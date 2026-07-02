@@ -41,6 +41,7 @@ export default {
         'bg-[linear-gradient(to_right,_#0FB442_0%,_#1AAF48_39%,_#118635_75%,_#004716_100%)]',
         'bg-[linear-gradient(to_right,_#D9D9D9_0%,_#E5E4E2_25%,_#DFE4EC_50%,_#E5E4E2_75%,_#CBC7C5_100%)]',
         'bg-[linear-gradient(to_right,_#065F22_0%,_#11B745_25%,_#1AE559_50%,_#17AB45_75%,_#077B2B_100%)]',
+        'bg-[linear-gradient(to_bottom,_#15582A_0%,_#179B40_25%,_#19BB4B_50%,_#22BA51_75%,_#0E5423_100%)]'
         // Tambahkan kelas lainnya kalau perlu
     ],
 
