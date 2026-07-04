@@ -19,10 +19,25 @@
             </div>
             <ul>
                 <li class="menu-label">Jamaah</li>
+
                 <li>
                     <a href="{{ route('jamaah.dashboard') }}"
                         class="{{ request()->routeIs('jamaah.dashboard') ? 'active' : '' }}">
                         <i class="ti-home"></i> Beranda
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ route('jamaah.ziswaf.create') }}"
+                        class="{{ request()->routeIs('jamaah.ziswaf.*') ? 'active' : '' }}">
+                        <i class="fa fa-hand-holding-heart"></i> Transaksi ZISWAF
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ route('jamaah.qris') }}"
+                        class="{{ request()->routeIs('jamaah.qris') ? 'active' : '' }}">
+                        <i class="fa fa-qrcode"></i> QRIS Masjid
                     </a>
                 </li>
             </ul>

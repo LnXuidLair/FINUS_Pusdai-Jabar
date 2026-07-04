@@ -97,6 +97,33 @@ class JamaahController extends Controller
         $komposisiLabels = $komposisiZiswaf->pluck('jenis')->values();
         $komposisiData = $komposisiZiswaf->pluck('total')->values();
 
+        $agendaKegiatan = collect([
+            [
+                'judul' => 'Kajian Rutin Subuh',
+                'hari' => 'Setiap Ahad',
+                'waktu' => '05.15 - 06.30 WIB',
+                'lokasi' => 'Aula Masjid Pusdai',
+                'kategori' => 'Kajian',
+                'deskripsi' => 'Kajian pekanan untuk jamaah umum setelah salat Subuh.',
+            ],
+            [
+                'judul' => 'Jumat Berkah',
+                'hari' => 'Setiap Jumat',
+                'waktu' => '11.00 - selesai',
+                'lokasi' => 'Area Masjid',
+                'kategori' => 'Sosial',
+                'deskripsi' => 'Pembagian konsumsi dan sedekah untuk jamaah Jumat.',
+            ],
+            [
+                'judul' => 'Kelas Tahsin Al-Qur’an',
+                'hari' => 'Setiap Sabtu',
+                'waktu' => '16.00 - 17.30 WIB',
+                'lokasi' => 'Ruang Belajar',
+                'kategori' => 'Pendidikan',
+                'deskripsi' => 'Kegiatan belajar memperbaiki bacaan Al-Qur’an.',
+            ],
+        ]);
+
         return view('dashboard.jamaah', compact(
             'jamaah',
             'jenisLabels',
@@ -115,8 +142,25 @@ class JamaahController extends Controller
             'chartData',
             'komposisiZiswaf',
             'komposisiLabels',
-            'komposisiData'
+            'komposisiData',
+            'agendaKegiatan'
         ));
+    }
+
+    public function createZiswaf()
+    {
+        $jenisLabels = $this->jenisLabels();
+
+        return view('jamaah.transaksi-ziswaf', compact('jenisLabels'));
+    }
+
+    public function qris()
+    {
+        $qrisPath = file_exists(public_path('images/qris-masjid.png'))
+            ? asset('images/qris-masjid.png')
+            : null;
+
+        return view('jamaah.qris', compact('qrisPath'));
     }
 
     public function storeZiswaf(Request $request)
