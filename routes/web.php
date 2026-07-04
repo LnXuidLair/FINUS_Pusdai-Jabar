@@ -109,6 +109,10 @@ Route::get('/jamaah/dashboard', [JamaahController::class, 'dashboard'])
     ->middleware(['auth', 'verified', 'role:jamaah'])
     ->name('jamaah.dashboard');
 
+Route::post('/jamaah/transaksi-ziswaf', [JamaahController::class, 'storeZiswaf'])
+    ->middleware(['auth', 'verified', 'role:jamaah'])
+    ->name('jamaah.ziswaf.store');
+
 Route::post('/session/heartbeat', fn () => response()->noContent())
     ->middleware('auth')
     ->name('session.heartbeat');
