@@ -90,8 +90,8 @@
             <p class="mb-2 text-white-50">Assalamu'alaikum,</p>
             <h2 class="text-white font-weight-bold mb-2">{{ $jamaah->name }}</h2>
             <p class="mb-0 text-white-50">
-                Dashboard jamaah untuk mencatat ZISWAF, infak, melihat riwayat transaksi,
-                grafik pemasukan jamaah, dan transparansi pengeluaran masjid.
+                Dashboard jamaah untuk melihat riwayat transaksi, grafik pemasukan jamaah,
+                agenda kegiatan, dan transparansi pengeluaran masjid.
             </p>
         </div>
 
@@ -202,108 +202,60 @@
 
 <div class="row">
     <div class="col-lg-4">
-        <div class="card finus-card mb-4">
-            <div class="card-header bg-white border-0 pt-4 px-4">
-                <h5 class="mb-1 font-weight-bold">Input Transaksi</h5>
-                <small class="text-muted">Catat transaksi ZISWAF atau infak secara mandiri.</small>
+        <div class="mb-4 rounded-2xl bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,.07)]">
+            <div class="mb-5">
+                <h5 class="mb-1 text-xl font-bold text-slate-800">Agenda & Kegiatan</h5>
+                <p class="mb-0 text-sm text-slate-500">
+                    Informasi kegiatan masjid untuk jamaah.
+                </p>
             </div>
 
-            <div class="card-body px-4">
-                <form method="POST" action="{{ route('jamaah.ziswaf.store') }}">
-                    @csrf
+            <div class="space-y-4">
+                @forelse(($agendaKegiatan ?? []) as $agenda)
+                    <div class="rounded-xl border border-slate-200 p-4">
+                        <div class="mb-2 flex items-start justify-between gap-3">
+                            <div>
+                                <h6 class="mb-1 font-bold text-slate-800">
+                                    {{ $agenda['judul'] }}
+                                </h6>
 
-                    <div class="form-group">
-                        <label>Jenis Transaksi</label>
-                        <select name="jenis_ziswaf" class="form-control" required>
-                            <option value="">Pilih jenis</option>
-                            @foreach($jenisLabels as $value => $label)
-                                <option value="{{ $value }}" @selected(old('jenis_ziswaf') === $value)>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('jenis_ziswaf')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
+                                <p class="mb-0 text-sm text-slate-500">
+                                    <i class="fa fa-calendar mr-1 text-emerald-600"></i>
+                                    {{ $agenda['hari'] }}
+                                </p>
+                            </div>
+
+                            <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                                {{ $agenda['kategori'] }}
+                            </span>
+                        </div>
+
+                        <p class="mb-1 text-sm text-slate-500">
+                            <i class="fa fa-clock mr-1 text-emerald-600"></i>
+                            {{ $agenda['waktu'] }}
+                        </p>
+
+                        <p class="mb-2 text-sm text-slate-500">
+                            <i class="fa fa-map-marker-alt mr-1 text-emerald-600"></i>
+                            {{ $agenda['lokasi'] }}
+                        </p>
+
+                        <p class="mb-0 text-sm text-slate-600">
+                            {{ $agenda['deskripsi'] }}
+                        </p>
                     </div>
-
-                    <div class="form-group">
-                        <label>Nominal</label>
-                        <input type="number" name="nominal" class="form-control"
-                            value="{{ old('nominal') }}" min="1000" placeholder="Contoh: 50000" required>
-                        @error('nominal')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
+                @empty
+                    <div class="py-8 text-center">
+                        <i class="fa fa-calendar mb-3 text-3xl text-slate-400"></i>
+                        <p class="mb-0 text-sm text-slate-500">
+                            Belum ada agenda kegiatan.
+                        </p>
                     </div>
-
-                    <div class="form-group">
-                        <label>Metode Pembayaran</label>
-                        <select name="metode_pembayaran" class="form-control" required>
-                            <option value="tunai" @selected(old('metode_pembayaran') === 'tunai')>Tunai</option>
-                            <option value="transfer" @selected(old('metode_pembayaran') === 'transfer')>Transfer</option>
-                            <option value="qris" @selected(old('metode_pembayaran') === 'qris')>QRIS</option>
-                        </select>
-                        @error('metode_pembayaran')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label>Keterangan</label>
-                        <textarea name="keterangan" class="form-control" rows="3"
-                            placeholder="Opsional">{{ old('keterangan') }}</textarea>
-                        @error('keterangan')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                    <button type="submit" class="btn btn-success btn-block">
-                        <i class="fa fa-paper-plane mr-1"></i> Simpan Transaksi
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <div class="card finus-card mb-4">
-            <div class="card-header bg-white border-0 pt-4 px-4">
-                <h5 class="mb-1 font-weight-bold">Akses Cepat</h5>
-                <small class="text-muted">Fitur yang bisa dikembangkan untuk jamaah.</small>
+                @endforelse
             </div>
 
-            <div class="card-body px-4">
-                <div class="row">
-                    <div class="col-6 mb-3">
-                        <a href="#" class="quick-action">
-                            <i class="fa fa-receipt text-success mb-2"></i>
-                            <strong class="d-block">Bukti Donasi</strong>
-                            <small>Unduh bukti</small>
-                        </a>
-                    </div>
-
-                    <div class="col-6 mb-3">
-                        <a href="#" class="quick-action">
-                            <i class="fa fa-qrcode text-primary mb-2"></i>
-                            <strong class="d-block">QRIS Masjid</strong>
-                            <small>Pembayaran cepat</small>
-                        </a>
-                    </div>
-
-                    <div class="col-6 mb-3">
-                        <a href="#" class="quick-action">
-                            <i class="fa fa-calendar text-info mb-2"></i>
-                            <strong class="d-block">Agenda</strong>
-                            <small>Kegiatan masjid</small>
-                        </a>
-                    </div>
-
-                    <div class="col-6 mb-3">
-                        <a href="#" class="quick-action">
-                            <i class="fa fa-bullhorn text-warning mb-2"></i>
-                            <strong class="d-block">Info</strong>
-                            <small>Pengumuman</small>
-                        </a>
-                    </div>
-                </div>
+            <div class="mt-5 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700">
+                Untuk transaksi ZISWAF dan QRIS, gunakan menu di sidebar.
             </div>
         </div>
     </div>

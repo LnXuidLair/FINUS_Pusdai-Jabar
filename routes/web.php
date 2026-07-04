@@ -105,13 +105,22 @@ Route::middleware(['auth', 'role:pegawai'])
             ->name('presensi.store');
     });
 
-Route::get('/jamaah/dashboard', [JamaahController::class, 'dashboard'])
-    ->middleware(['auth', 'verified', 'role:jamaah'])
-    ->name('jamaah.dashboard');
+Route::middleware(['auth', 'verified', 'role:jamaah'])
+    ->prefix('jamaah')
+    ->name('jamaah.')
+    ->group(function () {
+        Route::get('/dashboard', [JamaahController::class, 'dashboard'])
+            ->name('dashboard');
 
-Route::post('/jamaah/transaksi-ziswaf', [JamaahController::class, 'storeZiswaf'])
-    ->middleware(['auth', 'verified', 'role:jamaah'])
-    ->name('jamaah.ziswaf.store');
+        Route::get('/transaksi-ziswaf', [JamaahController::class, 'createZiswaf'])
+            ->name('ziswaf.create');
+
+        Route::post('/transaksi-ziswaf', [JamaahController::class, 'storeZiswaf'])
+            ->name('ziswaf.store');
+
+        Route::get('/qris', [JamaahController::class, 'qris'])
+            ->name('qris');
+    });
 
 Route::post('/session/heartbeat', fn () => response()->noContent())
     ->middleware('auth')
