@@ -11,6 +11,14 @@
 <form method="POST" action="{{ route('register.jamaah.post') }}" class="space-y-4">
     @csrf
     <div>
+        <label for="name" class="mb-1 block text-sm font-bold text-green-950">Nama Jamaah</label>
+        <input id="name" type="text" name="name" value="{{ old('name') }}"
+            class="auth-field" placeholder="Masukkan nama lengkap"
+            autocomplete="name" required autofocus>
+        @error('name')<p class="auth-error">{{ $message }}</p>@enderror
+    </div>
+    
+    <div>
         <label for="email" class="mb-1 block text-sm font-bold text-green-950">Alamat Gmail</label>
         <input id="email" type="email" name="email" value="{{ old('email') }}"
             class="auth-field" placeholder="nama@gmail.com"
