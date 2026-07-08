@@ -112,14 +112,13 @@ Route::middleware(['auth', 'verified', 'role:jamaah'])
         Route::get('/dashboard', [JamaahController::class, 'dashboard'])
             ->name('dashboard');
 
-        Route::get('/transaksi-ziswaf', [JamaahController::class, 'createZiswaf'])
-            ->name('ziswaf.create');
+        Route::get('/transaksi/{jenis}', [JamaahController::class, 'createTransaksi'])
+            ->whereIn('jenis', ['zakat', 'infak', 'wakaf'])
+            ->name('transaksi.create');
 
-        Route::post('/transaksi-ziswaf', [JamaahController::class, 'storeZiswaf'])
-            ->name('ziswaf.store');
-
-        Route::get('/qris', [JamaahController::class, 'qris'])
-            ->name('qris');
+        Route::post('/transaksi/{jenis}', [JamaahController::class, 'storeTransaksi'])
+            ->whereIn('jenis', ['zakat', 'infak', 'wakaf'])
+            ->name('transaksi.store');
     });
 
 Route::post('/session/heartbeat', fn () => response()->noContent())
