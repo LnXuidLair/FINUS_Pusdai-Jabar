@@ -162,7 +162,7 @@ Route::middleware('auth')->group(function () {
 
         $user->forceFill([
             'email_verification_code' => Hash::make($kode),
-            'email_verification_code_expires_at' => now()->addMinutes(10),
+            'email_verification_code_expires_at' => now()->addMinutes(5),
         ])->save();
 
         Mail::to($user->email)->send(new VerifyCodeJamaah($kode));
