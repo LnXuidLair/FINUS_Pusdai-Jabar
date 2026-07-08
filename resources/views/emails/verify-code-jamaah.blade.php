@@ -10,13 +10,13 @@
         {{ $kode }}
     </div>
     <p>
-        Kode ini berlaku selama <strong>10 menit</strong>.
+        Kode ini berlaku selama <strong>5 menit</strong>.
     </p>
     <p>
         Jika Anda tidak membuat akun di FINUS, abaikan email ini.
     </p>
     <p>
         Hormat kami,<br>
-        FINUS
+        FINUS Pusdai Jawa Barat
     </p>
 </div>
