@@ -9,7 +9,7 @@ class CoaSeeder extends Seeder
 {
     public function run(): void
     {
-        $coas = [
+        $coa = [
             // ASET
             [1, '1101', 'Kas'],
             [1, '1102', 'Bank'],
@@ -38,8 +38,8 @@ class CoaSeeder extends Seeder
             [5, '5111', 'Penyaluran ZISWAF'],
         ];
 
-        foreach ($coas as [$headerAkun, $kodeAkun, $namaAkun]) {
-            DB::table('coas')->updateOrInsert(
+        foreach ($coa as [$headerAkun, $kodeAkun, $namaAkun]) {
+            DB::table('coa')->updateOrInsert(
                 ['kode_akun' => $kodeAkun],
                 [
                     'header_akun' => $headerAkun,
