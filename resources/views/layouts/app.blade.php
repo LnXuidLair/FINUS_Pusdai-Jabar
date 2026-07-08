@@ -7,7 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>FINUS | Keuangan Masjid PUSDAI</title>
 
-    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('assets/images/favicon.png') }}?v=5">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/favicon.png') }}?v=5">
     <link href="{{ asset('assets/css/lib/weather-icons.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/lib/owl.carousel.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/lib/owl.theme.default.min.css') }}" rel="stylesheet">

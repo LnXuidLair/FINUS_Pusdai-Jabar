@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FINUS | PUSDAI Jabar</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="{{ asset('assets/images/favicon.png') }}?v=5">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/favicon.png') }}?v=5">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
 </head>
 <body class="m-0 min-h-screen overflow-x-hidden bg-white">
     <header class="relative z-40 flex h-[62px] w-full items-center justify-between bg-[linear-gradient(to_right,_#0FB442_0%,_#1AAF48_39%,_#118635_75%,_#004716_100%)] px-4 sm:px-5">
-        <img src="{{ asset('assets/images/FINUS_Welcome.png') }}" alt="FINUS PUSDAI" class="h-[48px] w-auto object-contain">
+        <img src="{{ asset('assets/images/FINUS_welcome.png') }}" alt="FINUS PUSDAI" class="h-[48px] w-auto object-contain">
         <nav class="flex items-center gap-3 font-serif font-bold text-[#6f8f79] sm:gap-3">
             <div class="relative group">
                 <button class="h-6 rounded-md bg-[linear-gradient(to_right,_#D9D9D9_0%,_#E5E4E2_25%,_#DFE4EC_50%,_#E5E4E2_75%,_#CBC7C5_100%)] px-4 text-[16px] leading-6 shadow-sm transition hover:bg-white">Login</button>
