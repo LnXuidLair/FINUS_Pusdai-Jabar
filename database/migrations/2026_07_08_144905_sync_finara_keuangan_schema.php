@@ -78,7 +78,7 @@ return new class extends Migration
             Schema::create('jurnal_detail', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('jurnal_id')->constrained('jurnal_umum')->cascadeOnDelete();
-                $table->foreignId('coa_id')->constrained('coas')->cascadeOnDelete();
+                $table->foreignId('coa_id')->constrained('coa')->cascadeOnDelete();
                 $table->string('deskripsi')->nullable();
                 $table->decimal('debit', 15, 2)->default(0);
                 $table->decimal('credit', 15, 2)->default(0);
@@ -117,7 +117,7 @@ return new class extends Migration
                 $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamp('verified_at')->nullable();
                 $table->text('keterangan')->nullable();
-                $table->foreignId('coa_id')->nullable()->constrained('coas')->nullOnDelete();
+                $table->foreignId('coa_id')->nullable()->constrained('coa')->nullOnDelete();
                 $table->foreignId('jurnal_id')->nullable()->constrained('jurnal_umum')->nullOnDelete();
                 $table->timestamps();
 
@@ -214,11 +214,11 @@ return new class extends Migration
                 }
 
                 if (!Schema::hasColumn('pengeluaran', 'coa_debit_id')) {
-                    $table->foreignId('coa_debit_id')->nullable()->after('referensi_penggajian_id')->constrained('coas')->nullOnDelete();
+                    $table->foreignId('coa_debit_id')->nullable()->after('referensi_penggajian_id')->constrained('coa')->nullOnDelete();
                 }
 
                 if (!Schema::hasColumn('pengeluaran', 'coa_kredit_id')) {
-                    $table->foreignId('coa_kredit_id')->nullable()->after('coa_debit_id')->constrained('coas')->nullOnDelete();
+                    $table->foreignId('coa_kredit_id')->nullable()->after('coa_debit_id')->constrained('coa')->nullOnDelete();
                 }
 
                 if (!Schema::hasColumn('pengeluaran', 'nominal')) {
