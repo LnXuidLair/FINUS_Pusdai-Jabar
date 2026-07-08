@@ -163,7 +163,10 @@ class JamaahController extends Controller
                 Rule::in(array_keys($config['jenisOptions'])),
             ],
             'nominal' => ['required', 'integer', 'min:1000'],
-            'metode_pembayaran' => ['required', Rule::in(['tunai', 'transfer', 'qris'])],
+            'metode_pembayaran' => [
+                'required',
+                Rule::in(array_keys($config['metodeOptions'])),
+            ],
             'keterangan' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -191,6 +194,10 @@ class JamaahController extends Controller
                     'zakat_maal' => 'Zakat Maal',
                     'zakat_fitrah' => 'Zakat Fitrah',
                 ],
+                'metodeOptions' => [
+                    'virtual_account' => 'Virtual Account',
+                    'transfer_bank' => 'Transfer Bank',
+                ],
                 'successMessage' => 'Transaksi zakat berhasil dicatat.',
             ],
 
@@ -200,6 +207,10 @@ class JamaahController extends Controller
                 'jenisOptions' => [
                     'infaq' => 'Infak',
                 ],
+                'metodeOptions' => [
+                    'transfer_bank' => 'Transfer Bank',
+                    'virtual_account' => 'Virtual Account',
+                ],
                 'successMessage' => 'Transaksi infak berhasil dicatat.',
             ],
 
@@ -208,6 +219,10 @@ class JamaahController extends Controller
                 'subtitle' => 'Catat transaksi wakaf jamaah.',
                 'jenisOptions' => [
                     'wakaf' => 'Wakaf',
+                ],
+                'metodeOptions' => [
+                    'transfer_bank' => 'Transfer Bank',
+                    'virtual_account' => 'Virtual Account',
                 ],
                 'successMessage' => 'Transaksi wakaf berhasil dicatat.',
             ],
