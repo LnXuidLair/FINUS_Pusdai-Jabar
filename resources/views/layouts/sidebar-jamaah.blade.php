@@ -28,16 +28,23 @@
                 </li>
 
                 <li>
-                    <a href="{{ route('jamaah.ziswaf.create') }}"
-                        class="{{ request()->routeIs('jamaah.ziswaf.*') ? 'active' : '' }}">
-                        <i class="fa fa-hand-holding-heart"></i> Transaksi ZISWAF
+                    <a href="{{ route('jamaah.transaksi.create', 'zakat') }}"
+                        class="{{ request()->routeIs('jamaah.transaksi.*') && request()->route('jenis') === 'zakat' ? 'active' : '' }}">
+                        <i class="fa fa-hand-holding-heart"></i> Transaksi Zakat
                     </a>
                 </li>
 
                 <li>
-                    <a href="{{ route('jamaah.qris') }}"
-                        class="{{ request()->routeIs('jamaah.qris') ? 'active' : '' }}">
-                        <i class="fa fa-qrcode"></i> QRIS Masjid
+                    <a href="{{ route('jamaah.transaksi.create', 'infak') }}"
+                        class="{{ request()->routeIs('jamaah.transaksi.*') && request()->route('jenis') === 'infak' ? 'active' : '' }}">
+                        <i class="fa fa-donate"></i> Transaksi Infak
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ route('jamaah.transaksi.create', 'wakaf') }}"
+                        class="{{ request()->routeIs('jamaah.transaksi.*') && request()->route('jenis') === 'wakaf' ? 'active' : '' }}">
+                        <i class="fa fa-mosque"></i> Transaksi Wakaf
                     </a>
                 </li>
             </ul>

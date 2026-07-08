@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pengeluaran;
 use App\Models\ZiswafPenerimaan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -147,28 +146,21 @@ class JamaahController extends Controller
         ));
     }
 
-    public function createZiswaf()
+    public function createTransaksi(string $jenis)
     {
-        $jenisLabels = $this->jenisLabels();
+        $config = $this->transaksiConfig($jenis);
 
-        return view('jamaah.transaksi-ziswaf', compact('jenisLabels'));
+        return view('jamaah.transaksi-ziswaf', compact('jenis', 'config'));
     }
 
-    public function qris()
+    public function storeTransaksi(Request $request, string $jenis)
     {
-        $qrisPath = file_exists(public_path('images/qris-masjid.png'))
-            ? asset('images/qris-masjid.png')
-            : null;
+        $config = $this->transaksiConfig($jenis);
 
-        return view('jamaah.qris', compact('qrisPath'));
-    }
-
-    public function storeZiswaf(Request $request)
-    {
         $validated = $request->validate([
             'jenis_ziswaf' => [
                 'required',
-                Rule::in(['zakat_maal', 'zakat_fitrah', 'infaq', 'shadaqah', 'wakaf', 'fidyah']),
+                Rule::in(array_keys($config['jenisOptions'])),
             ],
             'nominal' => ['required', 'integer', 'min:1000'],
             'metode_pembayaran' => ['required', Rule::in(['tunai', 'transfer', 'qris'])],
@@ -184,7 +176,44 @@ class JamaahController extends Controller
             'keterangan' => $validated['keterangan'] ?? null,
         ]);
 
-        return back()->with('success', 'Transaksi ZISWAF / infak berhasil dicatat.');
+        return redirect()
+            ->route('jamaah.transaksi.create', $jenis)
+            ->with('success', $config['successMessage']);
+    }
+
+    private function transaksiConfig(string $jenis): array
+    {
+        return match ($jenis) {
+            'zakat' => [
+                'title' => 'Transaksi Zakat',
+                'subtitle' => 'Catat transaksi zakat maal atau zakat fitrah.',
+                'jenisOptions' => [
+                    'zakat_maal' => 'Zakat Maal',
+                    'zakat_fitrah' => 'Zakat Fitrah',
+                ],
+                'successMessage' => 'Transaksi zakat berhasil dicatat.',
+            ],
+
+            'infak' => [
+                'title' => 'Transaksi Infak',
+                'subtitle' => 'Catat transaksi infak jamaah.',
+                'jenisOptions' => [
+                    'infaq' => 'Infak',
+                ],
+                'successMessage' => 'Transaksi infak berhasil dicatat.',
+            ],
+
+            'wakaf' => [
+                'title' => 'Transaksi Wakaf',
+                'subtitle' => 'Catat transaksi wakaf jamaah.',
+                'jenisOptions' => [
+                    'wakaf' => 'Wakaf',
+                ],
+                'successMessage' => 'Transaksi wakaf berhasil dicatat.',
+            ],
+
+            default => abort(404),
+        };
     }
 
     private function jenisLabels(): array
