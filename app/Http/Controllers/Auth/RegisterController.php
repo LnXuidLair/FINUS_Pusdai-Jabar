@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
 use App\Models\User;
+use App\Rules\PublicEmailDomain;
+use App\Mail\VerifyCodeJamaah;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -176,38 +179,51 @@ class RegisterController extends Controller
     public function registerJamaah(Request $request)
     {
         $request->merge([
+            'name' => trim((string) $request->input('name')),
             'email' => strtolower(trim((string) $request->input('email'))),
         ]);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => [
+                'bail',
                 'required',
                 'email:rfc',
                 'max:255',
-                'regex:/^[A-Z0-9._%+\-]+@gmail\.com$/i',
                 'unique:users,email',
+                new PublicEmailDomain,
             ],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ], [
-            'email.regex' => 'Jamaah wajib menggunakan alamat Gmail (@gmail.com).',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => strtolower($validated['email']),
-            'email_verified_at' => now(),
             'password' => Hash::make($validated['password']),
             'role' => User::ROLE_JAMAAH,
         ]);
+
+        $this->kirimKodeVerifikasiJamaah($user);
 
         Auth::login($user);
 
         $request->session()->regenerate();
         $request->session()->put('last_activity_at', now()->timestamp);
 
-        return redirect()->route('jamaah.dashboard')
-            ->with('success', 'Akun jamaah berhasil dibuat.');
+        return redirect()->route('verification.notice')
+            ->with('status', 'verification-code-sent');
+    }
+
+    private function kirimKodeVerifikasiJamaah(User $user): void
+    {
+        $kode = (string) random_int(100000, 999999);
+
+        $user->forceFill([
+            'email_verification_code' => Hash::make($kode),
+            'email_verification_code_expires_at' => now()->addMinutes(5),
+        ])->save();
+
+        Mail::to($user->email)->send(new VerifyCodeJamaah($kode, $user->name));
     }
 
     private function getStaffActivationPegawai(Request $request): ?Pegawai

@@ -16,20 +16,17 @@
             class="auth-field" placeholder="Nama sesuai data pegawai" required autofocus>
         @error('name')<p class="auth-error">{{ $message }}</p>@enderror
     </div>
-
     <div>
         <label for="nip" class="mb-1 block text-sm font-bold text-green-950">NIP</label>
         <input id="nip" type="text" name="nip" value="{{ old('nip') }}"
             class="auth-field" placeholder="Nomor induk pegawai" required>
         @error('nip')<p class="auth-error">{{ $message }}</p>@enderror
     </div>
-
     <button class="auth-button">Verifikasi</button>
     <p class="text-center text-sm text-slate-600">
         Akun sudah aktif? <a href="{{ route('login.staff') }}" class="auth-link">Kembali ke login</a>
     </p>
 </form>
-
 @isset($verifiedPegawai)
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
     <div class="w-full max-w-sm rounded-2xl bg-white p-7 text-center shadow-2xl">

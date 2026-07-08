@@ -19,17 +19,29 @@
             Email login: <strong id="admin-email-preview" class="text-green-800">nama@AdminFinusPusdai.ac.id</strong>
         </p>
     </div>
-
     <div>
         <label for="password" class="mb-1 block text-sm font-bold text-green-950">Password</label>
-        <input id="password" type="password" name="password" class="auth-field"
-            placeholder="Minimal 8 karakter" autocomplete="new-password" required>
-        @error('password')<p class="auth-error">{{ $message }}</p>@enderror
+        <div class="relative">
+            <input id="password" type="password" name="password" class="auth-field pr-12" placeholder="Minimal 8 Karakter" autocomplete="new-password" required>
+            <button type="button" data-toggle-password data-target="#password" aria-label="Tampilkan Password" class="absolute right-4 top-1/2 -translate-y-1/2">
+                <img src="{{asset('assets/images/ShowPassword.png')}}" alt="Tampilkan Password" class="h-6 w-6 cursor-pointer select-none">
+            </button>
+        </div>
+        @error('password')<p class="auth-error">{{$message}}</p>@enderror
     </div>
-
-    <button class="auth-button">Buat Akun Admin</button>
+    <div>
+        <label for="password_confirmation" class="mb-1 block text-sm font-bold text-green-950">Konfirmasi Password</label>
+        <div class="relative">
+            <input id="password_confirmation" type="password" name="password_confirmation"
+                class="auth-field pr-12" placeholder="Ulangi Password" autocomplete="new-password" required>
+            <button type="button" data-toggle-password data-target="#password_confirmation" aria-label="Tampilkan Password" class="absolute right-4 top-1/2 -translate-y-1/2">
+                <img src="{{asset('assets/images/ShowPassword.png')}}" alt="Tampilkan Password" class="h-6 w-6 cursor-pointer select-none">
+            </button>
+        </div>
+        @error('password_confirmation')<p class="auth-error">{{$message}}</p>@enderror
+    </div>
+    <button type="submit" class="auth-button">Buat Akun</button>
 </form>
-
 <script>
 (() => {
     const input = document.getElementById('admin-name');

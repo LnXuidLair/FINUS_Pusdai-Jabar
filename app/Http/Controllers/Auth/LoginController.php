@@ -38,17 +38,9 @@ class LoginController extends Controller
             'email' => strtolower(trim((string) $request->input('email'))),
         ]);
 
-        $emailRules = ['required', 'email'];
-
-        if ($role === 'jamaah') {
-            $emailRules[] = 'regex:/^[A-Z0-9._%+\-]+@gmail\.com$/i';
-        }
-
         $credentials = $request->validate([
-            'email' => $emailRules,
+            'email' => ['required', 'email:rfc'],
             'password' => ['required', 'string'],
-        ], [
-            'email.regex' => 'Akun jamaah wajib menggunakan alamat Gmail (@gmail.com).',
         ]);
 
         if (!Auth::attempt($credentials + ['role' => $role], $request->boolean('remember'))) {
@@ -56,14 +48,12 @@ class LoginController extends Controller
                 ->withErrors(['email' => "Email atau password {$label} salah."])
                 ->onlyInput('email');
         }
-
         $request->session()->regenerate();
         $request->session()->put('last_activity_at', now()->timestamp);
 
         if ($role === 'jamaah' && !$request->user()->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
-
         return redirect()->intended(route($route));
     }
 }
