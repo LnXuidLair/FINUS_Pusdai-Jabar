@@ -86,20 +86,13 @@
 
 <div class="jamaah-hero p-4 p-md-5 mb-4">
     <div class="row align-items-center position-relative" style="z-index: 2;">
-        <div class="col-lg-8">
+        <div class="col-12">
             <p class="mb-2 text-white-50">Assalamu'alaikum,</p>
             <h2 class="text-white font-weight-bold mb-2">{{ $jamaah->name }}</h2>
             <p class="mb-0 text-white-50">
                 Dashboard jamaah untuk melihat riwayat transaksi, grafik pemasukan jamaah,
                 agenda kegiatan, dan transparansi pengeluaran masjid.
             </p>
-        </div>
-
-        <div class="col-lg-4 mt-4 mt-lg-0 text-lg-right">
-            <div class="bg-white text-success d-inline-block px-4 py-3 rounded shadow-sm">
-                <small class="d-block text-muted">Saldo sederhana masjid</small>
-                <h4 class="mb-0 font-weight-bold">{{ $rupiah($saldoSederhana) }}</h4>
-            </div>
         </div>
     </div>
 </div>
@@ -255,7 +248,7 @@
             </div>
 
             <div class="mt-5 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700">
-                Untuk transaksi ZISWAF dan QRIS, gunakan menu di sidebar.
+                Untuk transaksi ZISWAF, gunakan menu di sidebar.
             </div>
         </div>
     </div>
@@ -290,7 +283,7 @@
                                         {{ $jenisLabels[$transaksi->jenis_ziswaf] ?? $transaksi->jenis_ziswaf }}
                                     </span>
                                 </td>
-                                <td>{{ strtoupper($transaksi->metode_pembayaran) }}</td>
+                                <td>{{ strtoupper(str_replace('_', ' ', $transaksi->metode_pembayaran)) }}</td>
                                 <td>{{ $transaksi->keterangan ?? '-' }}</td>
                                 <td class="text-right font-weight-bold text-success">
                                     {{ $rupiah($transaksi->nominal) }}
@@ -420,32 +413,23 @@
 
     <div class="card-body px-4">
         <div class="row">
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                 <div class="p-3 rounded bg-light">
                     <small class="text-muted">Total Zakat</small>
                     <h5 class="mb-0 text-success">{{ $rupiah($totalZakat) }}</h5>
                 </div>
             </div>
 
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                 <div class="p-3 rounded bg-light">
                     <small class="text-muted">Total Wakaf</small>
                     <h5 class="mb-0 text-primary">{{ $rupiah($totalWakaf) }}</h5>
                 </div>
             </div>
-
-            <div class="col-md-4 mb-3">
-                <div class="p-3 rounded bg-light">
-                    <small class="text-muted">Saldo Sederhana</small>
-                    <h5 class="mb-0 {{ $saldoSederhana >= 0 ? 'text-success' : 'text-danger' }}">
-                        {{ $rupiah($saldoSederhana) }}
-                    </h5>
-                </div>
-            </div>
         </div>
 
         <p class="mb-0 text-muted">
-            Catatan: saldo sederhana dihitung dari total pemasukan jamaah dikurangi total pengeluaran admin.
+            Catatan: informasi ini menampilkan ringkasan dana ZISWAF yang tercatat pada sistem.
             Untuk laporan resmi, tetap gunakan laporan keuangan admin.
         </p>
     </div>
