@@ -24,19 +24,41 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/css/intlTelInput.css">
 
     <style>
+        :root {
+            --sidebar-width: 270px;
+            --header-height: 74px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
         body {
-            margin: 0;
-            min-height: 100vh;
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100%;
             background: #f4f6f9;
             color: #334155;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: inherit;
         }
 
         .sidebar {
-            position: fixed;
-            inset: 0 auto 0 0;
-            z-index: 1040;
-            width: 260px;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            bottom: 0 !important;
+            width: var(--sidebar-width) !important;
+            min-width: var(--sidebar-width) !important;
+            max-width: var(--sidebar-width) !important;
+            z-index: 1050 !important;
             overflow-y: auto;
+            overflow-x: hidden;
+            transform: translateX(0);
             transition: transform .25s ease;
         }
 
@@ -48,51 +70,88 @@
         .sidebar ul {
             list-style: none;
             margin: 0;
+            padding: 0;
         }
 
         .sidebar a {
             text-decoration: none;
         }
 
+        .sidebar .logo {
+            min-height: 145px;
+            padding: 24px 18px 20px !important;
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .sidebar .logo img {
+            max-width: 120px !important;
+            max-height: 84px !important;
+            object-fit: contain;
+        }
+
         .header {
-            position: fixed;
-            top: 0;
-            right: 0;
-            left: 260px;
-            z-index: 1030;
-            min-height: 64px;
-            padding: 14px 18px;
-            background: #fff;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 2px 12px rgba(15, 23, 42, .06);
+            position: fixed !important;
+            top: 0 !important;
+            left: var(--sidebar-width) !important;
+            right: 0 !important;
+            width: auto !important;
+            max-width: none !important;
+            height: var(--header-height) !important;
+            min-height: var(--header-height) !important;
+            margin: 0 !important;
+            padding: 0 28px !important;
+            z-index: 1040 !important;
+            background: #ffffff !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, .06) !important;
+            display: flex !important;
+            align-items: center !important;
             transition: left .25s ease;
+        }
+
+        .header .container,
+        .header .container-fluid,
+        .header .row,
+        .header .navbar,
+        .header .navbar-header,
+        .header .pull-left,
+        .header .pull-right {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
         }
 
         .content-wrap {
             min-height: 100vh;
-            margin-left: 260px;
-            padding-top: 64px;
+            margin-left: var(--sidebar-width) !important;
+            padding-top: calc(var(--header-height) + 18px) !important;
             transition: margin-left .25s ease;
         }
 
         .content-wrap .main {
-            padding: 18px;
+            padding: 18px 24px 24px !important;
         }
 
         .hamburger,
         .sidebar-toggle,
         .finus-sidebar-toggle {
-            width: 42px;
-            height: 42px;
-            padding: 0;
-            border: none;
-            outline: none;
-            background: transparent;
-            color: #1f2937;
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            width: 42px !important;
+            height: 42px !important;
+            padding: 0 !important;
+            border: none !important;
+            outline: none !important;
+            background: transparent !important;
+            color: #1f2937 !important;
+            display: inline-flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
             cursor: pointer;
             gap: 5px;
         }
@@ -100,15 +159,15 @@
         .hamburger:hover,
         .sidebar-toggle:hover,
         .finus-sidebar-toggle:hover {
-            background: #f1f5f9;
+            background: #f1f5f9 !important;
             border-radius: 10px;
         }
 
         .hamburger:focus,
         .sidebar-toggle:focus,
         .finus-sidebar-toggle:focus {
-            outline: none;
-            box-shadow: none;
+            outline: none !important;
+            box-shadow: none !important;
         }
 
         .hamburger i,
@@ -144,45 +203,66 @@
             transition: none !important;
         }
 
-        body.sidebar-collapsed .hamburger .line,
-        body.sidebar-open .hamburger .line,
-        body.sidebar-collapsed .sidebar-toggle .line,
-        body.sidebar-open .sidebar-toggle .line {
-            opacity: 1 !important;
-            transform: none !important;
-        }
-
         .header-icon {
             min-height: 34px;
         }
 
         body.sidebar-collapsed .sidebar {
-            transform: translateX(-260px);
+            transform: translateX(-100%) !important;
         }
 
         body.sidebar-collapsed .header {
-            left: 0;
+            left: 0 !important;
+            width: auto !important;
         }
 
         body.sidebar-collapsed .content-wrap {
-            margin-left: 0;
+            margin-left: 0 !important;
+        }
+
+        .page-header,
+        .page_header_2 {
+            margin-bottom: 18px;
+        }
+
+        .page-title h1 {
+            margin: 0;
+        }
+
+        .breadcrumb {
+            background: transparent !important;
+            padding: 0 !important;
+            margin-bottom: 0 !important;
+            justify-content: flex-end;
         }
 
         @media (max-width: 991.98px) {
             .sidebar {
-                transform: translateX(-260px);
+                transform: translateX(-100%) !important;
             }
 
             .header {
-                left: 0;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                padding: 0 18px !important;
             }
 
             .content-wrap {
-                margin-left: 0;
+                margin-left: 0 !important;
+                padding-top: calc(var(--header-height) + 14px) !important;
+            }
+
+            .content-wrap .main {
+                padding: 16px !important;
             }
 
             body.sidebar-open .sidebar {
-                transform: translateX(0);
+                transform: translateX(0) !important;
+            }
+
+            .breadcrumb {
+                justify-content: flex-start;
             }
         }
     </style>
@@ -278,10 +358,15 @@
     <script>
     (() => {
         const toggle = document.querySelector('.sidebar-toggle, .hamburger');
+        const sidebar = document.querySelector('.sidebar');
+        const header = document.querySelector('.header');
+        const content = document.querySelector('.content-wrap');
 
         if (!toggle) {
             return;
         }
+
+        const sidebarWidth = 270;
 
         const normalizeToggleIcon = () => {
             toggle.classList.add('finus-sidebar-toggle', 'hamburger');
@@ -302,10 +387,67 @@
             });
         };
 
-        normalizeToggleIcon();
+        const applyLayout = () => {
+            const isMobile = window.innerWidth < 992;
+            const isCollapsed = document.body.classList.contains('sidebar-collapsed');
 
-        toggle.addEventListener('click', event => {
+            if (isMobile) {
+                if (header) {
+                    header.style.left = '0';
+                    header.style.right = '0';
+                    header.style.width = '100%';
+                }
+
+                if (content) {
+                    content.style.marginLeft = '0';
+                }
+
+                return;
+            }
+
+            if (isCollapsed) {
+                if (sidebar) {
+                    sidebar.style.transform = 'translateX(-100%)';
+                }
+
+                if (header) {
+                    header.style.left = '0';
+                    header.style.right = '0';
+                    header.style.width = 'auto';
+                }
+
+                if (content) {
+                    content.style.marginLeft = '0';
+                }
+            } else {
+                if (sidebar) {
+                    sidebar.style.transform = 'translateX(0)';
+                }
+
+                if (header) {
+                    header.style.left = sidebarWidth + 'px';
+                    header.style.right = '0';
+                    header.style.width = 'auto';
+                }
+
+                if (content) {
+                    content.style.marginLeft = sidebarWidth + 'px';
+                }
+            }
+        };
+
+        normalizeToggleIcon();
+        applyLayout();
+
+        document.addEventListener('click', event => {
+            const clickedToggle = event.target.closest('.sidebar-toggle, .hamburger');
+
+            if (!clickedToggle) {
+                return;
+            }
+
             event.preventDefault();
+            event.stopPropagation();
 
             if (window.innerWidth < 992) {
                 document.body.classList.toggle('sidebar-open');
@@ -313,8 +455,9 @@
                 document.body.classList.toggle('sidebar-collapsed');
             }
 
-            setTimeout(normalizeToggleIcon, 30);
-        });
+            normalizeToggleIcon();
+            applyLayout();
+        }, true);
 
         document.addEventListener('click', event => {
             if (window.innerWidth >= 992) {
@@ -334,8 +477,11 @@
             }
 
             document.body.classList.remove('sidebar-open');
-            setTimeout(normalizeToggleIcon, 30);
+            normalizeToggleIcon();
+            applyLayout();
         });
+
+        window.addEventListener('resize', applyLayout);
     })();
 
     (() => {
