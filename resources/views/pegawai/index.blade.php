@@ -75,7 +75,7 @@
                     </div>
 
                     <div class="d-flex align-items-center">
-                        <input id="search" type="search" class="form-control form-control-sm mr-2" placeholder="Cari nama, NIP, atau jabatan..." style="min-width:240px; background:rgba(255,255,255,0.95);">
+                        <input id="search" type="search" class="form-control form-control-sm mr-2" placeholder="Cari nama, NIP, email, atau jabatan..." style="min-width:240px; background:rgba(255,255,255,0.95);">
                         <a href="{{ route('admin.pegawai.create') }}" class="btn btn-light btn-sm shadow-sm">
                             <i class="fa fa-plus"></i> Tambah Data
                         </a>
@@ -93,9 +93,9 @@
                     <table id="pegawaiTable" class="table table-hover table-bordered table-sm align-middle">
                         <thead class="thead-light">
                             <tr>
-                                <th width="60" class="text-center">No</th>
                                 <th>NIP</th>
                                 <th>Nama</th>
+                                <th>Email</th>
                                 <th>Jabatan</th>
                                 <th width="120" class="text-center">Status</th>
                                 <th width="140" class="text-center">Aksi</th>
@@ -104,9 +104,9 @@
                         <tbody>
                         @forelse($pegawais as $i => $pegawai)
                             <tr>
-                                <td class="text-center">{{ $i + 1 }}</td>
                                 <td class="font-weight-bold">{{ $pegawai->nip }}</td>
                                 <td>{{ $pegawai->nama_pegawai }}</td>
+                                <td>{{ $pegawai->email ?: '-' }}</td>
                                 <td>{{ $pegawai->jabatan }}</td>
                                 <td class="text-center">
                                     @if($pegawai->is_verified)
@@ -139,7 +139,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-5">
+                                <td colspan="7" class="text-center text-muted py-5">
                                     <div class="mb-3">
                                         <i class="fa fa-folder-open fa-2x no-data-illustration"></i>
                                     </div>
@@ -264,7 +264,7 @@
         function applyFilter(term){
             const q = term.trim().toLowerCase();
             filtered = allRows.filter(r => {
-                const cells = Array.from(r.cells).slice(1,4); // NIP, Nama, Jabatan
+                const cells = Array.from(r.cells).slice(1,5); // NIP, Nama, Email, Jabatan
                 const text = cells.map(c => c.textContent.toLowerCase()).join(' ');
                 return q === '' || text.indexOf(q) !== -1;
             });

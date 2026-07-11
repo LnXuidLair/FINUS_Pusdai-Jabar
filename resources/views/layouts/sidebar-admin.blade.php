@@ -91,7 +91,7 @@
     <div class="nano-content">
 
       <div class="logo">
-        <img src="{{ asset('assets/images/finara1.png') }}" alt="FINUS"
+        <img src="{{ asset('assets/images/pusdai_dashboard.png') }}" alt="FINUS"
           onerror="this.style.display='none'">
         <div class="logo-title">FINUS</div>
         <div class="logo-sub-title">Keuangan Masjid</div>

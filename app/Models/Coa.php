@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Coa extends Model
 {
-    protected $table = 'coas';
+    protected $table = 'coa';
 
     protected $fillable = [
         'kode_akun',

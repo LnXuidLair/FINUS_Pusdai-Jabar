@@ -90,7 +90,7 @@
             <img src="{{ asset('assets/images/FINUS_login.png') }}"
                  alt="FINUS PUSDAI"
                  class="h-11 max-w-[190px] object-contain"
-                 onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='{{ asset('assets/images/finara1.png') }}';}else{this.style.display='none';document.getElementById('auth-brand-fallback').classList.remove('hidden');}">
+                 onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='{{ asset('assets/images/pusdai_dashboard.png') }}';}else{this.style.display='none';document.getElementById('auth-brand-fallback').classList.remove('hidden');}">
             <span id="auth-brand-fallback" class="hidden text-xl font-extrabold tracking-wide text-white">
                 FINUS PUSDAI
             </span>
@@ -129,7 +129,7 @@
                     <img src="{{ asset('assets/images/FINUS_logo.png') }}"
                          alt="FINUS PUSDAI"
                          class="mx-auto mb-3 h-14 max-w-[210px] object-contain"
-                         onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='{{ asset('assets/images/finara1.png') }}';}else{this.style.display='none';document.getElementById('auth-panel-logo-fallback').classList.remove('hidden');}">
+                         onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='{{ asset('assets/images/pusdai_dashboard.png') }}';}else{this.style.display='none';document.getElementById('auth-panel-logo-fallback').classList.remove('hidden');}">
                     <span id="auth-panel-logo-fallback" class="hidden mb-3 text-xl font-extrabold tracking-wide text-white">
                         FINUS PUSDAI
                     </span>
