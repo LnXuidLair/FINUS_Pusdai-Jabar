@@ -146,10 +146,23 @@ class PegawaiController extends Controller
 
     private function jabatanOptions(?string $current = null): array
     {
-        return GajiJabatan::query()
+        $databaseOptions = GajiJabatan::query()
             ->whereNotNull('jabatan')
             ->orderBy('jabatan')
             ->pluck('jabatan')
+            ->toArray();
+
+        $defaultOptions = [
+            'DKM',
+            'KBIH',
+            'Security',
+            'Kebersihan',
+            'Marbot',
+            'Administrasi',
+        ];
+
+        return collect($defaultOptions)
+            ->merge($databaseOptions)
             ->when($current, fn ($items) => $items->push($current))
             ->filter()
             ->unique()
