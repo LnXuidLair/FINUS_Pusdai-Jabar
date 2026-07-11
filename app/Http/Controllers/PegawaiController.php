@@ -149,9 +149,19 @@ class PegawaiController extends Controller
         $databaseOptions = GajiJabatan::query()
             ->whereNotNull('jabatan')
             ->orderBy('jabatan')
-            ->pluck('jabatan');
+            ->pluck('jabatan')
+            ->toArray();
 
-        return collect(Pegawai::JABATAN_DEFAULT)
+        $defaultOptions = [
+            'DKM',
+            'KBIH',
+            'Security',
+            'Kebersihan',
+            'Marbot',
+            'Administrasi',
+        ];
+
+        return collect($defaultOptions)
             ->merge($databaseOptions)
             ->when($current, fn ($items) => $items->push($current))
             ->filter()
