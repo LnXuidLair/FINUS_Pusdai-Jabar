@@ -146,13 +146,10 @@ class PegawaiController extends Controller
 
     private function jabatanOptions(?string $current = null): array
     {
-        $databaseOptions = GajiJabatan::query()
+        return GajiJabatan::query()
             ->whereNotNull('jabatan')
             ->orderBy('jabatan')
-            ->pluck('jabatan');
-
-        return collect(Pegawai::JABATAN_DEFAULT)
-            ->merge($databaseOptions)
+            ->pluck('jabatan')
             ->when($current, fn ($items) => $items->push($current))
             ->filter()
             ->unique()
@@ -160,7 +157,6 @@ class PegawaiController extends Controller
             ->values()
             ->all();
     }
-
     private function rules(?Pegawai $pegawai = null): array
     {
         return [

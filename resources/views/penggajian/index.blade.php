@@ -1,5 +1,143 @@
 @extends('layouts.app')
+
 @section('content')
-<div class="card card-body"><div class="d-flex justify-content-between"><h3>Penggajian</h3><a class="btn btn-primary" href="{{ route('admin.penggajian.create') }}">Proses Gaji</a></div>
-<table class="table mt-3"><tr><th>Pegawai</th><th>Periode</th><th>Kehadiran</th><th>Total</th><th>Status</th></tr>@foreach($penggajians as $item)<tr><td>{{ $item->pegawai->nama_pegawai }}</td><td>{{ $item->periode }}</td><td>{{ $item->jumlah_kehadiran }}</td><td>Rp {{ number_format($item->total_gaji) }}</td><td>{{ $item->status_penggajian }}</td></tr>@endforeach</table></div>
+<style>
+    .finus-table-card { border-radius:10px; border:1px solid #e6eef9; box-shadow:0 10px 30px rgba(15,23,42,.06); overflow:hidden; background:linear-gradient(180deg,#fff 0%,#fbfcff 100%); }
+    .finus-header-gradient { position:relative; background:linear-gradient(to left,#15582A 0%,#179B40 25%,#19BB4B 50%,#22BA51 75%,#0E5423 100%) !important; padding:14px 18px; overflow:hidden; border-radius:10px 10px 0 0; }
+    .finus-header-gradient::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,.15); pointer-events:none; }
+    .finus-header-content { position:relative; z-index:2; color:#fff; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+    .finus-header-left { display:flex; align-items:center; }
+    .finus-header-icon { width:42px; height:42px; border-radius:10px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; margin-right:12px; }
+    .finus-header-title { font-weight:800; text-shadow:0 3px 8px rgba(0,0,0,.35); }
+    .finus-header-subtitle { font-size:13px; color:rgba(255,255,255,.95); }
+    .finus-search { min-width:250px; background:rgba(255,255,255,.96); }
+    .table thead th { font-size:13px; font-weight:700; text-transform:uppercase; color:#4a5568; background:#fbfdff; border-bottom:2px solid #f1f5f9; vertical-align:middle; }
+    .table td { vertical-align:middle; }
+    .table tbody tr:hover { background:rgba(0,0,0,.015); }
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card finus-table-card">
+            <div class="finus-header-gradient">
+                <div class="finus-header-content">
+                    <div class="finus-header-left">
+                        <div class="finus-header-icon">
+                            <i class="fa fa-money-bill text-white"></i>
+                        </div>
+                        <div>
+                            <div class="finus-header-title">Penggajian</div>
+                            <div class="finus-header-subtitle" id="recordCount">
+                                Total: {{ is_countable($penggajians) ? count($penggajians) : 0 }} data
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <input id="searchInput" type="search" class="form-control form-control-sm mr-2 finus-search" placeholder="Cari pegawai, periode, total, atau status...">
+                        <a class="btn btn-light btn-sm shadow-sm" href="{{ route('admin.penggajian.create') }}">
+                            <i class="fa fa-plus"></i> Proses Gaji
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                @if(session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
+
+                <div class="table-responsive">
+                    <table id="searchTable" class="table table-hover table-bordered table-sm">
+                        <thead>
+                            <tr class="text-center">
+                                <th width="60" class="text-center">No</th>
+                                <th>Pegawai</th>
+                                <th>Periode</th>
+                                <th>Kehadiran</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($penggajians as $item)
+                                @php
+                                    $pegawaiNama = optional($item->pegawai)->nama_pegawai ?? '-';
+                                    $totalFormatted = 'Rp '.number_format($item->total_gaji, 0, ',', '.');
+                                @endphp
+                                <tr
+                                    data-search-row
+                                    data-search-start="{{ $pegawaiNama }}|{{ $item->periode }}|{{ $item->jumlah_kehadiran }}|{{ $totalFormatted }}|{{ $item->status_penggajian }}" class="text-center"
+                                >
+                                    <td class="text-center" data-row-number>{{ $loop->iteration }}</td>
+                                    <td>{{ $pegawaiNama }}</td>
+                                    <td>{{ $item->periode }}</td>
+                                    <td>{{ $item->jumlah_kehadiran }}</td>
+                                    <td>{{ $totalFormatted }}</td>
+                                    <td>{{ $item->status_penggajian }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-5">
+                                        Tidak ada data penggajian.
+                                    </td>
+                                </tr>
+                            @endforelse
+                            <tr id="emptySearchRow" style="display:none;">
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    Data tidak ditemukan.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    const input = document.getElementById('searchInput');
+    const rows = Array.from(document.querySelectorAll('[data-search-row]'));
+    const emptyRow = document.getElementById('emptySearchRow');
+    const countEl = document.getElementById('recordCount');
+    function normalize(value) {
+        return (value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    }
+    function filterRows() {
+        const keyword = normalize(input.value);
+        let visible = 0;
+        rows.forEach(row => {
+            const values = (row.dataset.searchStart || '')
+                .split('|')
+                .map(normalize)
+                .filter(Boolean);
+            const match = keyword === '' || values.some(value => value.startsWith(keyword));
+            row.style.display = match ? '' : 'none';
+            if (match) {
+                visible++;
+                const numberCell = row.querySelector('[data-row-number]');
+                if (numberCell) {
+                    numberCell.textContent = visible;
+                }
+            }
+        });
+        if (emptyRow) {
+            emptyRow.style.display = visible === 0 && rows.length > 0 ? '' : 'none';
+        }
+        if (countEl) {
+            const label = countEl.dataset.label || 'data';
+            countEl.textContent = `Total: ${visible} ${label}`;
+        }
+    }
+    if (input) {
+        input.addEventListener('input', filterRows);
+        filterRows();
+    }
+})();
+</script>
 @endsection
