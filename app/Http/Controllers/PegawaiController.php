@@ -170,7 +170,6 @@ class PegawaiController extends Controller
             ->values()
             ->all();
     }
-
     private function rules(?Pegawai $pegawai = null): array
     {
         return [

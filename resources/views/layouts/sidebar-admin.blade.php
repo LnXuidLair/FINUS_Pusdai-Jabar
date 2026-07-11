@@ -124,11 +124,6 @@
 
         <li class="label">Transaksi</li>
         <li>
-          <a href="{{ route('admin.presensi.index') }}" class="{{ request()->routeIs('admin.presensi.*') ? 'active' : '' }}">
-            <i class="fa-solid fa-calendar-check"></i> Presensi
-          </a>
-        </li>
-        <li>
           <a href="{{ route('admin.penggajian.index') }}" class="{{ request()->routeIs('admin.penggajian.*') ? 'active' : '' }}">
             <i class="fa-solid fa-wallet"></i> Penggajian
           </a>
@@ -140,6 +135,11 @@
         </li>
 
         <li class="label">Laporan</li>
+        <li>
+          <a href="{{ route('admin.presensi.index') }}" class="{{ request()->routeIs('admin.presensi.*') ? 'active' : '' }}">
+            <i class="fa-solid fa-calendar-check"></i> Presensi
+          </a>
+        </li>
         <li>
           <a href="{{ route('admin.laporan.jurnal-umum') }}" class="{{ request()->routeIs('admin.laporan.jurnal-umum') ? 'active' : '' }}">
             <i class="fa-solid fa-book-open"></i> Jurnal Umum
