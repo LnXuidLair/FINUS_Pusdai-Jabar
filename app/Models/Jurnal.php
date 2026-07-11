@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Jurnal extends Model
 {
+    protected $table = 'jurnal';
+
     protected $guarded = [];
-    protected $casts = ['tanggal' => 'date'];
+
+    protected $casts = [
+        'tanggal' => 'date',
+    ];
 }

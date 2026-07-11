@@ -105,11 +105,12 @@
 
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Email <span class="text-danger">*</span></label>
-                                <input type="email" name="email"
-                                    value="{{ old('email', $pegawai->email) }}"
-                                    class="form-control @error('email') is-invalid @enderror" required>
-                                @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                <label>Email Pegawai</label>
+                                <input type="email" id="email_preview" value="{{ old('email', $pegawai->email) }}" class="form-control @error('email') is-invalid @enderror" readonly>
+                                <div class="form-note mt-1">
+                                    Email akan otomatis mengikuti 2 kata pertama nama pegawai + 4 digit terakhir NIP.
+                                </div>
+                                @error('email')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                             </div>
                         </div>
 
@@ -156,21 +157,71 @@
 
 @push('scripts')
 <script>
-const phoneInput = document.querySelector("#phone_display");
-const iti = window.intlTelInput(phoneInput, {
-    initialCountry: "auto",
-    separateDialCode: true,
-    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/js/utils.js"
-});
+(function () {
+    const nameInput = document.querySelector('input[name="nama_pegawai"]');
+    const nipInput = document.querySelector('input[name="nip"]');
+    const emailPreview = document.getElementById('email_preview');
+    const domain = 'stafffinuspusdai.org';
 
-@if($pegawai->no_telp)
-iti.setNumber("{{ $pegawai->no_telp }}");
-@endif
+    function makeEmailPreview() {
+        if (!nameInput || !nipInput || !emailPreview) return;
 
-phoneInput.addEventListener("blur", () => {
-    if (iti.isValidNumber()) {
-        document.getElementById("phone_value").value = iti.getNumber();
+        const nameParts = nameInput.value
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(part => part.replace(/[^a-z0-9]/g, ''));
+
+        let localName = nameParts.join('');
+
+        if (!localName) {
+            localName = 'pegawai';
+        }
+
+        const nipDigits = nipInput.value.replace(/\D/g, '');
+        const suffix = nipDigits.slice(-4) || '0000';
+
+        emailPreview.value = `${localName}${suffix}@${domain}`;
     }
-});
+
+    if (nameInput) nameInput.addEventListener('input', makeEmailPreview);
+    if (nipInput) nipInput.addEventListener('input', makeEmailPreview);
+
+    makeEmailPreview();
+
+    const phoneInput = document.querySelector("#phone_display");
+    const phoneValue = document.getElementById("phone_value");
+
+    if (phoneInput && window.intlTelInput) {
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "auto",
+            separateDialCode: true,
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/js/utils.js"
+        });
+
+        @if($pegawai->no_telp)
+            iti.setNumber("{{ $pegawai->no_telp }}");
+        @endif
+
+        function updatePhoneValue() {
+            if (iti.isValidNumber()) {
+                phoneValue.value = iti.getNumber();
+            } else {
+                phoneValue.value = phoneInput.value.trim();
+            }
+        }
+
+        phoneInput.addEventListener("blur", updatePhoneValue);
+
+        const form = phoneInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', updatePhoneValue);
+        }
+    }
+})();
 </script>
 @endpush

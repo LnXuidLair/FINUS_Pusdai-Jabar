@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\GajiJabatan;
 use App\Models\Pegawai;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class PegawaiController extends Controller
 {
+    private const STAFF_DOMAIN = 'stafffinuspusdai.org';
+
     public function verifyStaff(Request $request)
     {
         $validated = $request->validate([
@@ -17,7 +21,7 @@ class PegawaiController extends Controller
 
         $pegawai = Pegawai::where('nip', $validated['nip'])->first();
 
-        if (!$pegawai) {
+        if (! $pegawai) {
             return response()->json(['valid' => false]);
         }
 
@@ -48,6 +52,14 @@ class PegawaiController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'email' => $this->makeStaffEmail(
+                (string) $request->input('nama_pegawai'),
+                (string) $request->input('nip'),
+                self::STAFF_DOMAIN
+            ),
+        ]);
+
         Pegawai::create($request->validate($this->rules()));
 
         return redirect()->route('admin.pegawai.index')
@@ -74,7 +86,30 @@ class PegawaiController extends Controller
     public function update(Request $request, $id)
     {
         $pegawai = Pegawai::findOrFail($id);
-        $pegawai->update($request->validate($this->rules($pegawai)));
+        $oldEmail = strtolower(trim((string) $pegawai->email));
+
+        $request->merge([
+            'email' => $this->makeStaffEmail(
+                (string) $request->input('nama_pegawai', $pegawai->nama_pegawai),
+                (string) $request->input('nip', $pegawai->nip),
+                self::STAFF_DOMAIN,
+                $pegawai->id,
+                $oldEmail
+            ),
+        ]);
+
+        $validated = $request->validate($this->rules($pegawai));
+
+        $pegawai->update($validated);
+
+        if ($oldEmail !== '' && $oldEmail !== strtolower($validated['email'])) {
+            User::where('email', $oldEmail)
+                ->where('role', 'pegawai')
+                ->update([
+                    'name' => $validated['nama_pegawai'],
+                    'email' => strtolower($validated['email']),
+                ]);
+        }
 
         return redirect()->route('admin.pegawai.index')
             ->with('success', 'Data pegawai berhasil diperbarui.');
@@ -152,5 +187,61 @@ class PegawaiController extends Controller
             'no_telp' => ['nullable', 'string', 'max:20'],
             'alamat' => ['nullable', 'string', 'max:500'],
         ];
+    }
+
+    private function makeStaffEmail(
+        string $name,
+        string $nip,
+        string $domain,
+        ?int $ignorePegawaiId = null,
+        ?string $allowedUserEmail = null
+    ): string {
+        $parts = collect(preg_split('/\s+/', trim($name)) ?: [])
+            ->filter()
+            ->map(fn ($part) => Str::of($part)
+                ->ascii()
+                ->lower()
+                ->replaceMatches('/[^a-z0-9]/', '')
+                ->toString()
+            )
+            ->filter()
+            ->take(2)
+            ->values();
+
+        $selectedName = $parts->implode('');
+
+        if ($selectedName === '') {
+            $selectedName = 'pegawai';
+        }
+
+        $nipDigits = preg_replace('/\D+/', '', $nip);
+        $nipSuffix = substr($nipDigits, -4);
+
+        if ($nipSuffix === '') {
+            $nipSuffix = (string) random_int(1000, 9999);
+        }
+
+        $email = strtolower($selectedName . $nipSuffix . '@' . $domain);
+
+        if ($this->emailAlreadyUsed($email, $ignorePegawaiId, $allowedUserEmail)) {
+            $email = strtolower($selectedName . $nipSuffix . random_int(10, 99) . '@' . $domain);
+        }
+
+        return $email;
+    }
+
+    private function emailAlreadyUsed(string $email, ?int $ignorePegawaiId = null, ?string $allowedUserEmail = null): bool
+    {
+        $usedByPegawai = Pegawai::where('email', $email)
+            ->when($ignorePegawaiId, fn ($query) => $query->where('id', '!=', $ignorePegawaiId))
+            ->exists();
+
+        if ($usedByPegawai) {
+            return true;
+        }
+
+        return User::where('email', $email)
+            ->when($allowedUserEmail, fn ($query) => $query->where('email', '!=', $allowedUserEmail))
+            ->exists();
     }
 }

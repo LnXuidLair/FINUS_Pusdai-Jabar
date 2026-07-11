@@ -18,7 +18,7 @@ class StaffActivationController extends Controller
 {
     private const SESSION_KEY = 'staff_activation';
     private const EXPIRES_MINUTES = 10;
-    private const STAFF_DOMAIN = 'StaffFinusPusdai.ac.id';
+    private const STAFF_DOMAIN = 'stafffinuspusdai.org';
 
     public function create(): View
     {
@@ -147,6 +147,7 @@ class StaffActivationController extends Controller
 
         if ((int) $data['expires_at'] < now()->timestamp) {
             $request->session()->forget(self::SESSION_KEY);
+
             return null;
         }
 
@@ -155,26 +156,80 @@ class StaffActivationController extends Controller
 
     private function staffEmailFor(Pegawai $pegawai): string
     {
-        if (is_string($pegawai->email) && trim($pegawai->email) !== '') {
-            return trim($pegawai->email);
+        $currentEmail = strtolower(trim((string) $pegawai->email));
+
+        if ($currentEmail !== '' && str_ends_with($currentEmail, '@' . self::STAFF_DOMAIN)) {
+            return $currentEmail;
         }
 
-        return $this->makeOrganizationEmail($pegawai->nama_pegawai, self::STAFF_DOMAIN);
+        $email = $this->makeStaffEmail(
+            $pegawai->nama_pegawai,
+            $pegawai->nip,
+            self::STAFF_DOMAIN,
+            $pegawai->id,
+            $currentEmail ?: null
+        );
+
+        $pegawai->forceFill([
+            'email' => $email,
+        ])->save();
+
+        return $email;
     }
 
-    private function makeOrganizationEmail(string $name, string $domain): string
-    {
-        $localPart = Str::of($name)
-            ->ascii()
-            ->lower()
-            ->replaceMatches('/[^a-z0-9]+/', '.')
-            ->trim('.')
-            ->toString();
+    private function makeStaffEmail(
+        string $name,
+        string $nip,
+        string $domain,
+        ?int $ignorePegawaiId = null,
+        ?string $allowedUserEmail = null
+    ): string {
+        $parts = collect(preg_split('/\s+/', trim($name)) ?: [])
+            ->filter()
+            ->map(fn ($part) => Str::of($part)
+                ->ascii()
+                ->lower()
+                ->replaceMatches('/[^a-z0-9]/', '')
+                ->toString()
+            )
+            ->filter()
+            ->take(2)
+            ->values();
 
-        if ($localPart === '') {
-            $localPart = 'pegawai';
+        $selectedName = $parts->implode('');
+
+        if ($selectedName === '') {
+            $selectedName = 'pegawai';
         }
 
-        return $localPart.'@'.$domain;
+        $nipDigits = preg_replace('/\D+/', '', $nip);
+        $nipSuffix = substr($nipDigits, -4);
+
+        if ($nipSuffix === '') {
+            $nipSuffix = (string) random_int(1000, 9999);
+        }
+
+        $email = strtolower($selectedName . $nipSuffix . '@' . $domain);
+
+        if ($this->emailAlreadyUsed($email, $ignorePegawaiId, $allowedUserEmail)) {
+            $email = strtolower($selectedName . $nipSuffix . random_int(10, 99) . '@' . $domain);
+        }
+
+        return $email;
+    }
+
+    private function emailAlreadyUsed(string $email, ?int $ignorePegawaiId = null, ?string $allowedUserEmail = null): bool
+    {
+        $usedByPegawai = Pegawai::where('email', $email)
+            ->when($ignorePegawaiId, fn ($query) => $query->where('id', '!=', $ignorePegawaiId))
+            ->exists();
+
+        if ($usedByPegawai) {
+            return true;
+        }
+
+        return User::where('email', $email)
+            ->when($allowedUserEmail, fn ($query) => $query->where('email', '!=', $allowedUserEmail))
+            ->exists();
     }
 }

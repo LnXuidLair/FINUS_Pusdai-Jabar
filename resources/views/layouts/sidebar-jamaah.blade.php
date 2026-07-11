@@ -13,7 +13,7 @@
     <div class="nano">
         <div class="nano-content">
             <div class="logo">
-                <img src="{{ asset('assets/images/finara1.png') }}" alt="FINUS" style="max-width:130px"
+                <img src="{{ asset('assets/images/pusdai_dashboard.png') }}" alt="FINUS" style="max-width:130px"
                     onerror="this.style.display='none'">
                 <div class="mt-2 font-weight-bold">FINUS JAMAAH</div>
             </div>

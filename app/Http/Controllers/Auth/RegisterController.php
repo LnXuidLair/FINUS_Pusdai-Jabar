@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\VerifyCodeJamaah;
 use App\Models\Pegawai;
 use App\Models\User;
 use App\Rules\PublicEmailDomain;
-use App\Mail\VerifyCodeJamaah;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -19,6 +19,8 @@ class RegisterController extends Controller
 {
     private const STAFF_ACTIVATION_SESSION = 'staff_activation';
     private const STAFF_ACTIVATION_MINUTES = 10;
+    private const ADMIN_DOMAIN = 'adminfinuspusdai.org';
+    private const STAFF_DOMAIN = 'stafffinuspusdai.org';
 
     public function registerAdmin(Request $request)
     {
@@ -40,9 +42,9 @@ class RegisterController extends Controller
         }
 
         $name = $validated['name'] ?: 'Admin';
-        $email = !empty($validated['email'])
+        $email = ! empty($validated['email'])
             ? strtolower($validated['email'])
-            : $this->makeInstitutionalEmail($name, 'AdminFinusPusdai.ac.id');
+            : $this->makeInstitutionalEmail($name, self::ADMIN_DOMAIN);
 
         Cache::lock('finus-register-admin', 10)->block(5, function () use ($name, $email, $validated) {
             if (User::where('role', User::ROLE_ADMIN)->exists()) {
@@ -101,13 +103,9 @@ class RegisterController extends Controller
             ]);
         }
 
-        if (empty(trim((string) $pegawai->email))) {
-            throw ValidationException::withMessages([
-                'nip' => 'Email pegawai belum ditentukan oleh admin.',
-            ]);
-        }
+        $email = $this->staffEmailFor($pegawai);
 
-        if ($pegawai->is_verified || User::where('email', strtolower($pegawai->email))->exists()) {
+        if ($pegawai->is_verified || User::where('email', strtolower($email))->exists()) {
             throw ValidationException::withMessages([
                 'nip' => 'Akun pegawai sudah aktif. Silakan login.',
             ]);
@@ -123,6 +121,7 @@ class RegisterController extends Controller
                 'nama' => $pegawai->nama_pegawai,
                 'nip' => $pegawai->nip,
                 'jabatan' => $pegawai->jabatan,
+                'email' => $email,
             ]);
     }
 
@@ -135,7 +134,10 @@ class RegisterController extends Controller
                 ->withErrors(['nip' => 'Sesi verifikasi pegawai berakhir. Silakan verifikasi ulang.']);
         }
 
-        return view('auth.activate-staff', compact('pegawai'));
+        return view('auth.activate-staff', [
+            'pegawai' => $pegawai,
+            'email' => $this->staffEmailFor($pegawai),
+        ]);
     }
 
     public function registerStaff(Request $request)
@@ -151,7 +153,9 @@ class RegisterController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if ($pegawai->is_verified || User::where('email', strtolower($pegawai->email))->exists()) {
+        $email = $this->staffEmailFor($pegawai);
+
+        if ($pegawai->is_verified || User::where('email', strtolower($email))->exists()) {
             $request->session()->forget(self::STAFF_ACTIVATION_SESSION);
 
             return redirect()->route('login.staff')
@@ -160,13 +164,14 @@ class RegisterController extends Controller
 
         User::create([
             'name' => $pegawai->nama_pegawai,
-            'email' => strtolower($pegawai->email),
+            'email' => strtolower($email),
             'email_verified_at' => now(),
             'password' => Hash::make($validated['password']),
             'role' => User::ROLE_PEGAWAI,
         ]);
 
         $pegawai->update([
+            'email' => strtolower($email),
             'is_verified' => true,
         ]);
 
@@ -243,6 +248,85 @@ class RegisterController extends Controller
         return Pegawai::find($activation['pegawai_id'] ?? null);
     }
 
+    private function staffEmailFor(Pegawai $pegawai): string
+    {
+        $currentEmail = strtolower(trim((string) $pegawai->email));
+
+        if ($currentEmail !== '' && str_ends_with($currentEmail, '@' . self::STAFF_DOMAIN)) {
+            return $currentEmail;
+        }
+
+        $email = $this->makeStaffEmail(
+            $pegawai->nama_pegawai,
+            $pegawai->nip,
+            self::STAFF_DOMAIN,
+            $pegawai->id,
+            $currentEmail ?: null
+        );
+
+        $pegawai->forceFill([
+            'email' => $email,
+        ])->save();
+
+        return $email;
+    }
+
+    private function makeStaffEmail(
+        string $name,
+        string $nip,
+        string $domain,
+        ?int $ignorePegawaiId = null,
+        ?string $allowedUserEmail = null
+    ): string {
+        $parts = collect(preg_split('/\s+/', trim($name)) ?: [])
+            ->filter()
+            ->map(fn ($part) => Str::of($part)
+                ->ascii()
+                ->lower()
+                ->replaceMatches('/[^a-z0-9]/', '')
+                ->toString()
+            )
+            ->filter()
+            ->take(2)
+            ->values();
+
+        $selectedName = $parts->implode('');
+
+        if ($selectedName === '') {
+            $selectedName = 'pegawai';
+        }
+
+        $nipDigits = preg_replace('/\D+/', '', $nip);
+        $nipSuffix = substr($nipDigits, -4);
+
+        if ($nipSuffix === '') {
+            $nipSuffix = (string) random_int(1000, 9999);
+        }
+
+        $email = strtolower($selectedName . $nipSuffix . '@' . $domain);
+
+        if ($this->emailAlreadyUsed($email, $ignorePegawaiId, $allowedUserEmail)) {
+            $email = strtolower($selectedName . $nipSuffix . random_int(10, 99) . '@' . $domain);
+        }
+
+        return $email;
+    }
+
+    private function emailAlreadyUsed(string $email, ?int $ignorePegawaiId = null, ?string $allowedUserEmail = null): bool
+    {
+        $usedByPegawai = Pegawai::where('email', $email)
+            ->when($ignorePegawaiId, fn ($query) => $query->where('id', '!=', $ignorePegawaiId))
+            ->exists();
+
+        if ($usedByPegawai) {
+            return true;
+        }
+
+        return User::where('email', $email)
+            ->when($allowedUserEmail, fn ($query) => $query->where('email', '!=', $allowedUserEmail))
+            ->exists();
+    }
+
     private function normalizeName(string $name): string
     {
         return preg_replace('/\s+/', ' ', mb_strtolower(trim($name)));
@@ -256,6 +340,6 @@ class RegisterController extends Controller
             $local = 'admin';
         }
 
-        return $local . '@' . $domain;
+        return strtolower($local . '@' . $domain);
     }
 }

@@ -20,7 +20,7 @@
     <div>
         <label for="email" class="mb-1 block text-sm font-bold text-green-950">Email Admin</label>
         <input id="email" type="email" name="email" value="{{ old('email') }}"
-            class="auth-field" placeholder="nama@AdminFinusPusdai.ac.id"
+            class="auth-field" placeholder="nama@AdminFinusPusdai.org"
             autocomplete="email" required autofocus>
         @error('email')<p class="auth-error">{{ $message }}</p>@enderror
     </div>

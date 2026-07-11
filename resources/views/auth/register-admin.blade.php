@@ -16,7 +16,7 @@
             class="auth-field" placeholder="Nama lengkap admin" required autofocus>
         @error('name')<p class="auth-error">{{ $message }}</p>@enderror
         <p class="mt-2 text-xs text-slate-600">
-            Email login: <strong id="admin-email-preview" class="text-green-800">nama@AdminFinusPusdai.ac.id</strong>
+            Email login: <strong id="admin-email-preview" class="text-green-800">nama@AdminFinusPusdai.org</strong>
         </p>
     </div>
     <div>
@@ -50,7 +50,7 @@
         const local = input.value
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .toLowerCase().trim().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '');
-        preview.textContent = `${local || 'nama'}@AdminFinusPusdai.ac.id`;
+        preview.textContent = `${local || 'nama'}@AdminFinusPusdai.org`;
     };
     input.addEventListener('input', update);
     update();
