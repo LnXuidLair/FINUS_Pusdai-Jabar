@@ -143,26 +143,12 @@ class PegawaiController extends Controller
 
         return view('dashboard.pegawai.kepsek.detail-pegawai', compact('pegawai'));
     }
-
     private function jabatanOptions(?string $current = null): array
     {
-        $databaseOptions = GajiJabatan::query()
+        return GajiJabatan::query()
             ->whereNotNull('jabatan')
             ->orderBy('jabatan')
             ->pluck('jabatan')
-            ->toArray();
-
-        $defaultOptions = [
-            'DKM',
-            'KBIH',
-            'Security',
-            'Kebersihan',
-            'Marbot',
-            'Administrasi',
-        ];
-
-        return collect($defaultOptions)
-            ->merge($databaseOptions)
             ->when($current, fn ($items) => $items->push($current))
             ->filter()
             ->unique()
