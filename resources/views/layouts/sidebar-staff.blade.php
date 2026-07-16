@@ -23,8 +23,8 @@
             <div class="logo">
                 <img src="{{ asset('assets/images/pusdai_dashboard.png') }}" alt="FINUS" style="max-width:130px"
                     onerror="this.style.display='none'">
-                <div class="mt-2 font-weight-bold">FINUS PEGAWAI</div>
-                <small>{{ $profileSidebar['jabatan'] }}</small>
+                <div class="mt-2 font-weight-bold">PEGAWAI FINUS</div>
+                <small>Jabatan: {{ $profileSidebar['jabatan'] }}</small>
             </div>
             <ul>
                 <li class="menu-label">Dashboard</li>

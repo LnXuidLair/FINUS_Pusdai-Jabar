@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GajiJabatan;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class GajiJabatanController extends Controller
 {
@@ -30,14 +31,35 @@ class GajiJabatanController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'jabatan' => 'required|string|max:255|unique:gaji_jabatan,jabatan',
-            'gaji_perhari' => 'required|integer|min:0',
-        ]);
+        $validated = $request->validate(
+            [
+                'jabatan' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    'unique:gaji_jabatan,jabatan',
+                ],
+                'gaji_perhari' => [
+                    'required',
+                    'integer',
+                    'min:0',
+                ],
+            ],
+            [
+                'jabatan.required' => 'Nama jabatan wajib diisi.',
+                'jabatan.string' => 'Nama jabatan harus berupa teks.',
+                'jabatan.unique' => 'Jabatan tersebut sudah tersedia.',
 
-        GajiJabatan::create($request->all());
+                'gaji_perhari.required' => 'Gaji per hari wajib diisi.',
+                'gaji_perhari.integer' => 'Gaji per hari harus berupa angka bulat.',
+                'gaji_perhari.min' => 'Gaji per hari tidak boleh kurang dari Rp0.',
+            ]
+        );
 
-        return redirect()->route('admin.gaji-jabatan.index')
+        GajiJabatan::create($validated);
+
+        return redirect()
+            ->route('admin.gaji-jabatan.index')
             ->with('success', 'Data gaji jabatan berhasil ditambahkan.');
     }
 
@@ -55,27 +77,45 @@ class GajiJabatanController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'jabatan' => 'required|string|max:255',
-            'gaji_perhari' => 'required|numeric|min:0',
-        ]);
-
         $gajiJabatan = GajiJabatan::findOrFail($id);
 
-        // SIMPAN JABATAN LAMA
+        $validated = $request->validate(
+            [
+                'jabatan' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Rule::unique('gaji_jabatan', 'jabatan')
+                        ->ignore($gajiJabatan->id),
+                ],
+                'gaji_perhari' => [
+                    'required',
+                    'integer',
+                    'min:0',
+                ],
+            ],
+            [
+                'jabatan.required' => 'Nama jabatan wajib diisi.',
+                'jabatan.string' => 'Nama jabatan harus berupa teks.',
+                'jabatan.unique' => 'Jabatan tersebut sudah tersedia.',
+
+                'gaji_perhari.required' => 'Gaji per hari wajib diisi.',
+                'gaji_perhari.integer' => 'Gaji per hari harus berupa angka bulat.',
+                'gaji_perhari.min' => 'Gaji per hari tidak boleh kurang dari Rp0.',
+            ]
+        );
+
         $jabatanLama = $gajiJabatan->jabatan;
 
-        // UPDATE GAJI_JABATAN
-        $gajiJabatan->update([
-            'jabatan' => $request->jabatan,
-            'gaji_perhari' => $request->gaji_perhari,
-        ]);
+        $gajiJabatan->update($validated);
 
-        // SINKRON KE PEGAWAI
         Pegawai::where('jabatan', $jabatanLama)
-            ->update(['jabatan' => $request->jabatan]);
+            ->update([
+                'jabatan' => $validated['jabatan'],
+            ]);
 
-        return redirect()->route('admin.gaji-jabatan.index')
+        return redirect()
+            ->route('admin.gaji-jabatan.index')
             ->with('success', 'Data gaji jabatan berhasil diperbarui.');
     }
     /**
