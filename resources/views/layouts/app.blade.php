@@ -14,8 +14,8 @@
             FINUS | Keuangan Masjid PUSDAI
         @endif
     </title>
-    <link rel="icon" type="image/png" href="{{ asset('assets/images/favicon.png') }}?v=6">
-    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/favicon.png') }}?v=6">
+    <link rel="icon" type="image/png" href="{{ asset('assets/images/favicon.png') }}?v=7">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/favicon.png') }}?v=7">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     {{-- Bootstrap hanya dimuat satu kali --}}
