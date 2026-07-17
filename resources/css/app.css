@@ -39,6 +39,37 @@ input[type=number] {
   animation: shake 0.3s ease-in-out;
 }
 
+/* Admin‑style summary cards for Jamaah */
+.j-grid-horizontal {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 17px;
+    margin-bottom: 22px;
+}
+
+.j-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 145px;
+    padding: 20px;
+    border: 1px solid var(--finus-border, #E1EAE4);
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .055), 0 3px 10px rgba(14, 84, 35, .025);
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+
+.j-card::after {
+    content: "";
+    position: absolute;
+    right: -35px;
+    bottom: -45px;
+    width: 115px;
+    height: 115px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .10);
+}
+
 @keyframes dots {
     0% { content: ""; }
     33% { content: "."; }
