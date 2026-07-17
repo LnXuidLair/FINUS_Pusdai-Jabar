@@ -138,6 +138,15 @@ Route::middleware(['auth', 'verified', 'role:jamaah'])
         Route::post('/transaksi/{jenis}', [JamaahController::class, 'storeTransaksi'])
             ->whereIn('jenis', ['zakat', 'infak', 'wakaf'])
             ->name('transaksi.store');
+
+        Route::get('/riwayat-transaksi', [JamaahController::class, 'riwayat'])
+            ->name('riwayat.index');
+
+        Route::get('/laporan-transaksi', [JamaahController::class, 'laporan'])
+            ->name('laporan.index');
+
+        Route::get('/laporan-transaksi/export', [JamaahController::class, 'exportLaporan'])
+            ->name('laporan.export');
     });
 
 Route::post('/session/heartbeat', fn () => response()->noContent())
