@@ -1,859 +1,447 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Jamaah')
-
 @section('content')
 @php
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
-
-    $greeting = match (true) {
-        now()->hour >= 5 && now()->hour < 11 => 'Selamat pagi',
-        now()->hour >= 11 && now()->hour < 15 => 'Selamat siang',
-        now()->hour >= 15 && now()->hour < 18 => 'Selamat sore',
-        default => 'Selamat malam',
-    };
-
-    $summaryCards = [
-        [
-            'label' => 'Transaksi Saya',
-            'value' => $totalTransaksiSaya ?? 0,
-            'note' => ($jumlahTransaksiSaya ?? 0) . ' transaksi telah tercatat.',
-            'tag' => 'Pribadi',
-            'icon' => 'fa-hand-holding-heart',
-            'color' => '#179B40',
-            'soft' => '#EAF8EE',
-        ],
-        [
-            'label' => 'Pemasukan Jamaah',
-            'value' => $totalPemasukanJamaah ?? 0,
-            'note' => 'Akumulasi seluruh transaksi jamaah.',
-            'tag' => 'Keseluruhan',
-            'icon' => 'fa-chart-line',
-            'color' => '#2563EB',
-            'soft' => '#EDF4FF',
-        ],
-        [
-            'label' => 'Infak Terkumpul',
-            'value' => $totalInfak ?? 0,
-            'note' => 'Total dana pada kategori infak.',
-            'tag' => 'Infak',
-            'icon' => 'fa-kaaba',
-            'color' => '#0891B2',
-            'soft' => '#EAFBFE',
-        ],
-        [
-            'label' => 'Pengeluaran Masjid',
-            'value' => $totalPengeluaran ?? 0,
-            'note' => 'Pengeluaran yang telah dicatat admin.',
-            'tag' => 'Transparansi',
-            'icon' => 'fa-wallet',
-            'color' => '#E5484D',
-            'soft' => '#FFF0F0',
-        ],
-    ];
-
-    $fundCards = [
-        [
-            'label' => 'Total Transaksi',
-            'value' => $totalZakat ?? 0,
-            'icon' => 'fa-hand-holding-heart',
-            'color' => '#179B40',
-            'soft' => '#EAF8EE',
-        ],
-        [
-            'label' => 'Total Wakaf',
-            'value' => $totalWakaf ?? 0,
-            'icon' => 'fa-mosque',
-            'color' => '#2563EB',
-            'soft' => '#EDF4FF',
-        ],
-    ];
 @endphp
 
 <style>
-    :root {
-        --j-green: #179B40;
-        --j-dark: #0E5423;
-        --j-text: #172033;
-        --j-muted: #64748B;
-        --j-border: #E2EAE5;
-        --j-soft: #EAF8EE;
-        --j-surface: #FFFFFF;
-        --j-shadow: 0 12px 30px rgba(15, 23, 42, .07);
-    }
-
-    .j-dashboard {
-        padding: 8px 0 36px;
-        color: var(--j-text);
-    }
-
-    .j-heading,
-    .j-card {
-        border: 1px solid var(--j-border);
-        border-radius: 18px;
-        background: var(--j-surface);
-        box-shadow: var(--j-shadow);
-    }
-
-    .j-heading {
-        position: relative;
+    .jamaah-hero {
+        border-radius: 24px;
+        background: linear-gradient(135deg, #065f46, #16a34a);
+        color: white;
         overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        margin-bottom: 22px;
-        padding: 21px 23px;
+        position: relative;
     }
 
-    .j-heading::after {
+    .jamaah-hero::after {
         content: "";
         position: absolute;
-        top: -65px;
-        right: -30px;
-        width: 155px;
-        height: 155px;
-        border-radius: 50%;
-        background: var(--j-soft);
+        width: 260px;
+        height: 260px;
+        right: -90px;
+        top: -100px;
+        background: rgba(255, 255, 255, .12);
+        border-radius: 999px;
     }
 
-    .j-heading-main,
-    .j-breadcrumb {
+    .finus-card {
+        border: 0;
+        border-radius: 18px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
+    }
+
+    .finus-stat-card {
         position: relative;
-        z-index: 1;
+        min-height: 178px;
+        padding: 24px;
+        border: 0;
+        border-radius: 20px;
+        overflow: hidden;
+        background: #ffffff;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
     }
 
-    .j-heading-main,
-    .j-title-wrap,
-    .j-panel-title {
+    .finus-stat-card::after {
+        content: "";
+        position: absolute;
+        right: -54px;
+        bottom: -66px;
+        width: 150px;
+        height: 150px;
+        border-radius: 999px;
+        opacity: .55;
+    }
+
+    .finus-stat-red::after {
+        background: #ffe4e6;
+    }
+
+    .finus-stat-green::after {
+        background: #dcfce7;
+    }
+
+    .finus-stat-blue::after {
+        background: #dbeafe;
+    }
+
+    .finus-stat-top {
+        position: relative;
+        z-index: 2;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 22px;
     }
 
-    .j-heading-main {
-        gap: 14px;
-    }
-
-    .j-icon {
+    .finus-stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 46px;
-        min-width: 46px;
-        height: 46px;
-        border-radius: 13px;
-        background: var(--soft, var(--j-soft));
-        color: var(--tone, var(--j-green));
-        font-size: 17px;
+        font-size: 19px;
     }
 
-    .j-eyebrow {
-        color: var(--j-green);
-        font-size: 10px;
-        font-weight: 800;
-        letter-spacing: .14em;
-        text-transform: uppercase;
+    .finus-stat-icon-red {
+        background: #ffe4e6;
+        color: #dc2626;
     }
 
-    .j-heading h1,
-    .j-panel-head h2,
-    .j-stat h2,
-    .j-agenda h3 {
-        margin: 0;
+    .finus-stat-icon-green {
+        background: #dcfce7;
+        color: #16a34a;
     }
 
-    .j-heading h1 {
-        margin-top: 2px;
-        font-size: 22px;
-        font-weight: 800;
+    .finus-stat-icon-blue {
+        background: #dbeafe;
+        color: #2563eb;
     }
 
-    .j-heading p,
-    .j-panel-head p,
-    .j-stat p,
-    .j-agenda p,
-    .j-note,
-    .j-meta {
-        color: var(--j-muted);
-    }
-
-    .j-heading p,
-    .j-panel-head p {
-        margin: 4px 0 0;
-        font-size: 12.5px;
-    }
-
-    .j-breadcrumb {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--j-muted);
-    }
-
-    .j-breadcrumb strong {
-        color: var(--j-dark);
-    }
-
-    .j-grid {
-        display: grid;
-        gap: 18px;
-        margin-bottom: 18px;
-    }
-
-    .j-grid-4 {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .j-grid-2 {
-        grid-template-columns: minmax(0, 1.65fr) minmax(300px, .85fr);
-    }
-
-    .j-grid-equal {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .j-stat {
-        --tone: var(--j-green);
-        --soft: var(--j-soft);
-        position: relative;
-        overflow: hidden;
-        min-height: 137px;
-        padding: 18px;
-        transition: .2s ease;
-    }
-
-    .j-stat:hover {
-        transform: translateY(-3px);
-    }
-
-    .j-stat::after {
-        content: "";
-        position: absolute;
-        right: -35px;
-        bottom: -45px;
-        width: 105px;
-        height: 105px;
-        border-radius: 50%;
-        background: var(--soft);
-    }
-
-    .j-stat-top,
-    .j-panel-head,
-    .j-agenda-top,
-    .j-expense-head,
-    .j-total {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-    }
-
-    .j-stat-top,
-    .j-stat-body {
-        position: relative;
-        z-index: 1;
-    }
-
-    .j-tag,
-    .j-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 6px 9px;
-        border-radius: 9px;
-        background: #F5F8F6;
-        color: var(--j-muted);
-        font-size: 9.5px;
-        font-weight: 800;
-        text-transform: uppercase;
-    }
-
-    .j-stat-body {
-        margin-top: 13px;
-    }
-
-    .j-stat p {
-        margin: 0 0 4px;
-        font-size: 12px;
-    }
-
-    .j-stat h2 {
-        font-size: 21px;
-        font-weight: 800;
-    }
-
-    .j-stat small {
-        display: block;
-        margin-top: 4px;
-        color: var(--j-muted);
-        font-size: 10.5px;
-    }
-
-    .j-panel-head {
-        padding: 17px 19px;
-        border-bottom: 1px solid var(--j-border);
-    }
-
-    .j-title-wrap {
-        gap: 11px;
-    }
-
-    .j-panel-head h2 {
-        font-size: 16px;
-        font-weight: 800;
-    }
-
-    .j-panel-body {
-        padding: 18px 19px;
-    }
-
-    .j-chart {
-        height: 310px;
-    }
-
-    .j-chart-small {
-        height: 285px;
-    }
-
-    .j-list {
-        display: grid;
-        gap: 12px;
-    }
-
-    .j-agenda {
-        padding: 14px;
-        border: 1px solid var(--j-border);
-        border-radius: 14px;
-        background: #FBFDFB;
-    }
-
-    .j-agenda h3 {
-        font-size: 14px;
-        font-weight: 800;
-    }
-
-    .j-agenda p {
-        margin: 9px 0 0;
-        font-size: 11px;
-        line-height: 1.6;
-    }
-
-    .j-meta {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        margin-top: 7px;
-        font-size: 10.5px;
-    }
-
-    .j-note {
-        display: flex;
-        align-items: flex-start;
-        gap: 9px;
-        margin-top: 14px;
-        padding: 12px;
+    .finus-stat-badge {
         border-radius: 12px;
-        background: var(--j-soft);
-        font-size: 11px;
+        padding: 8px 12px;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
     }
 
-    .j-table-wrap {
-        overflow-x: auto;
-    }
-
-    .j-table {
-        width: 100%;
-        margin: 0;
-        border-collapse: collapse;
-    }
-
-    .j-table th,
-    .j-table td {
-        padding: 13px 15px;
-        border-bottom: 1px solid #EDF1EE;
-        font-size: 11px;
+    .finus-stat-badge::before {
+        content: "";
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin-right: 7px;
+        border-radius: 999px;
         vertical-align: middle;
     }
 
-    .j-table th {
-        background: #F7FAF8;
-        color: var(--j-muted);
-        font-size: 9.5px;
+    .finus-stat-badge-red::before {
+        background: #ef4444;
+    }
+
+    .finus-stat-badge-green::before {
+        background: #16a34a;
+    }
+
+    .finus-stat-badge-blue::before {
+        background: #2563eb;
+    }
+
+    .finus-stat-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .finus-stat-label {
+        margin-bottom: 10px;
+        color: #475569;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .finus-stat-value {
+        margin-bottom: 6px;
+        color: #0f172a;
+        font-size: 25px;
         font-weight: 800;
-        letter-spacing: .05em;
+    }
+
+    .finus-stat-desc {
+        margin-bottom: 0;
+        color: #94a3b8;
+        font-size: 13px;
+    }
+
+    .badge-soft-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-soft-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-soft-info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .table thead th {
+        border-top: 0;
+        color: #475569;
+        font-size: 13px;
         text-transform: uppercase;
+        letter-spacing: .03em;
     }
 
-    .j-table tbody tr:hover {
-        background: #FBFDFB;
+    .agenda-card {
+        border: 0;
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
     }
 
-    .j-money {
-        color: var(--j-dark);
-        font-weight: 800;
+    .agenda-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 14px;
+    }
+
+    .agenda-badge {
+        border-radius: 999px;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 12px;
         white-space: nowrap;
     }
 
-    .j-type {
-        display: inline-block;
-        padding: 5px 8px;
-        border-radius: 8px;
-        background: var(--j-soft);
-        color: var(--j-dark);
-        font-size: 9.5px;
-        font-weight: 800;
-    }
-
-    .j-empty {
-        padding: 28px !important;
-        text-align: center;
-        color: var(--j-muted);
-    }
-
-    .j-expense {
-        margin-bottom: 15px;
-    }
-
-    .j-expense h3 {
-        margin: 0;
-        font-size: 12px;
-        font-weight: 800;
-    }
-
-    .j-expense small {
-        color: var(--j-muted);
-    }
-
-    .j-expense-value {
-        text-align: right;
-        font-size: 12px;
-        font-weight: 800;
-    }
-
-    .j-expense-value span {
-        display: block;
-        color: var(--j-muted);
-        font-size: 9px;
-    }
-
-    .j-progress {
-        height: 7px;
-        margin-top: 8px;
-        overflow: hidden;
-        border-radius: 999px;
-        background: #EDF3EF;
-    }
-
-    .j-progress span {
-        display: block;
-        height: 100%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, var(--j-dark), var(--j-green));
-    }
-
-    .j-total {
-        margin-top: 18px;
-        padding: 13px;
-        border-radius: 12px;
-        background: var(--j-soft);
-        color: var(--j-dark);
-        font-size: 12px;
-    }
-
-    .j-funds {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-    }
-
-    .j-fund {
-        --tone: var(--j-green);
-        --soft: var(--j-soft);
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 12px;
-        align-items: center;
-        padding: 15px;
-        border: 1px solid var(--j-border);
-        border-radius: 14px;
-        background: #FBFDFB;
-    }
-
-    .j-fund strong {
-        display: block;
-        margin-top: 2px;
-        color: var(--tone);
-        font-size: 16px;
-    }
-
-    .j-footnote {
-        margin: 14px 0 0;
-        color: var(--j-muted);
-        font-size: 10.5px;
-        line-height: 1.6;
-    }
-
-    @media (max-width: 1199px) {
-        .j-grid-4 {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .j-grid-2,
-        .j-grid-equal {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 767px) {
-        .j-heading {
-            align-items: flex-start;
-            padding: 18px;
-        }
-
-        .j-breadcrumb {
-            display: none;
-        }
-
-        .j-grid-4,
-        .j-funds {
-            grid-template-columns: 1fr;
-        }
-
-        .j-panel-head {
-            align-items: flex-start;
-        }
-
-        .j-chart,
-        .j-chart-small {
-            height: 260px;
-        }
+    .agenda-note {
+        border-radius: 16px;
+        background: #ecfdf5;
+        color: #047857;
+        padding: 14px 16px;
+        font-size: 14px;
     }
 </style>
 
-<div class="j-dashboard">
-    <section class="j-heading">
-        <div class="j-heading-main">
-            <span class="j-icon"><i class="fa-solid fa-mosque"></i></span>
-            <div>
-                <div class="j-eyebrow">{{ $greeting }}, {{ $jamaah->name }}</div>
-                <h1>Dashboard Jamaah</h1>
-                <p>Pantau transaksi ZISWAF, agenda masjid, dan transparansi keuangan melalui FINUS.</p>
+<div class="jamaah-hero p-4 p-md-5 mb-4">
+    <div class="row align-items-center position-relative" style="z-index: 2;">
+        <div class="col-12">
+            <p class="mb-2 text-white-50">Assalamu'alaikum,</p>
+            <h2 class="text-white font-weight-bold mb-2">{{ $jamaah->name }}</h2>
+            <p class="mb-0 text-white-50">
+                Dashboard jamaah untuk melihat riwayat transaksi, grafik pemasukan jamaah,
+                agenda kegiatan, dan transparansi pengeluaran masjid.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-4 col-md-6">
+        <div class="finus-stat-card finus-stat-red mb-4">
+            <div class="finus-stat-top">
+                <div class="finus-stat-icon finus-stat-icon-red">
+                    <i class="fa fa-receipt"></i>
+                </div>
+
+                <span class="finus-stat-badge finus-stat-badge-red">
+                    Bulan Ini
+                </span>
+            </div>
+
+            <div class="finus-stat-content">
+                <p class="finus-stat-label">Transaksi Saya</p>
+                <h4 class="finus-stat-value">{{ $rupiah($totalTransaksiSaya) }}</h4>
+                <p class="finus-stat-desc">
+                    {{ $jumlahTransaksiSaya }} transaksi yang telah kamu input.
+                </p>
             </div>
         </div>
+    </div>
 
-        <div class="j-breadcrumb">
-            <span>Dashboard Jamaah</span>
-            <i class="fa-solid fa-chevron-right"></i>
-            <strong>Beranda</strong>
+    <div class="col-xl-4 col-md-6">
+        <div class="finus-stat-card finus-stat-green mb-4">
+            <div class="finus-stat-top">
+                <div class="finus-stat-icon finus-stat-icon-green">
+                    <i class="fa fa-wallet"></i>
+                </div>
+
+                <span class="finus-stat-badge finus-stat-badge-green">
+                    Bulan Ini
+                </span>
+            </div>
+
+            <div class="finus-stat-content">
+                <p class="finus-stat-label">Donasi Jamaah</p>
+                <h4 class="finus-stat-value">{{ $rupiah($totalPemasukanJamaah) }}</h4>
+                <p class="finus-stat-desc">
+                    Donasi dari akumulasi keseluruhan jamaah.
+                </p>
+            </div>
         </div>
-    </section>
+    </div>
 
-    <section class="j-grid j-grid-4">
-        @foreach($summaryCards as $card)
-            <article
-                class="j-card j-stat"
-                style="--tone: {{ $card['color'] }}; --soft: {{ $card['soft'] }};"
-            >
-                <div class="j-stat-top">
-                    <span class="j-icon"><i class="fa-solid {{ $card['icon'] }}"></i></span>
-                    <span class="j-tag">{{ $card['tag'] }}</span>
+    <div class="col-xl-4 col-md-6">
+        <div class="finus-stat-card finus-stat-blue mb-4">
+            <div class="finus-stat-top">
+                <div class="finus-stat-icon finus-stat-icon-blue">
+                    <i class="fa fa-book-open"></i>
                 </div>
 
-                <div class="j-stat-body">
-                    <p>{{ $card['label'] }}</p>
-                    <h2>{{ $rupiah($card['value']) }}</h2>
-                    <small>{{ $card['note'] }}</small>
-                </div>
-            </article>
-        @endforeach
-    </section>
+                <span class="finus-stat-badge finus-stat-badge-blue">
+                    Bulan Ini
+                </span>
+            </div>
 
-    <section class="j-grid j-grid-equal">
-        <article class="j-card">
-            <header class="j-panel-head">
-                <div class="j-title-wrap">
-                    <span class="j-icon"><i class="fa-solid fa-calendar-days"></i></span>
-                    <div>
-                        <h2>Agenda & Kegiatan</h2>
-                        <p>Informasi kegiatan terbaru masjid.</p>
-                    </div>
-                </div>
-            </header>
+            <div class="finus-stat-content">
+                <p class="finus-stat-label">Pengeluaran Masjid</p>
+                <h4 class="finus-stat-value">{{ $rupiah($totalPengeluaran) }}</h4>
+                <p class="finus-stat-desc">
+                    Pengeluaran masjid yang telah dicatat admin.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 
-            <div class="j-panel-body">
-                <div class="j-list">
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card agenda-card mb-4">
+            <div class="card-body p-4">
+                <div class="mb-4">
+                    <h5 class="mb-1 font-weight-bold text-dark">Agenda & Kegiatan</h5>
+                    <p class="mb-0 text-muted">Informasi kegiatan masjid untuk jamaah.</p>
+                </div>
+                <div class="d-flex flex-wrap">
                     @forelse(($agendaKegiatan ?? []) as $agenda)
-                        <article class="j-agenda">
-                            <div class="j-agenda-top">
-                                <h3>{{ $agenda['judul'] }}</h3>
-                                <span class="j-badge">{{ $agenda['kategori'] }}</span>
+                        <div class="agenda-item me-3 mb-3" style="flex: 1 1 30%; min-width: 250px;">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1 font-weight-bold text-dark">{{ $agenda['judul'] }}</h6>
+                                    <p class="mb-0 text-muted small"><i class="fa fa-calendar mr-1 text-success"></i> {{ $agenda['hari'] }}</p>
+                                </div>
+                                <span class="agenda-badge">{{ $agenda['kategori'] }}</span>
                             </div>
-                            <div class="j-meta"><i class="fa-solid fa-calendar-day"></i>{{ $agenda['hari'] }}</div>
-                            <div class="j-meta"><i class="fa-regular fa-clock"></i>{{ $agenda['waktu'] }}</div>
-                            <div class="j-meta"><i class="fa-solid fa-location-dot"></i>{{ $agenda['lokasi'] }}</div>
-                            <p>{{ $agenda['deskripsi'] }}</p>
-                        </article>
+                            <p class="mb-1 text-muted small"><i class="fa fa-clock mr-1 text-success"></i> {{ $agenda['waktu'] }}</p>
+                            <p class="mb-2 text-muted small"><i class="fa fa-map-marker-alt mr-1 text-success"></i> {{ $agenda['lokasi'] }}</p>
+                            <p class="mb-0 text-secondary small">{{ $agenda['deskripsi'] }}</p>
+                        </div>
                     @empty
-                        <div class="j-empty">Belum ada agenda kegiatan.</div>
+                        <div class="py-5 text-center w-100">
+                            <i class="fa fa-calendar mb-3 text-muted" style="font-size: 34px;"></i>
+                            <p class="mb-0 text-muted">Belum ada agenda kegiatan.</p>
+                        </div>
                     @endforelse
                 </div>
-
-                <div class="j-note">
-                    <i class="fa-solid fa-circle-info"></i>
-                    Gunakan menu transaksi pada sidebar untuk melakukan pembayaran ZISWAF.
-                </div>
+                <div class="agenda-note mt-4">Untuk transaksi ZISWAF, gunakan menu di sidebar.</div>
             </div>
-        </article>
+        </div>
+    </div>
 
-        <article class="j-card">
-            <header class="j-panel-head">
-                <div class="j-title-wrap">
-                    <span class="j-icon" style="--tone:#2563EB;--soft:#EDF4FF">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                    </span>
-                    <div>
-                        <h2>Riwayat Transaksi Saya</h2>
-                        <p>Daftar transaksi ZISWAF yang pernah kamu input.</p>
-                    </div>
+    <div class="col-lg-12">
+        <div class="card finus-card mb-4">
+            <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1 font-weight-bold">Ringkasan Pengeluaran Masjid</h5>
+                    <small class="text-muted">Pengeluaran ditampilkan sederhana berdasarkan kelompok kategori.</small>
                 </div>
-                <div class="j-heading-actions">
-                    <a class="j-btn" href="{{ route('jamaah.laporan.index') }}">
-                        <i class="fa-solid fa-file-lines"></i>
-                        Buka Laporan
-                    </a>
-                    <a class="j-btn jt-btn-soft" href="{{ route('jamaah.laporan.export', request()->query()) }}">
-                        <i class="fa-solid fa-file-csv"></i>
-                        Export CSV
-                    </a>
-                    <button type="button" class="j-btn jt-btn-primary" onclick="window.print()">
-                        <i class="fa-solid fa-print"></i>
-                        Cetak
-                    </button>
-                </div>
-            </header>
-
-            <div class="j-table-wrap">
-                <table class="j-table">
-                    <thead>
-                        <tr>
-                            <th>Tanggal</th>
-                            <th>Jenis</th>
-                            <th>Metode</th>
-                            <th>Keterangan</th>
-                            <th class="text-right">Nominal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse(($riwayatSaya ?? []) as $transaksi)
-                            <tr>
-                                <td>{{ $transaksi->tanggal?->format('d/m/Y') }}</td>
-                                <td>
-                                    <span class="j-type">
-                                        {{ $jenisLabels[$transaksi->jenis_ziswaf] ?? $transaksi->jenis_ziswaf }}
-                                    </span>
-                                </td>
-                                <td>{{ strtoupper(str_replace('_', ' ', $transaksi->metode_pembayaran)) }}</td>
-                                <td>{{ $transaksi->keterangan ?? '-' }}</td>
-                                <td class="text-right j-money">{{ $rupiah($transaksi->nominal) }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="5" class="j-empty">Belum ada transaksi.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                <span class="badge badge-soft-danger px-3 py-2">Transparansi</span>
             </div>
-        </article>
-    </section>
-
-    <section class="j-grid j-grid-equal">
-        <article class="j-card">
-            <header class="j-panel-head">
-                <div class="j-title-wrap">
-                    <span class="j-icon"><i class="fa-solid fa-users-viewfinder"></i></span>
-                    <div>
-                        <h2>Transaksi Jamaah Terbaru</h2>
-                        <p>Aktivitas transaksi terbaru yang tercatat pada sistem.</p>
-                    </div>
-                </div>
-            </header>
-
-            <div class="j-table-wrap">
-                <table class="j-table">
-                    <thead>
-                        <tr>
-                            <th>Jamaah</th>
-                            <th>Tanggal</th>
-                            <th>Jenis</th>
-                            <th class="text-right">Nominal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse(($transaksiTerbaruJamaah ?? []) as $item)
-                            <tr>
-                                <td>{{ $item->muzakki?->name ?? 'Jamaah' }}</td>
-                                <td>{{ $item->tanggal?->format('d/m/Y') }}</td>
-                                <td>{{ $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf }}</td>
-                                <td class="text-right j-money">{{ $rupiah($item->nominal) }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="4" class="j-empty">Belum ada transaksi jamaah.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </article>
-
-        <article class="j-card">
-            <header class="j-panel-head">
-                <div class="j-title-wrap">
-                    <span class="j-icon" style="--tone:#E5484D;--soft:#FFF0F0">
-                        <i class="fa-solid fa-receipt"></i>
-                    </span>
-                    <div>
-                        <h2>Ringkasan Pengeluaran Masjid</h2>
-                        <p>Transparansi pengeluaran berdasarkan kategori.</p>
-                    </div>
-                </div>
-            </header>
-
-            <div class="j-panel-body">
-                @forelse(($pengeluaranKategori ?? []) as $item)
-                    @php
-                        $persen = ($totalPengeluaran ?? 0) > 0
-                            ? round(($item->total / $totalPengeluaran) * 100)
-                            : 0;
-                    @endphp
-
-                    <div class="j-expense">
-                        <div class="j-expense-head">
-                            <div>
-                                <h3>{{ $item->kategori_nama ?: 'Lainnya' }}</h3>
-                                <small>{{ $item->jumlah_transaksi }} transaksi</small>
+            <div class="card-body px-4">
+                <div class="row">
+                    @forelse($pengeluaranKategori as $item)
+                        @php
+                            $persen = $totalPengeluaran > 0 ? round(($item->total / $totalPengeluaran) * 100) : 0;
+                        @endphp
+                        <div class="col-md-4 mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div>
+                                    <h6 class="mb-0 font-weight-bold">{{ $item->kategori_nama ?: 'Lainnya' }}</h6>
+                                    <small class="text-muted">{{ $item->jumlah_transaksi }} transaksi</small>
+                                </div>
+                                <div class="text-right">
+                                    <strong class="text-danger">{{ $rupiah($item->total) }}</strong>
+                                    <small class="d-block text-muted">{{ $persen }}%</small>
+                                </div>
                             </div>
-                            <div class="j-expense-value">
-                                {{ $rupiah($item->total) }}
-                                <span>{{ $persen }}%</span>
+                            <div class="progress" style="height: 8px; border-radius: 999px;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: {{ $persen }}%; border-radius: 999px;" aria-valuenow="{{ $persen }}" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                         </div>
-                        <div class="j-progress">
-                            <span style="width: {{ min(100, $persen) }}%"></span>
+                    @empty
+                        <div class="text-center py-5 w-100">
+                            <i class="fa fa-wallet text-muted mb-3" style="font-size: 32px;"></i>
+                            <p class="text-muted mb-0">Belum ada data pengeluaran.</p>
                         </div>
-                    </div>
-                @empty
-                    <div class="j-empty">Belum ada data pengeluaran.</div>
-                @endforelse
-
-                @if(($totalPengeluaran ?? 0) > 0)
-                    <div class="j-total">
-                        <span>Total Pengeluaran</span>
-                        <strong>{{ $rupiah($totalPengeluaran) }}</strong>
+                    @endforelse
+                </div>
+                @if($totalPengeluaran > 0)
+                    <div class="border-top pt-3 mt-2 d-flex justify-content-between align-items-center">
+                        <span class="font-weight-bold">Total Pengeluaran</span>
+                        <h5 class="mb-0 text-danger font-weight-bold">{{ $rupiah($totalPengeluaran) }}</h5>
                     </div>
                 @endif
             </div>
-        </article>
-    </section>
+        </div>
+    </div>
+</div>
 
-    <section class="j-card">
-        <header class="j-panel-head">
-            <div class="j-title-wrap">
-                <span class="j-icon"><i class="fa-solid fa-scale-balanced"></i></span>
-                <div>
-                    <h2>Ringkasan Dana ZISWAF</h2>
-                    <p>Ringkasan dana yang telah tercatat pada sistem FINUS.</p>
+<div class="card finus-card mb-4">
+    <div class="card-header bg-white border-0 pt-4 px-4">
+        <h5 class="mb-1 font-weight-bold">Ringkasan Dana ZISWAF</h5>
+        <small class="text-muted">Informasi sederhana untuk membantu jamaah memahami arus dana.</small>
+    </div>
+
+    <div class="card-body px-4">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="p-3 rounded bg-light">
+                    <small class="text-muted">Total Zakat</small>
+                    <h5 class="mb-0 text-success">{{ $rupiah($totalZakat) }}</h5>
                 </div>
             </div>
-        </header>
 
-        <div class="j-panel-body">
-            <div class="j-funds">
-                @foreach($fundCards as $fund)
-                    <div
-                        class="j-fund"
-                        style="--tone:{{ $fund['color'] }};--soft:{{ $fund['soft'] }}"
-                    >
-                        <span class="j-icon"><i class="fa-solid {{ $fund['icon'] }}"></i></span>
-                        <div>
-                            <small>{{ $fund['label'] }}</small>
-                            <strong>{{ $rupiah($fund['value']) }}</strong>
-                        </div>
-                    </div>
-                @endforeach
+            <div class="col-md-6 mb-3">
+                <div class="p-3 rounded bg-light">
+                    <small class="text-muted">Total Wakaf</small>
+                    <h5 class="mb-0 text-primary">{{ $rupiah($totalWakaf) }}</h5>
+                </div>
             </div>
-
-            <p class="j-footnote">
-                Informasi ini merupakan ringkasan transaksi ZISWAF yang tercatat pada sistem.
-                Laporan resmi dan rekonsiliasi tetap dikelola oleh admin FINUS.
-            </p>
         </div>
-    </section>
+
+        <p class="mb-0 text-muted">
+            Catatan: informasi ini menampilkan ringkasan dana ZISWAF yang tercatat pada sistem.
+            Untuk laporan resmi, tetap gunakan laporan keuangan admin.
+        </p>
+    </div>
 </div>
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const money = value => 'Rp ' + Number(value || 0).toLocaleString('id-ID');
-    const common = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                labels: {
-                    color: '#64748B',
-                    usePointStyle: true,
-                    boxWidth: 7,
-                    font: { size: 10, weight: '600' }
-                }
-            },
-            tooltip: {
-                callbacks: {
-                    label: context => `${context.dataset.label || context.label}: ${money(context.raw)}`
-                }
-            }
-        }
-    };
+(() => {
+    const rupiah = value => 'Rp ' + Number(value || 0).toLocaleString('id-ID');
 
-    const line = document.getElementById('grafikPemasukanJamaah');
-    if (line) {
-        const gradient = line.getContext('2d').createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(23,155,64,.25)');
-        gradient.addColorStop(1, 'rgba(23,155,64,.01)');
+    const lineCanvas = document.getElementById('grafikPemasukanJamaah');
 
-        new Chart(line, {
+    if (lineCanvas) {
+        new Chart(lineCanvas, {
             type: 'line',
             data: {
-                labels: @json($chartLabels ?? []),
+                labels: @json($chartLabels),
                 datasets: [{
                     label: 'Pemasukan Jamaah',
-                    data: @json($chartData ?? []),
-                    borderColor: '#179B40',
-                    backgroundColor: gradient,
-                    borderWidth: 2.5,
-                    tension: .38,
+                    data: @json($chartData),
+                    tension: 0.35,
                     fill: true,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#FFFFFF',
-                    pointBorderColor: '#179B40',
-                    pointBorderWidth: 2
+                    borderWidth: 3
                 }]
             },
             options: {
-                ...common,
-                interaction: { intersect: false, mode: 'index' },
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: context => rupiah(context.raw)
+                        }
+                    }
+                },
                 scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#64748B', font: { size: 10 } }
-                    },
                     y: {
                         beginAtZero: true,
-                        grid: { color: 'rgba(100,116,139,.14)' },
                         ticks: {
-                            color: '#64748B',
-                            font: { size: 10 },
-                            callback: money
+                            callback: value => rupiah(value)
                         }
                     }
                 }
@@ -861,34 +449,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const doughnut = document.getElementById('grafikKomposisiZiswaf');
-    if (doughnut) {
-        new Chart(doughnut, {
+    const doughnutCanvas = document.getElementById('grafikKomposisiZiswaf');
+
+    if (doughnutCanvas) {
+        new Chart(doughnutCanvas, {
             type: 'doughnut',
             data: {
-                labels: @json($komposisiLabels ?? []),
+                labels: @json($komposisiLabels),
                 datasets: [{
-                    label: 'Nominal',
-                    data: @json($komposisiData ?? []),
-                    backgroundColor: ['#179B40', '#2563EB', '#0891B2', '#7C3AED', '#EA8B22', '#E5484D'],
-                    borderColor: '#FFFFFF',
-                    borderWidth: 4,
-                    hoverOffset: 5
+                    data: @json($komposisiData),
+                    borderWidth: 2
                 }]
             },
             options: {
-                ...common,
-                cutout: '68%',
+                responsive: true,
                 plugins: {
-                    ...common.plugins,
-                    legend: {
-                        ...common.plugins.legend,
-                        position: 'bottom'
+                    tooltip: {
+                        callbacks: {
+                            label: context => `${context.label}: ${rupiah(context.raw)}`
+                        }
                     }
                 }
             }
         });
     }
-});
+})();
 </script>
 @endpush

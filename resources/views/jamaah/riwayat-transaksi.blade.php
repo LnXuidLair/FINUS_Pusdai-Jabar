@@ -43,10 +43,6 @@
                 <i class="fa-solid fa-chart-column"></i>
                 Buka Laporan
             </a>
-            <a class="jt-btn jt-btn-primary" href="{{ route('jamaah.transaksi.create', 'infak') }}">
-                <i class="fa-solid fa-plus"></i>
-                Transaksi Baru
-            </a>
         </div>
     </section>
 
