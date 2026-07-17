@@ -2,200 +2,239 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\PembayaranSiswa;
-use App\Models\Pengeluaran;
-use App\Models\TagihanSiswa;
-use App\Models\Penggajian;
-use App\Models\JurnalDetail;
 use App\Models\Coa;
+use App\Models\Pengeluaran;
+use App\Models\Penggajian;
+use App\Models\ZiswafPenerimaan;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class LaporanController extends Controller
 {
     public function jurnalUmum()
     {
-        // Debug: Check if method is called
-        \Log::info('jurnalUmum method called');
-        
-        $pembayaran = PembayaranSiswa::with(['siswa'])
-            ->orderBy('tanggal_bayar', 'desc')
+        /*
+         * PembayaranSiswa sudah tidak digunakan.
+         * Pemasukan FINUS sekarang berasal dari tabel ziswaf_penerimaan.
+         * Hanya transaksi yang sudah diterima, serta data lama yang statusnya null,
+         * yang dimasukkan ke laporan keuangan.
+         */
+        $penerimaan = $this->queryPenerimaanLaporan()
+            ->with(['muzakki', 'coa'])
+            ->orderByDesc('tanggal')
             ->get();
 
-        $pengeluaran = Pengeluaran::orderBy('tanggal', 'desc')
+        /*
+         * Pengeluaran gaji tidak diambil di sini karena sudah ditampilkan dari
+         * tabel penggajian. Ini mencegah pencatatan gaji menjadi dua kali.
+         */
+        $pengeluaran = $this->queryPengeluaranOperasional()
+            ->orderByDesc('tanggal')
             ->get();
 
-        $penggajian = Penggajian::with(['pegawai'])
-            ->orderBy('tanggal', 'desc')
+        $penggajian = Penggajian::with('pegawai')
+            ->where('status_penggajian', 'sudah_dibayar')
+            ->whereNotNull('tanggal')
+            ->orderByDesc('tanggal')
             ->get();
 
-        // Create merged jurnals collection
+        $coaIds = $pengeluaran
+            ->flatMap(fn (Pengeluaran $item): array => [
+                $item->coa_debit_id,
+                $item->coa_kredit_id,
+            ])
+            ->filter()
+            ->unique()
+            ->values();
+
+        $namaCoa = $coaIds->isEmpty()
+            ? collect()
+            : Coa::whereIn('id', $coaIds)->pluck('nama_akun', 'id');
+
         $jurnals = collect();
 
-        // Add pembayaran as jurnal entries (pemasukan - kredit)
-        foreach ($pembayaran as $bayar) {
-            // Add debit entry (Kas/Bank)
-            $jurnals->push((object)[
-                'tanggal' => \Carbon\Carbon::parse($bayar->tanggal_bayar),
+        // Penerimaan ZISWAF: debit Kas/Bank, kredit akun penerimaan.
+        foreach ($penerimaan as $item) {
+            $jumlah = (int) $item->nominal;
+
+            if ($jumlah <= 0) {
+                continue;
+            }
+
+            $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
+            $namaJamaah = $item->muzakki?->name ?? 'Jamaah';
+            $jenisZiswaf = $this->labelJenisZiswaf($item->jenis_ziswaf);
+            $akunKas = $this->akunKasBerdasarkanMetode($item->metode_pembayaran);
+            $akunPenerimaan = $item->coa?->nama_akun ?? 'Penerimaan ' . $jenisZiswaf;
+            $keterangan = 'Penerimaan ' . $jenisZiswaf . ' dari ' . $namaJamaah;
+
+            $jurnals->push((object) [
+                'tanggal' => $tanggal,
                 'tipe' => 'debit',
-                'jumlah' => $bayar->jumlah,
-                'akun' => 'Kas',
-                'keterangan' => 'Penerimaan pembayaran ' . ($bayar->siswa ? $bayar->siswa->nama_siswa : 'Siswa'),
-                'referensi' => $bayar->no_pembayaran ?? 'PB-' . $bayar->id,
-                'pembayaran' => $bayar,
-                'pengeluaran' => null,
-                'penggajian' => null,
+                'jumlah' => $jumlah,
+                'akun' => $akunKas,
+                'keterangan' => $keterangan,
+                'referensi' => 'ZISWAF-' . $item->id,
             ]);
-            
-            // Add credit entry (Pendapatan)
-            $jurnals->push((object)[
-                'tanggal' => \Carbon\Carbon::parse($bayar->tanggal_bayar),
+
+            $jurnals->push((object) [
+                'tanggal' => $tanggal,
                 'tipe' => 'kredit',
-                'jumlah' => $bayar->jumlah,
-                'akun' => 'Pendapatan SPP',
-                'keterangan' => 'Pendapatan dari ' . ($bayar->siswa ? $bayar->siswa->nama_siswa : 'Siswa'),
-                'referensi' => $bayar->no_pembayaran ?? 'PB-' . $bayar->id,
-                'pembayaran' => $bayar,
-                'pengeluaran' => null,
-                'penggajian' => null,
+                'jumlah' => $jumlah,
+                'akun' => $akunPenerimaan,
+                'keterangan' => $keterangan,
+                'referensi' => 'ZISWAF-' . $item->id,
             ]);
         }
 
-        // Add pengeluaran as jurnal entries (pengeluaran - debit)
-        foreach ($pengeluaran as $keluar) {
-            // Add debit entry (Beban/Pengeluaran)
-            $jurnals->push((object)[
-                'tanggal' => \Carbon\Carbon::parse($keluar->tanggal),
+        // Pengeluaran operasional: debit akun beban, kredit Kas/Bank.
+        foreach ($pengeluaran as $item) {
+            $jumlah = $this->nilaiPengeluaran($item);
+
+            if ($jumlah <= 0) {
+                continue;
+            }
+
+            $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
+            $keterangan = $this->keteranganPengeluaran($item);
+            $akunDebit = $namaCoa->get($item->coa_debit_id)
+                ?? $item->kategori
+                ?? 'Beban Operasional';
+            $akunKredit = $namaCoa->get($item->coa_kredit_id) ?? 'Kas';
+
+            $jurnals->push((object) [
+                'tanggal' => $tanggal,
                 'tipe' => 'debit',
-                'jumlah' => $keluar->jumlah,
-                'akun' => 'Beban Operasional',
-                'keterangan' => $keluar->keterangan,
-                'referensi' => 'PGL-' . $keluar->id,
-                'pembayaran' => null,
-                'pengeluaran' => $keluar,
-                'penggajian' => null,
+                'jumlah' => $jumlah,
+                'akun' => $akunDebit,
+                'keterangan' => $keterangan,
+                'referensi' => 'PGL-' . $item->id,
             ]);
-            
-            // Add credit entry (Kas/Bank)
-            $jurnals->push((object)[
-                'tanggal' => \Carbon\Carbon::parse($keluar->tanggal),
+
+            $jurnals->push((object) [
+                'tanggal' => $tanggal,
                 'tipe' => 'kredit',
-                'jumlah' => $keluar->jumlah,
-                'akun' => 'Kas',
-                'keterangan' => 'Pengeluaran: ' . $keluar->keterangan,
-                'referensi' => 'PGL-' . $keluar->id,
-                'pembayaran' => null,
-                'pengeluaran' => $keluar,
-                'penggajian' => null,
+                'jumlah' => $jumlah,
+                'akun' => $akunKredit,
+                'keterangan' => $keterangan,
+                'referensi' => 'PGL-' . $item->id,
             ]);
         }
 
-        // Add penggajian as jurnal entries (pengeluaran - debit)
-        foreach ($penggajian as $gaji) {
-            // Add debit entry (Beban Gaji)
-            $jurnals->push((object)[
-                'tanggal' => \Carbon\Carbon::parse($gaji->tanggal),
+        // Penggajian yang sudah dibayar: debit Beban Gaji, kredit Kas.
+        foreach ($penggajian as $item) {
+            $jumlah = (int) $item->total_gaji;
+
+            if ($jumlah <= 0 || empty($item->tanggal)) {
+                continue;
+            }
+
+            $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
+            $namaPegawai = $item->pegawai?->nama_pegawai ?? 'Pegawai';
+            $keterangan = 'Pembayaran gaji ' . $namaPegawai . ' periode ' . $item->periode;
+
+            $jurnals->push((object) [
+                'tanggal' => $tanggal,
                 'tipe' => 'debit',
-                'jumlah' => $gaji->total_gaji,
+                'jumlah' => $jumlah,
                 'akun' => 'Beban Gaji',
-                'keterangan' => 'Gaji karyawan: ' . $gaji->pegawai->nama_pegawai,
-                'referensi' => 'GAJI-' . $gaji->id,
-                'pembayaran' => null,
-                'pengeluaran' => null,
-                'penggajian' => $gaji,
+                'keterangan' => $keterangan,
+                'referensi' => 'GAJI-' . $item->id,
             ]);
-            
-            // Add credit entry (Kas/Bank)
-            $jurnals->push((object)[
-                'tanggal' => \Carbon\Carbon::parse($gaji->tanggal),
+
+            $jurnals->push((object) [
+                'tanggal' => $tanggal,
                 'tipe' => 'kredit',
-                'jumlah' => $gaji->total_gaji,
+                'jumlah' => $jumlah,
                 'akun' => 'Kas',
-                'keterangan' => 'Pembayaran gaji: ' . $gaji->pegawai->nama_pegawai,
-                'referensi' => 'GAJI-' . $gaji->id,
-                'pembayaran' => null,
-                'pengeluaran' => null,
-                'penggajian' => $gaji,
+                'keterangan' => $keterangan,
+                'referensi' => 'GAJI-' . $item->id,
             ]);
         }
 
-        // Sort by date descending
-        $jurnals = $jurnals->sortByDesc('tanggal')->values();
+        $jurnals = $jurnals
+            ->sortByDesc('tanggal')
+            ->values();
 
-        // Debug: Check if we have data
-        \Log::info('Total pembayaran: ' . $pembayaran->count());
-        \Log::info('Total pengeluaran: ' . $pengeluaran->count());
-        \Log::info('Total penggajian: ' . $penggajian->count());
-        \Log::info('Total jurnals: ' . $jurnals->count());
-
-        // Debug: Check data before returning
-        \Log::info('Total jurnals to return: ' . $jurnals->count());
-        \Log::info('Returning view: admin.laporan.jurnal-umum');
-        
         return view('admin.laporan.jurnal-umum', compact('jurnals'));
     }
 
     public function arusKas()
     {
-        $pemasukanBulanan = PembayaranSiswa::selectRaw('MONTH(tanggal_bayar) as bulan, YEAR(tanggal_bayar) as tahun, SUM(jumlah) as total')
-            ->where('status_pembayaran', 'lunas')
-            ->groupBy('bulan', 'tahun')
-            ->orderBy('tahun', 'desc')
-            ->orderBy('bulan', 'desc')
+        $pemasukanBulanan = $this->queryPenerimaanLaporan()
+            ->selectRaw('MONTH(tanggal) AS bulan, YEAR(tanggal) AS tahun, SUM(nominal) AS total')
+            ->groupByRaw('YEAR(tanggal), MONTH(tanggal)')
+            ->orderByDesc('tahun')
+            ->orderByDesc('bulan')
             ->get();
 
-        $pengeluaranBulanan = Pengeluaran::selectRaw('MONTH(tanggal) as bulan, YEAR(tanggal) as tahun, SUM(jumlah) as total')
-            ->groupBy('bulan', 'tahun')
-            ->orderBy('tahun', 'desc')
-            ->orderBy('bulan', 'desc')
+        $pengeluaranBulanan = $this->queryPengeluaranOperasional()
+            ->selectRaw(
+                'MONTH(tanggal) AS bulan, YEAR(tanggal) AS tahun, '
+                . 'SUM(COALESCE(NULLIF(nominal, 0), jumlah, 0)) AS total'
+            )
+            ->groupByRaw('YEAR(tanggal), MONTH(tanggal)')
+            ->orderByDesc('tahun')
+            ->orderByDesc('bulan')
             ->get();
 
-        $penggajianBulanan = Penggajian::selectRaw('MONTH(tanggal) as bulan, YEAR(tanggal) as tahun, SUM(total_gaji) as total')
+        $penggajianBulanan = Penggajian::query()
+            ->selectRaw('MONTH(tanggal) AS bulan, YEAR(tanggal) AS tahun, SUM(total_gaji) AS total')
             ->where('status_penggajian', 'sudah_dibayar')
-            ->groupBy('bulan', 'tahun')
-            ->orderBy('tahun', 'desc')
-            ->orderBy('bulan', 'desc')
+            ->whereNotNull('tanggal')
+            ->groupByRaw('YEAR(tanggal), MONTH(tanggal)')
+            ->orderByDesc('tahun')
+            ->orderByDesc('bulan')
             ->get();
 
-        $totalPemasukan = PembayaranSiswa::where('status_pembayaran', 'lunas')->sum('jumlah');
-        $totalPengeluaran = Pengeluaran::sum('jumlah');
+        $totalPemasukan = (int) $this->queryPenerimaanLaporan()->sum('nominal');
+
+        $totalPengeluaranOperasional = (int) $this->queryPengeluaranOperasional()
+            ->selectRaw('COALESCE(SUM(COALESCE(NULLIF(nominal, 0), jumlah, 0)), 0) AS total')
+            ->value('total');
+
+        $totalPenggajian = (int) Penggajian::where('status_penggajian', 'sudah_dibayar')
+            ->sum('total_gaji');
+
+        $totalPengeluaran = $totalPengeluaranOperasional + $totalPenggajian;
         $saldo = $totalPemasukan - $totalPengeluaran;
 
-        return view('admin.laporan.arus-kas', compact('pemasukanBulanan', 'pengeluaranBulanan', 'penggajianBulanan', 'totalPemasukan', 'totalPengeluaran', 'saldo'));
+        return view('admin.laporan.arus-kas', compact(
+            'pemasukanBulanan',
+            'pengeluaranBulanan',
+            'penggajianBulanan',
+            'totalPemasukan',
+            'totalPengeluaran',
+            'saldo'
+        ));
     }
 
     /**
-     * Laporan Arus Kas sesuai PSAK 2/2009 (Ikatan Akuntansi Indonesia)
-     * Menghitung arus kas dari data jurnal umum dengan klasifikasi:
-     * 1. Arus Kas dari Aktivitas Operasi
-     * 2. Arus Kas dari Aktivitas Investasi  
-     * 3. Arus Kas dari Aktivitas Pendanaan
+     * Laporan arus kas berdasarkan transaksi ZISWAF, pengeluaran, dan penggajian.
      */
     public function arusKasDariJurnal()
     {
-        // Ambil data jurnal yang sudah ada
-        $pembayaran = PembayaranSiswa::with(['siswa'])
-            ->where('status_pembayaran', 'lunas')
-            ->orderBy('tanggal_bayar', 'desc')
+        $penerimaan = $this->queryPenerimaanLaporan()
+            ->with('muzakki')
+            ->orderByDesc('tanggal')
             ->get();
 
-        $pengeluaran = Pengeluaran::orderBy('tanggal', 'desc')->get();
-        
-        $penggajian = Penggajian::with(['pegawai'])
+        $pengeluaran = $this->queryPengeluaranOperasional()
+            ->orderByDesc('tanggal')
+            ->get();
+
+        $penggajian = Penggajian::with('pegawai')
             ->where('status_penggajian', 'sudah_dibayar')
-            ->orderBy('tanggal', 'desc')
+            ->whereNotNull('tanggal')
+            ->orderByDesc('tanggal')
             ->get();
 
-        // Struktur arus kas sesuai PSAK 2/2009
         $arusKas = [
             'operasi' => [
                 'masuk' => [
-                    'pendapatan_spp' => 0,
+                    'penerimaan_ziswaf' => 0,
                     'pendapatan_lain' => 0,
-                    'penjualan_barang' => 0,
-                    'piutang_diterima' => 0,
-                    'bunga_diterima' => 0,
-                    'dividen_diterima' => 0,
-                    'total' => 0
+                    'total' => 0,
                 ],
                 'keluar' => [
                     'beban_gaji' => 0,
@@ -208,228 +247,290 @@ class LaporanController extends Controller
                     'persediaan_dibeli' => 0,
                     'pajak_dibayar' => 0,
                     'bunga_dibayar' => 0,
-                    'total' => 0
+                    'total' => 0,
                 ],
-                'bersih' => 0
+                'bersih' => 0,
             ],
             'investasi' => [
                 'masuk' => [
                     'penjualan_aset_tetap' => 0,
                     'penjualan_investasi' => 0,
                     'pengembalian_pinjaman' => 0,
-                    'total' => 0
+                    'total' => 0,
                 ],
                 'keluar' => [
                     'pembelian_aset_tetap' => 0,
                     'pembelian_investasi' => 0,
                     'pemberian_pinjaman' => 0,
-                    'total' => 0
+                    'total' => 0,
                 ],
-                'bersih' => 0
+                'bersih' => 0,
             ],
             'pendanaan' => [
                 'masuk' => [
                     'penambahan_modal' => 0,
                     'pinjaman_diterima' => 0,
                     'penerbitan_saham' => 0,
-                    'total' => 0
+                    'total' => 0,
                 ],
                 'keluar' => [
                     'pembayaran_dividen' => 0,
                     'pengembalian_modal' => 0,
                     'pelunasan_pinjaman' => 0,
                     'pembelian_saham_treasury' => 0,
-                    'total' => 0
+                    'total' => 0,
                 ],
-                'bersih' => 0
+                'bersih' => 0,
             ],
-            'detail_transaksi' => []
+            'detail_transaksi' => [],
         ];
 
-        // Proses Pembayaran Siswa (Arus Kas Operasi - Masuk)
-        foreach ($pembayaran as $bayar) {
-            $keterangan = 'Pembayaran SPP ' . ($bayar->siswa ? $bayar->siswa->nama_siswa : 'Siswa');
-            
-            $arusKas['operasi']['masuk']['pendapatan_spp'] += $bayar->jumlah;
-            $arusKas['operasi']['masuk']['total'] += $bayar->jumlah;
-            
+        foreach ($penerimaan as $item) {
+            $jumlah = (int) $item->nominal;
+
+            if ($jumlah <= 0) {
+                continue;
+            }
+
+            $jenisZiswaf = $this->labelJenisZiswaf($item->jenis_ziswaf);
+            $namaJamaah = $item->muzakki?->name ?? 'Jamaah';
+
+            $arusKas['operasi']['masuk']['penerimaan_ziswaf'] += $jumlah;
+            $arusKas['operasi']['masuk']['total'] += $jumlah;
+
             $arusKas['detail_transaksi'][] = [
-                'tanggal' => $bayar->tanggal_bayar,
-                'keterangan' => $keterangan,
+                'tanggal' => Carbon::parse($item->tanggal)->format('Y-m-d'),
+                'keterangan' => 'Penerimaan ' . $jenisZiswaf . ' dari ' . $namaJamaah,
                 'kategori' => 'operasi',
                 'jenis' => 'masuk',
-                'sub_kategori' => 'pendapatan_spp',
-                'jumlah' => $bayar->jumlah
+                'sub_kategori' => 'penerimaan_ziswaf',
+                'jumlah' => $jumlah,
             ];
         }
 
-        // Proses Pengeluaran (diklasifikasikan sesuai jenis)
-        foreach ($pengeluaran as $keluar) {
-            $kategori = $this->klasifikasikanPengeluaranPSAK($keluar->keterangan);
-            $subKategori = $this->getSubKategoriPengeluaran($keluar->keterangan, $kategori);
-            
-            if ($kategori && $subKategori) {
-                $arusKas[$kategori]['keluar'][$subKategori] += $keluar->jumlah;
-                $arusKas[$kategori]['keluar']['total'] += $keluar->jumlah;
-                
-                $arusKas['detail_transaksi'][] = [
-                    'tanggal' => $keluar->tanggal,
-                    'keterangan' => $keluar->keterangan,
-                    'kategori' => $kategori,
-                    'jenis' => 'keluar',
-                    'sub_kategori' => $subKategori,
-                    'jumlah' => $keluar->jumlah
-                ];
+        foreach ($pengeluaran as $item) {
+            $jumlah = $this->nilaiPengeluaran($item);
+
+            if ($jumlah <= 0) {
+                continue;
             }
+
+            $keterangan = $this->keteranganPengeluaran($item);
+            $kategori = $this->klasifikasikanPengeluaranPSAK($keterangan);
+            $subKategori = $this->getSubKategoriPengeluaran($keterangan, $kategori);
+
+            $arusKas[$kategori]['keluar'][$subKategori] += $jumlah;
+            $arusKas[$kategori]['keluar']['total'] += $jumlah;
+
+            $arusKas['detail_transaksi'][] = [
+                'tanggal' => Carbon::parse($item->tanggal)->format('Y-m-d'),
+                'keterangan' => $keterangan,
+                'kategori' => $kategori,
+                'jenis' => 'keluar',
+                'sub_kategori' => $subKategori,
+                'jumlah' => $jumlah,
+            ];
         }
 
-        // Proses Penggajian (Arus Kas Operasi - Keluar)
-        foreach ($penggajian as $gaji) {
-            $keterangan = 'Gaji ' . ($gaji->pegawai ? $gaji->pegawai->nama_pegawai : 'Karyawan');
-            
-            $arusKas['operasi']['keluar']['beban_gaji'] += $gaji->total_gaji;
-            $arusKas['operasi']['keluar']['total'] += $gaji->total_gaji;
-            
+        foreach ($penggajian as $item) {
+            $jumlah = (int) $item->total_gaji;
+
+            if ($jumlah <= 0) {
+                continue;
+            }
+
+            $namaPegawai = $item->pegawai?->nama_pegawai ?? 'Pegawai';
+
+            $arusKas['operasi']['keluar']['beban_gaji'] += $jumlah;
+            $arusKas['operasi']['keluar']['total'] += $jumlah;
+
             $arusKas['detail_transaksi'][] = [
-                'tanggal' => $gaji->tanggal,
-                'keterangan' => $keterangan,
+                'tanggal' => Carbon::parse($item->tanggal)->format('Y-m-d'),
+                'keterangan' => 'Gaji ' . $namaPegawai . ' periode ' . $item->periode,
                 'kategori' => 'operasi',
                 'jenis' => 'keluar',
                 'sub_kategori' => 'beban_gaji',
-                'jumlah' => $gaji->total_gaji
+                'jumlah' => $jumlah,
             ];
         }
 
-        // Hitung arus kas bersih untuk setiap kategori
         foreach (['operasi', 'investasi', 'pendanaan'] as $kategori) {
-            $arusKas[$kategori]['bersih'] = $arusKas[$kategori]['masuk']['total'] - $arusKas[$kategori]['keluar']['total'];
+            $arusKas[$kategori]['bersih'] =
+                $arusKas[$kategori]['masuk']['total']
+                - $arusKas[$kategori]['keluar']['total'];
         }
 
-        // Total arus kas bersih
-        $totalBersih = $arusKas['operasi']['bersih'] + $arusKas['investasi']['bersih'] + $arusKas['pendanaan']['bersih'];
+        $totalBersih = $arusKas['operasi']['bersih']
+            + $arusKas['investasi']['bersih']
+            + $arusKas['pendanaan']['bersih'];
 
-        // Sort detail transaksi by date
-        usort($arusKas['detail_transaksi'], function($a, $b) {
-            return strtotime($b['tanggal']) - strtotime($a['tanggal']);
-        });
+        usort(
+            $arusKas['detail_transaksi'],
+            fn (array $a, array $b): int => strcmp($b['tanggal'], $a['tanggal'])
+        );
 
         return view('admin.laporan.arus-kas-psak', compact('arusKas', 'totalBersih'));
     }
 
-    /**
-     * Klasifikasikan pengeluaran sesuai PSAK 2/2009
-     */
-    private function klasifikasikanPengeluaranPSAK($keterangan)
+    private function queryPenerimaanLaporan(): Builder
+    {
+        return ZiswafPenerimaan::query()
+            ->where(function (Builder $query): void {
+                $query->where('status_verifikasi', 'diterima')
+                    ->orWhereNull('status_verifikasi');
+            });
+    }
+
+    private function queryPengeluaranLaporan(): Builder
+    {
+        return Pengeluaran::query()
+            ->where(function (Builder $query): void {
+                $query->where('status_verifikasi', 'diterima')
+                    ->orWhereNull('status_verifikasi');
+            });
+    }
+
+    private function queryPengeluaranOperasional(): Builder
+    {
+        return $this->queryPengeluaranLaporan()
+            ->where(function (Builder $query): void {
+                $query->whereNull('jenis')
+                    ->orWhere('jenis', '!=', 'gaji');
+            });
+    }
+
+    private function labelJenisZiswaf(?string $jenis): string
+    {
+        return match ($jenis) {
+            'zakat_maal' => 'Zakat Maal',
+            'zakat_fitrah' => 'Zakat Fitrah',
+            'infaq' => 'Infak',
+            'shadaqah' => 'Sedekah',
+            'wakaf' => 'Wakaf',
+            'fidyah' => 'Fidyah',
+            default => 'ZISWAF',
+        };
+    }
+
+    private function akunKasBerdasarkanMetode(?string $metode): string
+    {
+        return match ($metode) {
+            'transfer', 'transfer_bank', 'virtual_account', 'qris' => 'Bank',
+            default => 'Kas',
+        };
+    }
+
+    private function nilaiPengeluaran(Pengeluaran $pengeluaran): int
+    {
+        $nominal = (int) ($pengeluaran->nominal ?? 0);
+
+        return $nominal > 0
+            ? $nominal
+            : (int) ($pengeluaran->jumlah ?? 0);
+    }
+
+    private function keteranganPengeluaran(Pengeluaran $pengeluaran): string
+    {
+        return $pengeluaran->keterangan
+            ?: $pengeluaran->deskripsi
+            ?: $pengeluaran->kategori
+            ?: 'Pengeluaran operasional';
+    }
+
+    private function klasifikasikanPengeluaranPSAK(string $keterangan): string
     {
         $keterangan = strtolower($keterangan);
-        
-        // Investasi - pembelian aset jangka panjang
-        if (strpos($keterangan, 'aset') !== false || 
-            strpos($keterangan, 'gedung') !== false ||
-            strpos($keterangan, 'kendaraan') !== false ||
-            strpos($keterangan, 'mesin') !== false ||
-            strpos($keterangan, 'investasi') !== false ||
-            strpos($keterangan, 'tanah') !== false) {
+
+        if (
+            str_contains($keterangan, 'aset')
+            || str_contains($keterangan, 'gedung')
+            || str_contains($keterangan, 'kendaraan')
+            || str_contains($keterangan, 'mesin')
+            || str_contains($keterangan, 'investasi')
+            || str_contains($keterangan, 'tanah')
+        ) {
             return 'investasi';
         }
-        
-        // Pendanaan - pinjaman, modal, hutang, dividen
-        if (strpos($keterangan, 'pinjaman') !== false || 
-            strpos($keterangan, 'hutang') !== false ||
-            strpos($keterangan, 'modal') !== false ||
-            strpos($keterangan, 'dividen') !== false ||
-            strpos($keterangan, 'saham') !== false) {
+
+        if (
+            str_contains($keterangan, 'pinjaman')
+            || str_contains($keterangan, 'hutang')
+            || str_contains($keterangan, 'modal')
+            || str_contains($keterangan, 'dividen')
+            || str_contains($keterangan, 'saham')
+        ) {
             return 'pendanaan';
         }
-        
-        // Default ke operasi
+
         return 'operasi';
     }
 
-    /**
-     * Mendapatkan sub kategori pengeluaran
-     */
-    private function getSubKategoriPengeluaran($keterangan, $kategori)
+    private function getSubKategoriPengeluaran(string $keterangan, string $kategori): string
     {
         $keterangan = strtolower($keterangan);
-        
+
         if ($kategori === 'investasi') {
-            if (strpos($keterangan, 'aset') !== false || strpos($keterangan, 'gedung') !== false || 
-                strpos($keterangan, 'kendaraan') !== false || strpos($keterangan, 'mesin') !== false) {
+            if (
+                str_contains($keterangan, 'aset')
+                || str_contains($keterangan, 'gedung')
+                || str_contains($keterangan, 'kendaraan')
+                || str_contains($keterangan, 'mesin')
+                || str_contains($keterangan, 'tanah')
+            ) {
                 return 'pembelian_aset_tetap';
             }
-            if (strpos($keterangan, 'investasi') !== false) {
+
+            if (str_contains($keterangan, 'investasi')) {
                 return 'pembelian_investasi';
             }
-            if (strpos($keterangan, 'pinjaman') !== false) {
+
+            if (str_contains($keterangan, 'pinjaman')) {
                 return 'pemberian_pinjaman';
             }
+
+            return 'pembelian_aset_tetap';
         }
-        
+
         if ($kategori === 'pendanaan') {
-            if (strpos($keterangan, 'dividen') !== false) {
+            if (str_contains($keterangan, 'dividen')) {
                 return 'pembayaran_dividen';
             }
-            if (strpos($keterangan, 'hutang') !== false || strpos($keterangan, 'pinjaman') !== false) {
+
+            if (str_contains($keterangan, 'hutang') || str_contains($keterangan, 'pinjaman')) {
                 return 'pelunasan_pinjaman';
             }
-            if (strpos($keterangan, 'modal') !== false) {
+
+            if (str_contains($keterangan, 'modal')) {
                 return 'pengembalian_modal';
             }
-        }
-        
-        if ($kategori === 'operasi') {
-            if (strpos($keterangan, 'gaji') !== false || strpos($keterangan, 'upah') !== false) {
-                return 'beban_gaji';
-            }
-            if (strpos($keterangan, 'sewa') !== false) {
-                return 'beban_sewa';
-            }
-            if (strpos($keterangan, 'listrik') !== false || strpos($keterangan, 'pln') !== false) {
-                return 'beban_listrik';
-            }
-            if (strpos($keterangan, 'telepon') !== false || strpos($keterangan, 'pulsa') !== false) {
-                return 'beban_telepon';
-            }
-            if (strpos($keterangan, 'marketing') !== false || strpos($keterangan, 'iklan') !== false) {
-                return 'beban_marketing';
-            }
-            if (strpos($keterangan, 'administrasi') !== false || strpos($keterangan, 'admin') !== false) {
-                return 'beban_administrasi';
-            }
-            if (strpos($keterangan, 'atk') !== false || strpos($keterangan, 'operasional') !== false) {
-                return 'beban_operasional_lain';
-            }
-        }
-        
-        return 'beban_operasional_lain'; // Default
-    }
 
-    /**
-     * Klasifikasikan pengeluaran ke dalam kategori arus kas
-     */
-    private function klasifikasikanPengeluaran($keterangan)
-    {
-        $keterangan = strtolower($keterangan);
-        
-        // Investasi - pembelian aset jangka panjang
-        if (strpos($keterangan, 'aset') !== false || 
-            strpos($keterangan, 'investasi') !== false ||
-            strpos($keterangan, 'gedung') !== false ||
-            strpos($keterangan, 'kendaraan') !== false ||
-            strpos($keterangan, 'mesin') !== false) {
-            return 'investasi';
+            return 'pelunasan_pinjaman';
         }
-        
-        // Pendanaan - pinjaman, modal, hutang
-        if (strpos($keterangan, 'pinjaman') !== false || 
-            strpos($keterangan, 'hutang') !== false ||
-            strpos($keterangan, 'modal') !== false ||
-            strpos($keterangan, 'dividen') !== false) {
-            return 'pendanaan';
+
+        if (str_contains($keterangan, 'gaji') || str_contains($keterangan, 'upah')) {
+            return 'beban_gaji';
         }
-        
-        // Default ke operasi
-        return 'operasi';
+
+        if (str_contains($keterangan, 'sewa')) {
+            return 'beban_sewa';
+        }
+
+        if (str_contains($keterangan, 'listrik') || str_contains($keterangan, 'pln')) {
+            return 'beban_listrik';
+        }
+
+        if (str_contains($keterangan, 'telepon') || str_contains($keterangan, 'pulsa')) {
+            return 'beban_telepon';
+        }
+
+        if (str_contains($keterangan, 'marketing') || str_contains($keterangan, 'iklan')) {
+            return 'beban_marketing';
+        }
+
+        if (str_contains($keterangan, 'administrasi') || str_contains($keterangan, 'admin')) {
+            return 'beban_administrasi';
+        }
+
+        return 'beban_operasional_lain';
     }
 }
