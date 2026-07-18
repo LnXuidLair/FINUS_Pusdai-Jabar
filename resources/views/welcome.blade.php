@@ -6,7 +6,8 @@
     <title>FINUS | PUSDAI Jabar</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <link rel="icon" href="/favicon.ico?v=20" sizes="any">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=20">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=20">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
