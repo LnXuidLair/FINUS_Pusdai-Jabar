@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FINUS | PUSDAI Jabar</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/x-icon" href="{{ asset('assets/images/favicon.ico') }}?v=5">
-    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/images/favicon.ico') }}?v=5">
+
+    <link rel="icon" href="/favicon.ico?v=20" sizes="any">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
