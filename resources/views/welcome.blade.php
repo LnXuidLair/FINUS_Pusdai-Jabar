@@ -120,7 +120,7 @@
         const requestTimeout = setTimeout(() => controller.abort(), 12000);
 
         try {
-            const res = await fetch("{{ route('verify.code') }}", {
+            const res = await fetch("{{ route('verify.code', [], false) }}", {
                 method: "POST",
                 credentials: "same-origin",
                 signal: controller.signal,
