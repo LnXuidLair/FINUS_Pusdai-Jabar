@@ -16,8 +16,8 @@
             "dest": "/public/build/$1"
         },
         {
-            "src": "/favicon.png",
-            "dest": "/public/assets/images/favicon.png"
+            "src": "/favicon.ico",
+            "dest": "/public/assets/images/favicon.ico"
         },
         {
             "src": "/(.*)",
