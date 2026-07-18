@@ -15,20 +15,20 @@ class Handler extends ExceptionHandler
 
     public function register(): void
     {
-        $this->reportable(function (Throwable $e): void {
-            $message = str_replace(
-                ["\r", "\n"],
-                ' ',
-                $e->getMessage()
-            );
+        $this->renderable(function (Throwable $e, $request) {
+            if (
+                $request->header('X-Finus-Debug')
+                !== 'FINUS-DEBUG-7F9A-2026'
+            ) {
+                return null;
+            }
 
-            error_log(sprintf(
-                'FINUS_EXCEPTION | %s | %s | %s:%d',
-                get_class($e),
-                substr($message, 0, 1500),
-                $e->getFile(),
-                $e->getLine()
-            ));
+            return response()->json([
+                'exception' => get_class($e),
+                'message'   => $e->getMessage(),
+                'file'      => $e->getFile(),
+                'line'      => $e->getLine(),
+            ], 500);
         });
     }
 }
