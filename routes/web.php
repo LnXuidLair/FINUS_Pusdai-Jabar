@@ -122,6 +122,9 @@ Route::middleware(['auth', 'role:pegawai'])
 
         Route::post('/presensi', [PresensiController::class, 'pegawaiStore'])
             ->name('presensi.store');
+
+        Route::get('/laporan-gaji', [PegawaiDashboardController::class, 'laporanGaji'])
+            ->name('laporan-gaji.index');
     });
 
 Route::middleware(['auth', 'verified', 'role:jamaah'])
