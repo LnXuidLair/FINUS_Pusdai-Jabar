@@ -64,4 +64,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return explode(' ', trim($this->name))[0];
     }
+
+    public function ziswafPenerimaans()
+    {
+        return $this->hasMany(ZiswafPenerimaan::class, 'muzakki_id');
+    }
 }

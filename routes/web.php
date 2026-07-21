@@ -76,6 +76,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->name('dashboard');
 
     Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/jamaah', [JamaahController::class, 'index'])
+            ->name('jamaah.index');
+            
         Route::resource('pegawai', PegawaiController::class);
 
         Route::resource('gaji-jabatan', GajiJabatanController::class)
