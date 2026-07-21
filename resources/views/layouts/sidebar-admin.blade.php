@@ -510,6 +510,15 @@
                 </li>
                 <li>
                     <a
+                        href="{{ route('admin.gaji-jabatan.index') }}"
+                        class="{{ request()->routeIs('admin.gaji-jabatan.*') ? 'active' : '' }}"
+                    >
+                        <i class="fa-solid fa-briefcase"></i>
+                        <span>Gaji & Jabatan</span>
+                    </a>
+                </li>
+                <li>
+                    <a
                         href="{{ route('admin.pegawai.index') }}"
                         class="{{ request()->routeIs('admin.pegawai.*') ? 'active' : '' }}"
                     >
@@ -519,11 +528,11 @@
                 </li>
                 <li>
                     <a
-                        href="{{ route('admin.gaji-jabatan.index') }}"
-                        class="{{ request()->routeIs('admin.gaji-jabatan.*') ? 'active' : '' }}"
+                        href="{{ route('admin.jamaah.index') }}"
+                        class="{{ request()->routeIs('admin.jamaah.*') ? 'active' : '' }}"
                     >
-                        <i class="fa-solid fa-briefcase"></i>
-                        <span>Gaji & Jabatan</span>
+                        <i class="fa-solid fa-user-group"></i>
+                        <span>Jamaah</span>
                     </a>
                 </li>
                 <li class="label">Transaksi</li>

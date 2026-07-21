@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\ZiswafPenerimaan;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,24 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class JamaahController extends Controller
 {
+    public function index()
+    {
+        $jamaahs = User::query()
+            ->where('role', User::ROLE_JAMAAH)
+            ->withCount([
+                'ziswafPenerimaans as total_transaksi',
+            ])
+            ->withSum([
+                'ziswafPenerimaans as total_nominal',
+            ], 'nominal')
+            ->withMax([
+                'ziswafPenerimaans as transaksi_terakhir',
+            ], 'created_at')
+            ->orderBy('name')
+            ->get();
+
+        return view('jamaah.index', compact('jamaahs'));
+    }
     public function dashboard(Request $request)
     {
         $jamaah = $request->user();
