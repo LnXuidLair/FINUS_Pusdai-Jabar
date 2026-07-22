@@ -127,22 +127,6 @@
             min-height: 100%;
             background: transparent !important;
         }
-
-        .sidebar .nano {
-            height: 100vh !important;
-            max-height: 100vh !important;
-            overflow: hidden !important;
-        }
-
-        .sidebar .nano-content {
-            height: 100vh !important;
-            max-height: 100vh !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            padding-bottom: 45px !important;
-            overscroll-behavior: contain;
-            -webkit-overflow-scrolling: touch;
-        }
         .sidebar ul {
             margin: 0;
             padding: 0;
@@ -538,28 +522,6 @@
         .finus-flash ul {
             margin: 5px 0 0;
             padding-left: 18px;
-        }
-        /* =====================================================
-            DROPDOWN FALLBACK
-        ===================================================== */
-        .dropdown {
-            position: relative;
-        }
-
-        .dropdown-menu.show,
-        .dropdown.open > .dropdown-menu {
-            display: block !important;
-        }
-
-        .header .dropdown-menu.show,
-        .header .dropdown.open > .dropdown-menu {
-            position: absolute !important;
-            top: 100% !important;
-            right: 0 !important;
-            left: auto !important;
-            z-index: 3000 !important;
-            min-width: 180px;
-            margin-top: 10px;
         }
         /* =====================================================
            RESPONSIVE
@@ -1177,60 +1139,6 @@
             })();
         </script>
     @endauth
-    <script>
-    (() => {
-        const closeAllDropdowns = exceptMenu => {
-            document
-                .querySelectorAll('.dropdown-menu.show')
-                .forEach(menu => {
-                    if (exceptMenu && menu === exceptMenu) {
-                        return;
-                    }
-
-                    menu.classList.remove('show');
-                    menu.style.display = '';
-                    menu.closest('.dropdown')?.classList.remove('open');
-                });
-            };
-
-            document.addEventListener('click', event => {
-                const toggle = event.target.closest(
-                    '.dropdown-toggle, [data-toggle="dropdown"], [data-bs-toggle="dropdown"]'
-                );
-
-                if (!toggle) {
-                    closeAllDropdowns(null);
-                    return;
-                }
-
-                const parent = toggle.closest('.dropdown');
-                const menu = parent?.querySelector('.dropdown-menu');
-
-                if (!parent || !menu) {
-                    return;
-                }
-
-                event.preventDefault();
-                event.stopPropagation();
-
-                const willOpen = !menu.classList.contains('show');
-
-                closeAllDropdowns(menu);
-
-                parent.classList.toggle('open', willOpen);
-                menu.classList.toggle('show', willOpen);
-                menu.style.display = willOpen ? 'block' : '';
-
-                toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-            });
-
-            document.addEventListener('keydown', event => {
-                if (event.key === 'Escape') {
-                    closeAllDropdowns(null);
-                }
-            });
-        })();
-    </script>
     @stack('scripts')
 </body>
 </html>
