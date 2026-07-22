@@ -70,8 +70,20 @@
         background: transparent !important;
     }
 
+    .sidebar .nano {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+    }
+
     .sidebar .nano-content {
-        padding-bottom: 28px;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding-bottom: 45px !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
     }
 
     /* =====================================================
