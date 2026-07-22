@@ -66,15 +66,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::table('coa')->insert([
-            'id' => 1,
-            'header_akun' => 1,
-            'kode_akun' => '1101',
-            'nama_akun' => 'Kas',
-            'created_at' => '2025-12-18 01:35:55',
-            'updated_at' => '2025-12-18 01:35:55',
-        ]);
-
         Schema::create('jurnal_umum', function (Blueprint $table) {
             $table->id();
             $table->date('tgl')->nullable();
