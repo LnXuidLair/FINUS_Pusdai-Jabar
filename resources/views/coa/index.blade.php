@@ -99,6 +99,13 @@
     min-width: 0;
 }
 
+.finus-data-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
 .finus-data-hero-icon {
     display: flex;
     align-items: center;
@@ -245,6 +252,166 @@
 .finus-stat-amber { --stat-color: var(--fd-amber); --stat-soft: var(--fd-amber-soft); }
 .finus-stat-red { --stat-color: var(--fd-red); --stat-soft: var(--fd-red-soft); }
 .finus-stat-purple { --stat-color: var(--fd-purple); --stat-soft: var(--fd-purple-soft); }
+
+/* ALERT */
+.finus-alert {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.finus-alert-success {
+    border: 1px solid #BDE5C7;
+    background: #EFFAF2;
+    color: #166534;
+}
+
+.finus-alert-danger {
+    border: 1px solid #F1C6CB;
+    background: #FFF3F4;
+    color: #B91C1C;
+}
+
+.finus-alert-warning {
+    border: 1px solid #F1D59A;
+    background: #FFF8E8;
+    color: #92400E;
+}
+
+.finus-alert ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+}
+
+/* IMPORT CARD */
+.finus-import-card {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 17px;
+    overflow: hidden;
+    border: 1px solid rgba(14,84,35,.09);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(15,23,42,.065);
+}
+
+.finus-import-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #E7EEE9;
+    background: linear-gradient(180deg, #fff, #F9FCFA);
+}
+
+.finus-import-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 41px;
+    min-width: 41px;
+    height: 41px;
+    border-radius: 12px;
+    background: var(--fd-soft);
+    color: var(--fd-green);
+}
+
+.finus-import-title {
+    margin: 0;
+    color: var(--fd-text);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.finus-import-desc {
+    margin: 4px 0 0;
+    color: var(--fd-muted);
+    font-size: 11.5px;
+}
+
+.finus-import-body {
+    padding: 20px 22px;
+}
+
+.finus-import-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+}
+
+.finus-import-field {
+    flex: 1;
+}
+
+.finus-import-label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--fd-text);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.finus-import-input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #D8E4DC;
+    border-radius: 12px;
+    background: #FBFDFC;
+    color: var(--fd-text);
+    font-size: 13px;
+}
+
+.finus-import-help {
+    display: block;
+    margin-top: 7px;
+    color: var(--fd-muted);
+    font-size: 11px;
+}
+
+.finus-import-actions {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+}
+
+.finus-import-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 15px;
+    border: 1px solid #D6E9DC;
+    border-radius: 12px;
+    background: var(--fd-soft);
+    color: var(--fd-dark) !important;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.finus-import-btn:hover {
+    background: #DFF1E4;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(14,84,35,.11);
+}
+
+.finus-import-btn.primary {
+    border-color: rgba(23,155,64,.45);
+    background: linear-gradient(135deg, #0E5423, #179B40);
+    color: #fff !important;
+}
+
+.finus-import-btn.primary:hover {
+    background: linear-gradient(135deg, #0A431C, #128334);
+}
 
 /* CARD */
 .finus-data-card {
@@ -642,8 +809,14 @@
 
 /* RESPONSIVE */
 @media (max-width: 991.98px) {
-    .finus-data-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .finus-data-card-head { align-items: flex-start; flex-direction: column; }
+    .finus-data-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .finus-data-card-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
 
 @media (max-width: 767.98px) {
@@ -662,8 +835,11 @@
     }
 
     .finus-data-hero-title { font-size: 20px; }
+
     .finus-data-hero-actions,
-    .finus-data-add { width: 100%; }
+    .finus-data-add {
+        width: 100%;
+    }
 
     .finus-data-summary {
         grid-template-columns: 1fr;
@@ -671,10 +847,29 @@
     }
 
     .finus-data-stat { min-height: 82px; }
+
+    .finus-import-form {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .finus-import-actions {
+        width: 100%;
+    }
+
+    .finus-import-btn {
+        width: 100%;
+    }
+
     .finus-data-card { border-radius: 17px; }
+
     .finus-data-card-head,
-    .finus-data-toolbar { padding: 17px; }
+    .finus-data-toolbar {
+        padding: 17px;
+    }
+
     .finus-data-search-wrap { width: 100%; }
+
     .finus-data-table-area { padding: 15px; }
 
     .finus-data-table-wrap {
@@ -713,7 +908,9 @@
         text-align: right !important;
     }
 
-    .finus-data-table tbody tr[data-search-row] td:last-child { border-bottom: 0; }
+    .finus-data-table tbody tr[data-search-row] td:last-child {
+        border-bottom: 0;
+    }
 
     .finus-data-table tbody tr[data-search-row] td::before {
         content: attr(data-label);
@@ -759,6 +956,11 @@
         </div>
 
         <div class="finus-data-hero-actions">
+            <a href="{{ route('admin.coa.template') }}" class="finus-data-add">
+                <i class="fa-solid fa-download"></i>
+                Template CSV
+            </a>
+
             <a href="{{ route('admin.coa.create') }}" class="finus-data-add">
                 <i class="fa-solid fa-plus"></i>
                 Tambah Akun
@@ -768,7 +970,9 @@
 
     <section class="finus-data-summary">
         <article class="finus-data-stat finus-stat-blue">
-            <div class="finus-data-stat-icon"><i class="fa-solid fa-list-ol"></i></div>
+            <div class="finus-data-stat-icon">
+                <i class="fa-solid fa-list-ol"></i>
+            </div>
             <div>
                 <span class="finus-data-stat-label">Total Akun</span>
                 <strong class="finus-data-stat-value">{{ number_format($totalAkun) }}</strong>
@@ -776,7 +980,9 @@
         </article>
 
         <article class="finus-data-stat finus-stat-green">
-            <div class="finus-data-stat-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <div class="finus-data-stat-icon">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
             <div>
                 <span class="finus-data-stat-label">Kelompok Akun</span>
                 <strong class="finus-data-stat-value">{{ number_format($totalKelompok) }}</strong>
@@ -784,7 +990,9 @@
         </article>
 
         <article class="finus-data-stat finus-stat-purple">
-            <div class="finus-data-stat-icon"><i class="fa-solid fa-filter"></i></div>
+            <div class="finus-data-stat-icon">
+                <i class="fa-solid fa-filter"></i>
+            </div>
             <div>
                 <span class="finus-data-stat-label">Data Ditampilkan</span>
                 <strong class="finus-data-stat-value" data-visible-count>{{ number_format($totalAkun) }}</strong>
@@ -792,10 +1000,112 @@
         </article>
     </section>
 
+    @if(session('success'))
+        <div class="finus-alert finus-alert-success">
+            <i class="fa-solid fa-circle-check"></i>
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="finus-alert finus-alert-danger">
+            <i class="fa-solid fa-circle-xmark"></i>
+            {{ session('error') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="finus-alert finus-alert-danger">
+            <strong>
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Terjadi kesalahan.
+            </strong>
+
+            <ul>
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @if(session('import_errors') && count(session('import_errors')) > 0)
+        <div class="finus-alert finus-alert-warning">
+            <strong>
+                <i class="fa-solid fa-circle-info"></i>
+                Beberapa baris CSV dilewati:
+            </strong>
+
+            <ul>
+                @foreach(session('import_errors') as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <section class="finus-import-card">
+        <header class="finus-import-head">
+            <div class="finus-import-icon">
+                <i class="fa-solid fa-file-csv"></i>
+            </div>
+
+            <div>
+                <h2 class="finus-import-title">Import COA dari CSV</h2>
+                <p class="finus-import-desc">
+                    Upload file CSV untuk menambahkan atau memperbarui kode akun secara otomatis.
+                </p>
+            </div>
+        </header>
+
+        <div class="finus-import-body">
+            <form
+                action="{{ route('admin.coa.import') }}"
+                method="POST"
+                enctype="multipart/form-data"
+                class="finus-import-form"
+            >
+                @csrf
+
+                <div class="finus-import-field">
+                    <label for="file_csv" class="finus-import-label">File CSV</label>
+
+                    <input
+                        type="file"
+                        name="file_csv"
+                        id="file_csv"
+                        class="finus-import-input"
+                        accept=".csv,.txt"
+                        required
+                    >
+
+                    <span class="finus-import-help">
+                        Format wajib: header_akun, kode_akun, nama_akun. Maksimal 2 MB.
+                    </span>
+                </div>
+
+                <div class="finus-import-actions">
+                    <button type="submit" class="finus-import-btn primary">
+                        <i class="fa-solid fa-upload"></i>
+                        Import CSV
+                    </button>
+
+                    <a href="{{ route('admin.coa.template') }}" class="finus-import-btn">
+                        <i class="fa-solid fa-download"></i>
+                        Download Template
+                    </a>
+                </div>
+            </form>
+        </div>
+    </section>
+
     <section class="finus-data-card">
         <header class="finus-data-card-head">
             <div class="finus-data-card-title-wrap">
-                <div class="finus-data-card-icon"><i class="fa-solid fa-book"></i></div>
+                <div class="finus-data-card-icon">
+                    <i class="fa-solid fa-book"></i>
+                </div>
+
                 <div>
                     <h2 class="finus-data-card-title">Daftar Akun</h2>
                     <p class="finus-data-card-description">
@@ -814,6 +1124,7 @@
         <div class="finus-data-toolbar">
             <div class="finus-data-search-wrap">
                 <i class="fa-solid fa-magnifying-glass finus-data-search-icon"></i>
+
                 <input
                     type="search"
                     class="finus-data-search"
@@ -821,10 +1132,12 @@
                     placeholder="Ketik dari awal kode, nama, atau kelompok akun..."
                     autocomplete="off"
                 >
+
                 <button type="button" class="finus-data-clear" data-finus-clear aria-label="Hapus pencarian">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
+
             <p class="finus-data-search-help">
                 <i class="fa-solid fa-circle-info"></i>
                 Pencarian dimulai dari karakter pertama setiap data.
@@ -843,6 +1156,7 @@
                             <th width="125">Aksi</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         @forelse($coa as $item)
                             <tr
@@ -850,14 +1164,18 @@
                                 data-search-start="{{ $item->kode_akun }}|{{ $item->nama_akun }}|{{ $item->label_header_akun }}"
                             >
                                 <td data-label="Nomor">
-                                    <span class="finus-data-number" data-row-number>{{ $loop->iteration }}</span>
+                                    <span class="finus-data-number" data-row-number>
+                                        {{ $loop->iteration }}
+                                    </span>
                                 </td>
+
                                 <td data-label="Kode Akun">
                                     <span class="finus-data-chip blue">
                                         <i class="fa-solid fa-hashtag"></i>
                                         {{ $item->kode_akun }}
                                     </span>
                                 </td>
+
                                 <td data-label="Nama Akun">
                                     <span class="finus-data-primary">
                                         <span class="finus-data-primary-icon">
@@ -866,12 +1184,14 @@
                                         {{ $item->nama_akun }}
                                     </span>
                                 </td>
+
                                 <td data-label="Kelompok">
                                     <span class="finus-data-chip green">
                                         <i class="fa-solid fa-layer-group"></i>
                                         {{ $item->label_header_akun }}
                                     </span>
                                 </td>
+
                                 <td data-label="Aksi">
                                     <a href="{{ route('admin.coa.edit', $item) }}" class="finus-data-edit">
                                         <i class="fa-solid fa-pen"></i>
@@ -885,7 +1205,11 @@
                                     <div class="finus-data-empty-icon">
                                         <i class="fa-solid fa-book-open"></i>
                                     </div>
-                                    <div class="finus-data-empty-title">Belum ada akun</div>
+
+                                    <div class="finus-data-empty-title">
+                                        Belum ada akun
+                                    </div>
+
                                     <p class="finus-data-empty-text">
                                         Tekan tombol Tambah Akun untuk memasukkan data pertama.
                                     </p>
@@ -898,7 +1222,11 @@
                                 <div class="finus-data-empty-icon">
                                     <i class="fa-solid fa-magnifying-glass"></i>
                                 </div>
-                                <div class="finus-data-empty-title">Akun tidak ditemukan</div>
+
+                                <div class="finus-data-empty-title">
+                                    Akun tidak ditemukan
+                                </div>
+
                                 <p class="finus-data-empty-text">
                                     Coba ketik kata kunci dari karakter pertama.
                                 </p>
@@ -950,8 +1278,12 @@
 
                 if (matches) {
                     visible++;
+
                     const number = row.querySelector('[data-row-number]');
-                    if (number) number.textContent = visible;
+
+                    if (number) {
+                        number.textContent = visible;
+                    }
                 }
             });
 

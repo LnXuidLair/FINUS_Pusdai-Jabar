@@ -101,16 +101,9 @@ return new class extends Migration
                 $table->foreignId('muzakki_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->foreignId('id_pegawai')->nullable()->constrained('pegawai')->nullOnDelete();
                 $table->date('tanggal');
-                $table->enum('jenis_ziswaf', [
-                    'zakat_maal',
-                    'zakat_fitrah',
-                    'infaq',
-                    'shadaqah',
-                    'wakaf',
-                    'fidyah',
-                ]);
+                $table->string('jenis_ziswaf', 50);
                 $table->unsignedBigInteger('nominal')->default(0);
-                $table->enum('metode_pembayaran', ['tunai', 'transfer', 'qris'])->default('tunai');
+                $table->string('metode_pembayaran', 50)->default('manual_transfer');
                 $table->string('bukti_pembayaran')->nullable();
                 $table->enum('status_verifikasi', ['pending', 'diterima', 'ditolak'])->default('pending');
                 $table->text('catatan_verifikasi')->nullable();
@@ -172,14 +165,7 @@ return new class extends Migration
                 $table->string('kategori_program');
                 $table->string('penerima_manfaat')->nullable();
                 $table->unsignedBigInteger('nominal')->default(0);
-                $table->enum('jenis_ziswaf_asal', [
-                    'zakat_maal',
-                    'zakat_fitrah',
-                    'infaq',
-                    'shadaqah',
-                    'wakaf',
-                    'fidyah',
-                ]);
+                $table->string('jenis_ziswaf_asal', 50);
                 $table->string('bukti_penyaluran')->nullable();
                 $table->text('keterangan')->nullable();
                 $table->foreignId('id_pengeluaran')->nullable()->constrained('pengeluaran')->nullOnDelete();

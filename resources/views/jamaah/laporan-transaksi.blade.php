@@ -6,6 +6,10 @@
 @php
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
 
+    $laporanJenisFilterLabels = collect($jenisLabels)
+        ->except(['shadaqah', 'fidyah'])
+        ->all();
+
     $summaryCards = [
         [
             'label' => 'Total Pengajuan',
@@ -57,10 +61,7 @@
         </div>
 
         <div class="jt-heading-actions">
-            <a
-                class="jt-btn"
-                href="{{ route('jamaah.riwayat.index') }}"
-            >
+            <a class="jt-btn" href="{{ route('jamaah.riwayat.index') }}">
                 <i class="fa-solid fa-clock-rotate-left"></i>
                 Riwayat
             </a>
@@ -125,7 +126,7 @@
                     <label for="jenis">Jenis</label>
                     <select id="jenis" name="jenis" class="jt-control">
                         <option value="">Semua jenis</option>
-                        @foreach($jenisLabels as $value => $label)
+                        @foreach($laporanJenisFilterLabels as $value => $label)
                             <option value="{{ $value }}" @selected(($filters['jenis'] ?? '') === $value)>
                                 {{ $label }}
                             </option>
@@ -137,6 +138,7 @@
                     <label for="status">Status</label>
                     <select id="status" name="status" class="jt-control">
                         <option value="">Semua status</option>
+
                         @foreach($statusLabels as $value => $label)
                             <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>
                                 {{ $label }}
@@ -150,6 +152,7 @@
                         <i class="fa-solid fa-chart-line"></i>
                         Tampilkan
                     </button>
+
                     <a href="{{ route('jamaah.laporan.index') }}" class="jt-btn">
                         <i class="fa-solid fa-rotate-left"></i>
                         Tahun Ini
@@ -170,6 +173,7 @@
                         <i class="fa-solid {{ $card['icon'] }}"></i>
                     </span>
                 </div>
+
                 <div class="jt-stat-body">
                     <span>{{ $card['label'] }}</span>
                     <strong>{{ $card['value'] }}</strong>
@@ -189,6 +193,7 @@
                     </div>
                 </div>
             </header>
+
             <div class="jt-card-body">
                 <div class="jt-chart">
                     <canvas id="jtMonthlyChart"></canvas>
@@ -206,6 +211,7 @@
                     </div>
                 </div>
             </header>
+
             <div class="jt-card-body">
                 <div class="jt-chart-small">
                     <canvas id="jtTypeChart"></canvas>
@@ -235,6 +241,7 @@
                             </strong>
                             <small>{{ number_format($item->jumlah_transaksi, 0, ',', '.') }} transaksi</small>
                         </div>
+
                         <div class="jt-money">{{ $rupiah($item->total) }}</div>
                     </div>
                 @empty
@@ -268,29 +275,37 @@
                         <th class="text-right">Nominal</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @forelse($transaksiLaporan as $item)
                         @php
                             $status = $item->status_verifikasi ?: 'pending';
                         @endphp
+
                         <tr>
                             <td class="jt-reference">ZISWAF-{{ $item->id }}</td>
+
                             <td>{{ $item->tanggal?->format('d/m/Y') }}</td>
+
                             <td>
                                 <span class="jt-type">
                                     {{ $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf }}
                                 </span>
                             </td>
+
                             <td>
                                 {{ $metodeLabels[$item->metode_pembayaran]
                                     ?? strtoupper(str_replace('_', ' ', $item->metode_pembayaran)) }}
                             </td>
+
                             <td>
                                 <span class="jt-badge jt-badge-{{ $status }}">
                                     {{ $statusLabels[$status] ?? ucfirst($status) }}
                                 </span>
                             </td>
+
                             <td class="jt-note">{{ $item->keterangan ?? '-' }}</td>
+
                             <td class="jt-money text-right">{{ $rupiah($item->nominal) }}</td>
                         </tr>
                     @empty
@@ -301,6 +316,7 @@
                         </tr>
                     @endforelse
                 </tbody>
+
                 @if($transaksiLaporan->isNotEmpty())
                     <tfoot>
                         <tr>
@@ -322,6 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const money = value => 'Rp ' + Number(value || 0).toLocaleString('id-ID');
 
     const monthlyCanvas = document.getElementById('jtMonthlyChart');
+
     if (monthlyCanvas) {
         new Chart(monthlyCanvas, {
             type: 'bar',
@@ -375,6 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const typeCanvas = document.getElementById('jtTypeChart');
+
     if (typeCanvas) {
         new Chart(typeCanvas, {
             type: 'doughnut',

@@ -6,6 +6,10 @@
 @php
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
 
+    $riwayatJenisFilterLabels = collect($jenisLabels)
+        ->except(['shadaqah'])
+        ->all();
+
     $summaryCards = [
         [
             'label' => 'Jumlah Transaksi',
@@ -64,6 +68,7 @@
                         <i class="fa-solid {{ $card['icon'] }}"></i>
                     </span>
                 </div>
+
                 <div class="jt-stat-body">
                     <span>{{ $card['label'] }}</span>
                     <strong>{{ $card['value'] }}</strong>
@@ -101,7 +106,7 @@
                         <select id="jenis" name="jenis" class="jt-control">
                             <option value="">Semua jenis</option>
                             @foreach($jenisLabels as $value => $label)
-                                @if(!in_array($value, ['fidyah', 'sedekah']))
+                                @if(!in_array($value, ['fidyah', 'shadaqah']))
                                     <option value="{{ $value }}" @selected(($filters['jenis'] ?? '') === $value)>{{ $label }}</option>
                                 @endif
                             @endforeach
@@ -135,6 +140,7 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                         Terapkan
                     </button>
+
                     <a href="{{ route('jamaah.riwayat.index') }}" class="jt-btn">
                         <i class="fa-solid fa-rotate-left"></i>
                         Reset
@@ -168,14 +174,18 @@
                         <th>Keterangan</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @forelse($transaksi as $item)
                         @php
                             $status = $item->status_verifikasi ?: 'pending';
                         @endphp
+
                         <tr>
                             <td class="jt-reference">ZISWAF-{{ $item->id }}</td>
+
                             <td>{{ $item->tanggal?->format('d/m/Y') }}</td>
+
                             <td>
                                 <span class="jt-type">
                                     {{ $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf }}
@@ -183,13 +193,16 @@
                             </td>
 
                             <td class="jt-money">{{ $rupiah($item->nominal) }}</td>
+
                             <td>
                                 <span class="jt-badge jt-badge-{{ $status }}">
                                     {{ $statusLabels[$status] ?? ucfirst($status) }}
                                 </span>
                             </td>
+
                             <td class="jt-note">
                                 {{ $item->keterangan ?? '-' }}
+
                                 @if($item->catatan_verifikasi)
                                     <span class="jt-admin-note">
                                         Catatan admin: {{ $item->catatan_verifikasi }}

@@ -13,6 +13,7 @@ use App\Http\Controllers\PegawaiDashboardController;
 use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\PenggajianController;
 use App\Http\Controllers\PresensiController;
+use App\Http\Controllers\ZiswafTransactionController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -78,11 +79,28 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/jamaah', [JamaahController::class, 'index'])
             ->name('jamaah.index');
-            
+
+        Route::prefix('ziswaf')->name('ziswaf.')->group(function () {
+            Route::get('/transaksi', [ZiswafTransactionController::class, 'index'])
+                ->name('transaksi.index');
+
+            Route::patch('/transaksi/{transaksi}/terima', [ZiswafTransactionController::class, 'terima'])
+                ->name('transaksi.terima');
+
+            Route::patch('/transaksi/{transaksi}/tolak', [ZiswafTransactionController::class, 'tolak'])
+                ->name('transaksi.tolak');
+        });
+
         Route::resource('pegawai', PegawaiController::class);
 
         Route::resource('gaji-jabatan', GajiJabatanController::class)
             ->except(['show']);
+
+        Route::get('coa/template', [CoaController::class, 'downloadTemplate'])
+            ->name('coa.template');
+
+        Route::post('coa/import', [CoaController::class, 'import'])
+            ->name('coa.import');
 
         Route::resource('coa', CoaController::class)
             ->except(['show']);
@@ -145,6 +163,9 @@ Route::middleware(['auth', 'verified', 'role:jamaah'])
             ->whereIn('jenis', ['zakat', 'infak', 'wakaf'])
             ->name('transaksi.store');
 
+        Route::get('/pembayaran/{transaksi}', [JamaahController::class, 'showPembayaran'])
+            ->name('pembayaran.show');
+
         Route::get('/riwayat-transaksi', [JamaahController::class, 'riwayat'])
             ->name('riwayat.index');
 
@@ -154,6 +175,9 @@ Route::middleware(['auth', 'verified', 'role:jamaah'])
         Route::get('/laporan-transaksi/export', [JamaahController::class, 'exportLaporan'])
             ->name('laporan.export');
     });
+
+Route::post('/payment/midtrans/notification', [JamaahController::class, 'midtransNotification'])
+    ->name('payment.midtrans.notification');
 
 Route::post('/session/heartbeat', fn () => response()->noContent())
     ->middleware('auth')
