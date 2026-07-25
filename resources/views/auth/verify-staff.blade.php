@@ -8,37 +8,60 @@
 @section('hero-copy', 'Nama dan NIP harus sama dengan data pegawai yang telah didaftarkan oleh admin.')
 
 @section('content')
-<form method="POST" action="{{ route('verify.staff') }}" class="space-y-4">
+<form method="POST" action="{{ route('verify.staff') }}" class="auth-form" data-loading-title="Memverifikasi data pegawai...">
     @csrf
+
+    <div class="auth-info-card">
+        Masukkan nama lengkap dan NIP persis seperti data pegawai yang dibuat oleh admin.
+    </div>
+
     <div>
-        <label for="name" class="mb-1 block text-sm font-bold text-green-950">Nama Lengkap</label>
+        <label for="name" class="auth-label"><span class="auth-label-icon">◆</span>Nama Lengkap</label>
         <input id="name" type="text" name="name" value="{{ old('name') }}"
-            class="auth-field" placeholder="Nama sesuai data pegawai" required autofocus>
+               class="auth-field" placeholder="Nama sesuai data pegawai"
+               autocomplete="name" required autofocus>
         @error('name')<p class="auth-error">{{ $message }}</p>@enderror
     </div>
+
     <div>
-        <label for="nip" class="mb-1 block text-sm font-bold text-green-950">NIP</label>
+        <label for="nip" class="auth-label"><span class="auth-label-icon">#</span>NIP</label>
         <input id="nip" type="text" name="nip" value="{{ old('nip') }}"
-            class="auth-field" placeholder="Nomor induk pegawai" required>
+               class="auth-field" placeholder="Nomor induk pegawai"
+               autocomplete="off" required>
         @error('nip')<p class="auth-error">{{ $message }}</p>@enderror
     </div>
-    <button class="auth-button">Verifikasi</button>
-    <p class="text-center text-sm text-slate-600">
-        Akun sudah aktif? <a href="{{ route('login.staff') }}" class="auth-link">Kembali ke login</a>
+
+    <button type="submit" class="auth-button" data-loading-text="Memverifikasi..." data-loading-title="Memverifikasi data pegawai...">
+        Verifikasi Pegawai
+    </button>
+
+    <p class="auth-footer-text">
+        Akun sudah aktif?
+        <a href="{{ route('login.staff') }}" class="auth-link">Kembali ke login</a>
     </p>
 </form>
+
 @isset($verifiedPegawai)
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-    <div class="w-full max-w-sm rounded-2xl bg-white p-7 text-center shadow-2xl">
-        <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl text-green-700">&#10003;</div>
-        <h3 class="text-2xl font-extrabold text-green-800">Verify Success</h3>
-        <dl class="my-5 space-y-3 rounded-xl bg-green-50 p-4 text-left">
-            <div><dt class="text-xs text-gray-500">Nama Pegawai</dt><dd class="font-bold">{{ $verifiedPegawai->nama_pegawai }}</dd></div>
-            <div><dt class="text-xs text-gray-500">NIP</dt><dd class="font-bold">{{ $verifiedPegawai->nip }}</dd></div>
-            <div><dt class="text-xs text-gray-500">Jabatan</dt><dd class="font-bold">{{ $verifiedPegawai->jabatan }}</dd></div>
-        </dl>
-        <a href="{{ route('register.staff.account') }}" class="auth-button">Lanjut</a>
+    <div class="auth-dialog-overlay">
+        <div class="auth-dialog" role="dialog" aria-modal="true">
+            <div class="auth-dialog-body">
+                <div class="auth-dialog-icon">✓</div>
+                <h3 class="auth-dialog-title">Verifikasi Berhasil</h3>
+                <p class="auth-dialog-copy">Data pegawai ditemukan dan sesuai dengan data yang dibuat oleh admin.</p>
+
+                <dl class="auth-dialog-details">
+                    <div class="auth-dialog-detail"><dt>Nama Pegawai</dt><dd>{{ $verifiedPegawai->nama_pegawai }}</dd></div>
+                    <div class="auth-dialog-detail"><dt>NIP</dt><dd>{{ $verifiedPegawai->nip }}</dd></div>
+                    <div class="auth-dialog-detail"><dt>Jabatan</dt><dd>{{ $verifiedPegawai->jabatan }}</dd></div>
+                </dl>
+            </div>
+
+            <div class="auth-dialog-footer">
+                <a href="{{ route('register.staff.account') }}" class="auth-button" data-loading-title="Membuka aktivasi akun...">
+                    Lanjut Buat Password
+                </a>
+            </div>
+        </div>
     </div>
-</div>
 @endisset
 @endsection

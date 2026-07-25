@@ -1,21 +1,21 @@
 @extends('layouts.app')
-
 @section('title', 'Chart of Accounts')
 @section('hide-page-header', '1')
-
 @php
-    $coaItems = $coa instanceof \Illuminate\Contracts\Pagination\Paginator
+    $isPaginated = $coa instanceof \Illuminate\Contracts\Pagination\Paginator;
+    $coaItems = $isPaginated
         ? collect($coa->items())
         : collect($coa);
-
-    $totalAkun = $coaItems->count();
+    $totalAkun = method_exists($coa, 'total')
+        ? $coa->total()
+        : $coaItems->count();
+    $jumlahDataHalaman = $coaItems->count();
     $totalKelompok = $coaItems
         ->pluck('label_header_akun')
         ->filter()
         ->unique()
         ->count();
 @endphp
-
 @push('styles')
 <style>
 :root {
@@ -36,12 +36,10 @@
     --fd-purple: #7C3AED;
     --fd-purple-soft: #F5F0FF;
 }
-
 .finus-data-page {
     position: relative;
     padding-bottom: 32px;
 }
-
 .finus-data-page::before {
     content: "";
     position: absolute;
@@ -53,8 +51,6 @@
     background: rgba(34, 186, 81, .055);
     pointer-events: none;
 }
-
-/* HERO */
 .finus-data-hero {
     position: relative;
     z-index: 1;
@@ -73,7 +69,6 @@
         0 18px 38px rgba(14,84,35,.17),
         inset 0 1px 0 rgba(255,255,255,.13);
 }
-
 .finus-data-hero::after {
     content: "";
     position: absolute;
@@ -85,27 +80,23 @@
     background: rgba(126,255,135,.12);
     pointer-events: none;
 }
-
 .finus-data-hero-left,
 .finus-data-hero-actions {
     position: relative;
     z-index: 2;
 }
-
 .finus-data-hero-left {
     display: flex;
     align-items: center;
     gap: 16px;
     min-width: 0;
 }
-
 .finus-data-hero-actions {
     display: flex;
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
 }
-
 .finus-data-hero-icon {
     display: flex;
     align-items: center;
@@ -121,7 +112,6 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,.15);
     backdrop-filter: blur(8px);
 }
-
 .finus-data-hero-title {
     margin: 0;
     color: #fff;
@@ -130,7 +120,6 @@
     line-height: 1.3;
     letter-spacing: -.02em;
 }
-
 .finus-data-hero-subtitle {
     display: flex;
     align-items: center;
@@ -140,7 +129,6 @@
     font-size: 13px;
     line-height: 1.5;
 }
-
 .finus-data-hero-subtitle::before {
     content: "";
     width: 7px;
@@ -149,7 +137,6 @@
     background: #A5FFAE;
     box-shadow: 0 0 0 4px rgba(165,255,174,.13);
 }
-
 .finus-data-add {
     display: inline-flex;
     align-items: center;
@@ -168,7 +155,6 @@
     box-shadow: 0 9px 20px rgba(0,70,27,.16);
     transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
-
 .finus-data-add i {
     display: flex;
     align-items: center;
@@ -180,14 +166,11 @@
     color: var(--fd-green);
     font-size: 11px;
 }
-
 .finus-data-add:hover {
     background: #F3FFF6;
     transform: translateY(-2px);
     box-shadow: 0 13px 25px rgba(0,70,27,.22);
 }
-
-/* SUMMARY */
 .finus-data-summary {
     position: relative;
     z-index: 1;
@@ -196,7 +179,6 @@
     gap: 14px;
     margin-bottom: 17px;
 }
-
 .finus-data-stat {
     display: flex;
     align-items: center;
@@ -209,13 +191,11 @@
     box-shadow: 0 10px 25px rgba(15,23,42,.055);
     transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
-
 .finus-data-stat:hover {
     border-color: rgba(23,155,64,.23);
     transform: translateY(-2px);
     box-shadow: 0 14px 30px rgba(15,23,42,.075);
 }
-
 .finus-data-stat-icon {
     display: flex;
     align-items: center;
@@ -228,7 +208,6 @@
     color: var(--stat-color, var(--fd-green));
     font-size: 17px;
 }
-
 .finus-data-stat-label {
     display: block;
     color: var(--fd-muted);
@@ -236,7 +215,6 @@
     font-weight: 700;
     line-height: 1.4;
 }
-
 .finus-data-stat-value {
     display: block;
     margin-top: 4px;
@@ -246,14 +224,11 @@
     line-height: 1.25;
     word-break: break-word;
 }
-
 .finus-stat-green { --stat-color: var(--fd-green); --stat-soft: var(--fd-soft); }
 .finus-stat-blue { --stat-color: var(--fd-blue); --stat-soft: var(--fd-blue-soft); }
 .finus-stat-amber { --stat-color: var(--fd-amber); --stat-soft: var(--fd-amber-soft); }
 .finus-stat-red { --stat-color: var(--fd-red); --stat-soft: var(--fd-red-soft); }
 .finus-stat-purple { --stat-color: var(--fd-purple); --stat-soft: var(--fd-purple-soft); }
-
-/* ALERT */
 .finus-alert {
     position: relative;
     z-index: 1;
@@ -263,31 +238,25 @@
     font-size: 13px;
     font-weight: 700;
 }
-
 .finus-alert-success {
     border: 1px solid #BDE5C7;
     background: #EFFAF2;
     color: #166534;
 }
-
 .finus-alert-danger {
     border: 1px solid #F1C6CB;
     background: #FFF3F4;
     color: #B91C1C;
 }
-
 .finus-alert-warning {
     border: 1px solid #F1D59A;
     background: #FFF8E8;
     color: #92400E;
 }
-
 .finus-alert ul {
     margin: 8px 0 0;
     padding-left: 18px;
 }
-
-/* IMPORT CARD */
 .finus-import-card {
     position: relative;
     z-index: 1;
@@ -298,7 +267,6 @@
     background: #fff;
     box-shadow: 0 14px 34px rgba(15,23,42,.065);
 }
-
 .finus-import-head {
     display: flex;
     align-items: center;
@@ -307,7 +275,6 @@
     border-bottom: 1px solid #E7EEE9;
     background: linear-gradient(180deg, #fff, #F9FCFA);
 }
-
 .finus-import-icon {
     display: flex;
     align-items: center;
@@ -319,34 +286,28 @@
     background: var(--fd-soft);
     color: var(--fd-green);
 }
-
 .finus-import-title {
     margin: 0;
     color: var(--fd-text);
     font-size: 16px;
     font-weight: 800;
 }
-
 .finus-import-desc {
     margin: 4px 0 0;
     color: var(--fd-muted);
     font-size: 11.5px;
 }
-
 .finus-import-body {
     padding: 20px 22px;
 }
-
 .finus-import-form {
     display: flex;
     align-items: flex-end;
     gap: 14px;
 }
-
 .finus-import-field {
     flex: 1;
 }
-
 .finus-import-label {
     display: block;
     margin-bottom: 7px;
@@ -354,7 +315,6 @@
     font-size: 12px;
     font-weight: 800;
 }
-
 .finus-import-input {
     width: 100%;
     min-height: 44px;
@@ -365,20 +325,17 @@
     color: var(--fd-text);
     font-size: 13px;
 }
-
 .finus-import-help {
     display: block;
     margin-top: 7px;
     color: var(--fd-muted);
     font-size: 11px;
 }
-
 .finus-import-actions {
     display: flex;
     gap: 9px;
     flex-wrap: wrap;
 }
-
 .finus-import-btn {
     display: inline-flex;
     align-items: center;
@@ -396,24 +353,19 @@
     cursor: pointer;
     transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
-
 .finus-import-btn:hover {
     background: #DFF1E4;
     transform: translateY(-1px);
     box-shadow: 0 8px 16px rgba(14,84,35,.11);
 }
-
 .finus-import-btn.primary {
     border-color: rgba(23,155,64,.45);
     background: linear-gradient(135deg, #0E5423, #179B40);
     color: #fff !important;
 }
-
 .finus-import-btn.primary:hover {
     background: linear-gradient(135deg, #0A431C, #128334);
 }
-
-/* CARD */
 .finus-data-card {
     position: relative;
     z-index: 1;
@@ -423,7 +375,6 @@
     background: #fff;
     box-shadow: 0 18px 42px rgba(15,23,42,.075);
 }
-
 .finus-data-card-head {
     display: flex;
     align-items: center;
@@ -433,13 +384,11 @@
     border-bottom: 1px solid #E7EEE9;
     background: linear-gradient(180deg, #fff, #F9FCFA);
 }
-
 .finus-data-card-title-wrap {
     display: flex;
     align-items: center;
     gap: 12px;
 }
-
 .finus-data-card-icon {
     display: flex;
     align-items: center;
@@ -451,7 +400,6 @@
     background: var(--fd-soft);
     color: var(--fd-green);
 }
-
 .finus-data-card-title {
     margin: 0;
     color: var(--fd-text);
@@ -459,14 +407,12 @@
     font-weight: 800;
     line-height: 1.35;
 }
-
 .finus-data-card-description {
     margin: 4px 0 0;
     color: var(--fd-muted);
     font-size: 11.5px;
     line-height: 1.45;
 }
-
 .finus-data-visible {
     display: inline-flex;
     align-items: center;
@@ -480,19 +426,15 @@
     font-weight: 800;
     white-space: nowrap;
 }
-
-/* TOOLBAR */
 .finus-data-toolbar {
     padding: 17px 22px;
     border-bottom: 1px solid #E9EFEB;
     background: #fff;
 }
-
 .finus-data-search-wrap {
     position: relative;
     width: min(100%, 460px);
 }
-
 .finus-data-search-icon {
     position: absolute;
     top: 50%;
@@ -503,7 +445,6 @@
     transform: translateY(-50%);
     pointer-events: none;
 }
-
 .finus-data-search {
     width: 100%;
     height: 44px;
@@ -516,20 +457,16 @@
     outline: none;
     transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
-
 .finus-data-search::placeholder { color: #94A3B8; }
-
 .finus-data-search:hover {
     border-color: #BFD4C6;
     background: #fff;
 }
-
 .finus-data-search:focus {
     border-color: var(--fd-green);
     background: #fff;
     box-shadow: 0 0 0 4px rgba(23,155,64,.11);
 }
-
 .finus-data-clear {
     position: absolute;
     top: 50%;
@@ -547,12 +484,10 @@
     cursor: pointer;
     transform: translateY(-50%);
 }
-
 .finus-data-clear:hover {
     background: #DFF1E4;
     color: var(--fd-green);
 }
-
 .finus-data-search-help {
     display: flex;
     align-items: center;
@@ -561,29 +496,23 @@
     color: #7A8B82;
     font-size: 10.5px;
 }
-
 .finus-data-search-help i { color: var(--fd-green); }
-
-/* TABLE */
 .finus-data-table-area {
     padding: 20px 22px 24px;
     background: linear-gradient(180deg, rgba(234,248,238,.32), #fff 86px);
 }
-
 .finus-data-table-wrap {
     overflow: hidden;
     border: 1px solid var(--fd-border);
     border-radius: 15px;
     background: #fff;
 }
-
 .finus-data-table {
     width: 100%;
     margin: 0;
     border-collapse: separate;
     border-spacing: 0;
 }
-
 .finus-data-table thead th {
     padding: 14px 15px;
     border: 0;
@@ -598,7 +527,6 @@
     text-transform: uppercase;
     vertical-align: middle;
 }
-
 .finus-data-table tbody td {
     padding: 14px 15px;
     border: 0;
@@ -610,10 +538,8 @@
     vertical-align: middle;
     transition: background .2s ease;
 }
-
 .finus-data-table tbody tr:last-child td { border-bottom: 0; }
 .finus-data-table tbody tr[data-search-row]:hover td { background: #F7FCF8; }
-
 .finus-data-number {
     display: inline-flex;
     align-items: center;
@@ -627,7 +553,6 @@
     font-size: 11.5px;
     font-weight: 800;
 }
-
 .finus-data-primary {
     display: inline-flex;
     align-items: center;
@@ -637,7 +562,6 @@
     color: var(--fd-text);
     font-weight: 800;
 }
-
 .finus-data-primary-icon {
     display: inline-flex;
     align-items: center;
@@ -649,7 +573,6 @@
     background: var(--fd-soft);
     color: var(--fd-green);
 }
-
 .finus-data-chip,
 .finus-data-money,
 .finus-data-status {
@@ -665,42 +588,35 @@
     font-weight: 800;
     white-space: nowrap;
 }
-
 .finus-data-chip {
     border-color: #DCE6DF;
     background: #F8FAF9;
     color: #3E5447;
 }
-
 .finus-data-chip.green {
     border-color: #D5E9DB;
     background: var(--fd-soft);
     color: var(--fd-dark);
 }
-
 .finus-data-chip.blue {
     border-color: #C9DBFA;
     background: var(--fd-blue-soft);
     color: #1D4ED8;
 }
-
 .finus-data-money {
     border-color: #CDE8D5;
     background: #EFFAF2;
     color: #137035;
 }
-
 .finus-data-status {
     border-radius: 999px;
 }
-
 .finus-data-status::before {
     content: "";
     width: 6px;
     height: 6px;
     border-radius: 50%;
 }
-
 .finus-status-success {
     border-color: #BDE5C7;
     background: #EFFAF2;
@@ -710,7 +626,6 @@
     background: #22C55E;
     box-shadow: 0 0 0 3px rgba(34,197,94,.12);
 }
-
 .finus-status-warning {
     border-color: #F1D59A;
     background: #FFF8E8;
@@ -720,7 +635,6 @@
     background: #F59E0B;
     box-shadow: 0 0 0 3px rgba(245,158,11,.12);
 }
-
 .finus-status-danger {
     border-color: #F1C6CB;
     background: #FFF3F4;
@@ -730,7 +644,6 @@
     background: #EF4444;
     box-shadow: 0 0 0 3px rgba(239,68,68,.12);
 }
-
 .finus-status-info {
     border-color: #C9DBFA;
     background: #F0F5FF;
@@ -740,7 +653,6 @@
     background: #3B82F6;
     box-shadow: 0 0 0 3px rgba(59,130,246,.12);
 }
-
 .finus-status-neutral {
     border-color: #DCE6DF;
     background: #F8FAF9;
@@ -750,7 +662,6 @@
     background: #94A3B8;
     box-shadow: 0 0 0 3px rgba(148,163,184,.12);
 }
-
 .finus-data-edit {
     display: inline-flex;
     align-items: center;
@@ -767,7 +678,6 @@
     text-decoration: none !important;
     transition: background .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
 }
-
 .finus-data-edit:hover {
     border-color: #E7C66F;
     background: #FFF3CC;
@@ -775,13 +685,44 @@
     transform: translateY(-1px);
     box-shadow: 0 6px 13px rgba(161,98,7,.13);
 }
-
-/* EMPTY */
+.finus-data-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}
+.finus-data-delete-form {
+    display: inline-flex;
+    margin: 0;
+}
+.finus-data-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid #F1C6CB;
+    border-radius: 10px;
+    background: #FFF3F4;
+    color: #B91C1C !important;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.finus-data-delete:hover {
+    border-color: #E9A8AF;
+    background: #FFE7EA;
+    color: #991B1B !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 13px rgba(185,28,28,.13);
+}
 .finus-data-empty {
     padding: 54px 20px !important;
     text-align: center !important;
 }
-
 .finus-data-empty-icon {
     display: flex;
     align-items: center;
@@ -794,31 +735,25 @@
     color: var(--fd-green);
     font-size: 23px;
 }
-
 .finus-data-empty-title {
     color: var(--fd-text);
     font-size: 14px;
     font-weight: 800;
 }
-
 .finus-data-empty-text {
     margin: 5px 0 0;
     color: var(--fd-muted);
     font-size: 12px;
 }
-
-/* RESPONSIVE */
 @media (max-width: 991.98px) {
     .finus-data-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
     .finus-data-card-head {
         align-items: flex-start;
         flex-direction: column;
     }
 }
-
 @media (max-width: 767.98px) {
     .finus-data-hero {
         align-items: flex-start;
@@ -826,58 +761,44 @@
         padding: 23px 20px;
         border-radius: 18px;
     }
-
     .finus-data-hero-icon {
         width: 51px;
         min-width: 51px;
         height: 51px;
         border-radius: 15px;
     }
-
     .finus-data-hero-title { font-size: 20px; }
-
     .finus-data-hero-actions,
     .finus-data-add {
         width: 100%;
     }
-
     .finus-data-summary {
         grid-template-columns: 1fr;
         gap: 11px;
     }
-
     .finus-data-stat { min-height: 82px; }
-
     .finus-import-form {
         align-items: stretch;
         flex-direction: column;
     }
-
     .finus-import-actions {
         width: 100%;
     }
-
     .finus-import-btn {
         width: 100%;
     }
-
     .finus-data-card { border-radius: 17px; }
-
     .finus-data-card-head,
     .finus-data-toolbar {
         padding: 17px;
     }
-
     .finus-data-search-wrap { width: 100%; }
-
     .finus-data-table-area { padding: 15px; }
-
     .finus-data-table-wrap {
         overflow: visible;
         border: 0;
         background: transparent;
     }
-
     .finus-data-table,
     .finus-data-table tbody,
     .finus-data-table tr,
@@ -885,9 +806,7 @@
         display: block;
         width: 100%;
     }
-
     .finus-data-table thead { display: none; }
-
     .finus-data-table tbody tr[data-search-row] {
         overflow: hidden;
         margin-bottom: 13px;
@@ -896,7 +815,6 @@
         background: #fff;
         box-shadow: 0 8px 20px rgba(15,23,42,.045);
     }
-
     .finus-data-table tbody tr[data-search-row] td {
         display: flex;
         align-items: center;
@@ -907,11 +825,9 @@
         border-bottom: 1px solid #ECF1ED;
         text-align: right !important;
     }
-
     .finus-data-table tbody tr[data-search-row] td:last-child {
         border-bottom: 0;
     }
-
     .finus-data-table tbody tr[data-search-row] td::before {
         content: attr(data-label);
         flex-shrink: 0;
@@ -922,9 +838,7 @@
         text-align: left;
         text-transform: uppercase;
     }
-
     .finus-data-primary { justify-content: flex-end; }
-
     .finus-data-empty {
         display: block !important;
         padding: 44px 18px !important;
@@ -932,13 +846,150 @@
         border-radius: 15px;
         background: #fff !important;
     }
-
     .finus-data-empty::before { display: none; }
 }
-
+.finus-file-picker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 49px;
+    padding: 8px 12px;
+    border: 1px dashed #BFD8C6;
+    border-radius: 12px;
+    background: #F8FCF9;
+    transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.finus-file-picker:hover,
+.finus-file-picker:focus-within {
+    border-color: var(--fd-green);
+    background: #F1FAF4;
+    box-shadow: 0 0 0 4px rgba(23,155,64,.08);
+}
+.finus-file-picker-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    min-width: 35px;
+    height: 35px;
+    border-radius: 10px;
+    background: var(--fd-soft);
+    color: var(--fd-green);
+}
+.finus-file-picker-info {
+    min-width: 0;
+    flex: 1;
+}
+.finus-file-picker-name {
+    overflow: hidden;
+    color: var(--fd-text);
+    font-size: 12px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.finus-file-picker-help {
+    margin-top: 2px;
+    color: var(--fd-muted);
+    font-size: 10.5px;
+}
+.finus-file-picker-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    opacity: 0;
+}
+.finus-import-spinner {
+    display: none;
+    width: 15px;
+    height: 15px;
+    border: 2px solid rgba(255,255,255,.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: finus-import-spin .7s linear infinite;
+}
+.finus-import-btn.is-loading .finus-import-spinner {
+    display: inline-block;
+}
+.finus-import-btn.is-loading > i {
+    display: none;
+}
+@keyframes finus-import-spin {
+    to { transform: rotate(360deg); }
+}
+.finus-pagination-wrap {
+    padding: 0 22px 22px;
+}
+.finus-delete-modal .modal-content {
+    overflow: hidden;
+    border: 0;
+    border-radius: 19px;
+    box-shadow: 0 26px 65px rgba(15,23,42,.23);
+}
+.finus-delete-modal .modal-body {
+    padding: 28px 27px 20px;
+    text-align: center;
+}
+.finus-delete-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    border-radius: 19px;
+    background: var(--fd-red-soft);
+    color: var(--fd-red);
+    font-size: 23px;
+}
+.finus-delete-modal-title {
+    margin: 0;
+    color: var(--fd-text);
+    font-size: 19px;
+    font-weight: 800;
+}
+.finus-delete-modal-text {
+    margin: 9px 0 0;
+    color: var(--fd-muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+.finus-delete-modal-text strong {
+    color: var(--fd-text);
+}
+.finus-delete-modal .modal-footer {
+    justify-content: center;
+    gap: 9px;
+    padding: 0 27px 25px;
+    border: 0;
+}
+.finus-modal-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 43px;
+    padding: 0 17px;
+    border-radius: 11px;
+    font-size: 12.5px;
+    font-weight: 800;
+}
+.finus-modal-cancel {
+    border: 1px solid #D7E1DA;
+    background: #fff;
+    color: #475569;
+}
+.finus-modal-delete {
+    border: 1px solid var(--fd-red);
+    background: var(--fd-red);
+    color: #fff;
+    box-shadow: 0 8px 17px rgba(220,38,38,.18);
+}
 </style>
 @endpush
-
 @section('content')
 <div class="finus-data-page" data-finus-data-page>
     <section class="finus-data-hero">
@@ -946,7 +997,6 @@
             <div class="finus-data-hero-icon">
                 <i class="fa-solid fa-book-open"></i>
             </div>
-
             <div>
                 <h1 class="finus-data-hero-title">Chart of Accounts</h1>
                 <p class="finus-data-hero-subtitle" data-record-subtitle data-label="akun">
@@ -954,20 +1004,13 @@
                 </p>
             </div>
         </div>
-
         <div class="finus-data-hero-actions">
-            <a href="{{ route('admin.coa.template') }}" class="finus-data-add">
-                <i class="fa-solid fa-download"></i>
-                Template CSV
-            </a>
-
             <a href="{{ route('admin.coa.create') }}" class="finus-data-add">
                 <i class="fa-solid fa-plus"></i>
                 Tambah Akun
             </a>
         </div>
     </section>
-
     <section class="finus-data-summary">
         <article class="finus-data-stat finus-stat-blue">
             <div class="finus-data-stat-icon">
@@ -978,7 +1021,6 @@
                 <strong class="finus-data-stat-value">{{ number_format($totalAkun) }}</strong>
             </div>
         </article>
-
         <article class="finus-data-stat finus-stat-green">
             <div class="finus-data-stat-icon">
                 <i class="fa-solid fa-layer-group"></i>
@@ -988,54 +1030,22 @@
                 <strong class="finus-data-stat-value">{{ number_format($totalKelompok) }}</strong>
             </div>
         </article>
-
         <article class="finus-data-stat finus-stat-purple">
             <div class="finus-data-stat-icon">
                 <i class="fa-solid fa-filter"></i>
             </div>
             <div>
                 <span class="finus-data-stat-label">Data Ditampilkan</span>
-                <strong class="finus-data-stat-value" data-visible-count>{{ number_format($totalAkun) }}</strong>
+                <strong class="finus-data-stat-value" data-visible-count>{{ number_format($jumlahDataHalaman) }}</strong>
             </div>
         </article>
     </section>
-
-    @if(session('success'))
-        <div class="finus-alert finus-alert-success">
-            <i class="fa-solid fa-circle-check"></i>
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="finus-alert finus-alert-danger">
-            <i class="fa-solid fa-circle-xmark"></i>
-            {{ session('error') }}
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="finus-alert finus-alert-danger">
-            <strong>
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                Terjadi kesalahan.
-            </strong>
-
-            <ul>
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     @if(session('import_errors') && count(session('import_errors')) > 0)
         <div class="finus-alert finus-alert-warning">
             <strong>
                 <i class="fa-solid fa-circle-info"></i>
-                Beberapa baris CSV dilewati:
+                Beberapa baris data dilewati:
             </strong>
-
             <ul>
                 @foreach(session('import_errors') as $error)
                     <li>{{ $error }}</li>
@@ -1043,69 +1053,72 @@
             </ul>
         </div>
     @endif
-
     <section class="finus-import-card">
         <header class="finus-import-head">
             <div class="finus-import-icon">
-                <i class="fa-solid fa-file-csv"></i>
+                <i class="fa-solid fa-file-import"></i>
             </div>
-
             <div>
-                <h2 class="finus-import-title">Import COA dari CSV</h2>
+                <h2 class="finus-import-title">
+                    Import Data COA
+                </h2>
                 <p class="finus-import-desc">
-                    Upload file CSV untuk menambahkan atau memperbarui kode akun secara otomatis.
+                    Upload file CSV, TXT, XLSX, atau XLS untuk menambahkan
+                    atau memperbarui akun secara otomatis.
                 </p>
             </div>
         </header>
-
         <div class="finus-import-body">
-            <form
-                action="{{ route('admin.coa.import') }}"
-                method="POST"
-                enctype="multipart/form-data"
-                class="finus-import-form"
-            >
+            <form action="{{ route('admin.coa.import') }}" method="POST" enctype="multipart/form-data" class="finus-import-form" id="coaImportForm">
                 @csrf
-
                 <div class="finus-import-field">
-                    <label for="file_csv" class="finus-import-label">File CSV</label>
-
-                    <input
-                        type="file"
-                        name="file_csv"
-                        id="file_csv"
-                        class="finus-import-input"
-                        accept=".csv,.txt"
-                        required
-                    >
-
-                    <span class="finus-import-help">
-                        Format wajib: header_akun, kode_akun, nama_akun. Maksimal 2 MB.
-                    </span>
+                    <label for="file_csv" class="finus-import-label">
+                        File Data COA
+                    </label>
+                    <div class="finus-file-picker">
+                        <div class="finus-file-picker-icon" aria-hidden="true">
+                            <i class="fa-solid fa-file-arrow-up"></i>
+                        </div>
+                        <div class="finus-file-picker-info">
+                            <div class="finus-file-picker-name" id="coaFileName">
+                                Pilih file CSV atau Excel
+                            </div>
+                            <div class="finus-file-picker-help">
+                                Format: CSV, TXT, XLSX, atau XLS.
+                                Header wajib: kelompok_akun, kode_akun, nama_akun.
+                                Maksimal 5 MB dan 5.000 baris data.
+                            </div>
+                        </div>
+                        <input type="file" name="file_csv" id="file_csv" class="finus-file-picker-input" accept=".csv,.txt,.xlsx,.xls" required>
+                    </div>
+                    @error('file_csv')
+                        <div class="text-danger mt-2" style="font-size: 12px;">
+                            {{ $message }}
+                        </div>
+                    @enderror
                 </div>
-
                 <div class="finus-import-actions">
-                    <button type="submit" class="finus-import-btn primary">
+                    <button type="submit" class="finus-import-btn primary" id="coaImportButton">
+                        <span class="finus-import-spinner" aria-hidden="true"></span>
                         <i class="fa-solid fa-upload"></i>
-                        Import CSV
+                        <span id="coaImportButtonText">
+                            Import Data
+                        </span>
                     </button>
-
                     <a href="{{ route('admin.coa.template') }}" class="finus-import-btn">
                         <i class="fa-solid fa-download"></i>
-                        Download Template
+                        Download Template CSV
                     </a>
                 </div>
             </form>
         </div>
     </section>
-
     <section class="finus-data-card">
         <header class="finus-data-card-head">
             <div class="finus-data-card-title-wrap">
                 <div class="finus-data-card-icon">
                     <i class="fa-solid fa-book"></i>
                 </div>
-
                 <div>
                     <h2 class="finus-data-card-title">Daftar Akun</h2>
                     <p class="finus-data-card-description">
@@ -1113,37 +1126,25 @@
                     </p>
                 </div>
             </div>
-
             <div class="finus-data-visible">
                 <i class="fa-solid fa-database"></i>
-                <span data-visible-count>{{ $totalAkun }}</span>
+                <span data-visible-count>{{ number_format($jumlahDataHalaman) }}</span>
                 akun ditampilkan
             </div>
         </header>
-
         <div class="finus-data-toolbar">
             <div class="finus-data-search-wrap">
                 <i class="fa-solid fa-magnifying-glass finus-data-search-icon"></i>
-
-                <input
-                    type="search"
-                    class="finus-data-search"
-                    data-finus-search
-                    placeholder="Ketik dari awal kode, nama, atau kelompok akun..."
-                    autocomplete="off"
-                >
-
+                <input type="search" class="finus-data-search" data-finus-search placeholder="Ketik dari awal kode, nama, atau kelompok akun..." autocomplete="off">
                 <button type="button" class="finus-data-clear" data-finus-clear aria-label="Hapus pencarian">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-
             <p class="finus-data-search-help">
                 <i class="fa-solid fa-circle-info"></i>
                 Pencarian dimulai dari karakter pertama setiap data.
             </p>
         </div>
-
         <div class="finus-data-table-area">
             <div class="finus-data-table-wrap">
                 <table class="finus-data-table">
@@ -1153,29 +1154,23 @@
                             <th width="145">Kode Akun</th>
                             <th>Nama Akun</th>
                             <th width="220">Kelompok</th>
-                            <th width="125">Aksi</th>
+                            <th width="190">Aksi</th>
                         </tr>
                     </thead>
-
                     <tbody>
                         @forelse($coa as $item)
-                            <tr
-                                data-search-row
-                                data-search-start="{{ $item->kode_akun }}|{{ $item->nama_akun }}|{{ $item->label_header_akun }}"
-                            >
+                            <tr data-search-row data-search-start="{{ $item->kode_akun }}|{{ $item->nama_akun }}|{{ $item->label_header_akun }}">
                                 <td data-label="Nomor">
                                     <span class="finus-data-number" data-row-number>
                                         {{ $loop->iteration }}
                                     </span>
                                 </td>
-
                                 <td data-label="Kode Akun">
                                     <span class="finus-data-chip blue">
                                         <i class="fa-solid fa-hashtag"></i>
                                         {{ $item->kode_akun }}
                                     </span>
                                 </td>
-
                                 <td data-label="Nama Akun">
                                     <span class="finus-data-primary">
                                         <span class="finus-data-primary-icon">
@@ -1184,19 +1179,23 @@
                                         {{ $item->nama_akun }}
                                     </span>
                                 </td>
-
                                 <td data-label="Kelompok">
                                     <span class="finus-data-chip green">
                                         <i class="fa-solid fa-layer-group"></i>
                                         {{ $item->label_header_akun }}
                                     </span>
                                 </td>
-
                                 <td data-label="Aksi">
-                                    <a href="{{ route('admin.coa.edit', $item) }}" class="finus-data-edit">
-                                        <i class="fa-solid fa-pen"></i>
-                                        Edit
-                                    </a>
+                                    <div class="finus-data-actions">
+                                        <a href="{{ route('admin.coa.edit', $item) }}" class="finus-data-edit">
+                                            <i class="fa-solid fa-pen"></i>
+                                            Edit
+                                        </a>
+                                        <button type="button" class="finus-data-delete" data-toggle="modal" data-target="#deleteCoaModal" data-delete-url="{{ route('admin.coa.destroy', $item) }}" data-account-label="{{ $item->kode_akun }} - {{ $item->nama_akun }}">
+                                            <i class="fa-solid fa-trash"></i>
+                                            Hapus
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -1205,28 +1204,23 @@
                                     <div class="finus-data-empty-icon">
                                         <i class="fa-solid fa-book-open"></i>
                                     </div>
-
                                     <div class="finus-data-empty-title">
                                         Belum ada akun
                                     </div>
-
                                     <p class="finus-data-empty-text">
                                         Tekan tombol Tambah Akun untuk memasukkan data pertama.
                                     </p>
                                 </td>
                             </tr>
                         @endforelse
-
                         <tr data-empty-search-row style="display:none;">
                             <td colspan="5" class="finus-data-empty">
                                 <div class="finus-data-empty-icon">
                                     <i class="fa-solid fa-magnifying-glass"></i>
                                 </div>
-
                                 <div class="finus-data-empty-title">
                                     Akun tidak ditemukan
                                 </div>
-
                                 <p class="finus-data-empty-text">
                                     Coba ketik kata kunci dari karakter pertama.
                                 </p>
@@ -1236,10 +1230,49 @@
                 </table>
             </div>
         </div>
+        @if(method_exists($coa, 'links'))
+            <div class="finus-pagination-wrap">
+                {{ $coa->links() }}
+            </div>
+        @endif
     </section>
 </div>
 @endsection
-
+@push('modals')
+<div class="modal fade finus-delete-modal" id="deleteCoaModal" tabindex="-1" role="dialog" aria-labelledby="deleteCoaModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="finus-delete-modal-icon" aria-hidden="true">
+                    <i class="fa-solid fa-trash-can"></i>
+                </div>
+                <h3 class="finus-delete-modal-title" id="deleteCoaModalTitle">
+                    Hapus Akun?
+                </h3>
+                <p class="finus-delete-modal-text">
+                    Akun
+                    <strong id="deleteCoaAccount">ini</strong>
+                    akan dihapus. Tindakan ini tidak dapat dibatalkan.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="finus-modal-button finus-modal-cancel" data-dismiss="modal">
+                    <i class="fa-solid fa-xmark"></i>
+                    Batal
+                </button>
+                <form action="" method="POST" id="deleteCoaForm" class="m-0">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="finus-modal-button finus-modal-delete">
+                        <i class="fa-solid fa-trash"></i>
+                        Ya, Hapus
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endpush
 @push('scripts')
 <script>
 (() => {
@@ -1248,7 +1281,6 @@
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .trim();
-
     document.querySelectorAll('[data-finus-data-page]').forEach(page => {
         const input = page.querySelector('[data-finus-search]');
         const clearButton = page.querySelector('[data-finus-clear]');
@@ -1257,67 +1289,97 @@
         const visibleElements = page.querySelectorAll('[data-visible-count]');
         const subtitle = page.querySelector('[data-record-subtitle]');
         const label = subtitle?.dataset.label || 'data';
-
         if (!input) return;
-
         const filterRows = () => {
             const keyword = normalize(input.value);
             let visible = 0;
-
             rows.forEach(row => {
                 const values = (row.dataset.searchStart || '')
                     .split('|')
                     .map(normalize)
                     .filter(Boolean);
-
-                // Pencarian tetap dimulai dari karakter pertama setiap nilai.
                 const matches = keyword === ''
                     || values.some(value => value.startsWith(keyword));
-
                 row.style.display = matches ? '' : 'none';
-
                 if (matches) {
                     visible++;
-
                     const number = row.querySelector('[data-row-number]');
-
                     if (number) {
                         number.textContent = visible;
                     }
                 }
             });
-
             if (emptyRow) {
                 emptyRow.style.display =
                     visible === 0 && rows.length > 0 ? '' : 'none';
             }
-
             visibleElements.forEach(element => {
                 element.textContent = visible;
             });
-
             if (subtitle) {
                 subtitle.textContent =
                     `Menampilkan ${visible} ${label} pada daftar saat ini.`;
             }
-
             if (clearButton) {
                 clearButton.style.display =
                     input.value.trim() ? 'flex' : 'none';
             }
         };
-
         input.addEventListener('input', filterRows);
-
         clearButton?.addEventListener('click', () => {
             input.value = '';
             input.focus();
             filterRows();
         });
-
         filterRows();
     });
 })();
-
+(() => {
+    const fileInput = document.getElementById('file_csv');
+    const fileName = document.getElementById('coaFileName');
+    const form = document.getElementById('coaImportForm');
+    const submitButton = document.getElementById('coaImportButton');
+    const buttonText = document.getElementById('coaImportButtonText');
+    fileInput?.addEventListener('change', () => {
+        const selectedFile = fileInput.files?.[0];
+        if (!fileName) {
+            return;
+        }
+        fileName.textContent = selectedFile
+            ? selectedFile.name
+            : 'Pilih file CSV atau Excel';
+    });
+    form?.addEventListener('submit', event => {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+            return;
+        }
+        if (submitButton.dataset.loading === 'true') {
+            event.preventDefault();
+            return;
+        }
+        submitButton.dataset.loading = 'true';
+        submitButton.classList.add('is-loading');
+        submitButton.disabled = true;
+        buttonText.textContent = 'Mengimpor...';
+    });
+})();
+(() => {
+    const modal = document.getElementById('deleteCoaModal');
+    const form = document.getElementById('deleteCoaForm');
+    const account = document.getElementById('deleteCoaAccount');
+    if (!modal || !form || !account || !window.jQuery) {
+        return;
+    }
+    window.jQuery(modal).on('show.bs.modal', event => {
+        const trigger = event.relatedTarget;
+        if (!trigger) {
+            return;
+        }
+        form.action = trigger.dataset.deleteUrl || '';
+        account.textContent = trigger.dataset.accountLabel || 'ini';
+    });
+})();
 </script>
 @endpush
