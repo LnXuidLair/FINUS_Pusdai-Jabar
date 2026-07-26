@@ -880,6 +880,105 @@
     }
 </style>
 
+
+<style>
+    /* =====================================================
+       FIX LOGO PUSDAI PADA DARK MODE HP
+    ===================================================== */
+    .finus-mobile-logo-mask {
+        display: none;
+    }
+
+    .sidebar.sidebar-hide-to-small,
+    .sidebar.sidebar-hide-to-small .logo,
+    .sidebar.sidebar-hide-to-small .logo img {
+        color-scheme: only light !important;
+        forced-color-adjust: none !important;
+    }
+
+    .sidebar.sidebar-hide-to-small .logo img {
+        opacity: 1 !important;
+        background: transparent !important;
+
+        -webkit-filter:
+            brightness(0)
+            saturate(100%)
+            invert(100%)
+            drop-shadow(0 5px 9px rgba(0, 0, 0, .16)) !important;
+
+        filter:
+            brightness(0)
+            saturate(100%)
+            invert(100%)
+            drop-shadow(0 5px 9px rgba(0, 0, 0, .16)) !important;
+
+        mix-blend-mode: normal !important;
+        isolation: isolate;
+    }
+
+    @media (max-width: 991.98px) {
+        /*
+         * Mask memakai bentuk transparan PNG, lalu mengisi logo
+         * dengan putih. Browser dark mode tidak dapat menggelapkannya
+         * seperti ketika gambar PNG dirender secara langsung.
+         */
+        @supports (
+            (-webkit-mask-image: url(""))
+            or (mask-image: url(""))
+        ) {
+            .sidebar.sidebar-hide-to-small .logo img {
+                display: none !important;
+            }
+
+            .finus-mobile-logo-mask {
+                position: relative;
+                z-index: 2;
+
+                display: block !important;
+
+                width: 94px;
+                height: 61px;
+                margin: 0 auto 7px;
+
+                background-color: #FFFFFF !important;
+
+                -webkit-mask-image:
+                    url('{{ asset('assets/images/pusdai_dashboard.png') }}');
+                -webkit-mask-repeat: no-repeat;
+                -webkit-mask-position: center;
+                -webkit-mask-size: contain;
+
+                mask-image:
+                    url('{{ asset('assets/images/pusdai_dashboard.png') }}');
+                mask-repeat: no-repeat;
+                mask-position: center;
+                mask-size: contain;
+
+                color-scheme: only light !important;
+                forced-color-adjust: none !important;
+
+                opacity: 1 !important;
+                filter: drop-shadow(0 5px 9px rgba(0, 0, 0, .16));
+                mix-blend-mode: normal !important;
+                isolation: isolate;
+            }
+        }
+    }
+
+    @media (max-width: 991.98px) and (orientation: landscape) and (max-height: 520px) {
+        @supports (
+            (-webkit-mask-image: url(""))
+            or (mask-image: url(""))
+        ) {
+            .finus-mobile-logo-mask {
+                width: 72px;
+                height: 42px;
+                margin-bottom: 4px;
+            }
+        }
+    }
+</style>
+
 <div
     id="finusSidebar"
     class="sidebar sidebar-hide-to-small admin-sidebar"
@@ -897,6 +996,11 @@
                 >
                     <span aria-hidden="true">&times;</span>
                 </button>
+
+                <span
+                    class="finus-mobile-logo-mask"
+                    aria-hidden="true"
+                ></span>
                 <img
                     src="{{ asset('assets/images/pusdai_dashboard.png') }}"
                     alt="FINUS"
