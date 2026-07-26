@@ -1,5 +1,5 @@
 @extends('layouts.app')
-
+@section('title', 'Dashboard Staff')
 @section('content')
 @php
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');

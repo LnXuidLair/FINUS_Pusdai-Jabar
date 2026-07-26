@@ -18,6 +18,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+Route::view('/visi-misi', 'visi-misi')->name('visi-misi');
+Route::view('/location', 'location')->name('location');
 
 Route::get('/login', fn () => redirect()->route('home'))->name('login');
 Route::get('/register', fn () => redirect()->route('login.jamaah'));
