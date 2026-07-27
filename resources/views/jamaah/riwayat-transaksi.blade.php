@@ -89,31 +89,34 @@
         </header>
 
         <div class="jt-card-body">
-            <form method="GET" action="{{ route('jamaah.riwayat.index') }}" class="jt-filter">
-                <div class="jt-field jt-field-small">
+            <form method="GET" action="{{ route('jamaah.riwayat.index') }}" class="jt-filter" id="filterForm">
+                <div class="jt-field jt-field-wide">
                     <label for="q">Pencarian</label>
-                    <input
-                        id="q"
-                        name="q"
-                        class="jt-control"
-                        value="{{ $filters['q'] ?? '' }}"
-                        placeholder="Contoh: ZISWAF-10 atau keterangan"
-                    >
+                    <div class="jt-search-wrapper">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input
+                            id="q"
+                            name="q"
+                            class="jt-control"
+                            value="{{ $filters['q'] ?? '' }}"
+                            placeholder="Cari referensi atau keterangan..."
+                        >
+                    </div>
                 </div>
 
-                <div class="jt-field jt-field-small">
-                    <label for="jenis">Jenis</label>
-                        <select id="jenis" name="jenis" class="jt-control">
-                            <option value="">Semua jenis</option>
-                            @foreach($jenisLabels as $value => $label)
-                                @if(!in_array($value, ['fidyah', 'shadaqah']))
-                                    <option value="{{ $value }}" @selected(($filters['jenis'] ?? '') === $value)>{{ $label }}</option>
-                                @endif
-                            @endforeach
-                        </select>
+                <div class="jt-field">
+                    <label for="jenis">Jenis ZISWAF</label>
+                    <select id="jenis" name="jenis" class="jt-control">
+                        <option value="">Semua jenis</option>
+                        @foreach($jenisLabels as $value => $label)
+                            @if(!in_array($value, ['fidyah', 'shadaqah', 'zakat_fitrah']))
+                                <option value="{{ $value }}" @selected(($filters['jenis'] ?? '') === $value)>{{ $label }}</option>
+                            @endif
+                        @endforeach
+                    </select>
                 </div>
 
-                <div class="jt-field jt-field-small">
+                <div class="jt-field">
                     <label for="tanggal_mulai">Tanggal Mulai</label>
                     <input
                         type="date"
@@ -124,7 +127,7 @@
                     >
                 </div>
 
-                <div class="jt-field jt-field-small">
+                <div class="jt-field">
                     <label for="tanggal_selesai">Tanggal Selesai</label>
                     <input
                         type="date"
@@ -137,8 +140,8 @@
 
                 <div class="jt-filter-actions">
                     <button type="submit" class="jt-btn jt-btn-primary">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        Terapkan
+                        <i class="fa-solid fa-filter"></i>
+                        Filter
                     </button>
 
                     <a href="{{ route('jamaah.riwayat.index') }}" class="jt-btn">
@@ -236,3 +239,4 @@
     </section>
 </div>
 @endsection
+

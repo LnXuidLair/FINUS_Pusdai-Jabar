@@ -8,10 +8,12 @@
 <style>
     .jamaah-hero {
         border-radius: 24px;
-        background: linear-gradient(135deg, #065f46, #16a34a);
+        background: linear-gradient(135deg, #065f46, #10b981);
         color: white;
         overflow: hidden;
         position: relative;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(6, 95, 70, 0.15);
     }
 
     .jamaah-hero::after {
@@ -211,17 +213,328 @@
         padding: 14px 16px;
         font-size: 14px;
     }
+
+    /* Live Digital Clock styling */
+    .live-clock-wrapper {
+        font-size: 13px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.95);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(0, 0, 0, 0.18);
+        padding: 6px 16px;
+        border-radius: 30px;
+        margin-bottom: 14px;
+        backdrop-filter: blur(4px);
+    }
+
+    /* Quick Actions */
+    .quick-actions-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .btn-quick-action {
+        border: 0;
+        border-radius: 16px;
+        padding: 16px 10px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.12);
+        color: white !important;
+        font-weight: 700;
+        font-size: 13px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(8px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-quick-action:hover {
+        background: #ffffff;
+        color: #065f46 !important;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-quick-action i {
+        font-size: 20px;
+    }
+
+    /* Prayer Times Widget */
+    .prayer-card {
+        border: 0;
+        border-radius: 20px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        overflow: hidden;
+    }
+
+    .prayer-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .prayer-time-item {
+        background: #f8fafc;
+        border: 1.5px solid #f1f5f9;
+        border-radius: 14px;
+        padding: 12px 8px;
+        text-align: center;
+        transition: all 0.25s ease;
+    }
+
+    .prayer-time-item.next-prayer {
+        border-color: #10b981;
+        background: #f0fdf4;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.12);
+        position: relative;
+    }
+
+    .prayer-time-item.next-prayer::before {
+        content: "NANTI";
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #10b981;
+        color: white;
+        font-size: 8px;
+        font-weight: 800;
+        padding: 2px 6px;
+        border-radius: 30px;
+        letter-spacing: 0.05em;
+    }
+
+    .prayer-name {
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .prayer-time-item.next-prayer .prayer-name {
+        color: #047857;
+    }
+
+    .prayer-val {
+        font-size: 16px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .prayer-time-item.next-prayer .prayer-val {
+        color: #065f46;
+    }
+
+    @media (max-width: 767px) {
+        .prayer-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+    }
+
+    /* Agenda & Activities */
+    .agenda-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+        gap: 16px;
+        margin-top: 10px;
+    }
+    .agenda-card-item {
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 20px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .agenda-card-item:hover {
+        transform: translateY(-3px);
+        border-color: #10b981;
+        background: #ffffff;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.06);
+    }
+    .agenda-badge-new {
+        background: #e6fcf0;
+        color: #047857;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 30px;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    /* Expenses Summary */
+    .expense-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+        gap: 16px;
+    }
+    .expense-card-item {
+        background: #f8fafc;
+        border: 1.5px solid #f1f5f9;
+        border-radius: 16px;
+        padding: 16px;
+        transition: all 0.2s ease;
+    }
+    .expense-card-item:hover {
+        border-color: #fca5a5;
+        background: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.05);
+    }
+    .expense-progress-bar {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+    .expense-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ef4444, #f87171);
+        border-radius: 999px;
+        transition: width 0.4s ease;
+    }
+
+    /* ZISWAF Summary Cards */
+    .ziswaf-sum-card {
+        border-radius: 20px;
+        padding: 24px;
+        color: #ffffff !important;
+        position: relative;
+        overflow: hidden;
+        border: 0;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+        transition: all 0.25s ease;
+    }
+    .ziswaf-sum-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+    }
+    .ziswaf-sum-zakat {
+        background: linear-gradient(135deg, #047857, #10b981);
+    }
+    .ziswaf-sum-wakaf {
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+    }
+    .ziswaf-sum-card::after {
+        content: "";
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        right: -30px;
+        bottom: -30px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        pointer-events: none;
+    }
+    .ziswaf-sum-card i {
+        font-size: 42px;
+        position: absolute;
+        right: 24px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.18;
+        pointer-events: none;
+    }
+    .ziswaf-sum-card span {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.9;
+        display: block;
+        margin-bottom: 6px;
+    }
+    .ziswaf-sum-card h4 {
+        font-size: 24px;
+        font-weight: 800;
+        margin: 0;
+        color: white;
+    }
 </style>
 
-<div class="jamaah-hero p-4 p-md-5 mb-4">
+<div class="jamaah-hero mb-4">
     <div class="row align-items-center position-relative" style="z-index: 2;">
-        <div class="col-12">
-            <p class="mb-2 text-white-50">Assalamu'alaikum,</p>
+        <div class="col-lg-7">
+            <div class="live-clock-wrapper">
+                <i class="fa fa-clock"></i> <span id="live_clock_time">--:--:--</span>
+            </div>
+            <p class="mb-1 text-white-50">Assalamu'alaikum,</p>
             <h2 class="text-white font-weight-bold mb-2">{{ $jamaah->name }}</h2>
-            <p class="mb-0 text-white-50">
-                Dashboard jamaah untuk melihat riwayat transaksi, grafik pemasukan jamaah,
-                agenda kegiatan, dan transparansi pengeluaran masjid.
+            <p class="mb-0 text-white-50 small">
+                Selamat datang di sistem FINUS Pusdai Jabar. Di sini Anda dapat memantau riwayat donasi, 
+                arus transparansi pengeluaran masjid, serta melihat agenda kegiatan terupdate.
             </p>
+        </div>
+        <div class="col-lg-5 mt-4 mt-lg-0">
+            <div class="quick-actions-row">
+                <a href="{{ route('jamaah.transaksi.create', 'zakat') }}" class="btn-quick-action">
+                    <i class="fa fa-coins"></i>
+                    Bayar Zakat
+                </a>
+                <a href="{{ route('jamaah.transaksi.create', 'infak') }}" class="btn-quick-action">
+                    <i class="fa fa-hand-holding-heart"></i>
+                    Bayar Infak
+                </a>
+                <a href="{{ route('jamaah.transaksi.create', 'wakaf') }}" class="btn-quick-action">
+                    <i class="fa fa-mosque"></i>
+                    Wakaf
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card prayer-card mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+            <div>
+                <h5 class="mb-1 font-weight-bold text-dark"><i class="fa-solid fa-location-dot text-success mr-1"></i> Jadwal Salat Hari Ini</h5>
+                <small class="text-muted" id="prayer_location_text">Mendeteksi lokasi...</small>
+            </div>
+            <div class="text-md-right mt-2 mt-md-0">
+                <span class="badge badge-soft-success font-weight-bold px-3 py-2" id="next_prayer_countdown">Waktu Salat</span>
+            </div>
+        </div>
+        <div class="prayer-grid" id="prayer_grid_container">
+            <div class="prayer-time-item" id="prayer_Imsak">
+                <div class="prayer-name">Imsak</div>
+                <div class="prayer-val" id="val_Imsak">--:--</div>
+            </div>
+            <div class="prayer-time-item" id="prayer_Fajr">
+                <div class="prayer-name">Subuh</div>
+                <div class="prayer-val" id="val_Fajr">--:--</div>
+            </div>
+            <div class="prayer-time-item" id="prayer_Dhuhr">
+                <div class="prayer-name">Dzuhur</div>
+                <div class="prayer-val" id="val_Dhuhr">--:--</div>
+            </div>
+            <div class="prayer-time-item" id="prayer_Asr">
+                <div class="prayer-name">Ashar</div>
+                <div class="prayer-val" id="val_Asr">--:--</div>
+            </div>
+            <div class="prayer-time-item" id="prayer_Maghrib">
+                <div class="prayer-name">Maghrib</div>
+                <div class="prayer-val" id="val_Maghrib">--:--</div>
+            </div>
+            <div class="prayer-time-item" id="prayer_Isha">
+                <div class="prayer-name">Isya</div>
+                <div class="prayer-val" id="val_Isha">--:--</div>
+            </div>
         </div>
     </div>
 </div>
@@ -298,77 +611,80 @@
     <div class="col-lg-12">
         <div class="card agenda-card mb-4">
             <div class="card-body p-4">
-                <div class="mb-4">
-                    <h5 class="mb-1 font-weight-bold text-dark">Agenda & Kegiatan</h5>
-                    <p class="mb-0 text-muted">Informasi kegiatan masjid untuk jamaah.</p>
+                <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-1 font-weight-bold text-dark">Agenda & Kegiatan Masjid</h5>
+                        <p class="mb-0 text-muted small">Ikuti berbagai kegiatan kajian, sosial, dan ibadah di Masjid Pusdai.</p>
+                    </div>
+                    <span class="badge badge-soft-success font-weight-bold px-3 py-2">Terjadwal</span>
                 </div>
-                <div class="d-flex flex-wrap">
+                <div class="agenda-grid">
                     @forelse(($agendaKegiatan ?? []) as $agenda)
-                        <div class="agenda-item me-3 mb-3" style="flex: 1 1 30%; min-width: 250px;">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <h6 class="mb-1 font-weight-bold text-dark">{{ $agenda['judul'] }}</h6>
-                                    <p class="mb-0 text-muted small"><i class="fa fa-calendar mr-1 text-success"></i> {{ $agenda['hari'] }}</p>
-                                </div>
-                                <span class="agenda-badge">{{ $agenda['kategori'] }}</span>
+                        <div class="agenda-card-item">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h6 class="mb-0 font-weight-bold text-dark" style="font-size: 15px;">{{ $agenda['judul'] }}</h6>
+                                <span class="agenda-badge-new">{{ $agenda['kategori'] }}</span>
                             </div>
-                            <p class="mb-1 text-muted small"><i class="fa fa-clock mr-1 text-success"></i> {{ $agenda['waktu'] }}</p>
-                            <p class="mb-2 text-muted small"><i class="fa fa-map-marker-alt mr-1 text-success"></i> {{ $agenda['lokasi'] }}</p>
-                            <p class="mb-0 text-secondary small">{{ $agenda['deskripsi'] }}</p>
+                            <p class="mb-1 text-muted small"><i class="fa fa-calendar mr-2 text-success"></i> {{ $agenda['hari'] }}</p>
+                            <p class="mb-1 text-muted small"><i class="fa fa-clock mr-2 text-success"></i> {{ $agenda['waktu'] }}</p>
+                            <p class="mb-2 text-muted small"><i class="fa fa-map-marker-alt mr-2 text-success"></i> {{ $agenda['lokasi'] }}</p>
+                            <hr class="my-2" style="border-top: 1px solid #f1f5f9;">
+                            <p class="mb-0 text-secondary small" style="line-height: 1.4;">{{ $agenda['deskripsi'] }}</p>
                         </div>
                     @empty
                         <div class="py-5 text-center w-100">
-                            <i class="fa fa-calendar mb-3 text-muted" style="font-size: 34px;"></i>
-                            <p class="mb-0 text-muted">Belum ada agenda kegiatan.</p>
+                            <i class="fa-regular fa-calendar mb-3 text-muted" style="font-size: 34px;"></i>
+                            <p class="mb-0 text-muted">Belum ada agenda kegiatan saat ini.</p>
                         </div>
                     @endforelse
                 </div>
-                <div class="agenda-note mt-4">Untuk transaksi ZISWAF, gunakan menu di sidebar.</div>
             </div>
         </div>
     </div>
+</div>
 
+    <div class="row">
     <div class="col-lg-12">
         <div class="card finus-card mb-4">
             <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="mb-1 font-weight-bold">Ringkasan Pengeluaran Masjid</h5>
-                    <small class="text-muted">Pengeluaran ditampilkan sederhana berdasarkan kelompok kategori.</small>
+                    <small class="text-muted">Laporan transparansi alokasi dana pengeluaran masjid.</small>
                 </div>
-                <span class="badge badge-soft-danger px-3 py-2">Transparansi</span>
+                <span class="badge badge-soft-danger px-3 py-2 font-weight-bold">Transparansi Keuangan</span>
             </div>
             <div class="card-body px-4">
-                <div class="row">
+                <div class="expense-grid">
                     @forelse($pengeluaranKategori as $item)
                         @php
                             $persen = $totalPengeluaran > 0 ? round(($item->total / $totalPengeluaran) * 100) : 0;
                         @endphp
-                        <div class="col-md-4 mb-4">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="expense-card-item">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
-                                    <h6 class="mb-0 font-weight-bold">{{ $item->kategori_nama ?: 'Lainnya' }}</h6>
-                                    <small class="text-muted">{{ $item->jumlah_transaksi }} transaksi</small>
+                                    <h6 class="mb-1 font-weight-bold text-dark" style="font-size: 14px;">{{ $item->kategori_nama ?: 'Lainnya' }}</h6>
+                                    <small class="text-muted"><i class="fa fa-receipt mr-1 text-danger"></i> {{ $item->jumlah_transaksi }} transaksi</small>
                                 </div>
                                 <div class="text-right">
-                                    <strong class="text-danger">{{ $rupiah($item->total) }}</strong>
-                                    <small class="d-block text-muted">{{ $persen }}%</small>
+                                    <strong class="text-danger d-block" style="font-size: 14.5px;">{{ $rupiah($item->total) }}</strong>
+                                    <small class="text-muted font-weight-bold">{{ $persen }}% dari total</small>
                                 </div>
                             </div>
-                            <div class="progress" style="height: 8px; border-radius: 999px;">
-                                <div class="progress-bar bg-danger" role="progressbar" style="width: {{ $persen }}%; border-radius: 999px;" aria-valuenow="{{ $persen }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="expense-progress-bar">
+                                <div class="expense-progress-fill" style="width: {{ $persen }}%;"></div>
                             </div>
                         </div>
                     @empty
                         <div class="text-center py-5 w-100">
-                            <i class="fa fa-wallet text-muted mb-3" style="font-size: 32px;"></i>
-                            <p class="text-muted mb-0">Belum ada data pengeluaran.</p>
+                            <i class="fa-solid fa-wallet text-muted mb-3" style="font-size: 32px;"></i>
+                            <p class="text-muted mb-0">Belum ada data pengeluaran masjid.</p>
                         </div>
                     @endforelse
                 </div>
                 @if($totalPengeluaran > 0)
-                    <div class="border-top pt-3 mt-2 d-flex justify-content-between align-items-center">
-                        <span class="font-weight-bold">Total Pengeluaran</span>
-                        <h5 class="mb-0 text-danger font-weight-bold">{{ $rupiah($totalPengeluaran) }}</h5>
+                    <div class="border-top pt-3 mt-4 d-flex justify-content-between align-items-center">
+                        <span class="font-weight-bold text-secondary">Total Seluruh Pengeluaran</span>
+                        <h4 class="mb-0 text-danger font-weight-bold">{{ $rupiah($totalPengeluaran) }}</h4>
                     </div>
                 @endif
             </div>
@@ -377,31 +693,35 @@
 </div>
 
 <div class="card finus-card mb-4">
-    <div class="card-header bg-white border-0 pt-4 px-4">
-        <h5 class="mb-1 font-weight-bold">Ringkasan Dana ZISWAF</h5>
-        <small class="text-muted">Informasi sederhana untuk membantu jamaah memahami arus dana.</small>
+    <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-1 font-weight-bold">Ringkasan Saldo ZISWAF</h5>
+            <small class="text-muted">Informasi saldo akumulasi untuk memantau arus penerimaan dana umat.</small>
+        </div>
+        <span class="badge badge-soft-success px-3 py-2 font-weight-bold">Arus Kas ZISWAF</span>
     </div>
 
     <div class="card-body px-4">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <div class="p-3 rounded bg-light">
-                    <small class="text-muted">Total Zakat</small>
-                    <h5 class="mb-0 text-success">{{ $rupiah($totalZakat) }}</h5>
+        <div class="row mb-3">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="ziswaf-sum-card ziswaf-sum-zakat">
+                    <i class="fa fa-coins"></i>
+                    <span>Total Zakat</span>
+                    <h4>{{ $rupiah($totalZakat) }}</h4>
                 </div>
             </div>
 
-            <div class="col-md-6 mb-3">
-                <div class="p-3 rounded bg-light">
-                    <small class="text-muted">Total Wakaf</small>
-                    <h5 class="mb-0 text-primary">{{ $rupiah($totalWakaf) }}</h5>
+            <div class="col-md-6">
+                <div class="ziswaf-sum-card ziswaf-sum-wakaf">
+                    <i class="fa fa-mosque"></i>
+                    <span>Total Wakaf</span>
+                    <h4>{{ $rupiah($totalWakaf) }}</h4>
                 </div>
             </div>
         </div>
 
-        <p class="mb-0 text-muted">
-            Catatan: informasi ini menampilkan ringkasan dana ZISWAF yang tercatat pada sistem.
-            Untuk laporan resmi, tetap gunakan laporan keuangan admin.
+        <p class="mb-0 text-muted small italic">
+            * Catatan: Informasi ini menampilkan akumulasi dana ZISWAF yang tercatat pada sistem FINUS. Untuk laporan rincian slip/jurnal resmi, tetap gunakan data dari Administrator.
         </p>
     </div>
 </div>
@@ -472,6 +792,121 @@
                 }
             }
         });
+    }
+
+    // Live Clock
+    const clockSpan = document.getElementById('live_clock_time');
+    if (clockSpan) {
+        setInterval(() => {
+            const now = new Date();
+            clockSpan.textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+        }, 1000);
+    }
+
+    // Geolocation & Prayer Times
+    const locationText = document.getElementById('prayer_location_text');
+    const defaultLat = -6.9025; // Bandung (Pusdai)
+    const defaultLng = 107.6256; // Bandung (Pusdai)
+
+    function getPrayerTimes(lat, lng, isCustomLoc = false) {
+        if (locationText) {
+            locationText.textContent = isCustomLoc ? `Lokasi Anda: ${lat.toFixed(4)}, ${lng.toFixed(4)}` : 'Lokasi: Bandung (Pusdai)';
+        }
+
+        const date = new Date().toISOString().split('T')[0];
+        fetch(`https://api.aladhan.com/v1/timings/${date}?latitude=${lat}&longitude=${lng}&method=2`)
+            .then(res => res.json())
+            .then(data => {
+                const timings = data.data.timings;
+                const prayers = ['Imsak', 'Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+                
+                prayers.forEach(p => {
+                    const cellVal = document.getElementById(`val_${p}`);
+                    if (cellVal) {
+                        cellVal.textContent = timings[p] || '--:--';
+                    }
+                });
+
+                // Find next prayer
+                updateNextPrayer(timings);
+            })
+            .catch(err => {
+                console.error(err);
+                if (locationText) locationText.textContent = 'Gagal memuat jadwal salat';
+            });
+    }
+
+    function updateNextPrayer(timings) {
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        const prayerMinutes = {
+            'Imsak': parseMinutes(timings['Imsak']),
+            'Subuh': parseMinutes(timings['Fajr']),
+            'Dzuhur': parseMinutes(timings['Dhuhr']),
+            'Ashar': parseMinutes(timings['Asr']),
+            'Maghrib': parseMinutes(timings['Maghrib']),
+            'Isya': parseMinutes(timings['Isha'])
+        };
+
+        const prayerIds = {
+            'Imsak': 'Imsak',
+            'Subuh': 'Fajr',
+            'Dzuhur': 'Dhuhr',
+            'Ashar': 'Asr',
+            'Maghrib': 'Maghrib',
+            'Isya': 'Isha'
+        };
+
+        // Reset highlight
+        document.querySelectorAll('.prayer-time-item').forEach(el => el.classList.remove('next-prayer'));
+
+        let nextName = 'Imsak';
+        let nextTime = timings['Imsak'];
+        let found = false;
+
+        for (const [name, mins] of Object.entries(prayerMinutes)) {
+            if (mins > currentMinutes) {
+                nextName = name;
+                nextTime = timings[prayerIds[name]];
+                const targetId = `prayer_${prayerIds[name]}`;
+                const targetEl = document.getElementById(targetId);
+                if (targetEl) targetEl.classList.add('next-prayer');
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            nextName = 'Imsak';
+            const targetEl = document.getElementById('prayer_Imsak');
+            if (targetEl) targetEl.classList.add('next-prayer');
+        }
+
+        const countdownEl = document.getElementById('next_prayer_countdown');
+        if (countdownEl) {
+            countdownEl.textContent = `Salat Berikutnya: ${nextName} (${nextTime})`;
+        }
+    }
+
+    function parseMinutes(timeStr) {
+        if (!timeStr) return 0;
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                getPrayerTimes(pos.coords.latitude, pos.coords.longitude, true);
+            },
+            (err) => {
+                console.warn("Geolocation blocked/failed, using default: ", err);
+                getPrayerTimes(defaultLat, defaultLng, false);
+            }
+        );
+    } else {
+        getPrayerTimes(defaultLat, defaultLng, false);
     }
 })();
 </script>

@@ -821,10 +821,9 @@ class JamaahController extends Controller
         return match ($jenis) {
             'zakat' => [
                 'title' => 'Transaksi Zakat',
-                'subtitle' => 'Catat transaksi zakat maal, zakat fitrah, atau zakat penghasilan.',
+                'subtitle' => 'Catat transaksi zakat maal atau zakat penghasilan.',
                 'jenisOptions' => [
                     'zakat_maal' => 'Zakat Maal',
-                    'zakat_fitrah' => 'Zakat Fitrah',
                     'zakat_penghasilan' => 'Zakat Penghasilan',
                 ],
                 'metodeOptions' => $metodeOptions,

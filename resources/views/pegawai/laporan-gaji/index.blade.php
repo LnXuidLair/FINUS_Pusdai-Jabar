@@ -10,11 +10,11 @@
         position: relative;
         overflow: hidden;
         border-radius: 24px;
-        background: linear-gradient(135deg, #065f22 0%, #16a34a 100%);
+        background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
         color: #ffffff;
         padding: 30px;
         margin-bottom: 24px;
-        box-shadow: 0 18px 38px rgba(22, 163, 74, .20);
+        box-shadow: 0 15px 35px rgba(6, 95, 70, 0.15);
     }
 
     .finus-report-hero::before {
@@ -51,21 +51,21 @@
     .finus-report-hero h3 {
         margin-bottom: 8px;
         color: #ffffff;
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 800;
     }
 
     .finus-report-hero p {
         margin-bottom: 0;
-        color: rgba(255, 255, 255, .84);
+        color: rgba(255, 255, 255, .88);
     }
 
     .finus-report-badge {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 18px;
-        border-radius: 14px;
+        padding: 10px 16px;
+        border-radius: 12px;
         background: rgba(255, 255, 255, .16);
         color: #ffffff;
         font-weight: 800;
@@ -77,126 +77,187 @@
         border: 0;
         border-radius: 20px;
         background: #ffffff;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
+        box-shadow: 0 10px 28px rgba(15, 23, 42, .05);
         overflow: hidden;
+        border: 1px solid #f1f5f9;
+        transition: all 0.2s ease;
+    }
+
+    .finus-summary-card:hover {
+        transform: translateY(-2px);
     }
 
     .finus-summary-card .card-body {
-        padding: 24px;
+        padding: 22px;
     }
 
     .finus-summary-label {
         margin-bottom: 8px;
         color: #64748b;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
     }
 
     .finus-summary-value {
         margin-bottom: 0;
-        color: #065f22;
+        color: #065f46;
         font-size: 24px;
-        font-weight: 900;
+        font-weight: 800;
     }
 
     .finus-filter {
         border: 0;
         border-radius: 20px;
         background: #ffffff;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
+        box-shadow: 0 10px 28px rgba(15, 23, 42, .05);
         padding: 22px;
         margin-bottom: 24px;
+        border: 1px solid #f1f5f9;
     }
 
     .finus-filter label {
-        color: #0f172a;
-        font-weight: 700;
+        color: #334155;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        display: block;
     }
 
-    .finus-input {
-        height: 44px;
+    .finus-control {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 14px;
+        border: 1.5px solid #e2e8f0;
         border-radius: 12px;
-        border: 1px solid #cbd5e1;
-        box-shadow: none;
+        outline: none;
+        background: #FFFFFF;
+        color: #0f172a;
+        font-size: 13px;
+        transition: all 0.2s ease;
     }
 
-    .finus-input:focus {
-        border-color: #16a34a;
-        box-shadow: 0 0 0 4px rgba(22, 163, 74, .12);
+    .finus-control:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, .08);
     }
 
     .finus-btn-primary {
         border: 0;
         border-radius: 12px;
-        background: linear-gradient(135deg, #047857, #16a34a);
+        background: linear-gradient(135deg, #065f46, #10b981);
         color: #ffffff;
-        font-weight: 700;
-        padding: 10px 18px;
+        font-weight: 800;
+        padding: 12px 20px;
+        font-size: 13px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .finus-btn-primary:hover {
-        color: #ffffff;
-        background: linear-gradient(135deg, #065f46, #15803d);
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
     }
 
     .finus-table-card {
         border: 0;
         border-radius: 20px;
         background: #ffffff;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
+        box-shadow: 0 10px 28px rgba(15, 23, 42, .05);
         overflow: hidden;
+        border: 1px solid #f1f5f9;
     }
 
     .finus-table-card .card-header {
         background: #ffffff;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 22px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 20px 24px;
     }
 
     .finus-table-card .card-header h5 {
         margin-bottom: 4px;
         color: #0f172a;
         font-weight: 800;
+        font-size: 16px;
     }
 
     .finus-table-card .card-header small {
         color: #64748b;
+        font-size: 12px;
     }
 
-    .table thead th {
-        border-top: 0;
+    .table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table th, .table td {
+        padding: 14px 20px;
+        border-bottom: 1.5px solid #f1f5f9;
+        font-size: 13.5px;
+        vertical-align: middle;
+        transition: all 0.2s ease;
+    }
+
+    .table th {
+        background: #f8fafc;
         color: #475569;
-        font-size: 13px;
+        font-size: 10.5px;
         font-weight: 800;
+        letter-spacing: .06em;
         text-transform: uppercase;
-        letter-spacing: .03em;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .table tbody tr:hover td {
+        background-color: #f8fafc;
     }
 
     .badge-gaji {
-        display: inline-block;
-        border-radius: 999px;
-        padding: 7px 12px;
-        font-size: 12px;
-        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .badge-gaji::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
     }
 
     .badge-dibayar,
     .badge-selesai {
         background: #dcfce7;
-        color: #166534;
+        color: #15803d;
     }
 
     .badge-pending,
     .badge-diproses,
     .badge-belum-dibayar {
         background: #fef3c7;
-        color: #92400e;
+        color: #b45309;
     }
 
     .badge-gagal,
     .badge-ditolak {
         background: #fee2e2;
-        color: #991b1b;
+        color: #b91c1c;
     }
 
     @media (max-width: 991.98px) {
@@ -248,25 +309,25 @@
 
 <div class="finus-filter">
     <form method="GET" action="{{ route('pegawai.laporan-gaji.index') }}">
-        <div class="row align-items-end">
-            <div class="col-md-4 mb-3 mb-md-0">
+        <div class="d-flex flex-wrap align-items-end" style="gap: 14px;">
+            <div style="flex: 1 1 200px; min-width: 180px;">
                 <label for="bulan">Filter Bulan</label>
                 <input
                     type="month"
                     name="bulan"
                     id="bulan"
                     value="{{ $bulan }}"
-                    class="form-control finus-input"
+                    class="finus-control"
                 >
             </div>
 
-            <div class="col-md-8">
+            <div>
                 <button type="submit" class="finus-btn-primary">
-                    <i class="ti-search mr-1"></i>
+                    <i class="fa-solid fa-magnifying-glass mr-1"></i>
                     Tampilkan
                 </button>
 
-                <a href="{{ route('pegawai.laporan-gaji.index') }}" class="btn btn-light ml-2">
+                <a href="{{ route('pegawai.laporan-gaji.index') }}" class="btn btn-light ml-2 font-weight-bold" style="border-radius: 12px; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px;">
                     Reset
                 </a>
             </div>
