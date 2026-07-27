@@ -66,7 +66,7 @@
     </div>
 
     <button type="submit" class="auth-button" data-loading-text="Membuat akun..." data-loading-title="Membuat akun admin...">
-        Buat Akun Admin
+        Buat Akun
     </button>
 </form>
 @endsection
