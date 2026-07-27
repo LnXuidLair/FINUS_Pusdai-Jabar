@@ -2701,6 +2701,38 @@
             }
         }
 
+
+        /* PUBLIC HOMEPAGE — hero tetap sederhana, seluruh peran masuk dari dropdown Login */
+        .finus-hero-grid {
+            grid-template-columns: minmax(0, 900px) !important;
+            justify-content: start;
+        }
+
+        .finus-hero-content {
+            max-width: 900px;
+        }
+
+        .finus-hero-description {
+            max-width: 760px;
+        }
+
+        .finus-hero-actions {
+            width: fit-content;
+        }
+
+        @media (max-width: 980px) {
+            .finus-hero-grid {
+                grid-template-columns: minmax(0, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .finus-hero-actions,
+            .finus-primary-button {
+                width: 100%;
+            }
+        }
+
     </style>
 </head>
 
@@ -2907,11 +2939,6 @@
                 Keunggulan FINUS
             </a>
 
-            <a href="#layanan" class="finus-mobile-menu-link">
-                <span class="finus-mobile-menu-link-icon" aria-hidden="true">≡</span>
-                Akses Sistem
-            </a>
-
             <div class="finus-mobile-menu-title">Informasi lainnya</div>
 
             <a href="#kontak" class="finus-mobile-menu-link">
@@ -2961,14 +2988,11 @@
                         dan transparan.
                     </p>
 
-                    <div class="finus-hero-actions">
+                    <div class="finus-hero-actions" id="layanan">
                         <a href="{{ route('login.jamaah') }}" class="finus-primary-button"
                            data-page-loading="Membuka layanan jamaah...">
                             Masuk sebagai Jamaah <span aria-hidden="true">→</span>
                         </a>
-                        <button type="button" class="finus-secondary-button" data-open-role-selector>
-                            Login Operator / Pegawai <span aria-hidden="true">⌄</span>
-                        </button>
                     </div>
 
                     <div class="finus-hero-meta">
@@ -2977,51 +3001,6 @@
                         <div class="finus-meta-item"><span class="finus-meta-icon">⌁</span>Responsif di semua perangkat</div>
                     </div>
                 </div>
-
-                <aside class="finus-role-card finus-scroll-card" style="--scroll-delay: 100ms" id="layanan" aria-label="Pilihan akses FINUS">
-                    <span class="finus-role-card-kicker">Akses Sistem</span>
-                    <h2 class="finus-role-title">Masuk sesuai peran Anda</h2>
-                    <p class="finus-role-copy">
-                        Setiap pengguna mendapatkan akses yang disesuaikan dengan tugas dan kebutuhannya.
-                    </p>
-
-                    <div class="finus-role-list">
-                        <button type="button" class="finus-role-link"
-                                data-access-role="admin" data-access-url="{{ route('login.admin') }}">
-                            <span class="finus-role-icon">◆</span>
-                            <span>
-                                <span class="finus-role-name">Operator</span>
-                                <span class="finus-role-description">Kelola data dan laporan FINUS</span>
-                            </span>
-                            <span class="finus-role-arrow">→</span>
-                        </button>
-
-                        <button type="button" class="finus-role-link"
-                                data-access-role="staff" data-access-url="{{ route('login.staff') }}">
-                            <span class="finus-role-icon">♟</span>
-                            <span>
-                                <span class="finus-role-name">Pegawai</span>
-                                <span class="finus-role-description">Presensi dan aktivitas kerja</span>
-                            </span>
-                            <span class="finus-role-arrow">→</span>
-                        </button>
-
-                        <a href="{{ route('login.jamaah') }}" class="finus-role-link"
-                           data-page-loading="Membuka login jamaah...">
-                            <span class="finus-role-icon">♙</span>
-                            <span>
-                                <span class="finus-role-name">Jamaah</span>
-                                <span class="finus-role-description">Transaksi dan layanan jamaah</span>
-                            </span>
-                            <span class="finus-role-arrow">→</span>
-                        </a>
-                    </div>
-
-                    <div class="finus-role-security">
-                        <span aria-hidden="true">●</span>
-                        <span>Login Operator dan Pegawai dilindungi dengan kode akses FINUS.</span>
-                    </div>
-                </aside>
             </div>
         </section>
 
@@ -3040,9 +3019,9 @@
                     </h2>
 
                     <p class="finus-section-copy">
-                        FINUS menghubungkan kebutuhan operator, pegawai,
-                        dan jamaah melalui tampilan yang sederhana serta
-                        alur kerja yang terintegrasi.
+                        FINUS menghadirkan layanan Jamaah yang sederhana, transparan,
+                        dan mudah digunakan, sementara pengelolaan internal tetap
+                        berjalan melalui portal khusus Operator dan Pegawai.
                     </p>
                 </div>
 
@@ -3202,16 +3181,17 @@
                     <details class="finus-faq-item finus-scroll-card" style="--scroll-delay: 0ms">
                         <summary>Siapa saja yang dapat menggunakan FINUS?</summary>
                         <p>
-                            FINUS menyediakan akses untuk Operator, Pegawai, dan Jamaah. Setiap peran
-                            memiliki menu dan kewenangan yang disesuaikan dengan kebutuhannya.
+                            Halaman publik FINUS digunakan oleh Jamaah untuk mengakses layanan dan transaksi.
+                            Operator serta Pegawai menggunakan portal pengelola yang terpisah.
                         </p>
                     </details>
 
                     <details class="finus-faq-item finus-scroll-card" style="--scroll-delay: 90ms">
-                        <summary>Mengapa Operator dan Pegawai membutuhkan kode akses?</summary>
+                        <summary>Bagaimana Operator dan Pegawai masuk ke FINUS?</summary>
                         <p>
-                            Kode akses digunakan sebagai lapisan verifikasi awal sebelum pengguna
-                            membuka halaman login internal FINUS.
+                            Operator dan Pegawai masuk melalui portal pengelola terpisah. Tautannya
+                            tersedia secara sederhana di bagian footer agar halaman utama tetap fokus
+                            pada layanan publik untuk Jamaah.
                         </p>
                     </details>
 
@@ -3270,7 +3250,6 @@
                 <a href="#informasi" class="finus-footer-link">Tentang FINUS</a>
                 <a href="{{ route('visi-misi') }}" class="finus-footer-link" data-page-loading="Membuka halaman visi dan misi...">Visi &amp; Misi</a>
                 <a href="#keunggulan" class="finus-footer-link">Keunggulan</a>
-                <a href="#layanan" class="finus-footer-link">Akses Sistem</a>
                 <a href="{{ route('location') }}" class="finus-footer-link" data-page-loading="Membuka peta lokasi PUSDAI...">Location</a>
                 <a href="#faq" class="finus-footer-link">FAQ</a>
             </nav>
