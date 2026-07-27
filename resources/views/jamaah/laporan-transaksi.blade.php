@@ -7,7 +7,7 @@
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
 
     $laporanJenisFilterLabels = collect($jenisLabels)
-        ->except(['shadaqah', 'fidyah'])
+        ->except(['shadaqah', 'fidyah', 'zakat_fitrah'])
         ->all();
 
     $summaryCards = [
@@ -66,21 +66,13 @@
                 Riwayat
             </a>
 
-            <a
-                class="jt-btn jt-btn-soft"
-                href="{{ route('jamaah.laporan.export', request()->query()) }}"
-            >
-                <i class="fa-solid fa-file-csv"></i>
-                Export CSV
-            </a>
-
             <button
                 type="button"
                 class="jt-btn jt-btn-primary"
                 onclick="window.print()"
             >
-                <i class="fa-solid fa-print"></i>
-                Cetak
+                <i class="fa-solid fa-file-pdf"></i>
+                Cetak PDF
             </button>
         </div>
     </section>
@@ -97,7 +89,7 @@
         </header>
 
         <div class="jt-card-body">
-            <form method="GET" action="{{ route('jamaah.laporan.index') }}" class="jt-filter">
+            <form method="GET" action="{{ route('jamaah.laporan.index') }}" class="jt-filter" id="filterForm">
                 <div class="jt-field">
                     <label for="tanggal_mulai">Tanggal Mulai</label>
                     <input
@@ -123,7 +115,7 @@
                 </div>
 
                 <div class="jt-field">
-                    <label for="jenis">Jenis</label>
+                    <label for="jenis">Jenis ZISWAF</label>
                     <select id="jenis" name="jenis" class="jt-control">
                         <option value="">Semua jenis</option>
                         @foreach($laporanJenisFilterLabels as $value => $label)
@@ -135,7 +127,7 @@
                 </div>
 
                 <div class="jt-field">
-                    <label for="status">Status</label>
+                    <label for="status">Status Verifikasi</label>
                     <select id="status" name="status" class="jt-control">
                         <option value="">Semua status</option>
 
@@ -436,6 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
 });
 </script>
 @endpush

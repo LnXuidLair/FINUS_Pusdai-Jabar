@@ -242,55 +242,110 @@
     }
 
     .jt-card-body {
-        padding: 18px;
+        padding: 20px;
     }
 
     .jt-filter {
         display: flex;
-        flex-wrap: nowrap;
-        gap: 13px;
+        flex-wrap: wrap;
+        gap: 16px;
         align-items: flex-end;
     }
 
     .jt-field {
-        flex: 1 1 150px;
-        min-width: 120px;
+        flex: 1 1 180px;
+        min-width: 140px;
     }
 
     .jt-field-wide {
-        flex: 1 1 250px;
+        flex: 2 1 280px;
     }
 
     .jt-field-small {
-        flex: 0 1 100px;
+        flex: 1 1 150px;
     }
 
     .jt-field label {
         display: block;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         color: #334155;
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 800;
-        letter-spacing: .04em;
+        letter-spacing: .05em;
         text-transform: uppercase;
+    }
+
+    .jt-search-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .jt-search-wrapper i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--jt-muted);
+        font-size: 13px;
+        pointer-events: none;
+    }
+
+    .jt-search-wrapper .jt-control {
+        padding-left: 36px;
     }
 
     .jt-control {
         width: 100%;
-        min-height: 42px;
-        padding: 9px 11px;
-        border: 1px solid var(--jt-border);
-        border-radius: 11px;
+        min-height: 44px;
+        padding: 10px 14px;
+        border: 1.5px solid var(--jt-border);
+        border-radius: 12px;
         outline: none;
         background: #FFFFFF;
         color: var(--jt-text);
-        font-size: 12px;
-        transition: .2s ease;
+        font-size: 13px;
+        transition: all 0.2s ease;
     }
 
     .jt-control:focus {
-        border-color: rgba(23, 155, 64, .65);
-        box-shadow: 0 0 0 4px rgba(23, 155, 64, .10);
+        border-color: var(--jt-green);
+        box-shadow: 0 0 0 4px rgba(23, 155, 64, .12);
+    }
+
+    /* Filter Pills for ZISWAF Types */
+    .jt-filter-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 6px;
+    }
+
+    .jt-pill {
+        border: 1.5px solid var(--jt-border);
+        padding: 8px 16px;
+        border-radius: 99px;
+        font-size: 11.5px;
+        font-weight: 700;
+        background: #ffffff;
+        color: var(--jt-text);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .jt-pill:hover {
+        border-color: var(--jt-green);
+        color: var(--jt-green-dark);
+        background-color: var(--jt-green-soft);
+    }
+
+    .jt-pill.active {
+        background-color: var(--jt-green);
+        border-color: var(--jt-green);
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(23, 155, 64, 0.15);
     }
 
     .jt-filter-actions {
@@ -299,6 +354,7 @@
         gap: 8px;
         align-self: flex-end;
         margin-left: auto;
+        padding-bottom: 2px;
     }
 
     .jt-table-wrap {
@@ -308,52 +364,58 @@
     .jt-table {
         width: 100%;
         margin: 0;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
     }
 
     .jt-table th,
     .jt-table td {
-        padding: 13px 14px;
-        border-bottom: 1px solid #EDF1EE;
-        font-size: 11px;
+        padding: 14px 16px;
+        border-bottom: 1.5px solid #f1f5f9;
+        font-size: 12.5px;
         vertical-align: middle;
+        transition: all 0.2s ease;
     }
 
     .jt-table th {
-        background: #F7FAF8;
-        color: var(--jt-muted);
-        font-size: 9.5px;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 10.5px;
         font-weight: 800;
-        letter-spacing: .05em;
+        letter-spacing: .06em;
         text-transform: uppercase;
         white-space: nowrap;
+        border-bottom: 2px solid #e2e8f0;
     }
 
-    .jt-table tbody tr:hover {
-        background: #FBFDFB;
+    .jt-table tbody tr:hover td {
+        background-color: #f8fafc;
     }
 
     .jt-reference {
         color: var(--jt-green-dark);
-        font-weight: 800;
+        font-weight: 700;
         white-space: nowrap;
+        font-size: 12px;
     }
 
     .jt-money {
         color: var(--jt-green-dark);
         font-weight: 800;
         white-space: nowrap;
+        font-size: 13.5px;
     }
 
     .jt-badge {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 5px 8px;
-        border-radius: 8px;
-        font-size: 9.5px;
-        font-weight: 800;
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 11px;
+        font-weight: 700;
         white-space: nowrap;
+        border: 0;
     }
 
     .jt-badge::before {
@@ -365,28 +427,28 @@
     }
 
     .jt-badge-pending {
-        background: #FFF7E8;
-        color: #B86B00;
+        background: #fef3c7;
+        color: #d97706;
     }
 
     .jt-badge-diterima {
-        background: #EAF8EE;
-        color: #117A32;
+        background: #dcfce7;
+        color: #15803d;
     }
 
     .jt-badge-ditolak {
-        background: #FFF0F0;
-        color: #C8343A;
+        background: #fee2e2;
+        color: #b91c1c;
     }
 
     .jt-type {
         display: inline-flex;
-        padding: 5px 8px;
+        padding: 5px 10px;
         border-radius: 8px;
-        background: #EDF4FF;
-        color: #2356A8;
-        font-size: 9.5px;
-        font-weight: 800;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 10.5px;
+        font-weight: 700;
         white-space: nowrap;
     }
 
@@ -394,19 +456,22 @@
         max-width: 260px;
         color: var(--jt-muted);
         line-height: 1.55;
+        font-size: 12px;
     }
 
     .jt-admin-note {
         display: block;
         margin-top: 4px;
         color: var(--jt-red);
-        font-size: 9.5px;
+        font-size: 10px;
+        font-weight: 600;
     }
 
     .jt-empty {
-        padding: 34px 20px !important;
+        padding: 40px 20px !important;
         color: var(--jt-muted);
         text-align: center;
+        font-size: 13px;
     }
 
     .jt-pagination {
