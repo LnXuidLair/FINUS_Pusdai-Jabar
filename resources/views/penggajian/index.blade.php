@@ -740,6 +740,7 @@
 @endpush
 
 @section('content')
+@include('layouts.partials.finus-ui')
 <div class="finus-data-page" data-finus-data-page>
     <section class="finus-data-hero">
         <div class="finus-data-hero-left">

@@ -782,6 +782,7 @@
 @endpush
 
 @section('content')
+@include('layouts.partials.finus-ui')
 <div class="jm-page">
     <section class="jm-hero">
         <div class="jm-hero-left">

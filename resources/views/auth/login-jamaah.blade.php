@@ -2,42 +2,53 @@
 
 @section('title', 'FINUS | Login Jamaah')
 @section('header-title', 'Selamat Datang Jamaah')
+@section('panel-eyebrow', 'Akses Jamaah')
 @section('panel-title', 'Login Jamaah')
 @section('panel-copy', 'Masuk menggunakan email yang telah diverifikasi.')
 @section('hero-title', 'Masjid PUSDAI Jawa Barat')
-@section('hero-copy', 'Terhubung dengan informasi dan layanan keuangan Masjid PUSDAI secara transparan.')
+@section('hero-copy', 'Terhubung dengan informasi dan layanan keuangan Masjid PUSDAI secara mudah dan transparan.')
 
 @section('content')
 <form method="POST" action="{{ route('login.jamaah') }}" class="auth-form" data-loading-title="Memeriksa akun jamaah...">
     @csrf
 
-    <div>
-        <label for="email" class="auth-label"><span class="auth-label-icon">✉</span>Alamat Email</label>
-        <input id="email" type="email" name="email" value="{{ old('email') }}"
-               class="auth-field" placeholder="nama@email.com"
-               autocomplete="email" required autofocus>
-        @error('email')<p class="auth-error">{{ $message }}</p>@enderror
+    <div class="auth-context-card">
+        <span class="auth-context-icon" aria-hidden="true">J</span>
+        <div>
+            <p class="auth-context-title">Portal layanan jamaah</p>
+            <p class="auth-context-copy">Gunakan akun yang sudah menyelesaikan verifikasi email.</p>
+        </div>
     </div>
 
-    <div>
-        <label for="password" class="auth-label"><span class="auth-label-icon">●</span>Password</label>
+    <div class="auth-field-group">
+        <label for="email" class="auth-label"><span class="auth-label-icon" aria-hidden="true">@</span>Alamat Email <span class="auth-required">*</span></label>
+        <input id="email" type="email" name="email" value="{{ old('email') }}"
+               class="auth-field" placeholder="nama@email.com"
+               autocomplete="username" inputmode="email" required autofocus
+               @error('email') aria-invalid="true" aria-describedby="email-error" @enderror>
+        @error('email')<p class="auth-error" id="email-error" role="alert">{{ $message }}</p>@enderror
+    </div>
+
+    <div class="auth-field-group">
+        <label for="password" class="auth-label"><span class="auth-label-icon" aria-hidden="true">••</span>Password <span class="auth-required">*</span></label>
         <div class="auth-input-wrap">
             <input id="password" type="password" name="password" class="auth-field auth-password-field"
-                   placeholder="Masukkan password" autocomplete="current-password" required>
-            <button type="button" data-toggle-password data-target="#password" aria-label="Tampilkan password">
-                <img src="{{ asset('assets/images/ShowPassword.png') }}" alt="Tampilkan password">
+                   placeholder="Masukkan password" autocomplete="current-password" required
+                   @error('password') aria-invalid="true" aria-describedby="password-error" @enderror>
+            <button type="button" data-toggle-password data-target="#password" aria-label="Tampilkan password" aria-pressed="false">
+                <img src="{{ asset('assets/images/ShowPassword.png') }}" alt="">
             </button>
         </div>
-        @error('password')<p class="auth-error">{{ $message }}</p>@enderror
+        @error('password')<p class="auth-error" id="password-error" role="alert">{{ $message }}</p>@enderror
     </div>
 
     <div class="auth-form-row">
-        <label class="auth-checkbox"><input type="checkbox" name="remember">Ingat saya</label>
-        <a href="{{ route('password.request') }}" class="auth-link text-xs">Lupa password?</a>
+        <label class="auth-checkbox"><input type="checkbox" name="remember" value="1" @checked(old('remember'))>Ingat saya</label>
+        <a href="{{ route('password.request') }}" class="auth-link auth-link-small">Lupa password?</a>
     </div>
 
     <button type="submit" class="auth-button" data-loading-text="Sedang masuk..." data-loading-title="Memeriksa akun jamaah...">
-        Masuk
+        Masuk sebagai Jamaah
     </button>
 
     <p class="auth-footer-text">

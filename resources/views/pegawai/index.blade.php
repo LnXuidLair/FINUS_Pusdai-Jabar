@@ -341,6 +341,7 @@
 @endpush
 
 @section('content')
+@include('layouts.partials.finus-ui')
 <div class="employee-page">
     <section class="employee-hero">
         <div class="employee-hero-left">

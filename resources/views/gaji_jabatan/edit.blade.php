@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@include('layouts.partials.finus-ui')
 <style>
     .finus-form-card {
         border: 0;

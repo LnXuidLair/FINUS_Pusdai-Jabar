@@ -1,8 +1,3 @@
-<link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
->
-
 <style>
     :root {
         --sidebar-dark: #0b431d;
@@ -469,6 +464,64 @@
             min-height: 48px !important;
         }
     }
+
+    /* FINUS SIDEBAR COMPACT UPGRADE */
+    .sidebar .logo {
+        min-height: 164px !important;
+        padding-top: 20px !important;
+        padding-bottom: 18px !important;
+    }
+    .sidebar .logo img {
+        max-width: 118px !important;
+        max-height: 72px !important;
+        margin-bottom: 8px !important;
+    }
+    .sidebar .logo-title {
+        font-size: 16px !important;
+        letter-spacing: 3px !important;
+    }
+    .finus-sidebar-role-chip {
+        position: relative;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        margin-top: 10px;
+        padding: 0 9px;
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 999px;
+        background: rgba(255,255,255,.10);
+        color: rgba(255,255,255,.84);
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+    .sidebar ul { padding-top: 12px !important; }
+    .sidebar ul li a {
+        min-height: 46px !important;
+        border-radius: 13px !important;
+    }
+    .sidebar ul li a.active {
+        box-shadow: 0 9px 22px rgba(0,45,16,.18), inset 0 1px 0 rgba(255,255,255,.13) !important;
+    }
+    .sidebar ul li a.active::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #B7FFBE;
+        box-shadow: 0 0 0 4px rgba(183,255,190,.12);
+        transform: translateY(-50%);
+    }
+    .sidebar .nano-content { scrollbar-width: thin; scrollbar-color: rgba(183,255,190,.30) transparent; }
+    @media (max-width: 991.98px) {
+        .sidebar .logo { min-height: 148px !important; }
+    }
+
 </style>
 
 
@@ -1009,6 +1062,7 @@
 
                 <div class="logo-title">ADMIN FINUS</div>
                 <div class="logo-sub-title">Management FINUS</div>
+                <div class="finus-sidebar-role-chip">Administrator</div>
             </div>
 
             <ul>

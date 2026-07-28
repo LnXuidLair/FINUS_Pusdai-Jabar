@@ -1,217 +1,120 @@
 @extends('layouts.app')
-
+@section('title', 'Tambah Pegawai')
+@section('hide-page-header', '1')
 @section('content')
-<style>
-/* Polished card for Pegawai create */
-.admin-card { border-radius:12px; border:1px solid #e6f6ff; box-shadow:0 18px 40px rgba(2,6,23,0.06); overflow:hidden; }
-.admin-card .card-body { padding:24px; }
-.admin-title { font-size:18px; font-weight:700; color:#fff; }
-.admin-subtitle { font-size:13px; color:rgba(255,255,255,0.92); }
-.form-group label { font-size:13px; font-weight:600; color:#334155; }
-.form-control { border-radius:10px; padding:10px 12px; }
-.form-control:focus { box-shadow:0 10px 30px rgba(6,182,212,0.10); border-color:#06b6d4; }
-.card-footer { background:#fff; border-top:0; padding:14px 22px; }
-.header-gradient { position:relative; background:linear-gradient(135deg,#10b981,#06b6d4); padding:18px 22px; }
-.header-gradient::after{ content: ''; position:absolute; inset:0; background: linear-gradient(90deg, rgba(255,255,255,0.03), transparent); pointer-events:none; }
-.header-content{ position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; }
-.header-left{ display:flex; align-items:center; }
-.header-icon{ width:48px; height:48px; border-radius:12px; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; margin-right:14px; }
-.btn-footer-save {
-    background: linear-gradient(90deg,#6366f1,#dc2626);
-    color: #fff;
-    border: 0;
-    border-radius: 10px;
-    padding: .45rem .9rem;
-    box-shadow: 0 12px 36px rgba(220,38,38,0.12);
-    transition: transform .14s ease, box-shadow .14s ease, opacity .14s;
-}
-.btn-footer-save:hover { transform: translateY(-3px); box-shadow: 0 20px 48px rgba(2,6,23,0.14); }
-.btn-footer-save i { margin-right:8px; }
-.form-note{ font-size:12px; color:#6b7280; }
-.iti { width:100% !important; }
-@media (max-width:576px){ .header-content{ flex-direction:column; gap:10px; align-items:flex-start; } }
-</style>
-
-<div class="row justify-content-center">
-    <div class="col-xl-8 col-lg-9 col-md-11">
-        <div class="card admin-card">
-
-            <div class="header-gradient">
-                <div class="header-content">
-                    <div class="header-left">
-                        <div class="header-icon"><i class="fa fa-user-plus text-white"></i></div>
-                        <div>
-                            <div class="admin-title">Tambah Pegawai</div>
-                            <div class="admin-subtitle">Lengkapi data pegawai dengan benar</div>
-                        </div>
+@include('layouts.partials.finus-ui')
+<div class="fmu-page">
+    <section class="fmu-hero">
+    <div class="fmu-hero-main">
+        <span class="fmu-hero-icon"><i class="fa-solid fa-user-plus"></i></span>
+        <div>
+            <h1>Tambah Pegawai</h1>
+            <p>Lengkapi identitas pegawai untuk menambahkan data baru.</p>
+        </div>
+    </div>
+    <div class="fmu-hero-actions"><span class="fmu-hero-badge"><i class="fa-solid fa-circle-info"></i>Data Master Pegawai</span></div>
+</section>
+    <div class="fmu-grid" style="grid-template-columns:minmax(0,1.5fr) minmax(260px,.55fr);align-items:start">
+        <form method="POST" action="{{ route('admin.pegawai.store') }}" class="fmu-card">
+            @csrf
+            <div class="fmu-card-head"><div class="fmu-card-head-main"><span class="fmu-card-icon"><i class="fa-solid fa-user-plus"></i></span><div><h2>Informasi Pegawai</h2><p>Kolom bertanda bintang wajib diisi.</p></div></div></div>
+            <div class="fmu-card-body">
+                <div class="fmu-form-grid">
+                    <div class="fmu-field">
+                        <label class="fmu-label" for="nip">NIP <span class="fmu-required">*</span></label>
+                        <div class="fmu-input-icon-wrap"><i class="fa-solid fa-id-card"></i><input type="text" id="nip" name="nip" value="{{ old('nip') }}" class="fmu-control @error('nip') is-invalid @enderror" placeholder="Masukkan NIP" required autocomplete="off"></div>
+                        @error('nip')<span class="fmu-error">{{ $message }}</span>@enderror
                     </div>
-                    <div></div>
+                    <div class="fmu-field">
+                        <label class="fmu-label" for="nama_pegawai">Nama Pegawai <span class="fmu-required">*</span></label>
+                        <div class="fmu-input-icon-wrap"><i class="fa-solid fa-user"></i><input type="text" id="nama_pegawai" name="nama_pegawai" value="{{ old('nama_pegawai') }}" class="fmu-control @error('nama_pegawai') is-invalid @enderror" placeholder="Nama lengkap pegawai" required></div>
+                        @error('nama_pegawai')<span class="fmu-error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="fmu-field">
+                        <label class="fmu-label" for="jabatan">Jabatan <span class="fmu-required">*</span></label>
+                        <select id="jabatan" name="jabatan" class="fmu-select @error('jabatan') is-invalid @enderror" required>
+                            <option value="">Pilih jabatan</option>
+                            @foreach($jabatanOptions as $jabatan)
+                                <option value="{{ $jabatan }}" @selected(old('jabatan') === $jabatan)>{{ $jabatan }}</option>
+                            @endforeach
+                        </select>
+                        @error('jabatan')<span class="fmu-error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="fmu-field">
+                        <label class="fmu-label" for="gender">Jenis Kelamin <span class="fmu-required">*</span></label>
+                        <select id="gender" name="gender" class="fmu-select @error('gender') is-invalid @enderror" required>
+                            <option value="">Pilih jenis kelamin</option>
+                            <option value="L" @selected(old('gender') === 'L')>Laki-laki</option>
+                            <option value="P" @selected(old('gender') === 'P')>Perempuan</option>
+                        </select>
+                        @error('gender')<span class="fmu-error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="fmu-field">
+                        <label class="fmu-label" for="email_preview">Email Pegawai</label>
+                        <div class="fmu-input-icon-wrap"><i class="fa-solid fa-envelope"></i><input type="email" id="email_preview" value="otomatis@stafffinuspusdai.org" class="fmu-control" readonly></div>
+                        <span class="fmu-help">Dibuat otomatis dari dua kata pertama nama dan empat digit terakhir NIP.</span>
+                        @error('email')<span class="fmu-error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="fmu-field">
+                        <label class="fmu-label" for="phone_display">Nomor Telepon</label>
+                        <input type="tel" id="phone_display" class="fmu-control" placeholder="812 3456 7890">
+                        <input type="hidden" name="no_telp" id="phone_value" value="{{ old('no_telp') }}">
+                        <span class="fmu-help">Kosongkan apabila pegawai belum memiliki nomor aktif.</span>
+                        @error('no_telp')<span class="fmu-error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="fmu-field fmu-field-full">
+                        <label class="fmu-label" for="alamat">Alamat</label>
+                        <textarea id="alamat" name="alamat" class="fmu-textarea @error('alamat') is-invalid @enderror" placeholder="Alamat lengkap pegawai">{{ old('alamat') }}</textarea>
+                        @error('alamat')<span class="fmu-error">{{ $message }}</span>@enderror
+                    </div>
                 </div>
             </div>
-
-            {{-- BODY --}}
-            <form method="POST" action="{{ route('admin.pegawai.store') }}">
-                @csrf
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>NIP <span class="text-danger">*</span></label>
-                                <input type="text" name="nip" placeholder="Masukkan NIP"
-                                    class="form-control @error('nip') is-invalid @enderror"
-                                    value="{{ old('nip') }}" required>
-                                @error('nip')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Nama Pegawai <span class="text-danger">*</span></label>
-                                <input type="text" name="nama_pegawai" placeholder="Nama lengkap"
-                                    class="form-control @error('nama_pegawai') is-invalid @enderror"
-                                    value="{{ old('nama_pegawai') }}" required>
-                                @error('nama_pegawai')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Jabatan <span class="text-danger">*</span></label>
-                                <select name="jabatan" class="form-control @error('jabatan') is-invalid @enderror" required>
-                                    <option value="">-- Pilih Jabatan --</option>
-                                    @foreach($jabatanOptions as $jabatan)
-                                        <option value="{{ $jabatan }}" {{ old('jabatan') === $jabatan ? 'selected' : '' }}>
-                                            {{ $jabatan }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('jabatan')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Jenis Kelamin <span class="text-danger">*</span></label>
-                                <select name="gender"
-                                    class="form-control @error('gender') is-invalid @enderror" required>
-                                    <option value="">-- Pilih --</option>
-                                    <option value="L" {{ old('gender')=='L' ? 'selected' : '' }}>Laki-laki</option>
-                                    <option value="P" {{ old('gender')=='P' ? 'selected' : '' }}>Perempuan</option>
-                                </select>
-                                @error('gender')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Email Pegawai</label>
-                                <input type="email" id="email_preview" class="form-control" value="otomatis@stafffinuspusdai.org" readonly>
-                                <div class="form-note mt-1">
-                                    Email dibuat otomatis dari 2 kata pertama nama pegawai + 4 digit terakhir NIP.
-                                </div>
-                                @error('email')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>No Telepon</label>
-                                <input type="tel" id="phone_display" class="form-control" placeholder="812 3456 7890">
-                                <input type="hidden" name="no_telp" id="phone_value">
-                                <div class="form-note mt-1">Kosongkan jika tidak ada nomor.</div>
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label>Alamat</label>
-                                <textarea name="alamat" rows="3" placeholder="Alamat lengkap"
-                                    class="form-control">{{ old('alamat') }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- FOOTER --}}
-                <div class="card-footer">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <a href="{{ route('admin.pegawai.index') }}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fa fa-chevron-left"></i> Kembali <i class="fa fa-chevron-right"></i>
-                        </a>
-                        <button class="btn-footer-save btn-sm">
-                                <i class="fa fa-save"></i> Save
-                        </button>
-                    </div>
-                </div>
-            </form>
-
-        </div>
+            <div class="fmu-actions">
+                <a href="{{ route('admin.pegawai.index') }}" class="fmu-btn"><i class="fa-solid fa-arrow-left"></i>Kembali</a>
+                <button type="submit" class="fmu-btn fmu-btn-primary"><i class="fa-solid fa-floppy-disk"></i>Simpan Pegawai</button>
+            </div>
+        </form>
+        <aside class="fmu-side-note">
+            <h3><i class="fa-solid fa-shield-halved mr-2"></i>Panduan Data</h3>
+            <p>Pastikan data cocok dengan identitas pegawai agar aktivasi akun dan laporan tidak keliru.</p>
+            <ul><li>NIP harus unik.</li><li>Jabatan menentukan profil dashboard.</li><li>Email akun dibuat otomatis.</li><li>Nomor telepon disimpan dalam format internasional.</li></ul>
+        </aside>
     </div>
 </div>
 @endsection
 
 @push('scripts')
 <script>
-(function () {
+(() => {
     const nameInput = document.querySelector('input[name="nama_pegawai"]');
     const nipInput = document.querySelector('input[name="nip"]');
     const emailPreview = document.getElementById('email_preview');
     const domain = 'stafffinuspusdai.org';
-
-    function makeEmailPreview() {
+    const makeEmailPreview = () => {
         if (!nameInput || !nipInput || !emailPreview) return;
-
-        const nameParts = nameInput.value
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean)
-            .slice(0, 2)
-            .map(part => part.replace(/[^a-z0-9]/g, ''));
-
-        let localName = nameParts.join('');
-
-        if (!localName) {
-            localName = 'pegawai';
-        }
-
-        const nipDigits = nipInput.value.replace(/\D/g, '');
-        const suffix = nipDigits.slice(-4) || '0000';
-
-        emailPreview.value = `${localName}${suffix}@${domain}`;
-    }
-
-    if (nameInput) nameInput.addEventListener('input', makeEmailPreview);
-    if (nipInput) nipInput.addEventListener('input', makeEmailPreview);
-
+        const names = nameInput.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().split(/\s+/).filter(Boolean).slice(0,2).map(part => part.replace(/[^a-z0-9]/g,''));
+        const local = names.join('') || 'pegawai';
+        const suffix = nipInput.value.replace(/\D/g,'').slice(-4) || '0000';
+        emailPreview.value = `${local}${suffix}@${domain}`;
+    };
+    nameInput?.addEventListener('input', makeEmailPreview);
+    nipInput?.addEventListener('input', makeEmailPreview);
     makeEmailPreview();
 
-    const phoneInput = document.querySelector("#phone_display");
-    const phoneValue = document.getElementById("phone_value");
-
-    if (phoneInput && window.intlTelInput) {
+    const phoneInput = document.getElementById('phone_display');
+    const phoneValue = document.getElementById('phone_value');
+    if (phoneInput && phoneValue && window.intlTelInput) {
         const iti = window.intlTelInput(phoneInput, {
-            initialCountry: "auto",
+            initialCountry: 'id',
             separateDialCode: true,
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/js/utils.js"
+            preferredCountries: ['id','my','sg'],
+            utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/js/utils.js'
         });
-
-        function updatePhoneValue() {
-            if (iti.isValidNumber()) {
-                phoneValue.value = iti.getNumber();
-            } else {
-                phoneValue.value = phoneInput.value.trim();
-            }
-        }
-
-        phoneInput.addEventListener("blur", updatePhoneValue);
-
-        const form = phoneInput.closest('form');
-        if (form) {
-            form.addEventListener('submit', updatePhoneValue);
-        }
+        const initialNumber = phoneValue.value.trim();
+        if (initialNumber) iti.setNumber(initialNumber);
+        const syncPhone = () => { phoneValue.value = phoneInput.value.trim() ? iti.getNumber() || phoneInput.value.trim() : ''; };
+        phoneInput.addEventListener('blur', syncPhone);
+        phoneInput.closest('form')?.addEventListener('submit', syncPhone);
     }
 })();
 </script>

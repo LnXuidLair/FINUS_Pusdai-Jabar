@@ -1,316 +1,90 @@
 @extends('layouts.app')
 @section('title', 'Presensi Saya')
-@section('content')
-
+@section('hide-page-header', '1')
 @php
-    $totalHadir = $presensis->where('status', 'hadir')->count();
-    $totalIzin = $presensis->where('status', 'izin')->count();
-    $totalLembur = $presensis->where('status', 'lembur')->count();
-    $totalPresensi = $presensis->count();
+    $presensiCollection = $presensis instanceof \Illuminate\Contracts\Pagination\Paginator ? collect($presensis->items()) : collect($presensis);
+    $totalPresensi = method_exists($presensis, 'total') ? $presensis->total() : $presensiCollection->count();
+    $totalHadir = $presensiCollection->where('status', 'hadir')->count();
+    $totalIzin = $presensiCollection->where('status', 'izin')->count();
+    $totalLembur = $presensiCollection->where('status', 'lembur')->count();
 @endphp
-
-<style>
-    .presensi-hero {
-        border-radius: 20px;
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        color: white;
-        padding: 24px;
-        margin-bottom: 24px;
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 16px;
-    }
-    
-    .presensi-hero h3 {
-        margin: 0;
-        font-weight: 800;
-        font-size: 22px;
-        color: white;
-    }
-    
-    .presensi-hero p {
-        margin: 4px 0 0;
-        color: #94a3b8;
-        font-size: 13px;
-    }
-
-    .presensi-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-
-    .presensi-stat-card {
-        border: 0;
-        border-radius: 16px;
-        background: #ffffff;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
-        padding: 16px 20px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        border: 1px solid #f1f5f9;
-        transition: all 0.2s ease;
-    }
-
-    .presensi-stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-    }
-
-    .presensi-stat-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        font-weight: 700;
-    }
-
-    .icon-total { background: #f1f5f9; color: #475569; }
-    .icon-hadir { background: #dcfce7; color: #16a34a; }
-    .icon-izin { background: #fef3c7; color: #d97706; }
-    .icon-lembur { background: #dbeafe; color: #2563eb; }
-
-    .presensi-stat-info {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .presensi-stat-label {
-        font-size: 12px;
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-    }
-
-    .presensi-stat-value {
-        font-size: 20px;
-        font-weight: 800;
-        color: #0f172a;
-        margin-top: 2px;
-    }
-
-    .presensi-table-card {
-        border: 0;
-        border-radius: 20px;
-        background: #ffffff;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
-        overflow: hidden;
-        border: 1px solid #f1f5f9;
-    }
-
-    .presensi-table-header {
-        padding: 20px 24px;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    .presensi-table-header h5 {
-        margin: 0;
-        font-weight: 800;
-        font-size: 16px;
-        color: #0f172a;
-    }
-
-    .p-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .p-table th, .p-table td {
-        padding: 14px 20px;
-        border-bottom: 1px solid #f1f5f9;
-        font-size: 13px;
-        vertical-align: middle;
-    }
-
-    .p-table th {
-        background: #f8fafc;
-        color: #475569;
-        font-size: 10.5px;
-        font-weight: 800;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        border-bottom: 2px solid #e2e8f0;
-    }
-
-    .p-table tbody tr:hover td {
-        background-color: #f8fafc;
-    }
-
-    .badge-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 30px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        border: 0;
-    }
-
-    .badge-status::before {
-        content: "";
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: currentColor;
-    }
-
-    .badge-hadir {
-        background: #dcfce7;
-        color: #15803d;
-    }
-
-    .badge-izin {
-        background: #fef3c7;
-        color: #b45309;
-    }
-
-    .badge-lembur {
-        background: #dbeafe;
-        color: #1d4ed8;
-    }
-
-    .btn-action-view {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 11.5px;
-        font-weight: 700;
-        text-decoration: none !important;
-        transition: all 0.2s ease;
-        background: #f1f5f9;
-        color: #475569;
-        border: 1px solid #e2e8f0;
-    }
-
-    .btn-action-view:hover {
-        background: #e2e8f0;
-        color: #0f172a;
-    }
-
-    @media (max-width: 768px) {
-        .presensi-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-    }
-</style>
-
-<div class="presensi-hero">
-    <div>
-        <h3>Presensi Saya</h3>
-        <p>Kelola dan pantau riwayat absensi harian Anda sebagai pegawai.</p>
-    </div>
-    <div>
-        <a class="btn btn-success px-4 py-2 font-weight-bold" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);" href="{{ route('pegawai.presensi.create') }}">
-            <i class="fa fa-plus mr-1"></i> Isi Presensi
-        </a>
-    </div>
-</div>
-
-<div class="presensi-grid">
-    <div class="presensi-stat-card">
-        <div class="presensi-stat-icon icon-total">
-            <i class="fa fa-calendar-check"></i>
+@section('content')
+@include('layouts.partials.finus-ui')
+<div class="fmu-page">
+    <section class="fmu-hero">
+        <div class="fmu-hero-main">
+            <span class="fmu-hero-icon"><i class="fa-solid fa-calendar-check"></i></span>
+            <div><h1>Presensi Saya</h1><p>Pantau seluruh riwayat kehadiran dan bukti presensi harian Anda.</p></div>
         </div>
-        <div class="presensi-stat-info">
-            <span class="presensi-stat-label">Total Presensi</span>
-            <span class="presensi-stat-value">{{ $totalPresensi }}</span>
-        </div>
-    </div>
-    
-    <div class="presensi-stat-card">
-        <div class="presensi-stat-icon icon-hadir">
-            <i class="fa fa-check"></i>
-        </div>
-        <div class="presensi-stat-info">
-            <span class="presensi-stat-label">Hadir</span>
-            <span class="presensi-stat-value">{{ $totalHadir }}</span>
-        </div>
-    </div>
-    
-    <div class="presensi-stat-card">
-        <div class="presensi-stat-icon icon-izin">
-            <i class="fa fa-envelope"></i>
-        </div>
-        <div class="presensi-stat-info">
-            <span class="presensi-stat-label">Izin</span>
-            <span class="presensi-stat-value">{{ $totalIzin }}</span>
-        </div>
-    </div>
-    
-    <div class="presensi-stat-card">
-        <div class="presensi-stat-icon icon-lembur">
-            <i class="fa fa-moon"></i>
-        </div>
-        <div class="presensi-stat-info">
-            <span class="presensi-stat-label">Lembur</span>
-            <span class="presensi-stat-value">{{ $totalLembur }}</span>
-        </div>
-    </div>
-</div>
+        <div class="fmu-hero-actions"><a href="{{ route('pegawai.presensi.create') }}" class="fmu-btn" style="background:#fff;color:#0E5423!important"><i class="fa-solid fa-plus"></i>Isi Presensi</a></div>
+    </section>
 
-<div class="card presensi-table-card">
-    <div class="presensi-table-header">
-        <h5>Daftar Riwayat Presensi</h5>
-    </div>
-    <div class="table-responsive">
-        <table class="p-table">
-            <thead>
-                <tr>
-                    <th>Hari / Tanggal</th>
-                    <th>Status</th>
-                    <th>Keterangan</th>
-                    <th>Bukti Kehadiran</th>
-                </tr>
-            </thead>
-            <tbody>
+    <section class="fmu-grid fmu-grid-4 mb-3">
+        <article class="fmu-stat" style="--fmu-stat-color:#2563EB;--fmu-stat-soft:#EEF4FF"><span class="fmu-stat-icon"><i class="fa-solid fa-list-check"></i></span><div class="fmu-stat-copy"><small>Total Presensi</small><strong>{{ number_format($totalPresensi,0,',','.') }}</strong></div></article>
+        <article class="fmu-stat" style="--fmu-stat-color:#179B40;--fmu-stat-soft:#EAF8EE"><span class="fmu-stat-icon"><i class="fa-solid fa-user-check"></i></span><div class="fmu-stat-copy"><small>Hadir</small><strong>{{ number_format($totalHadir,0,',','.') }}</strong></div></article>
+        <article class="fmu-stat" style="--fmu-stat-color:#D97706;--fmu-stat-soft:#FFF7E6"><span class="fmu-stat-icon"><i class="fa-solid fa-envelope"></i></span><div class="fmu-stat-copy"><small>Izin</small><strong>{{ number_format($totalIzin,0,',','.') }}</strong></div></article>
+        <article class="fmu-stat" style="--fmu-stat-color:#7C3AED;--fmu-stat-soft:#F5F0FF"><span class="fmu-stat-icon"><i class="fa-solid fa-moon"></i></span><div class="fmu-stat-copy"><small>Lembur</small><strong>{{ number_format($totalLembur,0,',','.') }}</strong></div></article>
+    </section>
+
+    <section class="fmu-card">
+        <div class="fmu-card-head">
+            <div class="fmu-card-head-main"><span class="fmu-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></span><div><h2>Riwayat Presensi</h2><p>Gunakan pencarian untuk menemukan data berdasarkan karakter awal.</p></div></div>
+            <div style="width:min(100%,310px)"><div class="fmu-input-icon-wrap"><i class="fa-solid fa-magnifying-glass"></i><input id="staffAttendanceSearch" type="search" class="fmu-control" placeholder="Cari tanggal, status, atau keterangan..."></div></div>
+        </div>
+        <div class="fmu-table-wrap">
+            <table class="fmu-table">
+                <thead><tr><th style="width:65px">No</th><th>Hari / Tanggal</th><th>Status</th><th>Keterangan</th><th>Bukti</th></tr></thead>
+                <tbody>
                 @forelse($presensis as $item)
-                    <tr>
-                        <td class="font-weight-bold text-dark">
-                            {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->translatedFormat('l, d F Y') : '-' }}
-                        </td>
-                        <td>
-                            <span class="badge-status badge-{{ $item->status }}">
-                                {{ $item->status }}
-                            </span>
-                        </td>
-                        <td class="text-secondary">
-                            {{ $item->keterangan ?? '-' }}
-                        </td>
+                    @php
+                        $status = strtolower(trim((string) $item->status));
+                        $badgeColor = $status === 'hadir' ? '#179B40' : ($status === 'izin' ? '#D97706' : '#7C3AED');
+                        $badgeSoft = $status === 'hadir' ? '#EAF8EE' : ($status === 'izin' ? '#FFF7E6' : '#F5F0FF');
+                        $tanggalText = $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->translatedFormat('l, d F Y') : '-';
+                    @endphp
+                    <tr data-attendance-row data-search="{{ $tanggalText }}|{{ $status }}|{{ $item->keterangan ?? '-' }}">
+                        <td data-row-number>{{ $loop->iteration }}</td>
+                        <td class="font-weight-bold">{{ $tanggalText }}</td>
+                        <td><span class="fmu-badge" style="--badge-color:{{ $badgeColor }};--badge-soft:{{ $badgeSoft }}">{{ ucfirst($status) }}</span></td>
+                        <td>{{ $item->keterangan ?: '-' }}</td>
                         <td>
                             @if($item->bukti_kehadiran)
-                                <a href="{{ asset('storage/' . $item->bukti_kehadiran) }}" target="_blank" class="btn-action-view">
-                                    <i class="fa fa-eye"></i> Lihat Bukti
-                                </a>
+                                <a href="{{ asset('storage/' . $item->bukti_kehadiran) }}" target="_blank" rel="noopener" class="fmu-btn" style="min-height:36px;padding-inline:11px"><i class="fa-solid fa-eye"></i>Lihat</a>
                             @else
-                                <span class="text-muted small">Tidak ada bukti</span>
+                                <span class="text-muted">Tidak ada</span>
                             @endif
                         </td>
                     </tr>
                 @empty
-                    <tr>
-                        <td colspan="4" class="text-center text-muted py-5">
-                            <i class="fa-regular fa-folder-open mb-3" style="font-size: 32px;"></i>
-                            <p class="mb-0">Belum ada riwayat presensi.</p>
-                        </td>
-                    </tr>
+                    <tr><td colspan="5" class="fmu-empty"><i class="fa-regular fa-folder-open"></i>Belum ada riwayat presensi.</td></tr>
                 @endforelse
-            </tbody>
-        </table>
-    </div>
+                <tr id="staffAttendanceEmpty" style="display:none"><td colspan="5" class="fmu-empty"><i class="fa-solid fa-magnifying-glass"></i>Data tidak ditemukan.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        @if(method_exists($presensis, 'links'))<div class="fmu-card-body pt-3">{{ $presensis->links() }}</div>@endif
+    </section>
 </div>
 @endsection
+@push('scripts')
+<script>
+(() => {
+    const input = document.getElementById('staffAttendanceSearch');
+    const rows = Array.from(document.querySelectorAll('[data-attendance-row]'));
+    const empty = document.getElementById('staffAttendanceEmpty');
+    const normalize = value => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const filter = () => {
+        const keyword = normalize(input?.value);
+        let visible = 0;
+        rows.forEach(row => {
+            const values = (row.dataset.search || '').split('|').map(normalize);
+            const match = !keyword || values.some(value => value.startsWith(keyword));
+            row.style.display = match ? '' : 'none';
+            if (match) { visible++; const number = row.querySelector('[data-row-number]'); if (number) number.textContent = visible; }
+        });
+        if (empty) empty.style.display = rows.length && !visible ? '' : 'none';
+    };
+    input?.addEventListener('input', filter); filter();
+})();
+</script>
+@endpush
