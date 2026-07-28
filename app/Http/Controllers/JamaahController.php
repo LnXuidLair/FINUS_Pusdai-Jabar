@@ -46,25 +46,7 @@ class JamaahController extends Controller
         $jumlahTransaksiSaya = ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
             ->count();
 
-        $totalPendingSaya = (int) ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
-            ->where(function ($query): void {
-                $query->where('status_verifikasi', 'pending')
-                    ->orWhereNull('status_verifikasi');
-            })
-            ->sum('nominal');
-
-        $totalDiterimaSaya = (int) ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
-            ->where('status_verifikasi', 'diterima')
-            ->sum('nominal');
-
-        $totalPemasukanJamaah = (int) $this->penerimaanResmiQuery()
-            ->sum('nominal');
-
-        $totalInfak = (int) $this->penerimaanResmiQuery()
-            ->where('jenis_ziswaf', 'infaq')
-            ->sum('nominal');
-
-        $totalZakat = (int) $this->penerimaanResmiQuery()
+        $totalZakatSaya = (int) ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
             ->whereIn('jenis_ziswaf', [
                 'zakat_maal',
                 'zakat_fitrah',
@@ -72,75 +54,19 @@ class JamaahController extends Controller
             ])
             ->sum('nominal');
 
-        $totalWakaf = (int) $this->penerimaanResmiQuery()
-            ->where('jenis_ziswaf', 'wakaf')
+        $totalInfakSaya = (int) ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
+            ->where('jenis_ziswaf', 'infaq')
             ->sum('nominal');
 
-        $totalPengeluaran = (int) DB::table('pengeluaran')
-            ->selectRaw('COALESCE(SUM(COALESCE(nominal, jumlah, 0)), 0) AS total')
-            ->value('total');
-
-        $saldoSederhana = $totalPemasukanJamaah - $totalPengeluaran;
+        $totalWakafSaya = (int) ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
+            ->where('jenis_ziswaf', 'wakaf')
+            ->sum('nominal');
 
         $riwayatSaya = ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
             ->latest('tanggal')
             ->latest('id')
             ->limit(8)
             ->get();
-
-        $transaksiTerbaruJamaah = $this->penerimaanResmiQuery()
-            ->with('muzakki')
-            ->latest('tanggal')
-            ->latest('id')
-            ->limit(6)
-            ->get();
-
-        $pengeluaranKategori = DB::table('pengeluaran')
-            ->selectRaw("
-                COALESCE(kategori, jenis, 'Lainnya') AS kategori_nama,
-                COUNT(*) AS jumlah_transaksi,
-                COALESCE(SUM(COALESCE(nominal, jumlah, 0)), 0) AS total
-            ")
-            ->groupByRaw("COALESCE(kategori, jenis, 'Lainnya')")
-            ->orderByDesc('total')
-            ->limit(6)
-            ->get();
-
-        $rawChart = $this->penerimaanResmiQuery()
-            ->selectRaw("DATE_FORMAT(tanggal, '%Y-%m') AS bulan, SUM(nominal) AS total")
-            ->whereDate('tanggal', '>=', Carbon::now()->subMonths(5)->startOfMonth())
-            ->groupBy('bulan')
-            ->orderBy('bulan')
-            ->pluck('total', 'bulan')
-            ->all();
-
-        $chartLabels = [];
-        $chartData = [];
-
-        for ($i = 5; $i >= 0; $i--) {
-            $month = Carbon::now()->subMonths($i);
-            $key = $month->format('Y-m');
-
-            $chartLabels[] = $month->translatedFormat('M Y');
-            $chartData[] = (int) ($rawChart[$key] ?? 0);
-        }
-
-        $komposisiZiswaf = $this->penerimaanResmiQuery()
-            ->select('jenis_ziswaf')
-            ->selectRaw('SUM(nominal) AS total')
-            ->groupBy('jenis_ziswaf')
-            ->orderByDesc('total')
-            ->get()
-            ->map(function (ZiswafPenerimaan $item) use ($jenisLabels): array {
-                return [
-                    'jenis' => $jenisLabels[$item->jenis_ziswaf]
-                        ?? ucfirst(str_replace('_', ' ', $item->jenis_ziswaf)),
-                    'total' => (int) $item->total,
-                ];
-            });
-
-        $komposisiLabels = $komposisiZiswaf->pluck('jenis')->values();
-        $komposisiData = $komposisiZiswaf->pluck('total')->values();
 
         $agendaKegiatan = collect([
             [
@@ -174,22 +100,10 @@ class JamaahController extends Controller
             'jenisLabels',
             'totalTransaksiSaya',
             'jumlahTransaksiSaya',
-            'totalPendingSaya',
-            'totalDiterimaSaya',
-            'totalPemasukanJamaah',
-            'totalInfak',
-            'totalZakat',
-            'totalWakaf',
-            'totalPengeluaran',
-            'saldoSederhana',
+            'totalZakatSaya',
+            'totalInfakSaya',
+            'totalWakafSaya',
             'riwayatSaya',
-            'transaksiTerbaruJamaah',
-            'pengeluaranKategori',
-            'chartLabels',
-            'chartData',
-            'komposisiZiswaf',
-            'komposisiLabels',
-            'komposisiData',
             'agendaKegiatan'
         ));
     }
