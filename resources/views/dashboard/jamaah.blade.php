@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Dashboard Jamaah')
 @section('content')
+@include('layouts.partials.finus-ui')
 @php
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
 @endphp

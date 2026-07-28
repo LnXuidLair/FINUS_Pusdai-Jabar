@@ -42,7 +42,7 @@
     ];
 @endphp
 
-@include('jamaah.partials.transaction-page-styles')
+@include('layouts.partials.finus-ui')
 
 <div class="jt-page">
     <section class="jt-heading">

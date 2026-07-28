@@ -18,6 +18,7 @@
 @endphp
 
 @section('content')
+@include('layouts.partials.finus-ui')
 <style>
     :root {
         --gj-dark: #0E5423;

@@ -1,98 +1,722 @@
-<!DOCTYPE html>
-<html lang="id">
+<!doctype html>
+<html lang="id" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kode Verifikasi FINUS</title>
-</head>
-<body style="margin:0; padding:0; background-color:#F1F6F2; font-family:Arial, Helvetica, sans-serif; color:#172033;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%; background-color:#F1F6F2;">
-        <tr>
-            <td align="center" style="padding:32px 14px;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%; max-width:600px;">
-                    <tr>
-                        <td style="overflow:hidden; border-radius:22px; background-color:#FFFFFF; box-shadow:0 18px 45px rgba(15,23,42,.10);">
-                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                                <tr>
-                                    <td align="center" bgcolor="#0E5423" style="padding:34px 28px; background-color:#0E5423; background-image:linear-gradient(135deg,#0E5423 0%,#179B40 55%,#22BA51 100%);">
-                                        <div style="display:inline-block; width:58px; height:58px; line-height:58px; border-radius:18px; background-color:rgba(255,255,255,.16); color:#FFFFFF; font-size:25px; font-weight:bold;">
-                                            F
-                                        </div>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-                                        <h1 style="margin:15px 0 0; color:#FFFFFF; font-size:25px; line-height:1.3; letter-spacing:1px;">
-                                            FINUS PUSDAI
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="x-apple-disable-message-reformat">
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+
+    <title>Kode Verifikasi FINUS</title>
+
+    <style>
+        html,
+        body {
+            width: 100% !important;
+            min-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: #eef6f0 !important;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #172033;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            word-spacing: normal;
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+            mso-table-lspace: 0;
+            mso-table-rspace: 0;
+        }
+
+        td {
+            border-collapse: collapse;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            border: 0;
+            outline: none;
+            text-decoration: none;
+            -ms-interpolation-mode: bicubic;
+        }
+
+        .preheader {
+            display: none !important;
+            visibility: hidden;
+            overflow: hidden;
+            opacity: 0;
+            color: transparent;
+            width: 0;
+            height: 0;
+            max-width: 0;
+            max-height: 0;
+            mso-hide: all;
+        }
+
+        .verification-digit {
+            width: 42px;
+            height: 54px;
+            padding: 0;
+            border: 1px solid #b8ddc3;
+            border-radius: 10px;
+            background-color: #ffffff;
+            color: #0e5423;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 54px;
+            text-align: center;
+        }
+
+        @media only screen and (max-width: 640px) {
+            .email-wrapper {
+                padding: 16px 10px !important;
+            }
+
+            .email-container {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .email-card {
+                border-radius: 18px !important;
+            }
+
+            .header-cell {
+                padding: 28px 20px 26px !important;
+            }
+
+            .header-logo {
+                width: 150px !important;
+            }
+
+            .header-title {
+                font-size: 22px !important;
+            }
+
+            .content-cell {
+                padding: 26px 20px 24px !important;
+            }
+
+            .verification-box {
+                padding: 20px 10px !important;
+            }
+
+            .verification-digit {
+                width: 34px !important;
+                height: 48px !important;
+                font-size: 24px !important;
+                line-height: 48px !important;
+            }
+
+            .digit-gap {
+                width: 5px !important;
+            }
+
+            .security-cell {
+                padding: 16px !important;
+            }
+
+            .footer-cell {
+                padding: 18px 16px !important;
+            }
+        }
+
+        @media only screen and (max-width: 390px) {
+            .content-cell {
+                padding-right: 16px !important;
+                padding-left: 16px !important;
+            }
+
+            .verification-box {
+                padding-right: 5px !important;
+                padding-left: 5px !important;
+            }
+
+            .verification-digit {
+                width: 30px !important;
+                height: 44px !important;
+                font-size: 22px !important;
+                line-height: 44px !important;
+                border-radius: 8px !important;
+            }
+
+            .digit-gap {
+                width: 4px !important;
+            }
+        }
+    </style>
+
+    <!--[if mso]>
+    <style>
+        body,
+        table,
+        td,
+        p,
+        a,
+        span {
+            font-family: Arial, Helvetica, sans-serif !important;
+        }
+    </style>
+    <![endif]-->
+</head>
+
+<body style="margin:0; padding:0; background-color:#eef6f0;">
+
+    {{-- Teks pratinjau yang muncul di daftar inbox --}}
+    <div class="preheader">
+        Kode verifikasi akun FINUS Anda adalah {{ $kode }} dan berlaku selama 5 menit.
+    </div>
+
+    <table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        bgcolor="#EEF6F0"
+        style="width:100%; background-color:#eef6f0;"
+    >
+        <tr>
+            <td
+                align="center"
+                class="email-wrapper"
+                style="padding:34px 14px;"
+            >
+                <table
+                    role="presentation"
+                    width="620"
+                    cellspacing="0"
+                    cellpadding="0"
+                    border="0"
+                    class="email-container"
+                    style="width:100%; max-width:620px;"
+                >
+                    <tr>
+                        <td
+                            class="email-card"
+                            style="
+                                overflow:hidden;
+                                border:1px solid #dbe9df;
+                                border-radius:24px;
+                                background-color:#ffffff;
+                                box-shadow:0 18px 45px rgba(15,23,42,.09);
+                            "
+                        >
+                            <table
+                                role="presentation"
+                                width="100%"
+                                cellspacing="0"
+                                cellpadding="0"
+                                border="0"
+                            >
+                                {{-- Header --}}
+                                <tr>
+                                    <td
+                                        align="center"
+                                        bgcolor="#0E5423"
+                                        class="header-cell"
+                                        style="
+                                            padding:34px 28px 31px;
+                                            background-color:#0e5423;
+                                            background-image:linear-gradient(
+                                                135deg,
+                                                #063d1a 0%,
+                                                #0e5423 38%,
+                                                #179b40 72%,
+                                                #22ba51 100%
+                                            );
+                                        "
+                                    >
+                                        <table
+                                            role="presentation"
+                                            cellspacing="0"
+                                            cellpadding="0"
+                                            border="0"
+                                        >
+                                            <tr>
+                                                <td
+                                                    align="center"
+                                                    style="
+                                                        padding:6px 12px;
+                                                        border:1px solid rgba(255,255,255,.24);
+                                                        border-radius:999px;
+                                                        background-color:rgba(255,255,255,.12);
+                                                        color:#e8ffed;
+                                                        font-size:10px;
+                                                        font-weight:700;
+                                                        line-height:1.4;
+                                                        letter-spacing:1.4px;
+                                                        text-transform:uppercase;
+                                                    "
+                                                >
+                                                    Verifikasi Akun Jamaah
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <img
+                                            src="{{ $message->embed(public_path('assets/images/FINUS_login.png')) }}"
+                                            width="175"
+                                            alt="FINUS PUSDAI Jawa Barat"
+                                            class="header-logo"
+                                            style="
+                                                display:block;
+                                                width:175px;
+                                                max-width:175px;
+                                                height:auto;
+                                                margin:22px auto 0;
+                                                border:0;
+                                                outline:none;
+                                                text-decoration:none;
+                                            "
+                                        >
+
+                                        <h1
+                                            class="header-title"
+                                            style="
+                                                margin:19px 0 0;
+                                                color:#ffffff;
+                                                font-size:25px;
+                                                font-weight:700;
+                                                line-height:1.3;
+                                                letter-spacing:.3px;
+                                            "
+                                        >
+                                            Verifikasi Akun FINUS
                                         </h1>
 
-                                        <p style="margin:7px 0 0; color:#DDF7E3; font-size:13px; line-height:1.6;">
-                                            Sistem Informasi Keuangan Masjid
+                                        <p
+                                            style="
+                                                margin:8px 0 0;
+                                                color:#d9f7e1;
+                                                font-size:13px;
+                                                line-height:1.65;
+                                            "
+                                        >
+                                            Sistem Informasi Keuangan Masjid PUSDAI
                                         </p>
                                     </td>
                                 </tr>
 
+                                {{-- Konten utama --}}
                                 <tr>
-                                    <td style="padding:34px 34px 28px;">
-                                        <p style="margin:0; color:#172033; font-size:16px; line-height:1.7;">
-                                            Assalamu'alaikum,
-                                            <strong>{{ $namaJamaah }}</strong>
+                                    <td
+                                        class="content-cell"
+                                        style="padding:36px 36px 30px;"
+                                    >
+                                        <p
+                                            style="
+                                                margin:0;
+                                                color:#172033;
+                                                font-size:16px;
+                                                line-height:1.75;
+                                            "
+                                        >
+                                            Assalamu’alaikum,
+                                            <strong style="color:#0e5423;">
+                                                {{ $namaJamaah ?? 'Jamaah' }}
+                                            </strong>
                                         </p>
 
-                                        <p style="margin:18px 0 0; color:#64748B; font-size:14px; line-height:1.75;">
-                                            Gunakan kode berikut untuk memverifikasi akun jamaah Anda di FINUS.
+                                        <p
+                                            style="
+                                                margin:17px 0 0;
+                                                color:#5f6f65;
+                                                font-size:14px;
+                                                line-height:1.75;
+                                            "
+                                        >
+                                            Terima kasih telah melakukan pendaftaran akun
+                                            jamaah di FINUS. Masukkan kode berikut pada halaman
+                                            verifikasi untuk mengaktifkan akun Anda.
                                         </p>
 
-                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:24px;">
+                                        {{-- Kotak kode verifikasi --}}
+                                        <table
+                                            role="presentation"
+                                            width="100%"
+                                            cellspacing="0"
+                                            cellpadding="0"
+                                            border="0"
+                                            style="margin-top:25px;"
+                                        >
                                             <tr>
-                                                <td align="center" style="padding:23px 16px; border:1px solid #CFE8D6; border-radius:16px; background-color:#F0FAF3;">
-                                                    <div style="color:#0E5423; font-size:11px; font-weight:bold; letter-spacing:2px; text-transform:uppercase;">
-                                                        Kode Verifikasi
-                                                    </div>
+                                                <td
+                                                    align="center"
+                                                    class="verification-box"
+                                                    style="
+                                                        padding:23px 14px 24px;
+                                                        border:1px solid #c9e4d1;
+                                                        border-radius:18px;
+                                                        background-color:#f0faf3;
+                                                    "
+                                                >
+                                                    <p
+                                                        style="
+                                                            margin:0;
+                                                            color:#428058;
+                                                            font-size:10px;
+                                                            font-weight:700;
+                                                            line-height:1.5;
+                                                            letter-spacing:1.8px;
+                                                            text-transform:uppercase;
+                                                        "
+                                                    >
+                                                        Kode verifikasi Anda
+                                                    </p>
 
-                                                    <div style="margin-top:10px; color:#14532D; font-size:34px; font-weight:bold; line-height:1.25; letter-spacing:9px;">
-                                                        {{ $kode }}
-                                                    </div>
+                                                    <table
+                                                        role="presentation"
+                                                        cellspacing="0"
+                                                        cellpadding="0"
+                                                        border="0"
+                                                        align="center"
+                                                        style="margin:15px auto 0;"
+                                                    >
+                                                        <tr>
+                                                            @foreach(str_split((string) $kode) as $digit)
+                                                                <td
+                                                                    class="verification-digit"
+                                                                    align="center"
+                                                                    valign="middle"
+                                                                >
+                                                                    {{ $digit }}
+                                                                </td>
+
+                                                                @unless($loop->last)
+                                                                    <td
+                                                                        width="8"
+                                                                        class="digit-gap"
+                                                                        style="width:8px; font-size:1px; line-height:1px;"
+                                                                    >
+                                                                        &nbsp;
+                                                                    </td>
+                                                                @endunless
+                                                            @endforeach
+                                                        </tr>
+                                                    </table>
+
+                                                    <p
+                                                        style="
+                                                            margin:15px 0 0;
+                                                            color:#5f7868;
+                                                            font-size:11px;
+                                                            line-height:1.6;
+                                                        "
+                                                    >
+                                                        Masukkan enam digit kode tersebut pada
+                                                        halaman verifikasi FINUS.
+                                                    </p>
                                                 </td>
                                             </tr>
                                         </table>
 
-                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:21px;">
+                                        {{-- Masa berlaku --}}
+                                        <table
+                                            role="presentation"
+                                            width="100%"
+                                            cellspacing="0"
+                                            cellpadding="0"
+                                            border="0"
+                                            style="margin-top:19px;"
+                                        >
                                             <tr>
-                                                <td width="42" valign="top">
-                                                    <div style="width:34px; height:34px; line-height:34px; border-radius:10px; background-color:#FFF7E6; color:#D97706; text-align:center; font-size:16px;">
-                                                        ⏱
-                                                    </div>
+                                                <td
+                                                    width="44"
+                                                    valign="top"
+                                                    style="width:44px;"
+                                                >
+                                                    <table
+                                                        role="presentation"
+                                                        cellspacing="0"
+                                                        cellpadding="0"
+                                                        border="0"
+                                                    >
+                                                        <tr>
+                                                            <td
+                                                                align="center"
+                                                                valign="middle"
+                                                                width="36"
+                                                                height="36"
+                                                                style="
+                                                                    width:36px;
+                                                                    height:36px;
+                                                                    border-radius:11px;
+                                                                    background-color:#fff4d8;
+                                                                    color:#b45309;
+                                                                    font-size:17px;
+                                                                    font-weight:700;
+                                                                    line-height:36px;
+                                                                "
+                                                            >
+                                                                !
+                                                            </td>
+                                                        </tr>
+                                                    </table>
                                                 </td>
-                                                <td valign="middle" style="padding-left:10px; color:#64748B; font-size:13px; line-height:1.65;">
+
+                                                <td
+                                                    valign="middle"
+                                                    style="
+                                                        padding-left:8px;
+                                                        color:#64748b;
+                                                        font-size:13px;
+                                                        line-height:1.65;
+                                                    "
+                                                >
                                                     Kode ini hanya berlaku selama
-                                                    <strong style="color:#92400E;">5 menit</strong>.
-                                                    Jangan membagikan kode kepada siapa pun.
+                                                    <strong style="color:#92400e;">
+                                                        5 menit
+                                                    </strong>
+                                                    sejak email diterima.
                                                 </td>
                                             </tr>
                                         </table>
 
-                                        <div style="margin-top:22px; padding:15px 16px; border-left:4px solid #179B40; border-radius:0 11px 11px 0; background-color:#F5FBF7; color:#64748B; font-size:12.5px; line-height:1.65;">
-                                            Jika Anda tidak pernah membuat akun di FINUS, abaikan email ini. Akun tidak akan diverifikasi tanpa memasukkan kode tersebut.
-                                        </div>
+                                        {{-- Informasi keamanan --}}
+                                        <table
+                                            role="presentation"
+                                            width="100%"
+                                            cellspacing="0"
+                                            cellpadding="0"
+                                            border="0"
+                                            style="margin-top:22px;"
+                                        >
+                                            <tr>
+                                                <td
+                                                    class="security-cell"
+                                                    style="
+                                                        padding:18px;
+                                                        border:1px solid #dcebe0;
+                                                        border-radius:14px;
+                                                        background-color:#f8fbf9;
+                                                    "
+                                                >
+                                                    <p
+                                                        style="
+                                                            margin:0;
+                                                            color:#274c34;
+                                                            font-size:13px;
+                                                            font-weight:700;
+                                                            line-height:1.5;
+                                                        "
+                                                    >
+                                                        Jaga keamanan akun Anda
+                                                    </p>
 
-                                        <p style="margin:26px 0 0; color:#64748B; font-size:13px; line-height:1.7;">
+                                                    <table
+                                                        role="presentation"
+                                                        width="100%"
+                                                        cellspacing="0"
+                                                        cellpadding="0"
+                                                        border="0"
+                                                        style="margin-top:11px;"
+                                                    >
+                                                        <tr>
+                                                            <td
+                                                                width="20"
+                                                                valign="top"
+                                                                style="
+                                                                    width:20px;
+                                                                    color:#179b40;
+                                                                    font-size:13px;
+                                                                    font-weight:700;
+                                                                    line-height:1.6;
+                                                                "
+                                                            >
+                                                                ✓
+                                                            </td>
+
+                                                            <td
+                                                                style="
+                                                                    color:#64748b;
+                                                                    font-size:12px;
+                                                                    line-height:1.65;
+                                                                "
+                                                            >
+                                                                Jangan membagikan kode kepada siapa pun.
+                                                            </td>
+                                                        </tr>
+
+                                                        <tr>
+                                                            <td
+                                                                width="20"
+                                                                valign="top"
+                                                                style="
+                                                                    padding-top:5px;
+                                                                    color:#179b40;
+                                                                    font-size:13px;
+                                                                    font-weight:700;
+                                                                    line-height:1.6;
+                                                                "
+                                                            >
+                                                                ✓
+                                                            </td>
+
+                                                            <td
+                                                                style="
+                                                                    padding-top:5px;
+                                                                    color:#64748b;
+                                                                    font-size:12px;
+                                                                    line-height:1.65;
+                                                                "
+                                                            >
+                                                                Tim FINUS tidak akan meminta kode melalui
+                                                                telepon, pesan, atau media sosial.
+                                                            </td>
+                                                        </tr>
+
+                                                        <tr>
+                                                            <td
+                                                                width="20"
+                                                                valign="top"
+                                                                style="
+                                                                    padding-top:5px;
+                                                                    color:#179b40;
+                                                                    font-size:13px;
+                                                                    font-weight:700;
+                                                                    line-height:1.6;
+                                                                "
+                                                            >
+                                                                ✓
+                                                            </td>
+
+                                                            <td
+                                                                style="
+                                                                    padding-top:5px;
+                                                                    color:#64748b;
+                                                                    font-size:12px;
+                                                                    line-height:1.65;
+                                                                "
+                                                            >
+                                                                Jika kode kedaluwarsa, minta kode baru
+                                                                melalui halaman verifikasi.
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        {{-- Peringatan --}}
+                                        <table
+                                            role="presentation"
+                                            width="100%"
+                                            cellspacing="0"
+                                            cellpadding="0"
+                                            border="0"
+                                            style="margin-top:20px;"
+                                        >
+                                            <tr>
+                                                <td
+                                                    width="4"
+                                                    bgcolor="#179B40"
+                                                    style="
+                                                        width:4px;
+                                                        border-radius:4px 0 0 4px;
+                                                        background-color:#179b40;
+                                                    "
+                                                >
+                                                    &nbsp;
+                                                </td>
+
+                                                <td
+                                                    style="
+                                                        padding:14px 15px;
+                                                        border-radius:0 11px 11px 0;
+                                                        background-color:#f4faf6;
+                                                        color:#64748b;
+                                                        font-size:12px;
+                                                        line-height:1.7;
+                                                    "
+                                                >
+                                                    Jika Anda tidak pernah membuat akun FINUS,
+                                                    abaikan email ini. Akun tidak akan aktif tanpa
+                                                    memasukkan kode verifikasi tersebut.
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p
+                                            style="
+                                                margin:27px 0 0;
+                                                color:#64748b;
+                                                font-size:13px;
+                                                line-height:1.75;
+                                            "
+                                        >
+                                            Wassalamu’alaikum Warahmatullahi Wabarakatuh.
+                                        </p>
+
+                                        <p
+                                            style="
+                                                margin:13px 0 0;
+                                                color:#64748b;
+                                                font-size:13px;
+                                                line-height:1.7;
+                                            "
+                                        >
                                             Hormat kami,<br>
-                                            <strong style="color:#0E5423;">Tim FINUS Pusdai Jawa Barat</strong>
+                                            <strong style="color:#0e5423;">
+                                                Tim FINUS Pusdai Jawa Barat
+                                            </strong>
                                         </p>
                                     </td>
                                 </tr>
 
+                                {{-- Footer --}}
                                 <tr>
-                                    <td align="center" style="padding:18px 24px; border-top:1px solid #E7EEE9; background-color:#F8FBF9; color:#94A3B8; font-size:11px; line-height:1.6;">
-                                        Email ini dikirim otomatis oleh FINUS.<br>
-                                        Mohon tidak membalas email ini.
+                                    <td
+                                        align="center"
+                                        class="footer-cell"
+                                        style="
+                                            padding:20px 24px;
+                                            border-top:1px solid #e5eee7;
+                                            background-color:#f8fbf9;
+                                        "
+                                    >
+                                        <p
+                                            style="
+                                                margin:0;
+                                                color:#7b8d82;
+                                                font-size:11px;
+                                                line-height:1.65;
+                                            "
+                                        >
+                                            Email ini dikirim secara otomatis oleh sistem FINUS.<br>
+                                            Mohon tidak membalas email ini.
+                                        </p>
                                     </td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
 
+                    {{-- Copyright --}}
                     <tr>
-                        <td align="center" style="padding:17px 20px 0; color:#94A3B8; font-size:10.5px; line-height:1.6;">
-                            © {{ date('Y') }} FINUS Pusdai Jawa Barat
+                        <td
+                            align="center"
+                            style="
+                                padding:18px 20px 4px;
+                                color:#91a096;
+                                font-size:10.5px;
+                                line-height:1.6;
+                            "
+                        >
+                            © {{ date('Y') }} FINUS Pusdai Jawa Barat.<br>
+                            Sistem Informasi Keuangan Masjid
                         </td>
                     </tr>
                 </table>

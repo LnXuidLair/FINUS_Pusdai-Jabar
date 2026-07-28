@@ -31,4 +31,9 @@ class VerifyCodeJamaah extends Mailable
             view: 'emails.verify-code-jamaah',
         );
     }
+
+    public function attachments(): array
+    {
+        return [];
+    }
 }

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@include('layouts.partials.finus-ui')
 <style>
     :root {
         --finus-green-dark: #0E5423;

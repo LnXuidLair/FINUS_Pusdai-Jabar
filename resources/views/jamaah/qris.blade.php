@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@include('layouts.partials.finus-ui')
 <style>
     .finus-card {
         border: 0;
@@ -70,9 +71,9 @@
                     <li>Input transaksi melalui menu Transaksi ZISWAF.</li>
                 </ol>
 
-                <a href="{{ route('jamaah.ziswaf.create') }}" class="btn btn-success btn-block mt-3">
+                <a href="{{ route('jamaah.transaksi.create', 'infak') }}" class="btn btn-success btn-block mt-3">
                     <i class="fa fa-hand-holding-heart mr-1"></i>
-                    Input Transaksi ZISWAF
+                    Input Transaksi Infak
                 </a>
 
                 <a href="{{ route('jamaah.dashboard') }}" class="btn btn-light btn-block">

@@ -18,6 +18,10 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=20">
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=20">
 
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     {{-- Bootstrap hanya dimuat satu kali --}}
@@ -599,6 +603,83 @@
                 animation-iteration-count: 1 !important;
             }
         }
+    
+        /* =====================================================
+           FINUS LAYOUT UPGRADE — CONSISTENT, RESPONSIVE, ACCESSIBLE
+        ===================================================== */
+        :root {
+            --finus-sidebar-width: 264px;
+            --finus-header-height: 70px;
+        }
+        body.finus-layout {
+            font-family: "Nunito", sans-serif;
+            background:
+                radial-gradient(circle at 96% 3%, rgba(34,186,81,.065), transparent 23rem),
+                linear-gradient(180deg, #F6FAF7 0%, #F2F7F3 100%);
+        }
+        body.finus-layout .header {
+            background: linear-gradient(to right, #0FB442 0%, #1AAF48 39%, #118635 75%, #004716 100%) !important;
+            border-bottom: 1px solid rgba(255,255,255,.18) !important;
+            box-shadow: 0 10px 28px rgba(0,71,22,.20) !important;
+        }
+        .finus-content-container {
+            width: 100%;
+            max-width: 1580px;
+            margin-inline: auto;
+            padding: clamp(18px, 2.2vw, 30px) !important;
+        }
+        .finus-page-heading {
+            border: 1px solid rgba(23,155,64,.10);
+            border-radius: 18px;
+            background: rgba(255,255,255,.92);
+            box-shadow: 0 12px 30px rgba(15,23,42,.06);
+            backdrop-filter: blur(10px);
+        }
+        .finus-page-heading-icon {
+            background: linear-gradient(135deg, #EAF8EE, #DDF4E3) !important;
+            color: #179B40 !important;
+        }
+        .content-wrap,
+        .main {
+            min-width: 0;
+        }
+        .main a:focus-visible,
+        .main button:focus-visible,
+        .main input:focus-visible,
+        .main select:focus-visible,
+        .main textarea:focus-visible {
+            outline: 3px solid rgba(23,155,64,.22);
+            outline-offset: 2px;
+        }
+        .finus-global-reveal {
+            opacity: 0;
+            transform: translateY(18px);
+            transition: opacity .52s ease, transform .58s cubic-bezier(.2,.72,.2,1);
+        }
+        .finus-global-reveal.is-visible {
+            opacity: 1;
+            transform: none;
+        }
+        ::selection {
+            background: rgba(126,255,135,.45);
+            color: #033D18;
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(23,155,64,.55) rgba(225,234,228,.55);
+        }
+        *::-webkit-scrollbar { width: 9px; height: 9px; }
+        *::-webkit-scrollbar-track { background: rgba(225,234,228,.55); }
+        *::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: rgba(23,155,64,.58); background-clip: padding-box; }
+        @media (max-width: 991.98px) {
+            :root { --finus-header-height: 66px; }
+            .finus-content-container { padding: 16px 14px 24px !important; }
+        }
+        @media (max-width: 575.98px) {
+            .finus-content-container { padding-inline: 12px !important; }
+            .finus-page-heading { border-radius: 15px; }
+        }
+
     </style>
 </head>
 @php
@@ -828,15 +909,15 @@
                 }
                 const getGreeting = hour => {
                     if (hour >= 4 && hour < 12) {
-                        return 'Good morning';
+                        return 'Selamat pagi';
                     }
                     if (hour >= 12 && hour < 17) {
-                        return 'Good afternoon';
+                        return 'Selamat siang';
                     }
                     if (hour >= 17 && hour < 21) {
-                        return 'Good evening';
+                        return 'Selamat sore';
                     }
-                    return 'Good night';
+                    return 'Selamat malam';
                 };
                 const updateGreetings = () => {
                     const greeting = getGreeting(
@@ -1139,6 +1220,32 @@
             })();
         </script>
     @endauth
+
+    <script>
+        (() => {
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const candidates = Array.from(document.querySelectorAll(
+                '.finus-page-heading, .finus-flash, .main > .container-fluid > section, .main > .container-fluid > .row, .main > .container-fluid > .card'
+            ));
+            candidates.forEach((element, index) => {
+                element.classList.add('finus-global-reveal');
+                element.style.transitionDelay = `${Math.min(index, 4) * 45}ms`;
+            });
+            if (reduceMotion || !('IntersectionObserver' in window)) {
+                candidates.forEach(element => element.classList.add('is-visible'));
+                return;
+            }
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                });
+            }, { threshold: .08 });
+            candidates.forEach(element => observer.observe(element));
+        })();
+    </script>
+
     @stack('scripts')
 </body>
 </html>

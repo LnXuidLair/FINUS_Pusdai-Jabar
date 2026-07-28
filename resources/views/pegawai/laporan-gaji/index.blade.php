@@ -1,397 +1,107 @@
 @extends('layouts.app')
+@section('title', 'Laporan Gaji')
+@section('hide-page-header', '1')
 
-@section('content')
 @php
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
+    $gajiItems = $laporanGaji instanceof \Illuminate\Contracts\Pagination\Paginator
+        ? collect($laporanGaji->items())
+        : collect($laporanGaji);
+    $jumlahData = method_exists($laporanGaji, 'total') ? $laporanGaji->total() : $gajiItems->count();
+    $sudahDibayar = $gajiItems->filter(fn ($item) => in_array(
+        strtolower(str_replace([' ', '-'], '_', (string) ($item->status_penggajian ?? ''))),
+        ['sudah_dibayar', 'dibayar', 'selesai'], true
+    ))->count();
 @endphp
 
-<style>
-    .finus-report-hero {
-        position: relative;
-        overflow: hidden;
-        border-radius: 24px;
-        background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
-        color: #ffffff;
-        padding: 30px;
-        margin-bottom: 24px;
-        box-shadow: 0 15px 35px rgba(6, 95, 70, 0.15);
-    }
-
-    .finus-report-hero::before {
-        content: "";
-        position: absolute;
-        width: 240px;
-        height: 240px;
-        right: -80px;
-        top: -95px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, .14);
-    }
-
-    .finus-report-hero::after {
-        content: "";
-        position: absolute;
-        width: 170px;
-        height: 170px;
-        left: 55%;
-        bottom: -100px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, .09);
-    }
-
-    .finus-report-hero-content {
-        position: relative;
-        z-index: 2;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-    }
-
-    .finus-report-hero h3 {
-        margin-bottom: 8px;
-        color: #ffffff;
-        font-size: 26px;
-        font-weight: 800;
-    }
-
-    .finus-report-hero p {
-        margin-bottom: 0;
-        color: rgba(255, 255, 255, .88);
-    }
-
-    .finus-report-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 16px;
-        border-radius: 12px;
-        background: rgba(255, 255, 255, .16);
-        color: #ffffff;
-        font-weight: 800;
-        white-space: nowrap;
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16);
-    }
-
-    .finus-summary-card {
-        border: 0;
-        border-radius: 20px;
-        background: #ffffff;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, .05);
-        overflow: hidden;
-        border: 1px solid #f1f5f9;
-        transition: all 0.2s ease;
-    }
-
-    .finus-summary-card:hover {
-        transform: translateY(-2px);
-    }
-
-    .finus-summary-card .card-body {
-        padding: 22px;
-    }
-
-    .finus-summary-label {
-        margin-bottom: 8px;
-        color: #64748b;
-        font-size: 13px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-    }
-
-    .finus-summary-value {
-        margin-bottom: 0;
-        color: #065f46;
-        font-size: 24px;
-        font-weight: 800;
-    }
-
-    .finus-filter {
-        border: 0;
-        border-radius: 20px;
-        background: #ffffff;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, .05);
-        padding: 22px;
-        margin-bottom: 24px;
-        border: 1px solid #f1f5f9;
-    }
-
-    .finus-filter label {
-        color: #334155;
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-        display: block;
-    }
-
-    .finus-control {
-        width: 100%;
-        min-height: 44px;
-        padding: 10px 14px;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 12px;
-        outline: none;
-        background: #FFFFFF;
-        color: #0f172a;
-        font-size: 13px;
-        transition: all 0.2s ease;
-    }
-
-    .finus-control:focus {
-        border-color: #10b981;
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, .08);
-    }
-
-    .finus-btn-primary {
-        border: 0;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #065f46, #10b981);
-        color: #ffffff;
-        font-weight: 800;
-        padding: 12px 20px;
-        font-size: 13px;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .finus-btn-primary:hover {
-        color: #ffffff !important;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
-    }
-
-    .finus-table-card {
-        border: 0;
-        border-radius: 20px;
-        background: #ffffff;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, .05);
-        overflow: hidden;
-        border: 1px solid #f1f5f9;
-    }
-
-    .finus-table-card .card-header {
-        background: #ffffff;
-        border-bottom: 1px solid #f1f5f9;
-        padding: 20px 24px;
-    }
-
-    .finus-table-card .card-header h5 {
-        margin-bottom: 4px;
-        color: #0f172a;
-        font-weight: 800;
-        font-size: 16px;
-    }
-
-    .finus-table-card .card-header small {
-        color: #64748b;
-        font-size: 12px;
-    }
-
-    .table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .table th, .table td {
-        padding: 14px 20px;
-        border-bottom: 1.5px solid #f1f5f9;
-        font-size: 13.5px;
-        vertical-align: middle;
-        transition: all 0.2s ease;
-    }
-
-    .table th {
-        background: #f8fafc;
-        color: #475569;
-        font-size: 10.5px;
-        font-weight: 800;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        border-bottom: 2px solid #e2e8f0;
-    }
-
-    .table tbody tr:hover td {
-        background-color: #f8fafc;
-    }
-
-    .badge-gaji {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 30px;
-        font-size: 11px;
-        font-weight: 700;
-        white-space: nowrap;
-        border: 0;
-    }
-
-    .badge-gaji::before {
-        content: "";
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: currentColor;
-    }
-
-    .badge-dibayar,
-    .badge-selesai {
-        background: #dcfce7;
-        color: #15803d;
-    }
-
-    .badge-pending,
-    .badge-diproses,
-    .badge-belum-dibayar {
-        background: #fef3c7;
-        color: #b45309;
-    }
-
-    .badge-gagal,
-    .badge-ditolak {
-        background: #fee2e2;
-        color: #b91c1c;
-    }
-
-    @media (max-width: 991.98px) {
-        .finus-report-hero-content {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-    }
-</style>
-
-<div class="finus-report-hero">
-    <div class="finus-report-hero-content">
-        <div>
-            <h3>Laporan Gaji Pegawai</h3>
-            <p>
-                Riwayat penggajian milik {{ $pegawai->nama_pegawai ?? auth()->user()->name }}
-                berdasarkan data yang diproses admin.
-            </p>
-        </div>
-
-        <div class="finus-report-badge">
-            <i class="ti-user"></i>
-            {{ $pegawai->jabatan ?? 'Pegawai' }}
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card finus-summary-card">
-            <div class="card-body">
-                <div class="finus-summary-label">Total Gaji Tercatat</div>
-                <h4 class="finus-summary-value">{{ $rupiah($totalGaji ?? 0) }}</h4>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6 mb-4">
-        <div class="card finus-summary-card">
-            <div class="card-body">
-                <div class="finus-summary-label">Gaji Terakhir</div>
-                <h4 class="finus-summary-value">
-                    {{ $rupiah($gajiTerakhir->total_gaji ?? 0) }}
-                </h4>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="finus-filter">
-    <form method="GET" action="{{ route('pegawai.laporan-gaji.index') }}">
-        <div class="d-flex flex-wrap align-items-end" style="gap: 14px;">
-            <div style="flex: 1 1 200px; min-width: 180px;">
-                <label for="bulan">Filter Bulan</label>
-                <input
-                    type="month"
-                    name="bulan"
-                    id="bulan"
-                    value="{{ $bulan }}"
-                    class="finus-control"
-                >
-            </div>
-
+@section('content')
+@include('layouts.partials.finus-ui')
+<div class="fmu-page">
+    <section class="fmu-hero">
+        <div class="fmu-hero-main">
+            <span class="fmu-hero-icon"><i class="fa-solid fa-file-invoice-dollar"></i></span>
             <div>
-                <button type="submit" class="finus-btn-primary">
-                    <i class="fa-solid fa-magnifying-glass mr-1"></i>
-                    Tampilkan
-                </button>
-
-                <a href="{{ route('pegawai.laporan-gaji.index') }}" class="btn btn-light ml-2 font-weight-bold" style="border-radius: 12px; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px;">
-                    Reset
-                </a>
+                <h1>Laporan Gaji Pegawai</h1>
+                <p>Riwayat penggajian {{ $pegawai->nama_pegawai ?? auth()->user()->name }} yang telah diproses melalui FINUS.</p>
             </div>
         </div>
-    </form>
-</div>
+        <div class="fmu-hero-actions">
+            <span class="fmu-hero-badge"><i class="fa-solid fa-briefcase"></i>{{ $pegawai->jabatan ?? 'Pegawai' }}</span>
+        </div>
+    </section>
 
-<div class="card finus-table-card mb-4">
-    <div class="card-header">
-        <h5>Riwayat Penggajian</h5>
-        <small>Daftar gaji pegawai yang sudah tercatat pada sistem FINUS.</small>
-    </div>
+    <section class="fmu-grid fmu-grid-3 mb-3">
+        <article class="fmu-stat" style="--fmu-stat-color:#2563EB;--fmu-stat-soft:#EEF4FF">
+            <span class="fmu-stat-icon"><i class="fa-solid fa-wallet"></i></span>
+            <div class="fmu-stat-copy"><small>Total Gaji Tercatat</small><strong>{{ $rupiah($totalGaji ?? 0) }}</strong></div>
+        </article>
+        <article class="fmu-stat" style="--fmu-stat-color:#179B40;--fmu-stat-soft:#EAF8EE">
+            <span class="fmu-stat-icon"><i class="fa-solid fa-money-check-dollar"></i></span>
+            <div class="fmu-stat-copy"><small>Gaji Terakhir</small><strong>{{ $rupiah($gajiTerakhir->total_gaji ?? 0) }}</strong></div>
+        </article>
+        <article class="fmu-stat" style="--fmu-stat-color:#7C3AED;--fmu-stat-soft:#F5F0FF">
+            <span class="fmu-stat-icon"><i class="fa-solid fa-receipt"></i></span>
+            <div class="fmu-stat-copy"><small>Data / Sudah Dibayar</small><strong>{{ number_format($jumlahData, 0, ',', '.') }} / {{ number_format($sudahDibayar, 0, ',', '.') }}</strong></div>
+        </article>
+    </section>
 
-    <div class="card-body table-responsive px-4">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Periode</th>
-                    <th>Status</th>
-                    <th class="text-right">Total Gaji</th>
-                </tr>
-            </thead>
+    <section class="fmu-card mb-3">
+        <div class="fmu-card-head">
+            <div class="fmu-card-head-main">
+                <span class="fmu-card-icon"><i class="fa-solid fa-filter"></i></span>
+                <div><h2>Filter Periode</h2><p>Pilih bulan tertentu atau tampilkan seluruh riwayat penggajian.</p></div>
+            </div>
+        </div>
+        <form method="GET" action="{{ route('pegawai.laporan-gaji.index') }}">
+            <div class="fmu-card-body">
+                <div class="fmu-form-grid">
+                    <div class="fmu-field">
+                        <label class="fmu-label" for="bulan">Bulan laporan</label>
+                        <div class="fmu-input-icon-wrap">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <input type="month" name="bulan" id="bulan" value="{{ $bulan }}" class="fmu-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="fmu-actions">
+                <a href="{{ route('pegawai.laporan-gaji.index') }}" class="fmu-btn"><i class="fa-solid fa-rotate-left"></i>Reset</a>
+                <button type="submit" class="fmu-btn fmu-btn-primary"><i class="fa-solid fa-magnifying-glass"></i>Tampilkan</button>
+            </div>
+        </form>
+    </section>
 
-            <tbody>
+    <section class="fmu-card">
+        <div class="fmu-card-head">
+            <div class="fmu-card-head-main">
+                <span class="fmu-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                <div><h2>Riwayat Penggajian</h2><p>Daftar gaji yang tercatat pada akun pegawai.</p></div>
+            </div>
+        </div>
+        <div class="fmu-table-wrap">
+            <table class="fmu-table">
+                <thead><tr><th>Tanggal</th><th>Periode</th><th>Status</th><th class="text-right">Total Gaji</th></tr></thead>
+                <tbody>
                 @forelse($laporanGaji as $gaji)
                     @php
-                        $status = strtolower($gaji->status_penggajian ?? 'pending');
-                        $statusClass = str_replace(' ', '-', $status);
+                        $statusRaw = strtolower(str_replace([' ', '-'], '_', (string) ($gaji->status_penggajian ?? 'pending')));
+                        $isPaid = in_array($statusRaw, ['sudah_dibayar','dibayar','selesai'], true);
                     @endphp
-
                     <tr>
-                        <td>
-                            {{ $gaji->tanggal ? \Carbon\Carbon::parse($gaji->tanggal)->format('d/m/Y') : '-' }}
-                        </td>
-
-                        <td>
-                            {{ $gaji->bulan ?? '-' }}
-                            {{ $gaji->tahun ?? '' }}
-                        </td>
-
-                        <td>
-                            <span class="badge-gaji badge-{{ $statusClass }}">
-                                {{ ucfirst($gaji->status_penggajian ?? 'Pending') }}
-                            </span>
-                        </td>
-
-                        <td class="text-right font-weight-bold text-success">
-                            {{ $rupiah($gaji->total_gaji ?? 0) }}
-                        </td>
+                        <td>{{ $gaji->tanggal ? \Carbon\Carbon::parse($gaji->tanggal)->translatedFormat('d F Y') : '-' }}</td>
+                        <td>{{ trim(($gaji->bulan ?? '-') . ' ' . ($gaji->tahun ?? '')) }}</td>
+                        <td><span class="fmu-badge" style="--badge-color:{{ $isPaid ? '#179B40' : '#D97706' }};--badge-soft:{{ $isPaid ? '#EAF8EE' : '#FFF7E6' }}">{{ ucwords(str_replace('_',' ', $statusRaw)) }}</span></td>
+                        <td class="text-right font-weight-bold">{{ $rupiah($gaji->total_gaji ?? 0) }}</td>
                     </tr>
                 @empty
-                    <tr>
-                        <td colspan="4" class="text-center text-muted py-4">
-                            Belum ada data penggajian.
-                        </td>
-                    </tr>
+                    <tr><td colspan="4" class="fmu-empty"><i class="fa-regular fa-folder-open"></i>Belum ada data penggajian.</td></tr>
                 @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    <div class="px-4 pb-4">
-        {{ $laporanGaji->links() }}
-    </div>
+                </tbody>
+            </table>
+        </div>
+        @if(method_exists($laporanGaji, 'links'))
+            <div class="fmu-card-body pt-3">{{ $laporanGaji->links() }}</div>
+        @endif
+    </section>
 </div>
 @endsection

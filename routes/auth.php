@@ -142,7 +142,13 @@ Route::middleware('auth')->group(function () {
     })->middleware('throttle:5,1')->name('verification.code.verify');
 
     Route::post('/email/verification-notification', function (Request $request) {
-        $user = $request->user();
+    $user = $request->user();
+
+        if (! $user) {
+            return redirect()
+                ->route('login.jamaah')
+                ->with('error', 'Silakan masuk terlebih dahulu.');
+        }
 
         if ($user->role !== User::ROLE_JAMAAH) {
             abort(403);
@@ -154,7 +160,8 @@ Route::middleware('auth')->group(function () {
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login.jamaah')
+            return redirect()
+                ->route('login.jamaah')
                 ->with('status', 'email-verified');
         }
 
@@ -165,7 +172,12 @@ Route::middleware('auth')->group(function () {
             'email_verification_code_expires_at' => now()->addMinutes(5),
         ])->save();
 
-        Mail::to($user->email)->send(new VerifyCodeJamaah($kode));
+        Mail::to($user->email)->send(
+            new VerifyCodeJamaah(
+                $kode,
+                $user->name
+            )
+        );
 
         return back()->with('status', 'verification-code-sent');
     })->middleware('throttle:3,1')->name('verification.send');
