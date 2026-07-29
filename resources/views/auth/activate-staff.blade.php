@@ -65,7 +65,7 @@
     </div>
 
     <button type="submit" class="auth-button" data-loading-text="Mengaktifkan..." data-loading-title="Mengaktifkan akun pegawai...">
-        Aktifkan Akun Pegawai
+        Aktifkan Akun
     </button>
 </form>
 @endsection
