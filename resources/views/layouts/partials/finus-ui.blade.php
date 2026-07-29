@@ -2012,6 +2012,10 @@
         border-bottom: 2px solid #e2e8f0;
     }
 
+    .jt-th-center {
+        text-align: center !important;
+    }
+
     .jt-table tbody tr:hover td {
         background-color: #f8fafc;
     }
@@ -2065,6 +2069,11 @@
         color: #b91c1c;
     }
 
+    .jt-badge-dibatalkan {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
     .jt-type {
         display: inline-flex;
         padding: 5px 10px;
@@ -2096,6 +2105,110 @@
         color: var(--jt-muted);
         text-align: center;
         font-size: 13px;
+    }
+
+    /* ─── Pending-pay row & action button ─── */
+    .jt-row-pending-pay td {
+        background-color: #fffbeb !important;
+    }
+
+    .jt-row-pending-pay:hover td {
+        background-color: #fef9c3 !important;
+    }
+
+    .jt-badge-pay-indicator {
+        display: inline-block;
+        margin-left: 7px;
+        padding: 2px 7px;
+        border-radius: 99px;
+        background: #fef3c7;
+        color: #b45309;
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        vertical-align: middle;
+        animation: pay-pulse 2.2s ease-in-out infinite;
+    }
+
+    @keyframes pay-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .55; }
+    }
+
+    .jt-actions {
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .jt-action-none {
+        color: #cbd5e1;
+        font-size: 14px;
+    }
+
+    .jt-btn-pay-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 13px;
+        border: 1.5px solid #d97706;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #ffffff !important;
+        font-size: 11.5px;
+        font-weight: 700;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: all .2s ease;
+        box-shadow: 0 3px 8px rgba(217, 119, 6, .28);
+        white-space: nowrap;
+    }
+
+    .jt-btn-pay-action:hover {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        border-color: #b45309;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 5px 14px rgba(180, 83, 9, .35);
+    }
+
+    .jt-btn-pay-action i {
+        font-size: 12px;
+    }
+
+    .jt-action-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .jt-btn-cancel-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 13px;
+        border: 1.5px solid #fca5a5;
+        border-radius: 10px;
+        background: #fff1f2;
+        color: #b91c1c !important;
+        font-size: 11.5px;
+        font-weight: 700;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: all .2s ease;
+        white-space: nowrap;
+    }
+
+    .jt-btn-cancel-action:hover {
+        background: #fee2e2;
+        border-color: #f87171;
+        color: #991b1b !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(185, 28, 28, .18);
+    }
+
+    .jt-btn-cancel-action i {
+        font-size: 12px;
     }
 
     .jt-pagination {

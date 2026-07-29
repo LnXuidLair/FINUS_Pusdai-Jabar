@@ -7,7 +7,7 @@
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
 
     $riwayatJenisFilterLabels = collect($jenisLabels)
-        ->except(['shadaqah'])
+        ->except(['fidyah', 'shadaqah', 'zakat_fitrah'])
         ->all();
 
     $summaryCards = [
@@ -54,6 +54,24 @@
         <div class="jt-alert">
             <i class="fa-solid fa-circle-check"></i>
             {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('warning'))
+        <div class="jt-alert jt-alert-warning">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {{ session('warning') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="jt-alert jt-alert-danger">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <div>
+                @foreach($errors->all() as $error)
+                    <div>{{ $error }}</div>
+                @endforeach
+            </div>
         </div>
     @endif
 
@@ -108,10 +126,10 @@
                     <label for="jenis">Jenis ZISWAF</label>
                     <select id="jenis" name="jenis" class="jt-control">
                         <option value="">Semua jenis</option>
-                        @foreach($jenisLabels as $value => $label)
-                            @if(!in_array($value, ['fidyah', 'shadaqah', 'zakat_fitrah']))
-                                <option value="{{ $value }}" @selected(($filters['jenis'] ?? '') === $value)>{{ $label }}</option>
-                            @endif
+                        @foreach($riwayatJenisFilterLabels as $value => $label)
+                            <option value="{{ $value }}" @selected(($filters['jenis'] ?? '') === $value)>
+                                {{ $label }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -171,10 +189,9 @@
                         <th>Referensi</th>
                         <th>Tanggal</th>
                         <th>Jenis</th>
-
                         <th>Nominal</th>
                         <th>Status</th>
-                        <th>Keterangan</th>
+                        <th class="jt-th-center">Aksi</th>
                     </tr>
                 </thead>
 
@@ -182,10 +199,22 @@
                     @forelse($transaksi as $item)
                         @php
                             $status = $item->status_verifikasi ?: 'pending';
+                            $referensi = $item->order_id ?: 'ZISWAF-' . $item->id;
+
+                            // Cek apakah transaksi bisa dilanjutkan pembayarannya
+                            $bisaBayar = $status === 'pending'
+                                && $item->payment_gateway === 'midtrans'
+                                && !empty($item->snap_token)
+                                && in_array($item->payment_status, ['pending', null, ''], true);
                         @endphp
 
-                        <tr>
-                            <td class="jt-reference">ZISWAF-{{ $item->id }}</td>
+                        <tr class="{{ $bisaBayar ? 'jt-row-pending-pay' : '' }}">
+                            <td class="jt-reference">
+                                {{ $referensi }}
+                                @if($bisaBayar)
+                                    <span class="jt-badge-pay-indicator">Belum Dibayar</span>
+                                @endif
+                            </td>
 
                             <td>{{ $item->tanggal?->format('d/m/Y') }}</td>
 
@@ -203,13 +232,37 @@
                                 </span>
                             </td>
 
-                            <td class="jt-note">
-                                {{ $item->keterangan ?? '-' }}
-
-                                @if($item->catatan_verifikasi)
-                                    <span class="jt-admin-note">
-                                        Catatan admin: {{ $item->catatan_verifikasi }}
-                                    </span>
+                            <td class="jt-actions">
+                                @if($bisaBayar)
+                                    <div class="jt-action-group">
+                                        <a
+                                            href="{{ route('jamaah.pembayaran.show', $item) }}"
+                                            class="jt-btn jt-btn-pay-action"
+                                            title="Lanjutkan Pembayaran"
+                                        >
+                                            <i class="fa-solid fa-credit-card"></i>
+                                            <span>Bayar</span>
+                                        </a>
+                                        <form
+                                            method="POST"
+                                            action="{{ route('jamaah.pembayaran.batal', $item) }}"
+                                            style="display:inline"
+                                            onsubmit="return confirm('Yakin ingin membatalkan transaksi ini? Tindakan ini tidak dapat dibatalkan.')"
+                                        >
+                                            @csrf
+                                            @method('DELETE')
+                                            <button
+                                                type="submit"
+                                                class="jt-btn jt-btn-cancel-action"
+                                                title="Batalkan Pembayaran"
+                                            >
+                                                <i class="fa-solid fa-xmark"></i>
+                                                <span>Batal</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                @else
+                                    <span class="jt-action-none">&mdash;</span>
                                 @endif
                             </td>
                         </tr>
