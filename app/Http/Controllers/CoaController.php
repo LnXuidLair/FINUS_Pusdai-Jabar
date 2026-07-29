@@ -179,6 +179,10 @@ class CoaController extends Controller
 
     /**
      * Import data COA dari CSV, TXT, XLSX, atau XLS.
+     *
+     * Importer dapat membaca file yang memiliki baris kosong sebelum header,
+     * kolom kosong di sebelah kiri, serta variasi nama header seperti
+     * "Header Akun", "Kode Akun", dan "Nama Akun".
      */
     public function import(
         Request $request,
@@ -220,22 +224,50 @@ class CoaController extends Controller
             ]);
         }
 
-        /*
-         * Minimal terdiri dari:
-         * - 1 baris header
-         * - 1 baris data
-         */
-        if (count($rows) < 2) {
+        if ($rows === []) {
+            return back()->withErrors([
+                'file_csv' => 'File kosong atau tidak memiliki data.',
+            ]);
+        }
+
+        try {
+            [$headerRowIndex, $headerIndex] =
+                $this->findCoaHeaderRow($rows);
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            report($exception);
+
             return back()->withErrors([
                 'file_csv' =>
-                    'File kosong atau tidak memiliki baris data.',
+                    'Header file tidak dapat diproses. Pastikan file memiliki kolom kelompok_akun atau header_akun, kode_akun, dan nama_akun.',
             ]);
         }
 
         /*
-         * Jumlah baris dikurangi satu karena baris pertama adalah header.
+         * Ambil hanya baris setelah header. Baris kosong sebelum header,
+         * termasuk judul atau catatan pada bagian atas file, akan diabaikan.
          */
-        $totalDataRows = count($rows) - 1;
+        $dataRows = array_slice($rows, $headerRowIndex + 1);
+
+        /*
+         * Abaikan baris yang benar-benar kosong agar batas maksimal import
+         * dihitung berdasarkan data nyata, bukan area kosong pada Excel.
+         */
+        $dataRows = array_filter(
+            $dataRows,
+            fn ($row): bool => is_array($row)
+                && ! $this->isEmptyImportRow($row)
+        );
+
+        if ($dataRows === []) {
+            return back()->withErrors([
+                'file_csv' =>
+                    'File tidak memiliki baris data setelah header.',
+            ]);
+        }
+
+        $totalDataRows = count($dataRows);
 
         if ($totalDataRows > self::MAX_IMPORT_ROWS) {
             return back()->withErrors([
@@ -259,137 +291,53 @@ class CoaController extends Controller
             ]);
         }
 
-        /*
-         * Mengambil dan menghapus baris pertama sebagai header.
-         */
-        $headerRow = array_shift($rows);
-
-        $header = $dataFileImportService->normalizeHeader(
-            $headerRow
-        );
-
-        /*
-         * Header utama yang wajib tersedia.
-         */
-        $requiredHeaders = [
-            'kode_akun',
-            'nama_akun',
-        ];
-
-        $missingHeaders = array_diff(
-            $requiredHeaders,
-            $header
-        );
-
-        /*
-         * File boleh menggunakan salah satu:
-         *
-         * kelompok_akun:
-         * Aset, Kewajiban, Dana, Penerimaan, Pengeluaran
-         *
-         * header_akun:
-         * 1, 2, 3, 4, 5
-         */
-        $hasHeaderAkun = in_array(
-            'header_akun',
-            $header,
-            true
-        );
-
-        $hasKelompokAkun = in_array(
-            'kelompok_akun',
-            $header,
-            true
-        );
-
-        if (
-            $missingHeaders !== []
-            || (! $hasHeaderAkun && ! $hasKelompokAkun)
-        ) {
-            return back()->withErrors([
-                'file_csv' =>
-                    'Header file tidak lengkap. '
-                    . 'Wajib tersedia kode_akun dan nama_akun, '
-                    . 'serta salah satu kolom kelompok_akun atau header_akun.',
-            ]);
-        }
-
-        /*
-         * Menolak header kosong.
-         */
-        if (in_array('', $header, true)) {
-            return back()->withErrors([
-                'file_csv' =>
-                    'Terdapat nama kolom yang kosong pada header file.',
-            ]);
-        }
-
-        /*
-         * Menolak nama header yang sama lebih dari satu kali.
-         */
-        if (count($header) !== count(array_unique($header))) {
-            return back()->withErrors([
-                'file_csv' =>
-                    'Terdapat nama kolom header yang sama atau duplikat.',
-            ]);
-        }
-
-        $headerIndex = array_flip($header);
+        $hasHeaderAkun = isset($headerIndex['header_akun']);
+        $hasKelompokAkun = isset($headerIndex['kelompok_akun']);
 
         $created = 0;
         $updated = 0;
         $skipped = 0;
-        $rowNumber = 1;
         $importErrors = [];
 
         DB::beginTransaction();
 
         try {
-            foreach ($rows as $row) {
+            foreach ($dataRows as $dataRowIndex => $row) {
                 /*
-                 * Baris pertama adalah header,
-                 * sehingga data pertama berada pada baris nomor 2.
+                 * Nomor baris dibuat sesuai posisi aslinya pada file Excel.
+                 * +1 untuk indeks berbasis nol dan +1 karena baris data
+                 * dimulai setelah baris header.
                  */
-                $rowNumber++;
+                $rowNumber = $headerRowIndex + $dataRowIndex + 2;
 
                 $kelompokAkun = $hasKelompokAkun
-                    ? trim(
-                        $row[
-                            $headerIndex['kelompok_akun']
-                        ] ?? ''
-                    )
+                    ? trim((string) (
+                        $row[$headerIndex['kelompok_akun']] ?? ''
+                    ))
                     : '';
 
                 $headerAkunDariFile = $hasHeaderAkun
-                    ? trim(
-                        $row[
-                            $headerIndex['header_akun']
-                        ] ?? ''
-                    )
+                    ? trim((string) (
+                        $row[$headerIndex['header_akun']] ?? ''
+                    ))
                     : '';
 
                 /*
-                 * Apabila header_akun tersedia tetapi kosong,
-                 * gunakan kelompok_akun sebagai alternatif.
+                 * Prioritaskan header_akun apabila tersedia dan berisi nilai.
+                 * Jika kosong, konversikan nilai kelompok_akun menjadi 1-5.
                  */
                 $headerAkun = $headerAkunDariFile !== ''
-                    ? $headerAkunDariFile
+                    ? $this->resolveHeaderAkun($headerAkunDariFile)
                     : $this->resolveHeaderAkun($kelompokAkun);
 
                 $data = [
                     'header_akun' => $headerAkun,
-
-                    'kode_akun' => trim(
-                        $row[
-                            $headerIndex['kode_akun']
-                        ] ?? ''
-                    ),
-
-                    'nama_akun' => trim(
-                        $row[
-                            $headerIndex['nama_akun']
-                        ] ?? ''
-                    ),
+                    'kode_akun' => trim((string) (
+                        $row[$headerIndex['kode_akun']] ?? ''
+                    )),
+                    'nama_akun' => trim((string) (
+                        $row[$headerIndex['nama_akun']] ?? ''
+                    )),
                 ];
 
                 $validator = Validator::make(
@@ -415,7 +363,7 @@ class CoaController extends Controller
                         'header_akun.required' =>
                             'Kelompok akun tidak valid. '
                             . 'Gunakan Aset, Kewajiban, Dana, '
-                            . 'Penerimaan, atau Pengeluaran.',
+                            . 'Penerimaan, Pengeluaran, atau angka 1 sampai 5.',
 
                         'header_akun.integer' =>
                             'Kelompok akun harus menggunakan nilai yang valid.',
@@ -423,7 +371,7 @@ class CoaController extends Controller
                         'header_akun.in' =>
                             'Kelompok akun hanya boleh Aset, '
                             . 'Kewajiban, Dana, Penerimaan, '
-                            . 'atau Pengeluaran.',
+                            . 'Pengeluaran, atau angka 1 sampai 5.',
 
                         'kode_akun.required' =>
                             'Kode akun wajib diisi.',
@@ -442,14 +390,19 @@ class CoaController extends Controller
                 if ($validator->fails()) {
                     $skipped++;
 
-                    $importErrors[] =
-                        'Baris '
-                        . $rowNumber
-                        . ': '
-                        . implode(
-                            ', ',
-                            $validator->errors()->all()
-                        );
+                    if (
+                        count($importErrors)
+                        < self::MAX_IMPORT_ERROR_MESSAGES
+                    ) {
+                        $importErrors[] =
+                            'Baris '
+                            . $rowNumber
+                            . ': '
+                            . implode(
+                                ', ',
+                                $validator->errors()->all()
+                            );
+                    }
 
                     continue;
                 }
@@ -463,7 +416,6 @@ class CoaController extends Controller
                     $existingCoa->update([
                         'header_akun' =>
                             (int) $data['header_akun'],
-
                         'nama_akun' =>
                             $data['nama_akun'],
                     ]);
@@ -476,10 +428,8 @@ class CoaController extends Controller
                 Coa::create([
                     'header_akun' =>
                         (int) $data['header_akun'],
-
                     'kode_akun' =>
                         $data['kode_akun'],
-
                     'nama_akun' =>
                         $data['nama_akun'],
                 ]);
@@ -498,14 +448,7 @@ class CoaController extends Controller
                     . "diperbarui: {$updated}, "
                     . "dilewati: {$skipped}."
                 )
-                ->with(
-                    'import_errors',
-                    array_slice(
-                        $importErrors,
-                        0,
-                        self::MAX_IMPORT_ERROR_MESSAGES
-                    )
-                );
+                ->with('import_errors', $importErrors);
         } catch (\Throwable $exception) {
             DB::rollBack();
 
@@ -681,4 +624,141 @@ class CoaController extends Controller
             default => null,
         };
     }
+    /**
+     * Mencari posisi header COA pada maksimal 25 baris pertama.
+     *
+     * @return array{0:int, 1:array<string, int>}
+     */
+    private function findCoaHeaderRow(array $rows): array
+    {
+        $aliases = [
+            'kelompok_akun' => [
+                'kelompok_akun',
+                'kelompok',
+                'kelompok_coa',
+                'jenis_akun',
+                'jenis_coa',
+            ],
+            'header_akun' => [
+                'header_akun',
+                'header',
+                'kode_header',
+                'nomor_header',
+            ],
+            'kode_akun' => [
+                'kode_akun',
+                'kode',
+                'kode_coa',
+                'nomor_akun',
+                'no_akun',
+            ],
+            'nama_akun' => [
+                'nama_akun',
+                'nama',
+                'nama_coa',
+                'akun',
+            ],
+        ];
+
+        foreach (array_slice($rows, 0, 25, true) as $rowIndex => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $columns = [];
+            $duplicates = [];
+
+            foreach ($row as $columnIndex => $cell) {
+                $normalizedHeader =
+                    $this->normalizeImportHeader((string) $cell);
+
+                if ($normalizedHeader === '') {
+                    continue;
+                }
+
+                foreach ($aliases as $canonical => $acceptedHeaders) {
+                    if (
+                        ! in_array(
+                            $normalizedHeader,
+                            $acceptedHeaders,
+                            true
+                        )
+                    ) {
+                        continue;
+                    }
+
+                    if (isset($columns[$canonical])) {
+                        $duplicates[] = $canonical;
+                    } else {
+                        $columns[$canonical] = (int) $columnIndex;
+                    }
+
+                    break;
+                }
+            }
+
+            $hasRequiredHeaders =
+                isset(
+                    $columns['kode_akun'],
+                    $columns['nama_akun']
+                )
+                && (
+                    isset($columns['kelompok_akun'])
+                    || isset($columns['header_akun'])
+                );
+
+            if (! $hasRequiredHeaders) {
+                continue;
+            }
+
+            if ($duplicates !== []) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'file_csv' => [
+                        'Terdapat kolom header yang sama atau duplikat: '
+                        . implode(', ', array_unique($duplicates))
+                        . '.',
+                    ],
+                ]);
+            }
+
+            return [(int) $rowIndex, $columns];
+        }
+
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            'file_csv' => [
+                'Header file tidak ditemukan. '
+                . 'Gunakan kolom kelompok_akun atau header_akun, '
+                . 'kode_akun, dan nama_akun. '
+                . 'Header boleh ditulis sebagai Kelompok Akun, '
+                . 'Header Akun, Kode Akun, dan Nama Akun.',
+            ],
+        ]);
+    }
+
+    /**
+     * Menormalkan nama header agar variasi spasi dan kapital tetap terbaca.
+     */
+    private function normalizeImportHeader(string $header): string
+    {
+        $header = preg_replace('/^\xEF\xBB\xBF/', '', $header) ?? $header;
+        $header = strtolower(trim($header));
+        $header = preg_replace('/[^a-z0-9]+/i', '_', $header) ?? '';
+
+        return trim($header, '_');
+    }
+
+    /**
+     * Memeriksa apakah seluruh sel dalam satu baris kosong.
+     */
+    private function isEmptyImportRow(array $row): bool
+    {
+        foreach ($row as $cell) {
+            if (trim((string) $cell) !== '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }
