@@ -65,7 +65,7 @@
     </div>
 
     <button type="submit" class="auth-button" data-loading-text="Sedang masuk..." data-loading-title="Memeriksa akun pegawai...">
-        Masuk sebagai Pegawai
+        Masuk
     </button>
 
     <p class="auth-footer-text">
