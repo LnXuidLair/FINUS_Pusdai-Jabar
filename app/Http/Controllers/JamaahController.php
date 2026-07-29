@@ -160,27 +160,35 @@ class JamaahController extends Controller
             defaultPeriod: true
         );
 
+        // Query dasar: semua transaksi jamaah sesuai filter
         $query = $this->jamaahTransactionQuery($request, $filters);
+
+        // Query laporan: eksklusikan transaksi yang dibatalkan/ditolak
+        // agar tidak mengganggu chart dan grafik
+        $laporanQuery = (clone $query)
+            ->whereNotIn('status_verifikasi', ['ditolak', 'dibatalkan']);
+
         $summaryQuery = clone $query;
 
         $summary = [
-            'jumlah' => (clone $summaryQuery)->count(),
-            'total' => (int) (clone $summaryQuery)->sum('nominal'),
+            'jumlah'   => (clone $laporanQuery)->count(),
+            'total'    => (int) (clone $laporanQuery)->sum('nominal'),
             'diterima' => (int) (clone $summaryQuery)
                 ->where('status_verifikasi', 'diterima')
                 ->sum('nominal'),
-            'pending' => (int) (clone $summaryQuery)
+            'pending'  => (int) (clone $summaryQuery)
                 ->where(function ($builder): void {
                     $builder->where('status_verifikasi', 'pending')
                         ->orWhereNull('status_verifikasi');
                 })
                 ->sum('nominal'),
-            'ditolak' => (int) (clone $summaryQuery)
+            'ditolak'  => (int) (clone $summaryQuery)
                 ->where('status_verifikasi', 'ditolak')
                 ->sum('nominal'),
         ];
 
-        $perJenis = (clone $query)
+        // Chart per-jenis: hanya transaksi valid
+        $perJenis = (clone $laporanQuery)
             ->select('jenis_ziswaf')
             ->selectRaw('COUNT(*) AS jumlah_transaksi')
             ->selectRaw('COALESCE(SUM(nominal), 0) AS total')
@@ -188,7 +196,8 @@ class JamaahController extends Controller
             ->orderByDesc('total')
             ->get();
 
-        $monthlyRaw = (clone $query)
+        // Chart bulanan: hanya transaksi valid
+        $monthlyRaw = (clone $laporanQuery)
             ->selectRaw("DATE_FORMAT(tanggal, '%Y-%m') AS bulan")
             ->selectRaw('COALESCE(SUM(nominal), 0) AS total')
             ->groupBy('bulan')
@@ -208,24 +217,25 @@ class JamaahController extends Controller
 
         $jenisChartData = $perJenis->pluck('total')->map(fn ($value): int => (int) $value)->values();
 
-        $transaksiLaporan = (clone $query)
+        // Tabel laporan: hanya transaksi valid
+        $transaksiLaporan = (clone $laporanQuery)
             ->latest('tanggal')
             ->latest('id')
             ->get();
 
         return view('jamaah.laporan-transaksi', [
-            'jamaah' => $request->user(),
-            'filters' => $filters,
-            'summary' => $summary,
-            'perJenis' => $perJenis,
+            'jamaah'           => $request->user(),
+            'filters'          => $filters,
+            'summary'          => $summary,
+            'perJenis'         => $perJenis,
             'transaksiLaporan' => $transaksiLaporan,
-            'chartLabels' => $chartLabels,
-            'chartData' => $chartData,
+            'chartLabels'      => $chartLabels,
+            'chartData'        => $chartData,
             'jenisChartLabels' => $jenisChartLabels,
-            'jenisChartData' => $jenisChartData,
-            'jenisLabels' => $this->jenisLabels(),
-            'statusLabels' => $this->statusLabels(),
-            'metodeLabels' => $this->metodeLabels(),
+            'jenisChartData'   => $jenisChartData,
+            'jenisLabels'      => $this->jenisLabels(),
+            'statusLabels'     => $this->statusLabels(),
+            'metodeLabels'     => $this->metodeLabels(),
         ]);
     }
 
@@ -240,6 +250,7 @@ class JamaahController extends Controller
         );
 
         $transaksi = $this->jamaahTransactionQuery($request, $filters)
+            ->whereNotIn('status_verifikasi', ['ditolak', 'dibatalkan'])
             ->latest('tanggal')
             ->latest('id')
             ->get();
@@ -321,12 +332,18 @@ class JamaahController extends Controller
         $config = $this->transaksiConfig($jenis);
         $paymentGatewayReady = $this->isPaymentGatewayReady();
 
+        $minimalNominal = $paymentGatewayReady ? 10000 : 1000;
+
         $rules = [
             'jenis_ziswaf' => [
                 'required',
                 Rule::in(array_keys($config['jenisOptions'])),
             ],
-            'nominal' => ['required', 'integer', 'min:1000'],
+            'nominal' => [
+                'required',
+                'integer',
+                'min:' . $minimalNominal,
+            ],
             'metode_pembayaran' => [
                 'required',
                 Rule::in(array_keys($config['metodeOptions'])),
@@ -343,7 +360,26 @@ class JamaahController extends Controller
             ];
         }
 
-        $validated = $request->validate($rules);
+        $messages = [
+            'jenis_ziswaf.required' => 'Jenis transaksi wajib dipilih.',
+            'jenis_ziswaf.in' => 'Jenis transaksi tidak valid.',
+
+            'nominal.required' => 'Nominal wajib diisi.',
+            'nominal.integer' => 'Nominal harus berupa angka.',
+            'nominal.min' => $paymentGatewayReady
+                ? 'Minimal nominal pembayaran melalui Midtrans adalah Rp10.000.'
+                : 'Minimal nominal transaksi adalah Rp1.000.',
+
+            'metode_pembayaran.required' => 'Metode pembayaran wajib dipilih.',
+            'metode_pembayaran.in' => 'Metode pembayaran tidak valid.',
+
+            'bukti_pembayaran.required' => 'Bukti pembayaran wajib diunggah untuk pembayaran manual.',
+            'bukti_pembayaran.file' => 'Bukti pembayaran harus berupa file.',
+            'bukti_pembayaran.mimes' => 'Bukti pembayaran harus berformat JPG, JPEG, PNG, atau PDF.',
+            'bukti_pembayaran.max' => 'Ukuran bukti pembayaran maksimal 2 MB.',
+        ];
+
+        $validated = $request->validate($rules, $messages);
 
         $user = $request->user();
 
@@ -458,6 +494,37 @@ class JamaahController extends Controller
             'jenisLabels' => $this->jenisLabels(),
             'metodeLabels' => $this->metodeLabels(),
         ]);
+    }
+
+    public function batalPembayaran(Request $request, ZiswafPenerimaan $transaksi)
+    {
+        abort_unless(
+            (int) $transaksi->muzakki_id === (int) $request->user()->id,
+            403
+        );
+
+        // Hanya bisa dibatalkan jika masih pending & via midtrans dengan snap_token
+        $bisaBatal = $transaksi->payment_gateway === 'midtrans'
+            && !empty($transaksi->snap_token)
+            && in_array($transaksi->status_verifikasi, ['pending', null], true)
+            && in_array($transaksi->payment_status, ['pending', null, ''], true);
+
+        if (! $bisaBatal) {
+            return redirect()
+                ->route('jamaah.riwayat.index')
+                ->with('warning', 'Transaksi ini tidak dapat dibatalkan karena sudah diproses atau tidak memenuhi syarat pembatalan.');
+        }
+
+        $transaksi->update([
+            'payment_status'      => 'cancel',
+            'status_verifikasi'   => 'dibatalkan',
+            'catatan_verifikasi'  => 'Dibatalkan oleh jamaah.',
+            'snap_token'          => null,
+        ]);
+
+        return redirect()
+            ->route('jamaah.riwayat.index')
+            ->with('success', 'Transaksi berhasil dibatalkan.');
     }
 
     public function midtransNotification(Request $request)
@@ -817,9 +884,10 @@ class JamaahController extends Controller
     private function statusLabels(): array
     {
         return [
-            'pending' => 'Menunggu',
-            'diterima' => 'Diterima',
-            'ditolak' => 'Ditolak',
+            'pending'     => 'Menunggu',
+            'diterima'    => 'Diterima',
+            'ditolak'     => 'Ditolak',
+            'dibatalkan'  => 'Dibatalkan',
         ];
     }
 

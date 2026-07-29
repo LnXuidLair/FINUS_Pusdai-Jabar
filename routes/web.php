@@ -168,6 +168,9 @@ Route::middleware(['auth', 'verified', 'role:jamaah'])
         Route::get('/pembayaran/{transaksi}', [JamaahController::class, 'showPembayaran'])
             ->name('pembayaran.show');
 
+        Route::delete('/pembayaran/{transaksi}/batal', [JamaahController::class, 'batalPembayaran'])
+            ->name('pembayaran.batal');
+
         Route::get('/riwayat-transaksi', [JamaahController::class, 'riwayat'])
             ->name('riwayat.index');
 
