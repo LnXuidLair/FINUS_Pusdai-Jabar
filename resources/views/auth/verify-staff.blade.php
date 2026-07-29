@@ -39,7 +39,7 @@
     </div>
 
     <button type="submit" class="auth-button" data-loading-text="Memverifikasi..." data-loading-title="Memverifikasi data pegawai...">
-        Verifikasi Data Pegawai
+        Verifikasi
     </button>
 
     <p class="auth-footer-text">

@@ -3,7 +3,10 @@
     $roleLabel = $navUser?->isAdmin()
         ? 'Administrator'
         : ($navUser?->isPegawai() ? 'Pegawai' : 'Jamaah');
-    $pageContext = trim($__env->yieldContent('title')) ?: 'FINUS';
+    $rawPageContext = trim($__env->yieldContent('title'));
+    $pageContext = $rawPageContext !== ''
+        ? html_entity_decode($rawPageContext, ENT_QUOTES | ENT_HTML5, 'UTF-8')
+        : 'FINUS';
     $initial = mb_strtoupper(mb_substr(trim($navUser?->name ?? 'F'), 0, 1));
 @endphp
 
@@ -39,7 +42,37 @@
         align-items: center;
         min-width: 0;
     }
-    .finus-topbar-left { gap: 13px; }
+    .finus-topbar-left {
+        gap: 13px;
+        height: 100%;
+        align-items: center !important;
+    }
+
+    /* Reset style bawaan template agar tombol hamburger benar-benar sejajar. */
+    button.finus-topbar-toggle {
+        position: static !important;
+        inset: auto !important;
+        float: none !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        transform: none !important;
+    }
+
+    button.finus-topbar-toggle:hover,
+    button.finus-topbar-toggle:focus-visible {
+        transform: none !important;
+    }
+
+    .finus-topbar-toggle > span {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 100%;
+        height: 100%;
+        line-height: 1;
+    }
     .finus-topbar-toggle {
         display: inline-flex;
         align-items: center;
@@ -63,14 +96,21 @@
         transform: translateY(-1px);
     }
     .finus-topbar-toggle .line {
-        display: block;
-        width: 18px;
-        height: 2px;
-        margin: 3px 0;
+        display: block !important;
+        width: 20px !important;
+        height: 2px !important;
+        margin: 0 !important;
         border-radius: 99px;
         background: currentColor;
     }
-    .finus-topbar-context { min-width: 0; }
+    .finus-topbar-context {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+        min-height: 42px;
+        line-height: 1.15;
+    }
     .finus-topbar-eyebrow {
         display: block;
         color: rgba(255,255,255,.72);
@@ -82,7 +122,8 @@
     .finus-topbar-title {
         display: block;
         max-width: 480px;
-        margin-top: 2px;
+        margin-top: 3px;
+        line-height: 1.25;
         overflow: hidden;
         color: #fff;
         font-size: 15px;

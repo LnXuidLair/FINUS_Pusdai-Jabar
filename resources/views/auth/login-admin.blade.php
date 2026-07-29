@@ -58,7 +58,7 @@
     </div>
 
     <button type="submit" class="auth-button" data-loading-text="Sedang masuk..." data-loading-title="Memeriksa akun admin...">
-        Masuk sebagai Admin
+        Masuk
     </button>
 
     @unless(\App\Models\User::where('role', \App\Models\User::ROLE_ADMIN)->exists())
