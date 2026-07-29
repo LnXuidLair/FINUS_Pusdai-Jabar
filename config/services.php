@@ -1,7 +1,13 @@
 <?php
 
 return [
-    
+
+    /*
+    |--------------------------------------------------------------------------
+    | Third Party Services
+    |--------------------------------------------------------------------------
+    */
+
     'midtrans' => [
         'enabled' => env('MIDTRANS_ENABLED', false),
         'server_key' => env('MIDTRANS_SERVER_KEY'),
@@ -11,5 +17,11 @@ return [
         'is_3ds' => env('MIDTRANS_IS_3DS', true),
     ],
 
-    'mailgun' => ['domain' => env('MAILGUN_DOMAIN'), 'secret' => env('MAILGUN_SECRET')],
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme' => 'https',
+    ],
+
 ];
