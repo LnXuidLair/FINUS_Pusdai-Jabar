@@ -68,6 +68,10 @@
         background: #dbeafe;
     }
 
+    .finus-stat-yellow::after {
+        background: #fef9c3;
+    }
+
     .finus-stat-top {
         position: relative;
         z-index: 2;
@@ -102,6 +106,11 @@
         color: #2563eb;
     }
 
+    .finus-stat-icon-yellow {
+        background: #fef9c3;
+        color: #ca8a04;
+    }
+
     .finus-stat-badge {
         border-radius: 12px;
         padding: 8px 12px;
@@ -133,6 +142,10 @@
 
     .finus-stat-badge-blue::before {
         background: #2563eb;
+    }
+
+    .finus-stat-badge-yellow::before {
+        background: #ca8a04;
     }
 
     .finus-stat-content {
@@ -295,13 +308,15 @@
 
     .prayer-time-item.next-prayer {
         border-color: #10b981;
-        background: #f0fdf4;
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.12);
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.22);
         position: relative;
+        transform: translateY(-4px) scale(1.05);
+        z-index: 10;
     }
 
     .prayer-time-item.next-prayer::before {
-        content: "NANTI";
+        content: "SEKARANG/NANTI";
         position: absolute;
         top: -8px;
         left: 50%;
@@ -335,6 +350,91 @@
 
     .prayer-time-item.next-prayer .prayer-val {
         color: #065f46;
+    }
+
+    /* Enhanced Next Prayer Badge */
+    .next-prayer-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #ffffff !important;
+        font-weight: 800;
+        font-size: 14.5px;
+        padding: 10px 20px;
+        border-radius: 50px;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.25);
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        animation: pulse-badge 2.5s infinite ease-in-out;
+    }
+
+    .next-prayer-badge:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 12px 25px rgba(16, 185, 129, 0.4);
+    }
+
+    .next-prayer-badge::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.25),
+            transparent
+        );
+        transition: 0.5s;
+        animation: shimmers 3s infinite;
+    }
+
+    @keyframes shimmers {
+        0% {
+            left: -100%;
+        }
+        100% {
+            left: 100%;
+        }
+    }
+
+    @keyframes pulse-badge {
+        0% {
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+        50% {
+            box-shadow: 0 4px 22px rgba(16, 185, 129, 0.55);
+        }
+        100% {
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+    }
+
+    /* Pulsing status indicator dot */
+    .pulse-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #ffffff;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+        animation: pulse-dot-key 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+    }
+
+    @keyframes pulse-dot-key {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+        }
     }
 
     @media (max-width: 767px) {
@@ -508,7 +608,10 @@
                 <small class="text-muted" id="prayer_location_text">Mendeteksi lokasi...</small>
             </div>
             <div class="text-md-right mt-2 mt-md-0">
-                <span class="badge badge-soft-success font-weight-bold px-3 py-2" id="next_prayer_countdown">Waktu Salat</span>
+                <div class="next-prayer-badge">
+                    <span class="pulse-dot"></span>
+                    <span id="next_prayer_countdown">Mendeteksi Jadwal Salat...</span>
+                </div>
             </div>
         </div>
         <div class="prayer-grid" id="prayer_grid_container">
@@ -541,67 +644,77 @@
 </div>
 
 <div class="row">
-    <div class="col-xl-4 col-md-6">
-        <div class="finus-stat-card finus-stat-red mb-4">
+    <!-- Card 1: Total Transaksi -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="finus-stat-card finus-stat-red">
             <div class="finus-stat-top">
                 <div class="finus-stat-icon finus-stat-icon-red">
                     <i class="fa fa-receipt"></i>
                 </div>
-
-                <span class="finus-stat-badge finus-stat-badge-red">
-                    Bulan Ini
-                </span>
+                <span class="finus-stat-badge finus-stat-badge-red">Semua</span>
             </div>
-
             <div class="finus-stat-content">
                 <p class="finus-stat-label">Transaksi Saya</p>
                 <h4 class="finus-stat-value">{{ $rupiah($totalTransaksiSaya) }}</h4>
                 <p class="finus-stat-desc">
-                    {{ $jumlahTransaksiSaya }} transaksi yang telah kamu input.
+                    {{ $jumlahTransaksiSaya }} transaksi yang telah Anda input.
                 </p>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-4 col-md-6">
-        <div class="finus-stat-card finus-stat-green mb-4">
+    <!-- Card 2: Zakat Saya -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="finus-stat-card finus-stat-green">
             <div class="finus-stat-top">
                 <div class="finus-stat-icon finus-stat-icon-green">
-                    <i class="fa fa-wallet"></i>
+                    <i class="fa fa-coins"></i>
                 </div>
-
-                <span class="finus-stat-badge finus-stat-badge-green">
-                    Bulan Ini
-                </span>
+                <span class="finus-stat-badge finus-stat-badge-green">Zakat</span>
             </div>
-
             <div class="finus-stat-content">
-                <p class="finus-stat-label">Donasi Jamaah</p>
-                <h4 class="finus-stat-value">{{ $rupiah($totalPemasukanJamaah) }}</h4>
+                <p class="finus-stat-label">Zakat Saya</p>
+                <h4 class="finus-stat-value">{{ $rupiah($totalZakatSaya) }}</h4>
                 <p class="finus-stat-desc">
-                    Donasi dari akumulasi keseluruhan jamaah.
+                    Akumulasi zakat yang telah Anda tunaikan.
                 </p>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-4 col-md-6">
-        <div class="finus-stat-card finus-stat-blue mb-4">
+    <!-- Card 3: Infak Saya -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="finus-stat-card finus-stat-blue">
             <div class="finus-stat-top">
                 <div class="finus-stat-icon finus-stat-icon-blue">
-                    <i class="fa fa-book-open"></i>
+                    <i class="fa fa-hand-holding-heart"></i>
                 </div>
-
-                <span class="finus-stat-badge finus-stat-badge-blue">
-                    Bulan Ini
-                </span>
+                <span class="finus-stat-badge finus-stat-badge-blue">Infak</span>
             </div>
-
             <div class="finus-stat-content">
-                <p class="finus-stat-label">Pengeluaran Masjid</p>
-                <h4 class="finus-stat-value">{{ $rupiah($totalPengeluaran) }}</h4>
+                <p class="finus-stat-label">Infak Saya</p>
+                <h4 class="finus-stat-value">{{ $rupiah($totalInfakSaya) }}</h4>
                 <p class="finus-stat-desc">
-                    Pengeluaran masjid yang telah dicatat admin.
+                    Akumulasi infak yang telah Anda salurkan.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 4: Wakaf Saya -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="finus-stat-card finus-stat-yellow">
+            <div class="finus-stat-top">
+                <div class="finus-stat-icon finus-stat-icon-yellow">
+                    <i class="fa fa-mosque"></i>
+                </div>
+                <span class="finus-stat-badge finus-stat-badge-yellow">Wakaf</span>
+            </div>
+            <div class="finus-stat-content">
+                <p class="finus-stat-label">Wakaf Saya</p>
+                <h4 class="finus-stat-value">{{ $rupiah($totalWakafSaya) }}</h4>
+                <p class="finus-stat-desc">
+                    Akumulasi wakaf yang telah Anda salurkan.
                 </p>
             </div>
         </div>
@@ -644,156 +757,11 @@
     </div>
 </div>
 
-    <div class="row">
-    <div class="col-lg-12">
-        <div class="card finus-card mb-4">
-            <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="mb-1 font-weight-bold">Ringkasan Pengeluaran Masjid</h5>
-                    <small class="text-muted">Laporan transparansi alokasi dana pengeluaran masjid.</small>
-                </div>
-                <span class="badge badge-soft-danger px-3 py-2 font-weight-bold">Transparansi Keuangan</span>
-            </div>
-            <div class="card-body px-4">
-                <div class="expense-grid">
-                    @forelse($pengeluaranKategori as $item)
-                        @php
-                            $persen = $totalPengeluaran > 0 ? round(($item->total / $totalPengeluaran) * 100) : 0;
-                        @endphp
-                        <div class="expense-card-item">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <h6 class="mb-1 font-weight-bold text-dark" style="font-size: 14px;">{{ $item->kategori_nama ?: 'Lainnya' }}</h6>
-                                    <small class="text-muted"><i class="fa fa-receipt mr-1 text-danger"></i> {{ $item->jumlah_transaksi }} transaksi</small>
-                                </div>
-                                <div class="text-right">
-                                    <strong class="text-danger d-block" style="font-size: 14.5px;">{{ $rupiah($item->total) }}</strong>
-                                    <small class="text-muted font-weight-bold">{{ $persen }}% dari total</small>
-                                </div>
-                            </div>
-                            <div class="expense-progress-bar">
-                                <div class="expense-progress-fill" style="width: {{ $persen }}%;"></div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-5 w-100">
-                            <i class="fa-solid fa-wallet text-muted mb-3" style="font-size: 32px;"></i>
-                            <p class="text-muted mb-0">Belum ada data pengeluaran masjid.</p>
-                        </div>
-                    @endforelse
-                </div>
-                @if($totalPengeluaran > 0)
-                    <div class="border-top pt-3 mt-4 d-flex justify-content-between align-items-center">
-                        <span class="font-weight-bold text-secondary">Total Seluruh Pengeluaran</span>
-                        <h4 class="mb-0 text-danger font-weight-bold">{{ $rupiah($totalPengeluaran) }}</h4>
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="card finus-card mb-4">
-    <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-        <div>
-            <h5 class="mb-1 font-weight-bold">Ringkasan Saldo ZISWAF</h5>
-            <small class="text-muted">Informasi saldo akumulasi untuk memantau arus penerimaan dana umat.</small>
-        </div>
-        <span class="badge badge-soft-success px-3 py-2 font-weight-bold">Arus Kas ZISWAF</span>
-    </div>
-
-    <div class="card-body px-4">
-        <div class="row mb-3">
-            <div class="col-md-6 mb-3 mb-md-0">
-                <div class="ziswaf-sum-card ziswaf-sum-zakat">
-                    <i class="fa fa-coins"></i>
-                    <span>Total Zakat</span>
-                    <h4>{{ $rupiah($totalZakat) }}</h4>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="ziswaf-sum-card ziswaf-sum-wakaf">
-                    <i class="fa fa-mosque"></i>
-                    <span>Total Wakaf</span>
-                    <h4>{{ $rupiah($totalWakaf) }}</h4>
-                </div>
-            </div>
-        </div>
-
-        <p class="mb-0 text-muted small italic">
-            * Catatan: Informasi ini menampilkan akumulasi dana ZISWAF yang tercatat pada sistem FINUS. Untuk laporan rincian slip/jurnal resmi, tetap gunakan data dari Administrator.
-        </p>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 (() => {
-    const rupiah = value => 'Rp ' + Number(value || 0).toLocaleString('id-ID');
-
-    const lineCanvas = document.getElementById('grafikPemasukanJamaah');
-
-    if (lineCanvas) {
-        new Chart(lineCanvas, {
-            type: 'line',
-            data: {
-                labels: @json($chartLabels),
-                datasets: [{
-                    label: 'Pemasukan Jamaah',
-                    data: @json($chartData),
-                    tension: 0.35,
-                    fill: true,
-                    borderWidth: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: context => rupiah(context.raw)
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: value => rupiah(value)
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    const doughnutCanvas = document.getElementById('grafikKomposisiZiswaf');
-
-    if (doughnutCanvas) {
-        new Chart(doughnutCanvas, {
-            type: 'doughnut',
-            data: {
-                labels: @json($komposisiLabels),
-                datasets: [{
-                    data: @json($komposisiData),
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: context => `${context.label}: ${rupiah(context.raw)}`
-                        }
-                    }
-                }
-            }
-        });
-    }
 
     // Live Clock
     const clockSpan = document.getElementById('live_clock_time');
@@ -811,7 +779,7 @@
 
     function getPrayerTimes(lat, lng, isCustomLoc = false) {
         if (locationText) {
-            locationText.textContent = isCustomLoc ? `Lokasi Anda: ${lat.toFixed(4)}, ${lng.toFixed(4)}` : 'Lokasi: Bandung (Pusdai)';
+            locationText.textContent = isCustomLoc ? 'Mendeteksi nama lokasi...' : 'Lokasi: Bandung (Pusdai)';
         }
 
         const date = new Date().toISOString().split('T')[0];
@@ -835,6 +803,40 @@
                 console.error(err);
                 if (locationText) locationText.textContent = 'Gagal memuat jadwal salat';
             });
+
+        if (isCustomLoc && locationText) {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`, {
+                headers: {
+                    'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.address) {
+                    const addr = data.address;
+                    const district = addr.village || addr.suburb || addr.neighbourhood || addr.hamlet || addr.city_district || '';
+                    const city = addr.city || addr.town || addr.municipality || addr.county || '';
+                    
+                    let locationName = '';
+                    if (district && city) {
+                        locationName = `${district}, ${city}`;
+                    } else if (district) {
+                        locationName = district;
+                    } else if (city) {
+                        locationName = city;
+                    } else {
+                        locationName = data.name || (data.display_name ? data.display_name.split(',')[0] : `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                    }
+                    locationText.textContent = `Lokasi Anda: ${locationName}`;
+                } else {
+                    locationText.textContent = `Lokasi Anda: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                }
+            })
+            .catch(err => {
+                console.error("Geocoding error:", err);
+                locationText.textContent = `Lokasi Anda: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            });
+        }
     }
 
     function updateNextPrayer(timings) {

@@ -1818,12 +1818,13 @@
     }
 
     .jt-stat .jt-icon {
-        width: 40px;
-        min-width: 40px;
-        height: 40px;
-        border-radius: 11px;
+        width: 48px;
+        min-width: 48px;
+        height: 48px;
+        border-radius: 13px;
         background: var(--stat-soft, var(--jt-green-soft));
         color: var(--stat-color, var(--jt-green));
+        font-size: 21px;
     }
 
     .jt-stat-body {
