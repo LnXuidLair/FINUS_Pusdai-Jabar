@@ -311,6 +311,8 @@
     $isZakatPage = ($jenis ?? null) === 'zakat';
     $isInfakPage = ($jenis ?? null) === 'infak';
     $isWakafPage = ($jenis ?? null) === 'wakaf';
+
+    $minimalNominal = $paymentGatewayReady ? 10000 : 1000;
 @endphp
 
 <div class="page-hero p-4 p-md-5 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -358,7 +360,7 @@
                 <h5 class="mb-1 font-weight-bold">Form {{ $config['title'] }}</h5>
                 <small class="text-muted">
                     @if($paymentGatewayReady)
-                        Isi data transaksi dengan benar. Setelah disimpan, kamu akan diarahkan ke pembayaran otomatis.
+                        Isi data transaksi dengan benar. Setelah transaksi dibuat, kamu akan diarahkan ke halaman payment gateway.
                     @else
                         Isi data transaksi dengan benar. Transaksi akan masuk status menunggu verifikasi admin.
                     @endif
@@ -375,305 +377,347 @@
                     <div class="row">
                         <!-- Left Column -->
                         <div class="col-lg-6 border-right pr-lg-4">
+                            <div class="form-group">
+                                <label>Jenis Transaksi</label>
 
-                    <div class="form-group">
-                        <label>Jenis Transaksi</label>
-
-                        @if(count($jenisOptions) === 1)
-                            <input type="hidden" name="jenis_ziswaf" id="jenis_ziswaf" value="{{ $singleJenisKey }}">
-                            <div class="option-grid">
-                                <div class="option-card active" style="pointer-events: none;">
-                                    <div class="option-icon">
-                                        @if($singleJenisKey === 'infaq')
-                                            <i class="fa-solid fa-circle-dollar-to-slot text-success"></i>
-                                        @elseif($singleJenisKey === 'wakaf')
-                                            <i class="fa fa-mosque text-success"></i>
-                                        @else
-                                            <i class="fa fa-coins text-success"></i>
-                                        @endif
-                                    </div>
-                                    <h6 class="option-title">{{ $jenisOptions[$singleJenisKey] }}</h6>
-                                </div>
-                            </div>
-                        @else
-                            <select name="jenis_ziswaf"
-                                id="jenis_ziswaf"
-                                class="form-control d-none @error('jenis_ziswaf') is-invalid @enderror"
-                                required>
-                                <option value="">Pilih jenis</option>
-                                @foreach($jenisOptions as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('jenis_ziswaf') === $value)>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            <div class="option-grid" id="jenis_ziswaf_cards">
-                                @foreach($jenisOptions as $value => $label)
-                                    <div class="option-card @if(old('jenis_ziswaf') === $value) active @endif" data-value="{{ $value }}">
-                                        <div class="option-icon">
-                                            @if($value === 'zakat_maal')
-                                                <i class="fa fa-coins"></i>
-                                            @elseif($value === 'zakat_penghasilan')
-                                                <i class="fa fa-briefcase"></i>
-                                            @else
-                                                <i class="fa fa-heart"></i>
-                                            @endif
+                                @if(count($jenisOptions) === 1)
+                                    <input type="hidden" name="jenis_ziswaf" id="jenis_ziswaf" value="{{ $singleJenisKey }}">
+                                    <div class="option-grid">
+                                        <div class="option-card active" style="pointer-events: none;">
+                                            <div class="option-icon">
+                                                @if($singleJenisKey === 'infaq')
+                                                    <i class="fa-solid fa-circle-dollar-to-slot text-success"></i>
+                                                @elseif($singleJenisKey === 'wakaf')
+                                                    <i class="fa fa-mosque text-success"></i>
+                                                @else
+                                                    <i class="fa fa-coins text-success"></i>
+                                                @endif
+                                            </div>
+                                            <h6 class="option-title">{{ $jenisOptions[$singleJenisKey] }}</h6>
                                         </div>
-                                        <h6 class="option-title">{{ $label }}</h6>
                                     </div>
-                                @endforeach
-                            </div>
-                        @endif
+                                @else
+                                    <select name="jenis_ziswaf"
+                                        id="jenis_ziswaf"
+                                        class="form-control d-none @error('jenis_ziswaf') is-invalid @enderror"
+                                        required>
+                                        <option value="">Pilih jenis</option>
+                                        @foreach($jenisOptions as $value => $label)
+                                            <option value="{{ $value }}" @selected(old('jenis_ziswaf') === $value)>
+                                                {{ $label }}
+                                            </option>
+                                        @endforeach
+                                    </select>
 
-                        @error('jenis_ziswaf')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                    @if($isZakatPage)
-                        <div id="kalkulator-zakat-maal" class="info-box mb-3" style="display: none;">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="font-weight-bold mb-0">Kalkulator Zakat Maal</h6>
-                                <span class="zakat-type-badge">2,5%</span>
-                            </div>
-
-                            <p class="small-muted mb-3">
-                                Zakat maal dihitung dari harta yang sudah mencapai nisab dan haul.
-                                Perhitungan sederhananya adalah 2,5% dari total harta wajib zakat.
-                            </p>
-
-                            <div class="form-group mb-2">
-                                <label>Total Harta Wajib Zakat</label>
-                                <input type="number"
-                                    id="harta_maal"
-                                    class="form-control"
-                                    min="0"
-                                    placeholder="Contoh: 10000000">
-                            </div>
-
-                            <div class="formula-box">
-                                <small class="d-block text-muted mb-1">Rumus</small>
-                                <strong>Zakat Maal = Total Harta × 2,5%</strong>
-
-                                <hr>
-
-                                <small class="d-block text-muted mb-1">Hasil Perhitungan</small>
-                                <h5 class="mb-0 font-weight-bold text-success" id="hasil_maal">
-                                    Rp0
-                                </h5>
-
-                                <button type="button" id="pakai_hasil_maal" class="btn btn-sm btn-success mt-3">
-                                    Pakai hasil ini sebagai nominal
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="kalkulator-zakat-penghasilan" class="info-box mb-3" style="display: none;">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="font-weight-bold mb-0">Kalkulator Zakat Penghasilan</h6>
-                                <span class="zakat-type-badge">2,5%</span>
-                            </div>
-
-                            <p class="small-muted mb-3">
-                                Zakat penghasilan dihitung dari penghasilan bersih yang sudah mencapai nisab.
-                                Perhitungan sederhana: 2,5% dari penghasilan wajib zakat.
-                            </p>
-
-                            <div class="form-group mb-2">
-                                <label>Penghasilan Utama</label>
-                                <input type="number"
-                                    id="penghasilan_utama"
-                                    class="form-control"
-                                    min="0"
-                                    placeholder="Contoh: 5000000">
-                            </div>
-
-                            <div class="form-group mb-2">
-                                <label>Penghasilan Lain</label>
-                                <input type="number"
-                                    id="penghasilan_lain"
-                                    class="form-control"
-                                    min="0"
-                                    placeholder="Contoh: 500000">
-                            </div>
-
-                            <div class="form-group mb-2">
-                                <label>Pengurang/Kebutuhan Pokok</label>
-                                <input type="number"
-                                    id="pengurang_penghasilan"
-                                    class="form-control"
-                                    min="0"
-                                    placeholder="Contoh: 1000000">
-                            </div>
-
-                            <div class="formula-box">
-                                <small class="d-block text-muted mb-1">Rumus</small>
-                                <strong>Zakat Penghasilan = Penghasilan Bersih × 2,5%</strong>
-
-                                <hr>
-
-                                <small class="d-block text-muted mb-1">Penghasilan Bersih</small>
-                                <h6 class="mb-2 font-weight-bold text-dark" id="penghasilan_bersih">
-                                    Rp0
-                                </h6>
-
-                                <small class="d-block text-muted mb-1">Hasil Perhitungan</small>
-                                <h5 class="mb-0 font-weight-bold text-success" id="hasil_penghasilan">
-                                    Rp0
-                                </h5>
-
-                                <button type="button" id="pakai_hasil_penghasilan" class="btn btn-sm btn-success mt-3">
-                                    Pakai hasil ini sebagai nominal
-                                </button>
-                            </div>
-                        </div>
-                    @endif
-
-                    <div class="form-group">
-                        <label for="nominal">Nominal Pembayaran</label>
-                        <div class="input-group-currency">
-                            <span class="currency-addon">Rp</span>
-                            <input type="number"
-                                name="nominal"
-                                id="nominal"
-                                class="form-control @error('nominal') is-invalid @enderror"
-                                value="{{ old('nominal') }}"
-                                min="1000"
-                                placeholder="50.000"
-                                required>
-                        </div>
-                        <small class="small-muted d-block mt-2">Minimal pembayaran Rp1.000</small>
-                        @error('nominal')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-                </div>
-
-                <!-- Right Column -->
-                <div class="col-lg-6 pl-lg-4 mt-4 mt-lg-0 d-flex flex-column justify-content-between">
-                    <div class="form-group">
-                        <label>Metode Pembayaran</label>
-
-                        <select name="metode_pembayaran"
-                            id="metode_pembayaran"
-                            class="form-control d-none @error('metode_pembayaran') is-invalid @enderror"
-                            required>
-                            @foreach($metodeOptions as $value => $label)
-                                <option value="{{ $value }}" @selected(old('metode_pembayaran') === $value)>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <div class="option-grid" id="metode_pembayaran_cards">
-                            @foreach($metodeOptions as $value => $label)
-                                <div class="option-card @if(old('metode_pembayaran', array_key_first($metodeOptions)) === $value) active @endif" data-value="{{ $value }}">
-                                    <div class="option-icon">
-                                        @if($value === 'qris' || $value === 'qris_manual')
-                                            <i class="fa fa-qrcode"></i>
-                                        @elseif($value === 'virtual_account')
-                                            <i class="fa fa-university"></i>
-                                        @elseif($value === 'e_wallet')
-                                            <i class="fa fa-mobile-alt"></i>
-                                        @elseif($value === 'manual_transfer')
-                                            <i class="fa fa-credit-card"></i>
-                                        @else
-                                            <i class="fa fa-receipt"></i>
-                                        @endif
+                                    <div class="option-grid" id="jenis_ziswaf_cards">
+                                        @foreach($jenisOptions as $value => $label)
+                                            <div class="option-card @if(old('jenis_ziswaf') === $value) active @endif" data-value="{{ $value }}">
+                                                <div class="option-icon">
+                                                    @if($value === 'zakat_maal')
+                                                        <i class="fa fa-coins"></i>
+                                                    @elseif($value === 'zakat_penghasilan')
+                                                        <i class="fa fa-briefcase"></i>
+                                                    @else
+                                                        <i class="fa fa-heart"></i>
+                                                    @endif
+                                                </div>
+                                                <h6 class="option-title">{{ $label }}</h6>
+                                            </div>
+                                        @endforeach
                                     </div>
-                                    <h6 class="option-title">{{ $label }}</h6>
+                                @endif
+
+                                @error('jenis_ziswaf')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+
+                            @if($isZakatPage)
+                                <div id="kalkulator-zakat-maal" class="info-box mb-3" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="font-weight-bold mb-0">Kalkulator Zakat Maal</h6>
+                                        <span class="zakat-type-badge">2,5%</span>
+                                    </div>
+
+                                    <p class="small-muted mb-3">
+                                        Zakat maal dihitung dari harta yang sudah mencapai nisab dan haul.
+                                        Perhitungan sederhananya adalah 2,5% dari total harta wajib zakat.
+                                    </p>
+
+                                    <div class="form-group mb-2">
+                                        <label>Total Harta Wajib Zakat</label>
+                                        <input type="number"
+                                            id="harta_maal"
+                                            class="form-control"
+                                            min="0"
+                                            placeholder="Contoh: 10000000">
+                                    </div>
+
+                                    <div class="formula-box">
+                                        <small class="d-block text-muted mb-1">Rumus</small>
+                                        <strong>Zakat Maal = Total Harta × 2,5%</strong>
+
+                                        <hr>
+
+                                        <small class="d-block text-muted mb-1">Hasil Perhitungan</small>
+                                        <h5 class="mb-0 font-weight-bold text-success" id="hasil_maal">
+                                            Rp0
+                                        </h5>
+
+                                        <button type="button" id="pakai_hasil_maal" class="btn btn-sm btn-success mt-3">
+                                            Pakai hasil ini sebagai nominal
+                                        </button>
+                                    </div>
                                 </div>
-                            @endforeach
+
+                                <div id="kalkulator-zakat-penghasilan" class="info-box mb-3" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="font-weight-bold mb-0">Kalkulator Zakat Penghasilan</h6>
+                                        <span class="zakat-type-badge">2,5%</span>
+                                    </div>
+
+                                    <p class="small-muted mb-3">
+                                        Zakat penghasilan dihitung dari penghasilan bersih yang sudah mencapai nisab.
+                                        Perhitungan sederhana: 2,5% dari penghasilan wajib zakat.
+                                    </p>
+
+                                    <div class="form-group mb-2">
+                                        <label>Penghasilan Utama</label>
+                                        <input type="number"
+                                            id="penghasilan_utama"
+                                            class="form-control"
+                                            min="0"
+                                            placeholder="Contoh: 5000000">
+                                    </div>
+
+                                    <div class="form-group mb-2">
+                                        <label>Penghasilan Lain</label>
+                                        <input type="number"
+                                            id="penghasilan_lain"
+                                            class="form-control"
+                                            min="0"
+                                            placeholder="Contoh: 500000">
+                                    </div>
+
+                                    <div class="form-group mb-2">
+                                        <label>Pengurang/Kebutuhan Pokok</label>
+                                        <input type="number"
+                                            id="pengurang_penghasilan"
+                                            class="form-control"
+                                            min="0"
+                                            placeholder="Contoh: 1000000">
+                                    </div>
+
+                                    <div class="formula-box">
+                                        <small class="d-block text-muted mb-1">Rumus</small>
+                                        <strong>Zakat Penghasilan = Penghasilan Bersih × 2,5%</strong>
+
+                                        <hr>
+
+                                        <small class="d-block text-muted mb-1">Penghasilan Bersih</small>
+                                        <h6 class="mb-2 font-weight-bold text-dark" id="penghasilan_bersih">
+                                            Rp0
+                                        </h6>
+
+                                        <small class="d-block text-muted mb-1">Hasil Perhitungan</small>
+                                        <h5 class="mb-0 font-weight-bold text-success" id="hasil_penghasilan">
+                                            Rp0
+                                        </h5>
+
+                                        <button type="button" id="pakai_hasil_penghasilan" class="btn btn-sm btn-success mt-3">
+                                            Pakai hasil ini sebagai nominal
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="form-group">
+                                <label for="nominal">Nominal Transaksi</label>
+                                <div class="input-group-currency">
+                                    <span class="currency-addon">Rp</span>
+                                    <input type="number"
+                                        name="nominal"
+                                        id="nominal"
+                                        class="form-control @error('nominal') is-invalid @enderror"
+                                        value="{{ old('nominal') }}"
+                                        min="{{ $minimalNominal }}"
+                                        placeholder="50000"
+                                        required>
+                                </div>
+                                <small class="small-muted d-block mt-2">
+                                    Minimal transaksi {{ $paymentGatewayReady ? 'Rp10.000' : 'Rp1.000' }}
+                                </small>
+                                @error('nominal')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
                         </div>
 
-                        @error('metode_pembayaran')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
+                        <div class="col-lg-6 pl-lg-4 mt-4 mt-lg-0 d-flex flex-column justify-content-between">
+                            <div class="form-group">
+                                <label>Metode Pembayaran</label>
 
-                    @if($paymentGatewayReady)
-                        <div id="info-qris" class="alert alert-info" style="display: none; border-radius: 12px;">
-                            <strong>QRIS</strong><br>
-                            Pembayaran akan diproses otomatis melalui payment gateway. Setelah berhasil, transaksi otomatis diterima oleh sistem.
-                        </div>
-
-                        <div id="info-virtual-account" class="alert alert-info" style="display: none; border-radius: 12px;">
-                            <strong>Virtual Account</strong><br>
-                            Sistem akan membuat nomor virtual account melalui payment gateway. Setelah berhasil, transaksi otomatis diterima oleh sistem.
-                        </div>
-
-                        <div id="info-e-wallet" class="alert alert-info" style="display: none; border-radius: 12px;">
-                            <strong>E-Wallet</strong><br>
-                            Pembayaran akan diproses melalui e-wallet yang tersedia di gateway. Setelah berhasil, transaksi otomatis diterima oleh sistem.
-                        </div>
-
-                        <div id="info-bank-transfer" class="alert alert-info" style="display: none; border-radius: 12px;">
-                            <strong>Bank Transfer Gateway</strong><br>
-                            Pembayaran akan diproses melalui bank transfer payment gateway. Setelah berhasil, transaksi otomatis diterima oleh sistem.
-                        </div>
-                    @else
-                        <div class="alert alert-warning" style="border-radius: 12px;">
-                            <strong>Payment Gateway Belum Aktif</strong><br>
-                            Untuk sementara transaksi memakai upload bukti pembayaran dan diverifikasi admin.
-                        </div>
-
-                        <div id="info-manual-transfer" class="alert alert-warning" style="display: none; border-radius: 12px;">
-                            <strong>Transfer Bank Manual</strong><br>
-                            Silakan transfer ke rekening masjid/lembaga, lalu upload bukti pembayaran agar admin dapat melakukan verifikasi.
-                        </div>
-
-                        <div id="info-qris-manual" class="alert alert-info" style="display: none; border-radius: 12px;">
-                            <strong>QRIS Manual</strong><br>
-                            Silakan lakukan pembayaran melalui QRIS manual, lalu upload bukti pembayaran agar admin dapat melakukan verifikasi.
-                        </div>
-
-                        <div class="form-group">
-                            <label>Bukti Pembayaran</label>
-                            <div class="custom-dropzone" id="dropzone_wrapper">
-                                <i class="fa fa-cloud-upload-alt"></i>
-                                <h6 class="mb-1 font-weight-bold text-dark">Klik atau Seret Bukti Transfer</h6>
-                                <p class="small-muted mb-0">Format: JPG, JPEG, PNG, PDF (Maksimal 2 MB)</p>
-                                <input
-                                    type="file"
-                                    name="bukti_pembayaran"
-                                    id="bukti_pembayaran"
-                                    class="@error('bukti_pembayaran') is-invalid @enderror"
-                                    accept=".jpg,.jpeg,.png,.pdf"
+                                <select name="metode_pembayaran"
+                                    id="metode_pembayaran"
+                                    class="form-control d-none @error('metode_pembayaran') is-invalid @enderror"
                                     required>
-                                <div id="file_info_badge" class="file-name-badge d-none">
-                                    <i class="fa fa-file mr-1"></i> <span id="file_name_text">nama-file.jpg</span>
+                                    @foreach($metodeOptions as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('metode_pembayaran') === $value)>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <div class="option-grid" id="metode_pembayaran_cards">
+                                    @foreach($metodeOptions as $value => $label)
+                                        <div class="option-card @if(old('metode_pembayaran', array_key_first($metodeOptions)) === $value) active @endif" data-value="{{ $value }}">
+                                            <div class="option-icon">
+                                                @if($value === 'qris' || $value === 'qris_manual')
+                                                    <i class="fa fa-qrcode"></i>
+                                                @elseif($value === 'virtual_account')
+                                                    <i class="fa fa-university"></i>
+                                                @elseif($value === 'e_wallet')
+                                                    <i class="fa fa-mobile-alt"></i>
+                                                @elseif($value === 'manual_transfer')
+                                                    <i class="fa fa-credit-card"></i>
+                                                @else
+                                                    <i class="fa fa-receipt"></i>
+                                                @endif
+                                            </div>
+                                            <h6 class="option-title">{{ $label }}</h6>
+                                        </div>
+                                    @endforeach
                                 </div>
+
+                                @error('metode_pembayaran')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
 
-                            @error('bukti_pembayaran')
-                                <small class="text-danger d-block mt-2">{{ $message }}</small>
-                            @enderror
+                            @if($paymentGatewayReady)
+                                {{-- Info QRIS --}}
+                                <div id="info-qris" class="alert alert-info" style="display: none; border-radius: 12px;">
+                                    <strong><i class="fa fa-qrcode mr-1"></i> QRIS</strong><br>
+                                    Pembayaran dilakukan dengan scan QR Code. Setelah lunas, transaksi otomatis diterima oleh sistem.
+                                </div>
+
+                                {{-- Info Virtual Account + sub-pilihan bank --}}
+                                <div id="info-virtual-account" style="display: none;">
+                                    <div class="alert alert-info mb-2" style="border-radius: 12px;">
+                                        <strong><i class="fa fa-university mr-1"></i> Virtual Account</strong><br>
+                                        Pilih bank untuk mendapatkan nomor VA. Setelah transfer, transaksi otomatis diterima.
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="small font-weight-bold text-muted">Pilih Bank VA</label>
+                                        <div class="option-grid" id="bank_va_cards" style="grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+                                            @foreach(['bca_va' => 'BCA', 'bni_va' => 'BNI', 'bri_va' => 'BRI', 'permata_va' => 'Permata', 'other_va' => 'Lainnya'] as $vaVal => $vaLabel)
+                                                <div class="option-card" data-value="{{ $vaVal }}" style="padding: 12px 8px;">
+                                                    <div class="option-icon" style="width: 36px; height: 36px; font-size: 14px; margin-bottom: 6px;">
+                                                        @if($vaVal === 'bca_va') <i class="fa fa-landmark"></i>
+                                                        @elseif($vaVal === 'bni_va') <i class="fa fa-building"></i>
+                                                        @elseif($vaVal === 'bri_va') <i class="fa fa-university"></i>
+                                                        @elseif($vaVal === 'permata_va') <i class="fa fa-gem"></i>
+                                                        @else <i class="fa fa-ellipsis-h"></i>
+                                                        @endif
+                                                    </div>
+                                                    <h6 class="option-title" style="font-size: 12px;">{{ $vaLabel }}</h6>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <input type="hidden" name="bank_va_pilihan" id="bank_va_pilihan" value="">
+                                    </div>
+                                </div>
+
+                                {{-- Info E-Wallet + sub-pilihan --}}
+                                <div id="info-e-wallet" style="display: none;">
+                                    <div class="alert alert-info mb-2" style="border-radius: 12px;">
+                                        <strong><i class="fa fa-mobile-alt mr-1"></i> E-Wallet</strong><br>
+                                        Pilih dompet digital yang ingin digunakan. Setelah lunas, transaksi otomatis diterima.
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="small font-weight-bold text-muted">Pilih E-Wallet</label>
+                                        <div class="option-grid" id="ewallet_cards" style="grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+                                            @foreach(['gopay' => 'GoPay', 'shopeepay' => 'ShopeePay', 'dana' => 'DANA'] as $ewVal => $ewLabel)
+                                                <div class="option-card" data-value="{{ $ewVal }}" style="padding: 12px 8px;">
+                                                    <div class="option-icon" style="width: 36px; height: 36px; font-size: 14px; margin-bottom: 6px;">
+                                                        <i class="fa fa-wallet"></i>
+                                                    </div>
+                                                    <h6 class="option-title" style="font-size: 12px;">{{ $ewLabel }}</h6>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <input type="hidden" name="ewallet_pilihan" id="ewallet_pilihan" value="">
+                                    </div>
+                                </div>
+
+                                {{-- Info Bank Transfer --}}
+                                <div id="info-bank-transfer" class="alert alert-info" style="display: none; border-radius: 12px;">
+                                    <strong><i class="fa fa-exchange-alt mr-1"></i> Bank Transfer Gateway</strong><br>
+                                    Transaksi akan diproses melalui bank transfer payment gateway. Jika berhasil, sistem akan menerima status transaksi secara otomatis.
+                                </div>
+                            @else
+                                <div class="alert alert-warning" style="border-radius: 12px;">
+                                    <strong>Payment Gateway Belum Aktif</strong><br>
+                                    Untuk sementara transaksi memakai upload bukti transfer dan diverifikasi admin.
+                                </div>
+
+                                <div id="info-manual-transfer" class="alert alert-warning" style="display: none; border-radius: 12px;">
+                                    <strong>Transfer Bank Manual</strong><br>
+                                    Silakan transfer ke rekening masjid/lembaga, lalu upload bukti transfer agar admin dapat melakukan verifikasi.
+                                </div>
+
+                                <div id="info-qris-manual" class="alert alert-info" style="display: none; border-radius: 12px;">
+                                    <strong>QRIS Manual</strong><br>
+                                    Silakan lakukan transfer melalui QRIS manual, lalu upload bukti transfer agar admin dapat melakukan verifikasi.
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Bukti Transfer</label>
+                                    <div class="custom-dropzone" id="dropzone_wrapper">
+                                        <i class="fa fa-cloud-upload-alt"></i>
+                                        <h6 class="mb-1 font-weight-bold text-dark">Klik atau Seret Bukti Transfer</h6>
+                                        <p class="small-muted mb-0">Format: JPG, JPEG, PNG, PDF (Maksimal 2 MB)</p>
+                                        <input
+                                            type="file"
+                                            name="bukti_pembayaran"
+                                            id="bukti_pembayaran"
+                                            class="@error('bukti_pembayaran') is-invalid @enderror"
+                                            accept=".jpg,.jpeg,.png,.pdf"
+                                            required>
+                                        <div id="file_info_badge" class="file-name-badge d-none">
+                                            <i class="fa fa-file mr-1"></i> <span id="file_name_text">nama-file.jpg</span>
+                                        </div>
+                                    </div>
+
+                                    @error('bukti_pembayaran')
+                                        <small class="text-danger d-block mt-2">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                            @endif
+
+                            <div class="form-group">
+                                <label>Keterangan</label>
+
+                                <textarea name="keterangan"
+                                    class="form-control @error('keterangan') is-invalid @enderror"
+                                    rows="3"
+                                    placeholder="Opsional">{{ old('keterangan') }}</textarea>
+
+                                @error('keterangan')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+
+                            <button type="submit" class="btn btn-submit-premium btn-block">
+                                @if($paymentGatewayReady)
+                                    <i class="fa fa-credit-card mr-1"></i>
+                                    Lanjutkan Pembayaran
+                                @else
+                                    <i class="fa fa-paper-plane mr-1"></i>
+                                    Kirim Transaksi & Verifikasi
+                                @endif
+                            </button>
                         </div>
-                    @endif
-
-                    <div class="form-group">
-                        <label>Keterangan</label>
-
-                        <textarea name="keterangan"
-                            class="form-control @error('keterangan') is-invalid @enderror"
-                            rows="3"
-                            placeholder="Opsional">{{ old('keterangan') }}</textarea>
-
-                        @error('keterangan')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                    <button type="submit" class="btn btn-submit-premium btn-block">
-                        @if($paymentGatewayReady)
-                            <i class="fa fa-credit-card mr-1"></i>
-                            Lanjutkan ke Pembayaran
-                        @else
-                            <i class="fa fa-paper-plane mr-1"></i>
-                            Kirim Transaksi & Verifikasi
-                        @endif
-                    </button>
                     </div>
                 </form>
             </div>
@@ -833,29 +877,46 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function hideAllPaymentInfo() {
-        if (infoQris) {
-            infoQris.style.display = 'none';
-        }
+        [infoQris, infoVirtualAccount, infoEWallet, infoBankTransfer,
+         infoManualTransfer, infoQrisManual].forEach(function (el) {
+            if (el) el.style.display = 'none';
+        });
+    }
 
-        if (infoVirtualAccount) {
-            infoVirtualAccount.style.display = 'none';
-        }
+    // Sub-pilihan Bank VA
+    const bankVaCards = document.querySelectorAll('#bank_va_cards .option-card');
+    const bankVaPilihan = document.getElementById('bank_va_pilihan');
 
-        if (infoEWallet) {
-            infoEWallet.style.display = 'none';
-        }
+    bankVaCards.forEach(function (card) {
+        card.addEventListener('click', function () {
+            bankVaCards.forEach(function (c) { c.classList.remove('active'); });
+            this.classList.add('active');
+            if (bankVaPilihan) bankVaPilihan.value = this.getAttribute('data-value');
+        });
+    });
 
-        if (infoBankTransfer) {
-            infoBankTransfer.style.display = 'none';
-        }
+    // Aktifkan kartu pertama Bank VA secara default
+    if (bankVaCards.length > 0) {
+        bankVaCards[0].classList.add('active');
+        if (bankVaPilihan) bankVaPilihan.value = bankVaCards[0].getAttribute('data-value');
+    }
 
-        if (infoManualTransfer) {
-            infoManualTransfer.style.display = 'none';
-        }
+    // Sub-pilihan E-Wallet
+    const ewalletCards = document.querySelectorAll('#ewallet_cards .option-card');
+    const ewalletPilihan = document.getElementById('ewallet_pilihan');
 
-        if (infoQrisManual) {
-            infoQrisManual.style.display = 'none';
-        }
+    ewalletCards.forEach(function (card) {
+        card.addEventListener('click', function () {
+            ewalletCards.forEach(function (c) { c.classList.remove('active'); });
+            this.classList.add('active');
+            if (ewalletPilihan) ewalletPilihan.value = this.getAttribute('data-value');
+        });
+    });
+
+    // Aktifkan kartu pertama E-Wallet secara default
+    if (ewalletCards.length > 0) {
+        ewalletCards[0].classList.add('active');
+        if (ewalletPilihan) ewalletPilihan.value = ewalletCards[0].getAttribute('data-value');
     }
 
     function toggleMetodePembayaran() {
@@ -924,6 +985,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const fileInput = document.getElementById('bukti_pembayaran');
     const badge = document.getElementById('file_info_badge');
     const badgeText = document.getElementById('file_name_text');
+
     if (fileInput) {
         fileInput.addEventListener('change', function() {
             if (this.files && this.files.length > 0) {

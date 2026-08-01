@@ -562,6 +562,7 @@
                     <div>
                         <strong>Penting:</strong> Transaksi akan <strong>otomatis kadaluarsa</strong> jika tidak diselesaikan.
                         Klik tombol <em>"Bayar Sekarang"</em> di sebelah kanan untuk membuka jendela pembayaran Midtrans.
+                        Jika ingin melanjutkan nanti, kamu bisa kembali melalui menu <strong>Riwayat Transaksi</strong>.
                     </div>
                 </div>
             </div>
@@ -588,10 +589,6 @@
                         Bayar Sekarang
                     </button>
 
-                    <a href="{{ route('jamaah.riwayat.index') }}" class="pay-btn-secondary">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                        Bayar Nanti
-                    </a>
 
                     {{-- Batalkan transaksi --}}
                     <form
