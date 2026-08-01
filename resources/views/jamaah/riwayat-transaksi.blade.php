@@ -199,7 +199,7 @@
                     @forelse($transaksi as $item)
                         @php
                             $status = $item->status_verifikasi ?: 'pending';
-                            $referensi = $item->order_id ?: 'ZISWAF-' . $item->id;
+                            $referensi = $item->order_id ?: 'ZSF-' . $item->id;
 
                             // Cek apakah transaksi bisa dilanjutkan pembayarannya
                             $bisaBayar = $status === 'pending'

@@ -291,7 +291,7 @@ class JamaahController extends Controller
                     $status = $item->status_verifikasi ?: 'pending';
 
                     fputcsv($output, [
-                        $item->order_id ?: 'ZISWAF-' . $item->id,
+                        $item->order_id ?: 'ZSF-' . $item->id,
                         optional($item->tanggal)->format('d/m/Y'),
                         $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf,
                         $metodeLabels[$item->metode_pembayaran]
@@ -378,7 +378,9 @@ class JamaahController extends Controller
 
         $user = $request->user();
 
-        $orderId = 'ZISWAF-' . $user->id . '-' . now()->format('YmdHis') . '-' . random_int(100, 999);
+        // Format pendek: ZSF-{base36 dari unix timestamp}-{3 digit random}
+        // Contoh: ZSF-l8n4kx-427 (~14 karakter, unik, sesuai standar Midtrans)
+        $orderId = 'ZSF-' . base_convert((string) now()->timestamp, 10, 36) . '-' . random_int(100, 999);
 
         $buktiPembayaranPath = null;
 
@@ -417,7 +419,11 @@ class JamaahController extends Controller
                 'order_id' => $orderId,
                 'gross_amount' => (int) $validated['nominal'],
             ],
-            'enabled_payments' => $this->enabledPaymentsFor($validated['metode_pembayaran']),
+            'enabled_payments' => $this->enabledPaymentsFor(
+                $validated['metode_pembayaran'],
+                $request->input('bank_va_pilihan') ?: null,
+                $request->input('ewallet_pilihan') ?: null
+            ),
             'customer_details' => [
                 'first_name' => $user->name,
                 'email' => $user->email,
@@ -689,7 +695,7 @@ class JamaahController extends Controller
             $search = trim($filters['q']);
             $referenceId = null;
 
-            if (preg_match('/(?:ZISWAF-)?(\d+)/i', $search, $matches)) {
+            if (preg_match('/(?:ZSF-|ZISWAF-)?([a-z0-9]+)/i', $search, $matches)) {
                 $referenceId = (int) $matches[1];
             }
 
@@ -777,27 +783,27 @@ class JamaahController extends Controller
         MidtransConfig::$is3ds = (bool) config('services.midtrans.is_3ds');
     }
 
-    private function enabledPaymentsFor(string $metode): array
-    {
+    private function enabledPaymentsFor(
+        string $metode,
+        ?string $bankVaPilihan = null,
+        ?string $ewalletPilihan = null
+    ): array {
+        $validBankVa  = ['bca_va', 'bni_va', 'bri_va', 'permata_va', 'other_va'];
+        $validEwallet = ['gopay', 'shopeepay', 'dana'];
+
         return match ($metode) {
             'qris' => [
                 'qris',
                 'other_qris',
             ],
 
-            'virtual_account' => [
-                'bca_va',
-                'bni_va',
-                'bri_va',
-                'permata_va',
-                'other_va',
-            ],
+            'virtual_account' => in_array($bankVaPilihan, $validBankVa, true)
+                ? [$bankVaPilihan]
+                : ['bca_va', 'bni_va', 'bri_va', 'permata_va', 'other_va'],
 
-            'e_wallet' => [
-                'gopay',
-                'shopeepay',
-                'dana',
-            ],
+            'e_wallet' => in_array($ewalletPilihan, $validEwallet, true)
+                ? [$ewalletPilihan]
+                : ['gopay', 'shopeepay', 'dana'],
 
             default => [
                 'qris',

@@ -275,7 +275,7 @@
                         @endphp
 
                         <tr>
-                            <td class="jt-reference">ZISWAF-{{ $item->id }}</td>
+                            <td class="jt-reference">{{ $item->order_id ?: 'ZSF-' . $item->id }}</td>
 
                             <td>{{ $item->tanggal?->format('d/m/Y') }}</td>
 
