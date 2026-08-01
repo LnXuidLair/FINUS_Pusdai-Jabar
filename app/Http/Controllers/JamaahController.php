@@ -41,13 +41,17 @@ class JamaahController extends Controller
         $jamaah = $request->user();
         $jenisLabels = $this->jenisLabels();
 
-        $totalTransaksiSaya = (int) ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
+        $transaksiBerhasilSaya = ZiswafPenerimaan::query()
+            ->where('muzakki_id', $jamaah->id)
+            ->where('status_verifikasi', 'diterima');
+
+        $totalTransaksiSaya = (int) (clone $transaksiBerhasilSaya)
             ->sum('nominal');
 
-        $jumlahTransaksiSaya = ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
+        $jumlahTransaksiSaya = (clone $transaksiBerhasilSaya)
             ->count();
 
-        $totalZakatSaya = (int) ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
+        $totalZakatSaya = (int) (clone $transaksiBerhasilSaya)
             ->whereIn('jenis_ziswaf', [
                 'zakat_maal',
                 'zakat_fitrah',
@@ -55,15 +59,15 @@ class JamaahController extends Controller
             ])
             ->sum('nominal');
 
-        $totalInfakSaya = (int) ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
+        $totalInfakSaya = (int) (clone $transaksiBerhasilSaya)
             ->where('jenis_ziswaf', 'infaq')
             ->sum('nominal');
 
-        $totalWakafSaya = (int) ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
+        $totalWakafSaya = (int) (clone $transaksiBerhasilSaya)
             ->where('jenis_ziswaf', 'wakaf')
             ->sum('nominal');
 
-        $riwayatSaya = ZiswafPenerimaan::where('muzakki_id', $jamaah->id)
+        $riwayatSaya = (clone $transaksiBerhasilSaya)
             ->latest('tanggal')
             ->latest('id')
             ->limit(8)
@@ -87,12 +91,12 @@ class JamaahController extends Controller
                 'deskripsi' => 'Pembagian konsumsi dan sedekah untuk jamaah Jumat.',
             ],
             [
-                'judul' => 'Kelas Tahsin Al-Qur’an',
+                'judul' => 'Kelas Tahsin Al-Qur\'an',
                 'hari' => 'Setiap Sabtu',
                 'waktu' => '16.00 - 17.30 WIB',
                 'lokasi' => 'Ruang Belajar',
                 'kategori' => 'Pendidikan',
-                'deskripsi' => 'Kegiatan belajar memperbaiki bacaan Al-Qur’an.',
+                'deskripsi' => 'Kegiatan belajar memperbaiki bacaan Al-Qur\'an.',
             ],
         ]);
 
@@ -160,7 +164,8 @@ class JamaahController extends Controller
             defaultPeriod: true
         );
 
-        // Query dasar: semua transaksi jamaah sesuai filter
+        $filters['status'] = 'diterima';
+
         $query = $this->jamaahTransactionQuery($request, $filters);
 
         // Query laporan: eksklusikan transaksi yang dibatalkan/ditolak
@@ -171,24 +176,14 @@ class JamaahController extends Controller
         $summaryQuery = clone $query;
 
         $summary = [
-            'jumlah'   => (clone $laporanQuery)->count(),
-            'total'    => (int) (clone $laporanQuery)->sum('nominal'),
-            'diterima' => (int) (clone $summaryQuery)
-                ->where('status_verifikasi', 'diterima')
-                ->sum('nominal'),
-            'pending'  => (int) (clone $summaryQuery)
-                ->where(function ($builder): void {
-                    $builder->where('status_verifikasi', 'pending')
-                        ->orWhereNull('status_verifikasi');
-                })
-                ->sum('nominal'),
-            'ditolak'  => (int) (clone $summaryQuery)
-                ->where('status_verifikasi', 'ditolak')
-                ->sum('nominal'),
+            'jumlah' => (clone $summaryQuery)->count(),
+            'total' => (int) (clone $summaryQuery)->sum('nominal'),
+            'diterima' => (int) (clone $summaryQuery)->sum('nominal'),
+            'pending' => 0,
+            'ditolak' => 0,
         ];
 
-        // Chart per-jenis: hanya transaksi valid
-        $perJenis = (clone $laporanQuery)
+        $perJenis = (clone $query)
             ->select('jenis_ziswaf')
             ->selectRaw('COUNT(*) AS jumlah_transaksi')
             ->selectRaw('COALESCE(SUM(nominal), 0) AS total')
@@ -196,8 +191,7 @@ class JamaahController extends Controller
             ->orderByDesc('total')
             ->get();
 
-        // Chart bulanan: hanya transaksi valid
-        $monthlyRaw = (clone $laporanQuery)
+        $monthlyRaw = (clone $query)
             ->selectRaw("DATE_FORMAT(tanggal, '%Y-%m') AS bulan")
             ->selectRaw('COALESCE(SUM(nominal), 0) AS total')
             ->groupBy('bulan')
@@ -217,25 +211,24 @@ class JamaahController extends Controller
 
         $jenisChartData = $perJenis->pluck('total')->map(fn ($value): int => (int) $value)->values();
 
-        // Tabel laporan: hanya transaksi valid
-        $transaksiLaporan = (clone $laporanQuery)
+        $transaksiLaporan = (clone $query)
             ->latest('tanggal')
             ->latest('id')
             ->get();
 
         return view('jamaah.laporan-transaksi', [
-            'jamaah'           => $request->user(),
-            'filters'          => $filters,
-            'summary'          => $summary,
-            'perJenis'         => $perJenis,
+            'jamaah' => $request->user(),
+            'filters' => $filters,
+            'summary' => $summary,
+            'perJenis' => $perJenis,
             'transaksiLaporan' => $transaksiLaporan,
-            'chartLabels'      => $chartLabels,
-            'chartData'        => $chartData,
+            'chartLabels' => $chartLabels,
+            'chartData' => $chartData,
             'jenisChartLabels' => $jenisChartLabels,
-            'jenisChartData'   => $jenisChartData,
-            'jenisLabels'      => $this->jenisLabels(),
-            'statusLabels'     => $this->statusLabels(),
-            'metodeLabels'     => $this->metodeLabels(),
+            'jenisChartData' => $jenisChartData,
+            'jenisLabels' => $this->jenisLabels(),
+            'statusLabels' => $this->statusLabels(),
+            'metodeLabels' => $this->metodeLabels(),
         ]);
     }
 
@@ -249,6 +242,8 @@ class JamaahController extends Controller
             defaultPeriod: true
         );
 
+        $filters['status'] = 'diterima';
+
         $transaksi = $this->jamaahTransactionQuery($request, $filters)
             ->whereNotIn('status_verifikasi', ['ditolak', 'dibatalkan'])
             ->latest('tanggal')
@@ -256,7 +251,7 @@ class JamaahController extends Controller
             ->get();
 
         $namaFile = sprintf(
-            'laporan-transaksi-%s-%s.csv',
+            'laporan-transaksi-berhasil-%s-%s.csv',
             auth()->id(),
             now()->format('Ymd-His')
         );
@@ -505,7 +500,7 @@ class JamaahController extends Controller
 
         // Hanya bisa dibatalkan jika masih pending & via midtrans dengan snap_token
         $bisaBatal = $transaksi->payment_gateway === 'midtrans'
-            && !empty($transaksi->snap_token)
+            && ! empty($transaksi->snap_token)
             && in_array($transaksi->status_verifikasi, ['pending', null], true)
             && in_array($transaksi->payment_status, ['pending', null, ''], true);
 
@@ -516,10 +511,10 @@ class JamaahController extends Controller
         }
 
         $transaksi->update([
-            'payment_status'      => 'cancel',
-            'status_verifikasi'   => 'dibatalkan',
-            'catatan_verifikasi'  => 'Dibatalkan oleh jamaah.',
-            'snap_token'          => null,
+            'payment_status' => 'cancel',
+            'status_verifikasi' => 'dibatalkan',
+            'catatan_verifikasi' => 'Dibatalkan oleh jamaah.',
+            'snap_token' => null,
         ]);
 
         return redirect()
@@ -801,6 +796,7 @@ class JamaahController extends Controller
             'e_wallet' => [
                 'gopay',
                 'shopeepay',
+                'dana',
             ],
 
             default => [
@@ -813,6 +809,7 @@ class JamaahController extends Controller
                 'other_va',
                 'gopay',
                 'shopeepay',
+                'dana',
             ],
         };
     }
@@ -884,10 +881,10 @@ class JamaahController extends Controller
     private function statusLabels(): array
     {
         return [
-            'pending'     => 'Menunggu',
-            'diterima'    => 'Diterima',
-            'ditolak'     => 'Ditolak',
-            'dibatalkan'  => 'Dibatalkan',
+            'pending' => 'Menunggu',
+            'diterima' => 'Diterima',
+            'ditolak' => 'Ditolak',
+            'dibatalkan' => 'Dibatalkan',
         ];
     }
 
@@ -907,6 +904,7 @@ class JamaahController extends Controller
             'other_va' => 'Virtual Account Lainnya',
             'gopay' => 'GoPay',
             'shopeepay' => 'ShopeePay',
+            'dana' => 'DANA',
         ];
     }
 }
