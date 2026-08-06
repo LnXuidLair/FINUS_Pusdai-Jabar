@@ -498,7 +498,7 @@
 
                                 <td class="text-center" data-label="Status">
                                     <span class="employee-status {{ $status }}">
-                                        {{ $pegawai->is_verified ? 'Terverifikasi' : 'Belum' }}
+                                        {{ $pegawai->is_verified ? 'Terverifikasi' : 'Belum Verifikasi' }}
                                     </span>
                                 </td>
 
