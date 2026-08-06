@@ -516,16 +516,134 @@ class JamaahController extends Controller
                 ->with('warning', 'Transaksi ini tidak dapat dibatalkan karena sudah diproses atau tidak memenuhi syarat pembatalan.');
         }
 
+        // ── Kirim Cancel ke Midtrans ──────────────────────────────────────────
+        // Jika payment gateway aktif, batalkan order di sisi Midtrans juga
+        // sehingga tidak ada ghost transaction yang tertinggal di dashboard Midtrans.
+        if ($this->isPaymentGatewayReady()) {
+            try {
+                $this->configureMidtrans();
+                \Midtrans\Transaction::cancel($transaksi->order_id);
+            } catch (\Throwable $e) {
+                // Jika order sudah expire/tidak ditemukan di Midtrans, abaikan saja.
+                // Kita tetap batalkan secara lokal agar UX tidak terganggu.
+                report($e);
+            }
+        }
+
         $transaksi->update([
-            'payment_status' => 'cancel',
-            'status_verifikasi' => 'dibatalkan',
-            'catatan_verifikasi' => 'Dibatalkan oleh jamaah.',
-            'snap_token' => null,
+            'payment_status'      => 'cancel',
+            'status_verifikasi'   => 'dibatalkan',
+            'catatan_verifikasi'  => 'Dibatalkan oleh jamaah.',
+            'snap_token'          => null,
         ]);
 
         return redirect()
             ->route('jamaah.riwayat.index')
             ->with('success', 'Transaksi berhasil dibatalkan.');
+    }
+
+    /**
+     * Cek status terkini transaksi ke Midtrans dan sinkronkan ke database lokal.
+     * Berguna ketika notifikasi webhook gagal terkirim (fallback polling).
+     */
+    public function cekStatusPembayaran(Request $request, ZiswafPenerimaan $transaksi)
+    {
+        abort_unless(
+            (int) $transaksi->muzakki_id === (int) $request->user()->id,
+            403
+        );
+
+        if ($transaksi->payment_gateway !== 'midtrans') {
+            return redirect()
+                ->route('jamaah.riwayat.index')
+                ->with('warning', 'Cek status hanya tersedia untuk transaksi melalui Midtrans.');
+        }
+
+        if (! $this->isPaymentGatewayReady()) {
+            return redirect()
+                ->route('jamaah.riwayat.index')
+                ->with('warning', 'Payment gateway belum aktif.');
+        }
+
+        try {
+            $this->configureMidtrans();
+            $status = \Midtrans\Transaction::status($transaksi->order_id);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->back()
+                ->with('warning', 'Gagal menghubungi Midtrans. Periksa koneksi atau coba beberapa saat lagi.');
+        }
+
+        $transactionStatus = (string) ($status->transaction_status ?? '');
+        $fraudStatus       = $status->fraud_status ?? null;
+        $paymentType       = $status->payment_type ?? null;
+        $transactionId     = $status->transaction_id ?? null;
+
+        // Jaga idempotency: jangan downgrade status yang sudah settlement
+        if (
+            in_array($transaksi->payment_status, ['settlement', 'capture'], true)
+            && $transactionStatus === 'pending'
+        ) {
+            return redirect()
+                ->back()
+                ->with('success', 'Status transaksi sudah terkonfirmasi sebelumnya. Tidak ada perubahan.');
+        }
+
+        if (
+            $transactionStatus === 'settlement'
+            || ($transactionStatus === 'capture' && in_array($fraudStatus, ['accept', null, ''], true))
+        ) {
+            $transaksi->update([
+                'payment_status'      => $transactionStatus,
+                'payment_type'        => $paymentType,
+                'transaction_id'      => $transactionId,
+                'fraud_status'        => $fraudStatus,
+                'status_verifikasi'   => 'diterima',
+                'catatan_verifikasi'  => 'Pembayaran terkonfirmasi melalui cek status manual.',
+                'verified_at'         => now(),
+                'paid_at'             => $transaksi->paid_at ?? now(),
+            ]);
+
+            return redirect()
+                ->route('jamaah.riwayat.index')
+                ->with('success', 'Pembayaran terkonfirmasi! Transaksi berhasil diterima.');
+        }
+
+        if ($transactionStatus === 'pending') {
+            $transaksi->update([
+                'payment_status'  => 'pending',
+                'payment_type'    => $paymentType,
+                'transaction_id'  => $transactionId,
+                'fraud_status'    => $fraudStatus,
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('warning', 'Status pembayaran masih menunggu (pending). Silakan selesaikan pembayaran terlebih dahulu.');
+        }
+
+        if (in_array($transactionStatus, ['deny', 'cancel', 'expire', 'failure'], true)) {
+            $transaksi->update([
+                'payment_status'      => $transactionStatus,
+                'payment_type'        => $paymentType,
+                'transaction_id'      => $transactionId,
+                'fraud_status'        => $fraudStatus,
+                'status_verifikasi'   => 'ditolak',
+                'catatan_verifikasi'  => 'Pembayaran gagal, dibatalkan, atau kedaluwarsa (sinkron dari cek status manual).',
+                'verified_at'         => now(),
+                'snap_token'          => null,
+            ]);
+
+            return redirect()
+                ->route('jamaah.riwayat.index')
+                ->with('warning', 'Pembayaran ' . $transactionStatus . '. Transaksi telah ditandai sebagai ditolak.');
+        }
+
+        return redirect()
+            ->back()
+            ->with('warning', 'Status Midtrans: ' . ($transactionStatus ?: 'tidak diketahui') . '. Tidak ada perubahan yang dilakukan.');
     }
 
     public function midtransNotification(Request $request)

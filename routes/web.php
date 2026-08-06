@@ -171,6 +171,9 @@ Route::middleware(['auth', 'verified', 'role:jamaah'])
         Route::delete('/pembayaran/{transaksi}/batal', [JamaahController::class, 'batalPembayaran'])
             ->name('pembayaran.batal');
 
+        Route::get('/pembayaran/{transaksi}/cek-status', [JamaahController::class, 'cekStatusPembayaran'])
+            ->name('pembayaran.cek-status');
+
         Route::get('/riwayat-transaksi', [JamaahController::class, 'riwayat'])
             ->name('riwayat.index');
 

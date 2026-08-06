@@ -380,6 +380,34 @@
         color: #991b1b;
     }
 
+    /* ── Cek Status Button ── */
+    .pay-btn-check {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        width: 100%;
+        margin-top: 10px;
+        padding: 11px 20px;
+        border: 1.5px solid #a5b4fc;
+        border-radius: 12px;
+        background: #eef2ff;
+        color: #4338ca;
+        font-size: 12.5px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all .2s ease;
+    }
+
+    .pay-btn-check:hover {
+        background: #e0e7ff;
+        border-color: #818cf8;
+        color: #3730a3;
+        transform: translateY(-1px);
+    }
+
+
     /* ─── Guarantee list ─── */
     .pay-guarantees {
         margin-top: 18px;
@@ -589,6 +617,17 @@
                         Bayar Sekarang
                     </button>
 
+
+                    {{-- Cek Status: fallback jika webhook tidak terkirim --}}
+                    <a
+                        href="{{ route('jamaah.pembayaran.cek-status', $transaksi) }}"
+                        class="pay-btn-check"
+                        id="check-status-btn"
+                        onclick="this.innerHTML='<i class=\'fa-solid fa-circle-notch fa-spin\'></i> Mengecek status...'; this.style.pointerEvents='none';"
+                    >
+                        <i class="fa-solid fa-rotate"></i>
+                        Sudah Bayar? Cek Status
+                    </a>
 
                     {{-- Batalkan transaksi --}}
                     <form
