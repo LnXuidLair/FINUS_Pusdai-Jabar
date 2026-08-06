@@ -27,7 +27,6 @@
             --shadow-md:0 18px 46px rgba(3,61,24,.15);
             --shadow-lg:0 30px 80px rgba(1,38,14,.24)
         }
-
         *,*::before,*::after{box-sizing:border-box}
         html{min-height:100%;scroll-behavior:smooth;background:var(--g950)}
         body{
@@ -40,9 +39,7 @@
         button,a{touch-action:manipulation}
         img{display:block;max-width:100%}
         [hidden]{display:none!important}
-
         .finus-container{width:min(calc(100% - 32px),var(--container));margin-inline:auto}
-
         /* HEADER */
         .finus-header{
             position:fixed;inset:0 0 auto;z-index:1000;
@@ -100,7 +97,6 @@
             transform:translateY(2px) rotate(225deg)
         }
         .finus-menu-button{width:44px;padding:0}
-
         .finus-dropdown{
             position:absolute;top:calc(100% + 10px);right:0;z-index:1200;
             width:190px;padding:7px;border:1px solid rgba(14,110,44,.15);
@@ -130,7 +126,6 @@
             display:inline-flex;align-items:center;justify-content:center;width:28px;min-width:28px;height:28px;
             border-radius:8px;background:var(--g50);color:var(--g700)
         }
-
         /* HERO */
         .finus-main{
             min-height:100vh;min-height:100dvh;
@@ -218,7 +213,6 @@
             display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
             border-radius:7px;background:var(--g100);color:var(--g700)
         }
-
         /* ROLE CARD */
         .finus-role-card{
             position:relative;overflow:hidden;padding:clamp(22px,3vw,31px);
@@ -274,7 +268,6 @@
             border-top:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.67);
             font-size:10.5px;line-height:1.55
         }
-
         /* MOBILE PANEL */
         .finus-mobile-panel{
             position:fixed;inset:calc(var(--header) + env(safe-area-inset-top)) 0 auto;
@@ -300,7 +293,6 @@
             display:inline-flex;align-items:center;justify-content:center;width:31px;min-width:31px;height:31px;
             border-radius:9px;background:var(--g100);color:var(--g800)
         }
-
         /* ACCESS MODAL */
         .finus-modal{
             position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;
@@ -407,7 +399,6 @@
             width:17px;height:17px;border:2px solid rgba(3,61,24,.22);
             border-top-color:var(--g950);border-radius:50%;animation:finus-spin .68s linear infinite
         }
-
         /* PAGE LOADER */
         .finus-page-loader{
             position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;
@@ -427,13 +418,11 @@
         }
         .finus-loader-title{margin:0;color:var(--g950);font-size:14px;font-weight:900}
         .finus-loader-copy{display:block;margin-top:5px;color:var(--muted);font-size:11px;line-height:1.5}
-
         @keyframes finus-spin{to{transform:rotate(360deg)}}
         @keyframes finus-reveal{
             from{opacity:0;transform:translateY(18px)}
             to{opacity:1;transform:none}
         }
-
         @media(min-width:1100px){.finus-brand-copy{display:block}}
         @media(max-width:980px){
             :root{--header:70px}
@@ -490,7 +479,6 @@
             html{scroll-behavior:auto}
             *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
         }
-
         /* =====================================================
            WELCOME V2 — POLISH & MULTI-DEVICE
         ===================================================== */
@@ -500,7 +488,6 @@
                 background .25s ease,
                 box-shadow .25s ease;
         }
-
         .finus-header.is-scrolled {
             background:
                 linear-gradient(
@@ -509,16 +496,13 @@
                     rgba(14, 110, 44, .96) 48%,
                     rgba(3, 61, 24, .98)
                 );
-
             box-shadow:
                 0 12px 34px rgba(0, 42, 15, .25);
         }
-
         .finus-brand-logo {
             color-scheme: only light !important;
             forced-color-adjust: none !important;
         }
-
         .finus-hero-batik {
             position: absolute;
             top: 0;
@@ -528,14 +512,10 @@
 
             width: min(27vw, 310px);
             height: 100%;
-
             object-fit: cover;
-
             opacity: .20;
             mix-blend-mode: multiply;
-
             pointer-events: none;
-
             -webkit-mask-image:
                 linear-gradient(
                     to right,
@@ -543,7 +523,6 @@
                     rgba(0, 0, 0, .84) 62%,
                     transparent 100%
                 );
-
             mask-image:
                 linear-gradient(
                     to right,
@@ -552,78 +531,57 @@
                     transparent 100%
                 );
         }
-
         .finus-hero-content {
             position: relative;
         }
-
         .finus-hero-content::before {
             content: "";
-
             position: absolute;
             top: -28px;
             left: -30px;
             z-index: -1;
-
             width: 135px;
             height: 135px;
-
             border:
                 1px solid rgba(17, 138, 55, .12);
             border-radius: 30px;
-
             background:
                 rgba(255, 255, 255, .23);
-
             transform: rotate(12deg);
-
             backdrop-filter: blur(4px);
         }
-
         .finus-hero-description strong {
             color: var(--g900);
             font-weight: 900;
         }
-
         .finus-hero-meta {
             max-width: 700px;
         }
-
         .finus-role-card {
             transform:
                 translateZ(0);
-
             transition:
                 transform .25s ease,
                 box-shadow .25s ease;
         }
-
         .finus-role-card:hover {
-            transform:
-                translateY(-4px);
-
-            box-shadow:
-                0 36px 92px rgba(1, 38, 14, .30);
+            transform: translateY(-4px);
+            box-shadow: 0 36px 92px rgba(1, 38, 14, .30);
         }
-
         .finus-role-link {
             text-align: left;
         }
-
         .finus-role-link:active {
             transform:
                 translateX(2px)
                 scale(.995);
         }
-
         .finus-section {
             position: relative;
-
             padding:
                 clamp(56px, 7vw, 92px)
                 0;
         }
-
         .finus-section-soft {
             background:
                 radial-gradient(
@@ -637,10 +595,8 @@
                     #EEF8F1
                 );
         }
-
         .finus-section-dark {
             overflow: hidden;
-
             background:
                 radial-gradient(
                     circle at 90% 0%,
@@ -656,194 +612,114 @@
 
             color: #FFFFFF;
         }
-
         .finus-section-dark::after {
             content: "";
-
             position: absolute;
             right: -130px;
             bottom: -210px;
-
             width: 410px;
             height: 410px;
-
             border:
                 72px solid rgba(255, 255, 255, .055);
             border-radius: 50%;
-
             pointer-events: none;
         }
-
         .finus-section-heading {
             max-width: 720px;
-
-            margin:
-                0
-                auto
-                clamp(26px, 4vw, 42px);
-
+            margin:0 auto clamp(26px, 4vw, 42px);
             text-align: center;
         }
-
         .finus-section-kicker {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-
             margin-bottom: 12px;
             padding: 7px 11px;
-
-            border:
-                1px solid rgba(7, 89, 35, .14);
+            border: 1px solid rgba(7, 89, 35, .14);
             border-radius: 999px;
-
             background:
                 rgba(255, 255, 255, .72);
-
             color: var(--g900);
-
             font-size: 9px;
             font-weight: 900;
             letter-spacing: .14em;
             text-transform: uppercase;
-
             box-shadow: var(--shadow-sm);
         }
-
         .finus-section-kicker::before {
             content: "";
-
             width: 6px;
             height: 6px;
-
             border-radius: 50%;
-
             background: var(--g500);
-
-            box-shadow:
-                0 0 0 4px rgba(34, 186, 81, .13);
+            box-shadow: 0 0 0 4px rgba(34, 186, 81, .13);
         }
-
         .finus-section-dark
         .finus-section-kicker {
-            border-color:
-                rgba(255, 255, 255, .16);
-
-            background:
-                rgba(255, 255, 255, .09);
-
+            border-color:rgba(255, 255, 255, .16);
+            background:rgba(255, 255, 255, .09);
             color:
                 rgba(255, 255, 255, .84);
-
             box-shadow: none;
         }
-
         .finus-section-title {
             margin: 0;
-
             color: var(--g950);
-
-            font-family:
-                Georgia,
-                "Times New Roman",
-                serif;
-
-            font-size:
-                clamp(28px, 4vw, 45px);
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(28px, 4vw, 45px);
             font-weight: 900;
             line-height: 1.18;
             letter-spacing: -.025em;
         }
-
         .finus-section-dark
         .finus-section-title {
             color: #FFFFFF;
         }
-
         .finus-section-copy {
             max-width: 650px;
-
-            margin:
-                13px
-                auto
-                0;
-
+            margin: 13px auto 0;
             color: #607369;
-
-            font-size:
-                clamp(12px, 1.4vw, 15px);
+            font-size: clamp(12px, 1.4vw, 15px);
             line-height: 1.75;
         }
-
         .finus-section-dark
         .finus-section-copy {
-            color:
-                rgba(255, 255, 255, .70);
+            color: rgba(255, 255, 255, .70);
         }
-
         .finus-feature-grid {
             display: grid;
-            grid-template-columns:
-                repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 15px;
-        }
-
+        } 
         .finus-feature-card {
             position: relative;
             overflow: hidden;
-
             min-height: 240px;
             padding: 24px;
-
-            border:
-                1px solid rgba(7, 89, 35, .10);
+            border: 1px solid rgba(7, 89, 35, .10);
             border-radius: 20px;
-
-            background:
-                rgba(255, 255, 255, .88);
-
-            box-shadow:
-                0 15px 34px rgba(3, 61, 24, .07);
-
-            transition:
-                transform .25s ease,
-                border-color .25s ease,
-                box-shadow .25s ease;
-
+            background: rgba(255, 255, 255, .88);
+            box-shadow: 0 15px 34px rgba(3, 61, 24, .07);
+            transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
             backdrop-filter: blur(10px);
         }
-
         .finus-feature-card::after {
             content: "";
-
             position: absolute;
             right: -45px;
             bottom: -55px;
-
             width: 135px;
             height: 135px;
-
             border-radius: 50%;
-
-            background:
-                var(--feature-soft, var(--g100));
-
+            background: var(--feature-soft, var(--g100));
             opacity: .72;
-
             pointer-events: none;
         }
-
         .finus-feature-card:hover {
-            border-color:
-                rgba(7, 89, 35, .22);
-
-            transform:
-                translateY(-5px);
-
-            box-shadow:
-                0 22px 43px rgba(3, 61, 24, .11);
+            border-color: rgba(7, 89, 35, .22);
+            transform: translateY(-5px);
+            box-shadow: 0 22px 43px rgba(3, 61, 24, .11);
         }
-
         .finus-feature-icon,
         .finus-feature-title,
         .finus-feature-copy,
@@ -851,248 +727,155 @@
             position: relative;
             z-index: 2;
         }
-
         .finus-feature-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-
             width: 52px;
             height: 52px;
-
             border-radius: 15px;
-
-            background:
-                var(--feature-soft, var(--g100));
-
-            color:
-                var(--feature-color, var(--g700));
-
+            background: var(--feature-soft, var(--g100));
+            color: var(--feature-color, var(--g700));
             font-size: 21px;
         }
-
         .finus-feature-title {
-            margin:
-                18px
-                0
-                0;
-
+            margin: 18px 0 0;
             color: var(--g950);
-
             font-size: 17px;
             font-weight: 900;
         }
-
         .finus-feature-copy {
-            margin:
-                8px
-                0
-                0;
-
+            margin: 8px 0 0;
             color: var(--muted);
-
             font-size: 12px;
             line-height: 1.65;
         }
-
         .finus-feature-list {
             display: grid;
             gap: 7px;
-
-            margin:
-                15px
-                0
-                0;
+            margin: 15px 0 0;
             padding: 0;
-
             list-style: none;
         }
-
         .finus-feature-list li {
             display: flex;
             align-items: flex-start;
             gap: 8px;
-
             color: #50685A;
-
             font-size: 10.5px;
             font-weight: 700;
             line-height: 1.5;
         }
-
         .finus-feature-list li::before {
             content: "✓";
-
             display: inline-flex;
             align-items: center;
             justify-content: center;
-
             width: 18px;
             min-width: 18px;
             height: 18px;
-
             margin-top: 1px;
-
             border-radius: 6px;
-
             background: var(--g100);
             color: var(--g700);
-
             font-size: 10px;
             font-weight: 900;
         }
-
         .finus-feature-card.is-blue {
             --feature-color: #2563EB;
             --feature-soft: #EAF2FF;
         }
-
         .finus-feature-card.is-purple {
             --feature-color: #7C3AED;
             --feature-soft: #F2ECFF;
         }
-
         .finus-flow-grid {
             position: relative;
             z-index: 2;
-
             display: grid;
-            grid-template-columns:
-                repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 16px;
         }
-
         .finus-flow-step {
             position: relative;
-
             min-height: 180px;
             padding: 22px;
-
-            border:
-                1px solid rgba(255, 255, 255, .13);
+            border: 1px solid rgba(255, 255, 255, .13);
             border-radius: 18px;
-
-            background:
-                rgba(255, 255, 255, .075);
-
+            background: rgba(255, 255, 255, .075);
             backdrop-filter: blur(8px);
         }
-
         .finus-flow-number {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-
             width: 38px;
             height: 38px;
-
-            border:
-                1px solid rgba(183, 255, 190, .30);
+            border: 1px solid rgba(183, 255, 190, .30);
             border-radius: 12px;
-
-            background:
-                rgba(126, 255, 135, .14);
-
+            background: rgba(126, 255, 135, .14);
             color: #B7FFBE;
-
             font-size: 12px;
             font-weight: 900;
         }
-
         .finus-flow-title {
-            margin:
-                17px
-                0
-                0;
-
+            margin: 17px 0 0;
             color: #FFFFFF;
-
             font-size: 16px;
             font-weight: 900;
         }
-
         .finus-flow-copy {
-            margin:
-                8px
-                0
-                0;
-
-            color:
-                rgba(255, 255, 255, .68);
-
+            margin: 8px 0 0;
+            color: rgba(255, 255, 255, .68);
             font-size: 11.5px;
             line-height: 1.7;
         }
-
         .finus-flow-arrow {
             position: absolute;
             top: 50%;
             right: -18px;
             z-index: 5;
-
             display: inline-flex;
             align-items: center;
             justify-content: center;
-
             width: 36px;
             height: 36px;
-
-            border:
-                1px solid rgba(255, 255, 255, .18);
+            border: 1px solid rgba(255, 255, 255, .18);
             border-radius: 50%;
-
             background: #075923;
             color: #B7FFBE;
-
             font-size: 15px;
-
-            transform:
-                translateY(-50%);
+            transform: translateY(-50%);
         }
-
         .finus-footer {
-            padding:
-                24px
-                0
-                calc(24px + env(safe-area-inset-bottom));
-
-            border-top:
-                1px solid rgba(255, 255, 255, .10);
-
+            padding: 24px 0 calc(24px + env(safe-area-inset-bottom));
+            border-top: 1px solid rgba(255, 255, 255, .10);
             background: #022F12;
-            color:
-                rgba(255, 255, 255, .68);
+            color: rgba(255, 255, 255, .68);
         }
-
         .finus-footer-inner {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 18px;
         }
-
         .finus-footer-brand {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-
         .finus-footer-logo {
             width: auto;
             height: 37px;
             max-width: 120px;
-
             object-fit: contain;
-
             color-scheme: only light !important;
             forced-color-adjust: none !important;
         }
-
         .finus-footer-text {
             font-size: 10.5px;
             line-height: 1.6;
         }
-
         .finus-footer-links {
             display: flex;
             align-items: center;
@@ -1100,38 +883,24 @@
             gap: 13px;
             flex-wrap: wrap;
         }
-
         .finus-footer-link {
-            color:
-                rgba(255, 255, 255, .72);
-
+            color: rgba(255, 255, 255, .72);
             font-size: 10.5px;
             font-weight: 800;
             text-decoration: none;
         }
-
         .finus-footer-link:hover {
             color: #FFFFFF;
         }
-
         .finus-reveal {
             opacity: 0;
-
-            transform:
-                translateY(20px);
-
-            transition:
-                opacity .55s ease,
-                transform .55s ease;
+            transform: translateY(20px);
+            transition: opacity .55s ease, transform .55s ease;
         }
-
         .finus-reveal.is-visible {
             opacity: 1;
-
-            transform:
-                translateY(0);
+            transform: translateY(0);
         }
-
         #informasi,
         #layanan,
         #keunggulan,
@@ -1142,83 +911,63 @@
                     + 18px
                 );
         }
-
         @media (max-width: 980px) {
             .finus-feature-grid,
             .finus-flow-grid {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
-
             .finus-flow-step:last-child {
-                grid-column:
-                    1 / -1;
+                grid-column: 1 / -1;
             }
-
             .finus-flow-arrow {
                 display: none;
             }
         }
-
         @media (max-width: 720px) {
             .finus-hero-batik {
                 width: 180px;
                 opacity: .13;
             }
-
             .finus-hero-content::before {
                 top: -14px;
                 left: -10px;
-
                 width: 92px;
                 height: 92px;
             }
-
             .finus-feature-grid,
             .finus-flow-grid {
                 grid-template-columns: 1fr;
             }
-
             .finus-flow-step:last-child {
                 grid-column: auto;
             }
-
             .finus-feature-card {
                 min-height: 0;
             }
-
             .finus-footer-inner {
                 align-items: flex-start;
                 flex-direction: column;
             }
-
             .finus-footer-links {
                 justify-content: flex-start;
             }
         }
-
         @media (max-width: 390px) {
             .finus-section {
-                padding:
-                    48px
-                    0;
+                padding: 48px 0;
             }
-
             .finus-feature-card,
             .finus-flow-step {
                 padding: 20px;
                 border-radius: 17px;
             }
         }
-
         @media (prefers-reduced-motion: reduce) {
             .finus-reveal {
                 opacity: 1;
                 transform: none;
             }
         }
-
-
         /* =====================================================
            WELCOME V3 — CLEANER LAYOUT & NAVIGATION
            Menjaga seluruh alur login/verifikasi yang sudah ada,
@@ -1228,76 +977,61 @@
             --header: 72px;
             --container: 1160px;
         }
-
         .finus-header {
             background:
                 radial-gradient(circle at 18% 0%, rgba(126, 255, 135, .12), transparent 15rem),
                 linear-gradient(105deg, #064A1D 0%, #075923 48%, #118A37 76%, #033D18 100%);
             box-shadow: 0 8px 26px rgba(2, 49, 18, .18);
         }
-
         .finus-header.is-scrolled {
             background:
                 linear-gradient(105deg, rgba(3, 61, 24, .99), rgba(7, 89, 35, .98) 54%, rgba(3, 61, 24, .99));
             box-shadow: 0 11px 32px rgba(1, 39, 14, .24);
         }
-
         .finus-header-inner {
             min-height: var(--header);
         }
-
         .finus-brand {
             gap: 10px;
         }
-
         .finus-brand-logo {
             height: 47px;
             max-width: 176px;
         }
-
         .finus-brand-copy {
             line-height: 1.25;
         }
-
         .finus-brand-name {
             font-size: 12px;
             letter-spacing: .105em;
         }
-
         .finus-brand-subtitle {
             font-size: 9px;
         }
-
         .finus-nav {
             gap: 8px;
         }
-
         .finus-nav-button {
             min-height: 40px;
             padding-inline: 13px;
             border-radius: 11px;
         }
-
         .finus-dropdown {
             width: 178px;
             padding: 6px;
             border-radius: 13px;
         }
-
         .finus-dropdown-link {
             min-height: 40px;
             border-radius: 9px;
         }
-
         .finus-dropdown-link-centered {
             justify-content: center;
             text-align: center;
         }
-
         .finus-main {
             padding-top: calc(var(--header) + env(safe-area-inset-top));
         }
-
         .finus-hero {
             min-height: calc(100vh - var(--header) - env(safe-area-inset-top));
             min-height: calc(100dvh - var(--header) - env(safe-area-inset-top));
@@ -1312,13 +1046,11 @@
                 ),
                 url('{{ asset('assets/images/bg-welcome.png') }}');
         }
-
         .finus-hero::before {
             background:
                 radial-gradient(circle at 15% 16%, rgba(126, 255, 135, .13), transparent 21rem),
                 radial-gradient(circle at 78% 76%, rgba(255, 255, 255, .20), transparent 24rem);
         }
-
         .finus-hero::after {
             right: -135px;
             bottom: -185px;
@@ -1327,21 +1059,17 @@
             border-width: 58px;
             opacity: .68;
         }
-
         .finus-hero-batik {
             width: min(20vw, 220px);
             opacity: .10;
         }
-
         .finus-hero-grid {
             grid-template-columns: minmax(0, 1.12fr) minmax(350px, .78fr);
             gap: clamp(40px, 5.4vw, 76px);
         }
-
         .finus-hero-content {
             max-width: 665px;
         }
-
         .finus-hero-content::before {
             top: -22px;
             left: -22px;
@@ -1350,163 +1078,131 @@
             border-radius: 26px;
             opacity: .72;
         }
-
         .finus-eyebrow {
             margin-bottom: 16px;
             padding: 7px 12px;
         }
-
         .finus-hero-title {
             font-size: clamp(54px, 7.3vw, 91px);
             line-height: .96;
         }
-
         .finus-hero-subtitle {
             max-width: 600px;
             margin-top: clamp(18px, 2.5vw, 25px);
             font-size: clamp(24px, 3vw, 36px);
             line-height: 1.22;
         }
-
         .finus-hero-description {
             max-width: 610px;
             margin-top: 15px;
             font-size: clamp(13px, 1.35vw, 16px);
             line-height: 1.7;
         }
-
         .finus-hero-actions {
             margin-top: 24px;
         }
-
         .finus-primary-button,
         .finus-secondary-button {
             min-height: 47px;
             border-radius: 12px;
         }
-
         .finus-hero-meta {
             margin-top: 22px;
         }
-
         .finus-meta-item {
             min-height: 35px;
         }
-
         .finus-role-card {
             width: min(100%, 430px);
             justify-self: end;
             padding: clamp(23px, 2.5vw, 29px);
             border-radius: 22px;
         }
-
         .finus-role-title {
             margin-top: 14px;
             font-size: 22px;
         }
-
         .finus-role-list {
             gap: 9px;
             margin-top: 18px;
         }
-
         .finus-role-link {
             min-height: 57px;
             border-radius: 13px;
         }
-
         .finus-role-security {
             margin-top: 16px;
             padding-top: 15px;
         }
-
         .finus-section {
             padding: clamp(54px, 6vw, 78px) 0;
         }
-
         .finus-section-heading {
             margin-bottom: clamp(24px, 3.3vw, 36px);
         }
-
         .finus-section-title {
             font-size: clamp(29px, 3.7vw, 43px);
             line-height: 1.15;
         }
-
         .finus-section-copy {
             margin-top: 11px;
         }
-
         .finus-feature-grid {
             gap: 16px;
         }
-
         .finus-feature-card {
             min-height: 228px;
             padding: 23px;
             border-radius: 19px;
         }
-
         .finus-feature-icon {
             width: 50px;
             height: 50px;
             border-radius: 14px;
         }
-
         .finus-feature-title {
             margin-top: 16px;
         }
-
         .finus-flow-step {
             min-height: 168px;
             padding: 21px;
         }
-
         .finus-footer {
             padding-top: 21px;
         }
-
         .finus-mobile-menu-button {
             display: none;
         }
-
         @media (max-width: 980px) {
             .finus-hero-grid {
                 grid-template-columns: 1fr;
                 gap: 30px;
             }
-
             .finus-role-card {
                 justify-self: start;
                 width: min(100%, 650px);
             }
         }
-
         @media (max-width: 720px) {
             .finus-about-group,
             .finus-desktop-more-group {
                 display: none !important;
             }
-
             .finus-mobile-menu-button {
                 display: inline-flex;
             }
-
             .finus-login-group .finus-nav-button {
                 width: auto !important;
                 min-width: 76px;
                 padding-inline: 12px !important;
             }
-
             .finus-login-group .finus-nav-button-text,
             .finus-login-group .finus-nav-chevron {
                 display: inline-block !important;
             }
-
             .finus-login-group .finus-nav-button-icon {
                 display: none;
             }
-
             .finus-login-group .finus-dropdown {
                 display: block !important;
                 right: auto;
@@ -1515,55 +1211,42 @@
                 transform: translate(-50%, -6px) scale(.98);
                 transform-origin: top center;
             }
-
             .finus-login-group .finus-dropdown.is-open {
                 transform: translate(-50%, 0) scale(1);
             }
-
             .finus-login-group .finus-dropdown::before {
                 right: auto;
                 left: 50%;
                 transform: translateX(-50%) rotate(45deg);
             }
-
             .finus-brand-logo {
                 height: 44px;
                 max-width: 148px;
             }
-
             .finus-hero {
                 padding-top: 34px;
             }
-
             .finus-hero-title {
                 font-size: clamp(48px, 15vw, 66px);
             }
-
             .finus-hero-subtitle {
                 font-size: clamp(22px, 7vw, 29px);
             }
-
             .finus-feature-card,
             .finus-flow-step {
                 border-radius: 17px;
             }
         }
-
         @media (max-width: 390px) {
             .finus-brand-logo {
                 height: 41px;
                 max-width: 132px;
             }
-
             .finus-login-group .finus-nav-button {
                 min-width: 70px;
                 padding-inline: 10px !important;
             }
         }
-
-
-
-
         /* =====================================================
            WELCOME V4 — EXACT HEADER GRADIENT & FULL RESPONSIVE
         ===================================================== */
@@ -1571,7 +1254,6 @@
             --header: clamp(66px, 5.3vw, 78px);
             --container: 1180px;
         }
-
         .finus-header,
         .finus-header.is-scrolled {
             background: linear-gradient(
@@ -1583,11 +1265,9 @@
             );
             box-shadow: 0 10px 30px rgba(0, 71, 22, .22);
         }
-
         .finus-header {
             width: 100%;
         }
-
         .finus-header-inner {
             display: grid;
             grid-template-columns: minmax(0, auto) minmax(0, 1fr);
@@ -1595,7 +1275,6 @@
             gap: clamp(14px, 3vw, 34px);
             width: 100%;
         }
-
         .finus-brand {
             display: flex;
             align-items: center;
@@ -1603,53 +1282,44 @@
             min-width: 0;
             user-select: none;
         }
-
         .finus-brand-logo {
             width: auto;
             height: clamp(43px, 4vw, 54px);
             max-width: clamp(145px, 16vw, 205px);
             object-fit: contain;
         }
-
         .finus-nav {
             justify-self: end;
             justify-content: flex-end;
             margin-left: auto;
             min-width: 0;
         }
-
         .finus-nav-button {
             white-space: nowrap;
         }
-
         .finus-dropdown {
             max-width: calc(100vw - 24px);
         }
-
         .finus-faq-section {
             background:
                 radial-gradient(circle at 88% 18%, rgba(126, 255, 135, .12), transparent 20rem),
                 linear-gradient(180deg, #F7FCF8 0%, #EDF7F0 100%);
         }
-
         .finus-faq-layout {
             display: grid;
             grid-template-columns: minmax(260px, .72fr) minmax(0, 1.28fr);
             align-items: start;
             gap: clamp(28px, 6vw, 74px);
         }
-
         .finus-faq-heading .finus-section-title,
         .finus-faq-heading .finus-section-copy {
             margin-inline: 0;
             text-align: left;
         }
-
         .finus-faq-list {
             display: grid;
             gap: 12px;
         }
-
         .finus-faq-item {
             overflow: hidden;
             border: 1px solid rgba(7, 89, 35, .12);
@@ -1657,7 +1327,6 @@
             background: rgba(255, 255, 255, .92);
             box-shadow: 0 12px 28px rgba(3, 61, 24, .06);
         }
-
         .finus-faq-item summary {
             position: relative;
             padding: 18px 50px 18px 19px;
@@ -1668,11 +1337,9 @@
             list-style: none;
             cursor: pointer;
         }
-
         .finus-faq-item summary::-webkit-details-marker {
             display: none;
         }
-
         .finus-faq-item summary::after {
             content: "+";
             position: absolute;
@@ -1690,12 +1357,10 @@
             transform: translateY(-50%);
             transition: transform .2s ease;
         }
-
         .finus-faq-item[open] summary::after {
             content: "−";
             transform: translateY(-50%) rotate(180deg);
         }
-
         .finus-faq-item p {
             margin: 0;
             padding: 0 19px 19px;
@@ -1703,11 +1368,9 @@
             font-size: 12px;
             line-height: 1.72;
         }
-
         .finus-footer {
             padding: 0;
         }
-
         .finus-footer-inner {
             display: grid;
             grid-template-columns: minmax(230px, .9fr) minmax(310px, 1.2fr) minmax(135px, .45fr);
@@ -1716,34 +1379,28 @@
             padding-top: 32px;
             padding-bottom: 28px;
         }
-
         .finus-footer-brand {
             align-items: flex-start;
         }
-
         .finus-footer-text {
             display: grid;
             gap: 4px;
             color: rgba(255, 255, 255, .70);
         }
-
         .finus-footer-text strong {
             color: #FFFFFF;
             font-size: 11px;
             letter-spacing: .08em;
         }
-
         .finus-footer-text span {
             max-width: 220px;
         }
-
         .finus-footer-address {
             display: grid;
             gap: 9px;
             margin: 0;
             font-style: normal;
         }
-
         .finus-footer-heading {
             display: block;
             margin-bottom: 3px;
@@ -1753,7 +1410,6 @@
             letter-spacing: .09em;
             text-transform: uppercase;
         }
-
         .finus-footer-contact {
             display: flex;
             align-items: flex-start;
@@ -1764,14 +1420,12 @@
             text-decoration: none;
             transition: color .18s ease, transform .18s ease;
         }
-
         .finus-footer-contact:hover,
         .finus-footer-contact:focus-visible {
             color: #FFFFFF;
             outline: none;
             transform: translateX(2px);
         }
-
         .finus-footer-contact-icon {
             display: inline-flex;
             align-items: center;
@@ -1784,13 +1438,11 @@
             color: #B7FFBE;
             font-size: 11px;
         }
-
         .finus-footer-links {
             display: grid;
             justify-content: stretch;
             gap: 8px;
         }
-
         .finus-footer-bottom {
             display: flex;
             align-items: center;
@@ -1803,56 +1455,45 @@
             font-size: 9.5px;
             line-height: 1.5;
         }
-
         #faq,
         #kontak {
             scroll-margin-top: calc(var(--header) + 18px);
         }
-
         /* Medium laptop and small desktop */
         @media (max-width: 1180px) {
             .finus-container {
                 width: min(calc(100% - 40px), var(--container));
             }
-
             .finus-hero-grid {
                 grid-template-columns: minmax(0, 1.06fr) minmax(340px, .78fr);
                 gap: 42px;
             }
         }
-
         /* Tablet landscape and compact laptop */
         @media (max-width: 1024px) {
             .finus-brand-copy {
                 display: none;
             }
-
             .finus-nav-button {
                 padding-inline: 12px;
             }
-
             .finus-hero-grid {
                 grid-template-columns: 1fr;
                 gap: 30px;
             }
-
             .finus-role-card {
                 justify-self: start;
                 width: min(100%, 680px);
             }
-
             .finus-feature-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
-
             .finus-feature-card:last-child {
                 grid-column: 1 / -1;
             }
-
             .finus-footer-inner {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
-
             .finus-footer-links {
                 grid-column: 1 / -1;
                 grid-template-columns: repeat(4, max-content);
@@ -1860,42 +1501,34 @@
                 justify-content: start;
                 gap: 10px 18px;
             }
-
             .finus-footer-links .finus-footer-heading {
                 grid-column: 1 / -1;
             }
         }
-
         /* Tablet portrait: keep logo left, controls right */
         @media (max-width: 840px) {
             .finus-about-group,
             .finus-desktop-more-group {
                 display: none !important;
             }
-
             .finus-mobile-menu-button {
                 display: inline-flex;
             }
-
             .finus-header-inner {
                 grid-template-columns: minmax(0, auto) minmax(0, 1fr);
             }
-
             .finus-login-group .finus-nav-button {
                 width: auto !important;
                 min-width: 78px;
                 padding-inline: 12px !important;
             }
-
             .finus-login-group .finus-nav-button-text,
             .finus-login-group .finus-nav-chevron {
                 display: inline-block !important;
             }
-
             .finus-login-group .finus-nav-button-icon {
                 display: none;
             }
-
             .finus-login-group .finus-dropdown {
                 display: block !important;
                 right: 0;
@@ -1904,217 +1537,174 @@
                 transform: translateY(-6px) scale(.98);
                 transform-origin: top right;
             }
-
             .finus-login-group .finus-dropdown.is-open {
                 transform: none;
             }
-
             .finus-login-group .finus-dropdown::before {
                 right: 22px;
                 left: auto;
                 transform: rotate(45deg);
             }
-
             .finus-mobile-panel {
                 left: auto;
                 width: min(100%, 430px);
                 border-left: 1px solid rgba(7, 89, 35, .12);
                 border-bottom-left-radius: 20px;
             }
-
             .finus-faq-layout {
                 grid-template-columns: 1fr;
                 gap: 24px;
             }
         }
-
         /* Phone and small tablet */
         @media (max-width: 640px) {
             :root {
                 --header: 66px;
             }
-
             .finus-container {
                 width: min(calc(100% - 24px), var(--container));
             }
-
             .finus-header-inner {
                 gap: 8px;
             }
-
             .finus-brand-logo {
                 height: 42px;
                 max-width: 136px;
             }
-
             .finus-nav {
                 gap: 7px;
             }
-
             .finus-nav-button,
             .finus-menu-button {
                 min-height: 40px;
             }
-
             .finus-menu-button {
                 width: 40px;
             }
-
             .finus-login-group .finus-nav-button {
                 min-width: 69px;
                 padding-inline: 9px !important;
             }
-
             .finus-hero {
                 min-height: auto;
                 padding-top: 34px;
                 padding-bottom: 42px;
             }
-
             .finus-hero-content::before {
                 display: none;
             }
-
             .finus-hero-actions,
             .finus-hero-meta {
                 width: 100%;
             }
-
             .finus-role-card {
                 width: 100%;
             }
-
             .finus-feature-grid,
             .finus-flow-grid {
                 grid-template-columns: 1fr;
             }
-
             .finus-feature-card:last-child {
                 grid-column: auto;
             }
-
             .finus-footer-inner {
                 grid-template-columns: 1fr;
                 gap: 25px;
                 padding-top: 28px;
             }
-
             .finus-footer-links {
                 grid-column: auto;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
-
             .finus-footer-links .finus-footer-heading {
                 grid-column: 1 / -1;
             }
-
             .finus-footer-bottom {
                 align-items: flex-start;
                 flex-direction: column;
                 gap: 4px;
             }
         }
-
         /* Narrow phone */
         @media (max-width: 420px) {
             .finus-brand-logo {
                 height: 39px;
                 max-width: 119px;
             }
-
             .finus-login-group .finus-nav-button {
                 min-width: 64px;
                 font-size: 11px;
             }
-
             .finus-nav-chevron {
                 width: 6px;
                 height: 6px;
             }
-
             .finus-hero-title {
                 font-size: clamp(46px, 15vw, 60px);
             }
-
             .finus-hero-subtitle {
                 font-size: clamp(21px, 7.2vw, 27px);
             }
-
             .finus-hero-meta {
                 grid-template-columns: 1fr;
             }
-
             .finus-faq-item summary {
                 padding: 16px 46px 16px 16px;
                 font-size: 12px;
             }
-
             .finus-faq-item p {
                 padding: 0 16px 16px;
             }
         }
-
         /* Extra narrow devices */
         @media (max-width: 350px) {
             .finus-brand-logo {
                 max-width: 105px;
             }
-
             .finus-login-group .finus-nav-button-text {
                 display: none !important;
             }
-
             .finus-login-group .finus-nav-button {
                 width: 40px !important;
                 min-width: 40px;
                 padding: 0 !important;
             }
-
             .finus-login-group .finus-nav-button-icon {
                 display: inline-flex;
             }
-
             .finus-login-group .finus-nav-chevron {
                 display: none !important;
             }
         }
-
         /* Short-height landscape phones */
         @media (max-width: 900px) and (orientation: landscape) and (max-height: 560px) {
             :root {
                 --header: 62px;
             }
-
             .finus-brand-logo {
                 height: 38px;
             }
-
             .finus-hero {
                 padding-top: 25px;
                 padding-bottom: 30px;
             }
-
             .finus-hero-grid {
                 grid-template-columns: minmax(0, 1fr) minmax(280px, .78fr);
                 gap: 24px;
             }
-
             .finus-role-card {
                 width: 100%;
                 padding: 19px;
             }
-
             .finus-role-list {
                 gap: 7px;
                 margin-top: 14px;
             }
-
             .finus-role-security,
             .finus-hero-meta {
                 display: none;
             }
         }
-
         /* =====================================================
            WELCOME V5 — FULL-BLEED HEADER FIX
            Logo benar-benar di kiri layar, tombol di kanan layar.
@@ -2131,7 +1721,6 @@
             ) !important;
             box-shadow: 0 10px 30px rgba(0, 71, 22, .22) !important;
         }
-
         /* Lepaskan header dari batas max-width .finus-container. */
         .finus-header > .finus-header-inner,
         .finus-header .finus-header-inner.finus-container {
@@ -2145,27 +1734,23 @@
             justify-content: space-between !important;
             gap: clamp(10px, 2vw, 24px) !important;
         }
-
         .finus-header .finus-brand {
             flex: 0 1 auto !important;
             justify-self: auto !important;
             margin: 0 !important;
             padding: 0 !important;
         }
-
         .finus-header .finus-brand-logo {
             width: auto !important;
             height: clamp(42px, 4vw, 56px) !important;
             max-width: clamp(145px, 18vw, 225px) !important;
         }
-
         .finus-header .finus-nav {
             flex: 0 0 auto !important;
             justify-self: auto !important;
             justify-content: flex-end !important;
             margin-left: auto !important;
         }
-
         /* Tablet */
         @media (max-width: 900px) {
             .finus-header > .finus-header-inner,
@@ -2173,13 +1758,11 @@
                 padding-left: 16px !important;
                 padding-right: 16px !important;
             }
-
             .finus-header .finus-brand-logo {
                 height: 44px !important;
                 max-width: 155px !important;
             }
         }
-
         /* HP */
         @media (max-width: 640px) {
             .finus-header > .finus-header-inner,
@@ -2188,17 +1771,14 @@
                 padding-right: 10px !important;
                 gap: 7px !important;
             }
-
             .finus-header .finus-brand-logo {
                 height: 39px !important;
                 max-width: 122px !important;
             }
-
             .finus-header .finus-nav {
                 gap: 6px !important;
             }
         }
-
         /* HP sangat sempit */
         @media (max-width: 380px) {
             .finus-header .finus-brand-logo {
@@ -2206,87 +1786,70 @@
                 max-width: 105px !important;
             }
         }
-
-
         /* =====================================================
            WELCOME V6 — MOTION & MICRO-INTERACTIONS
            Animasi ringan, halus, dan tetap ramah semua device.
         ===================================================== */
-
         @keyframes finus-header-enter {
             from { opacity: 0; transform: translateY(-100%); }
             to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes finus-logo-enter {
             0% { opacity: 0; transform: translateX(-24px) scale(.92); }
             70% { opacity: 1; transform: translateX(3px) scale(1.02); }
             100% { opacity: 1; transform: translateX(0) scale(1); }
         }
-
         @keyframes finus-nav-enter {
             from { opacity: 0; transform: translateY(-14px) scale(.96); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
         @keyframes finus-shimmer {
             0%, 18% { transform: translateX(-130%) skewX(-18deg); opacity: 0; }
             28% { opacity: .34; }
             48%, 100% { transform: translateX(160%) skewX(-18deg); opacity: 0; }
         }
-
         @keyframes finus-rise {
             from { opacity: 0; transform: translateY(24px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes finus-slide-left {
             from { opacity: 0; transform: translateX(34px) scale(.975); }
             to { opacity: 1; transform: translateX(0) scale(1); }
         }
-
         @keyframes finus-batik-drift {
             0% { transform: translate3d(-8px, -4px, 0) scale(1.02); }
             50% { transform: translate3d(5px, 6px, 0) scale(1.045); }
             100% { transform: translate3d(-2px, 2px, 0) scale(1.025); }
         }
-
         @keyframes finus-dot-pulse {
             0%, 100% { box-shadow: 0 0 0 4px rgba(34, 186, 81, .13); }
             50% { box-shadow: 0 0 0 9px rgba(34, 186, 81, 0); }
         }
-
         @keyframes finus-soft-pulse {
             0%, 100% { opacity: .72; transform: scale(1); }
             50% { opacity: 1; transform: scale(1.07); }
         }
-
         @keyframes finus-card-sheen {
             0%, 28% { transform: translateX(-150%) rotate(14deg); opacity: 0; }
             40% { opacity: .22; }
             62%, 100% { transform: translateX(190%) rotate(14deg); opacity: 0; }
         }
-
         @keyframes finus-dropdown-item-enter {
             from { opacity: 0; transform: translateY(-7px) translateX(4px); }
             to { opacity: 1; transform: translateY(0) translateX(0); }
         }
-
         @keyframes finus-faq-open {
             from { opacity: 0; transform: translateY(-8px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes finus-arrow-nudge {
             0%, 100% { transform: translateX(0); }
             50% { transform: translateX(4px); }
         }
-
         .finus-header {
             animation: finus-header-enter .62s cubic-bezier(.22, .8, .24, 1) both;
             will-change: transform, opacity;
         }
-
         .finus-header::before {
             content: "";
             position: absolute;
@@ -2304,43 +1867,35 @@
             transform: translateX(-130%) skewX(-18deg);
             animation: finus-shimmer 8.5s 1.1s ease-in-out infinite;
         }
-
         .finus-header-inner {
             position: relative;
             z-index: 1;
         }
-
         .finus-brand {
             animation: finus-logo-enter .72s .13s cubic-bezier(.22, .85, .3, 1.12) both;
         }
-
         .finus-brand-logo {
             transition: transform .28s ease, filter .28s ease;
             transform-origin: left center;
         }
-
         .finus-brand:hover .finus-brand-logo {
             transform: translateY(-2px) scale(1.025);
             filter: drop-shadow(0 9px 17px rgba(0, 30, 10, .25));
         }
-
         .finus-nav-group {
             opacity: 0;
             animation: finus-nav-enter .5s cubic-bezier(.22, .8, .24, 1) forwards;
         }
-
         .finus-nav-group:nth-child(1) { animation-delay: .20s; }
         .finus-nav-group:nth-child(2) { animation-delay: .29s; }
         .finus-nav-group:nth-child(3) { animation-delay: .38s; }
         .finus-nav-group:nth-child(4) { animation-delay: .47s; }
-
         .finus-nav-button,
         .finus-dropdown-link,
         .finus-mobile-menu-link {
             position: relative;
             overflow: hidden;
         }
-
         .finus-nav-button::after {
             content: "";
             position: absolute;
@@ -2351,32 +1906,25 @@
             transition: transform .55s ease;
             pointer-events: none;
         }
-
         .finus-nav-button:hover::after,
         .finus-nav-button:focus-visible::after {
             transform: translateX(120%);
         }
-
         .finus-dropdown.is-open .finus-dropdown-link {
             animation: finus-dropdown-item-enter .28s ease both;
         }
-
         .finus-dropdown.is-open .finus-dropdown-link:nth-of-type(1) { animation-delay: .03s; }
         .finus-dropdown.is-open .finus-dropdown-link:nth-of-type(2) { animation-delay: .07s; }
         .finus-dropdown.is-open .finus-dropdown-link:nth-of-type(3) { animation-delay: .11s; }
         .finus-dropdown.is-open .finus-dropdown-link:nth-of-type(4) { animation-delay: .15s; }
-
         .finus-mobile-panel.is-open .finus-mobile-menu-link {
             animation: finus-dropdown-item-enter .32s ease both;
         }
-
         .finus-mobile-panel.is-open .finus-mobile-menu-link:nth-of-type(2n) { animation-delay: .05s; }
         .finus-mobile-panel.is-open .finus-mobile-menu-link:nth-of-type(3n) { animation-delay: .10s; }
-
         .finus-hero-content {
             animation: none !important;
         }
-
         .finus-eyebrow,
         .finus-hero-title,
         .finus-hero-subtitle,
@@ -2386,30 +1934,25 @@
             opacity: 0;
             animation: finus-rise .66s cubic-bezier(.22, .8, .24, 1) forwards;
         }
-
         .finus-eyebrow { animation-delay: .18s; }
         .finus-hero-title { animation-delay: .28s; }
         .finus-hero-subtitle { animation-delay: .39s; }
         .finus-hero-description { animation-delay: .50s; }
         .finus-hero-actions { animation-delay: .61s; }
         .finus-hero-meta { animation-delay: .72s; }
-
         .finus-eyebrow-dot,
         .finus-section-kicker::before {
             animation: finus-dot-pulse 2.2s ease-in-out infinite;
         }
-
         .finus-hero-batik {
             animation: finus-batik-drift 13s ease-in-out infinite alternate;
             will-change: transform;
         }
-
         .finus-primary-button,
         .finus-secondary-button {
             position: relative;
             overflow: hidden;
         }
-
         .finus-primary-button::before {
             content: "";
             position: absolute;
@@ -2422,38 +1965,31 @@
             transition: left .65s ease;
             pointer-events: none;
         }
-
         .finus-primary-button:hover::before,
         .finus-primary-button:focus-visible::before {
             left: 125%;
         }
-
         .finus-primary-button:hover span,
         .finus-primary-button:focus-visible span,
         .finus-role-link:hover .finus-role-arrow,
         .finus-role-link:focus-visible .finus-role-arrow {
             animation: finus-arrow-nudge .65s ease-in-out infinite;
         }
-
         .finus-secondary-button:hover span,
         .finus-secondary-button:focus-visible span {
             transform: translateY(2px);
         }
-
         .finus-meta-item {
             transition: transform .22s ease, box-shadow .22s ease, background .22s ease;
         }
-
         .finus-meta-item:hover {
             transform: translateY(-3px);
             background: rgba(255, 255, 255, .86);
             box-shadow: 0 12px 26px rgba(3, 61, 24, .10);
         }
-
         .finus-role-card {
             animation: finus-slide-left .78s .44s cubic-bezier(.22, .8, .24, 1) both !important;
         }
-
         .finus-role-card::after {
             content: "";
             position: absolute;
@@ -2467,16 +2003,13 @@
             pointer-events: none;
             animation: finus-card-sheen 7.5s 1.8s ease-in-out infinite;
         }
-
         .finus-role-link {
             opacity: 0;
             animation: finus-rise .48s ease forwards;
         }
-
         .finus-role-link:nth-child(1) { animation-delay: .72s; }
         .finus-role-link:nth-child(2) { animation-delay: .82s; }
         .finus-role-link:nth-child(3) { animation-delay: .92s; }
-
         .finus-role-icon,
         .finus-role-arrow,
         .finus-feature-icon,
@@ -2484,68 +2017,55 @@
         .finus-footer-contact-icon {
             transition: transform .24s ease, box-shadow .24s ease;
         }
-
         .finus-role-link:hover .finus-role-icon,
         .finus-role-link:focus-visible .finus-role-icon {
             transform: rotate(-5deg) scale(1.08);
             box-shadow: 0 10px 22px rgba(0, 35, 12, .18);
         }
-
         .finus-feature-grid .finus-reveal:nth-child(2) { transition-delay: .09s; }
         .finus-feature-grid .finus-reveal:nth-child(3) { transition-delay: .18s; }
         .finus-flow-grid .finus-reveal:nth-child(2) { transition-delay: .10s; }
         .finus-flow-grid .finus-reveal:nth-child(3) { transition-delay: .20s; }
         .finus-faq-list .finus-reveal:nth-child(2) { transition-delay: .08s; }
         .finus-faq-list .finus-reveal:nth-child(3) { transition-delay: .16s; }
-
         .finus-feature-card:hover .finus-feature-icon,
         .finus-flow-step:hover .finus-flow-number {
             transform: translateY(-3px) rotate(-4deg) scale(1.08);
             box-shadow: 0 12px 25px rgba(3, 61, 24, .12);
         }
-
         .finus-feature-card::after {
             animation: finus-soft-pulse 5.5s ease-in-out infinite;
         }
-
         .finus-flow-step {
             transition: transform .25s ease, background .25s ease, border-color .25s ease;
         }
-
         .finus-flow-step:hover {
             transform: translateY(-5px);
             border-color: rgba(183, 255, 190, .28);
             background: rgba(255, 255, 255, .105);
         }
-
         .finus-faq-item {
             transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
         }
-
         .finus-faq-item:hover {
             transform: translateY(-2px);
             border-color: rgba(7, 89, 35, .22);
             box-shadow: 0 18px 34px rgba(3, 61, 24, .09);
         }
-
         .finus-faq-item[open] p {
             animation: finus-faq-open .30s ease both;
         }
-
         .finus-faq-item[open] summary::after {
             box-shadow: 0 8px 18px rgba(3, 61, 24, .12);
         }
-
         .finus-footer-contact:hover .finus-footer-contact-icon,
         .finus-footer-contact:focus-visible .finus-footer-contact-icon {
             transform: rotate(-6deg) scale(1.08);
         }
-
         .finus-footer-link {
             position: relative;
             width: fit-content;
         }
-
         .finus-footer-link::after {
             content: "";
             position: absolute;
@@ -2558,28 +2078,23 @@
             transform-origin: right;
             transition: transform .25s ease;
         }
-
         .finus-footer-link:hover::after,
         .finus-footer-link:focus-visible::after {
             transform: scaleX(1);
             transform-origin: left;
         }
-
         @media (max-width: 640px) {
             .finus-header::before,
             .finus-role-card::after {
                 animation-duration: 10s;
             }
-
             .finus-hero-batik {
                 animation-duration: 16s;
             }
-
             .finus-role-link:nth-child(1) { animation-delay: .58s; }
             .finus-role-link:nth-child(2) { animation-delay: .66s; }
             .finus-role-link:nth-child(3) { animation-delay: .74s; }
         }
-
         @media (hover: none), (pointer: coarse) {
             .finus-meta-item:hover,
             .finus-flow-step:hover,
@@ -2589,7 +2104,6 @@
                 transform: none;
             }
         }
-
         @media (prefers-reduced-motion: reduce) {
             .finus-header,
             .finus-brand,
@@ -2613,7 +2127,6 @@
             .finus-faq-item[open] p {
                 animation: none !important;
             }
-
             .finus-nav-group,
             .finus-eyebrow,
             .finus-hero-title,
@@ -2626,15 +2139,12 @@
                 transform: none !important;
             }
         }
-
-
         /* =====================================================
            SCROLL CARD REVEAL — TERPICU SETIAP KOTAK MASUK VIEWPORT
         ===================================================== */
         .finus-role-card.finus-scroll-card {
             animation: none;
         }
-
         .finus-scroll-card {
             opacity: 0;
             filter: blur(7px);
@@ -2649,31 +2159,25 @@
             transition-delay: var(--scroll-delay, 0ms);
             will-change: opacity, transform, filter;
         }
-
         .finus-scroll-card.is-inview {
             opacity: 1;
             filter: blur(0);
             transform: translate3d(0, 0, 0) scale(1);
         }
-
         .finus-feature-card.finus-scroll-card:nth-child(2n),
         .finus-flow-step.finus-scroll-card:nth-child(2n) {
             transform: translate3d(28px, 42px, 0) scale(.965);
         }
-
         .finus-feature-card.finus-scroll-card:nth-child(2n).is-inview,
         .finus-flow-step.finus-scroll-card:nth-child(2n).is-inview {
             transform: translate3d(0, 0, 0) scale(1);
         }
-
         .finus-faq-item.finus-scroll-card {
             transform: translate3d(-24px, 34px, 0) scale(.98);
         }
-
         .finus-faq-item.finus-scroll-card.is-inview {
             transform: translate3d(0, 0, 0) scale(1);
         }
-
         @media (max-width: 720px) {
             .finus-scroll-card,
             .finus-feature-card.finus-scroll-card:nth-child(2n),
@@ -2682,7 +2186,6 @@
                 transform: translate3d(0, 34px, 0) scale(.98);
                 transition-delay: 0ms;
             }
-
             .finus-scroll-card.is-inview,
             .finus-feature-card.finus-scroll-card:nth-child(2n).is-inview,
             .finus-flow-step.finus-scroll-card:nth-child(2n).is-inview,
@@ -2690,7 +2193,6 @@
                 transform: translate3d(0, 0, 0) scale(1);
             }
         }
-
         @media (prefers-reduced-motion: reduce) {
             .finus-scroll-card,
             .finus-scroll-card.is-inview {
@@ -2700,42 +2202,33 @@
                 transition: none !important;
             }
         }
-
-
         /* PUBLIC HOMEPAGE — hero tetap sederhana, seluruh peran masuk dari dropdown Login */
         .finus-hero-grid {
             grid-template-columns: minmax(0, 900px) !important;
             justify-content: start;
         }
-
         .finus-hero-content {
             max-width: 900px;
         }
-
         .finus-hero-description {
             max-width: 760px;
         }
-
         .finus-hero-actions {
             width: fit-content;
         }
-
         @media (max-width: 980px) {
             .finus-hero-grid {
                 grid-template-columns: minmax(0, 1fr) !important;
             }
         }
-
         @media (max-width: 720px) {
             .finus-hero-actions,
             .finus-primary-button {
                 width: 100%;
             }
         }
-
     </style>
 </head>
-
 <body>
     <div id="pageLoader" class="finus-page-loader" role="status" aria-live="polite" aria-hidden="true">
         <div class="finus-loader-card">
@@ -2744,168 +2237,85 @@
             <span class="finus-loader-copy">Mohon tunggu sebentar.</span>
         </div>
     </div>
-
     <header class="finus-header">
         <div class="finus-container finus-header-inner">
             <div class="finus-brand" aria-label="FINUS PUSDAI Jawa Barat">
-                <img
-                    src="{{ asset('assets/images/FINUS_Welcome.png') }}"
-                    alt="FINUS PUSDAI"
-                    class="finus-brand-logo"
-                    loading="eager"
-                    decoding="async"
-                >
+                <img src="{{ asset('assets/images/FINUS_Welcome.png') }}" alt="FINUS PUSDAI" class="finus-brand-logo" loading="eager" decoding="async">
                 <span class="finus-brand-copy">
                     <span class="finus-brand-name">FINUS PUSDAI</span>
                     <span class="finus-brand-subtitle">Sistem Informasi Keuangan Masjid</span>
                 </span>
             </div>
-
             <nav class="finus-nav" aria-label="Navigasi utama">
                 <div class="finus-nav-group finus-login-group">
-                    <button
-                        type="button"
-                        class="finus-nav-button"
-                        data-dropdown-toggle="loginDropdown"
-                        aria-expanded="false"
-                        aria-controls="loginDropdown"
-                    >
+                    <button type="button" class="finus-nav-button" data-dropdown-toggle="loginDropdown" aria-expanded="false" aria-controls="loginDropdown">
                         <span class="finus-nav-button-icon" aria-hidden="true">↪</span>
                         <span class="finus-nav-button-text">Login</span>
                         <span class="finus-nav-chevron" aria-hidden="true"></span>
                     </button>
-
                     <div class="finus-dropdown" id="loginDropdown" role="menu">
                         <div class="finus-dropdown-label">Pilih peran</div>
-
-                        <a
-                            href="{{ route('login.admin') }}"
-                            class="finus-dropdown-link"
-                            data-access-role="admin"
-                            data-access-url="{{ route('login.admin') }}"
-                            role="menuitem"
-                        >
+                        <a href="{{ route('login.admin') }}" class="finus-dropdown-link" data-access-role="admin" data-access-url="{{ route('login.admin') }}" role="menuitem">
                             <span class="finus-dropdown-link-icon" aria-hidden="true">◆</span>
                             Operator
                         </a>
-
-                        <a
-                            href="{{ route('login.staff') }}"
-                            class="finus-dropdown-link"
-                            data-access-role="staff"
-                            data-access-url="{{ route('login.staff') }}"
-                            role="menuitem"
-                        >
+                        <a href="{{ route('login.staff') }}" class="finus-dropdown-link" data-access-role="staff" data-access-url="{{ route('login.staff') }}" role="menuitem">
                             <span class="finus-dropdown-link-icon" aria-hidden="true">♟</span>
                             Pegawai
                         </a>
-
-                        <a
-                            href="{{ route('login.jamaah') }}"
-                            class="finus-dropdown-link"
-                            data-page-loading="Membuka login jamaah..."
-                            role="menuitem"
-                        >
+                        <a href="{{ route('login.jamaah') }}" class="finus-dropdown-link" data-page-loading="Membuka login jamaah..." role="menuitem">
                             <span class="finus-dropdown-link-icon" aria-hidden="true">♙</span>
                             Jamaah
                         </a>
                     </div>
                 </div>
-
                 <div class="finus-nav-group finus-about-group">
-                    <button
-                        type="button"
-                        class="finus-nav-button"
-                        data-dropdown-toggle="aboutDropdown"
-                        aria-expanded="false"
-                        aria-controls="aboutDropdown"
-                    >
+                    <button type="button" class="finus-nav-button" data-dropdown-toggle="aboutDropdown" aria-expanded="false" aria-controls="aboutDropdown">
                         <span class="finus-nav-button-icon" aria-hidden="true">i</span>
                         <span class="finus-nav-button-text">Tentang</span>
                         <span class="finus-nav-chevron" aria-hidden="true"></span>
                     </button>
-
                     <div class="finus-dropdown" id="aboutDropdown" role="menu">
                         <div class="finus-dropdown-label">PUSDAI Jawa Barat</div>
-
-                        <a
-                            href="https://pusdai.or.id/Lahirnya_Sebuah_Gagasan"
-                            class="finus-dropdown-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            role="menuitem"
-                        >
+                        <a href="https://pusdai.or.id/Lahirnya_Sebuah_Gagasan" class="finus-dropdown-link" target="_blank" rel="noopener noreferrer" role="menuitem">
                             <span class="finus-dropdown-link-icon" aria-hidden="true">✦</span>
                             Sambutan
                         </a>
-
                         <a href="#informasi" class="finus-dropdown-link" role="menuitem">
                             <span class="finus-dropdown-link-icon" aria-hidden="true">◎</span>
                             Tentang FINUS
                         </a>
-
-                        <a
-                            href="{{ route('visi-misi') }}"
-                            class="finus-dropdown-link"
-                            data-page-loading="Membuka halaman visi dan misi..."
-                            role="menuitem"
-                        >
+                        <a href="{{ route('visi-misi') }}" class="finus-dropdown-link" data-page-loading="Membuka halaman visi dan misi..." role="menuitem">
                             <span class="finus-dropdown-link-icon" aria-hidden="true">✧</span>
                             Visi &amp; Misi
                         </a>
-
                         <a href="#keunggulan" class="finus-dropdown-link" role="menuitem">
                             <span class="finus-dropdown-link-icon" aria-hidden="true">✓</span>
                             Keunggulan
                         </a>
                     </div>
                 </div>
-
                 <div class="finus-nav-group finus-desktop-more-group">
-                    <button
-                        type="button"
-                        class="finus-nav-button finus-menu-button"
-                        data-dropdown-toggle="moreDropdown"
-                        aria-label="Buka menu informasi tambahan"
-                        aria-expanded="false"
-                        aria-controls="moreDropdown"
-                    >
+                    <button type="button" class="finus-nav-button finus-menu-button" data-dropdown-toggle="moreDropdown" aria-label="Buka menu informasi tambahan" aria-expanded="false" aria-controls="moreDropdown">
                         <span class="finus-nav-button-icon" aria-hidden="true">☰</span>
                     </button>
-
                     <div class="finus-dropdown" id="moreDropdown" role="menu">
                         <div class="finus-dropdown-label">Informasi lainnya</div>
-
                         <a href="#kontak" class="finus-dropdown-link" role="menuitem">
                             <span class="finus-dropdown-link-icon" aria-hidden="true">✉</span>
                             Contacts
                         </a>
-
-                        <a
-                            href="{{ route('location') }}"
-                            class="finus-dropdown-link"
-                            data-page-loading="Membuka peta lokasi PUSDAI..."
-                            role="menuitem"
-                        >
+                        <a href="{{ route('location') }}" class="finus-dropdown-link" data-page-loading="Membuka peta lokasi PUSDAI..." role="menuitem">
                             <span class="finus-dropdown-link-icon" aria-hidden="true">⌖</span>
                             Location
                         </a>
-
                         <a href="#faq" class="finus-dropdown-link" role="menuitem">
                             <span class="finus-dropdown-link-icon" aria-hidden="true">?</span>
                             FAQ
                         </a>
                     </div>
                 </div>
-
-                <button
-                    type="button"
-                    class="finus-nav-button finus-menu-button finus-mobile-menu-button"
-                    id="mobileMenuButton"
-                    aria-label="Buka menu"
-                    aria-expanded="false"
-                    aria-controls="mobileMenuPanel"
-                >
+                <button type="button" class="finus-nav-button finus-menu-button finus-mobile-menu-button" id="mobileMenuButton" aria-label="Buka menu" aria-expanded="false" aria-controls="mobileMenuPanel">
                     <span
                         class="finus-nav-button-icon"
                         id="mobileMenuIcon"
@@ -2915,86 +2325,58 @@
             </nav>
         </div>
     </header>
-
     <div class="finus-mobile-panel" id="mobileMenuPanel" aria-hidden="true">
         <div class="finus-mobile-menu-grid">
             <div class="finus-mobile-menu-title">Menu FINUS</div>
-
             <a href="#informasi" class="finus-mobile-menu-link">
                 <span class="finus-mobile-menu-link-icon" aria-hidden="true">i</span>
                 Tentang FINUS
             </a>
-
-            <a
-                href="{{ route('visi-misi') }}"
-                class="finus-mobile-menu-link"
-                data-page-loading="Membuka halaman visi dan misi..."
-            >
+            <a href="{{ route('visi-misi') }}" class="finus-mobile-menu-link" data-page-loading="Membuka halaman visi dan misi...">
                 <span class="finus-mobile-menu-link-icon" aria-hidden="true">✧</span>
                 Visi &amp; Misi
             </a>
-
             <a href="#keunggulan" class="finus-mobile-menu-link">
                 <span class="finus-mobile-menu-link-icon" aria-hidden="true">✓</span>
                 Keunggulan FINUS
             </a>
-
             <div class="finus-mobile-menu-title">Informasi lainnya</div>
-
             <a href="#kontak" class="finus-mobile-menu-link">
                 <span class="finus-mobile-menu-link-icon" aria-hidden="true">✉</span>
                 Contacts
             </a>
-
-            <a
-                href="{{ route('location') }}"
-                class="finus-mobile-menu-link"
-                data-page-loading="Membuka peta lokasi PUSDAI..."
-            >
+            <a href="{{ route('location') }}" class="finus-mobile-menu-link" data-page-loading="Membuka peta lokasi PUSDAI...">
                 <span class="finus-mobile-menu-link-icon" aria-hidden="true">⌖</span>
                 Location
             </a>
-
             <a href="#faq" class="finus-mobile-menu-link">
                 <span class="finus-mobile-menu-link-icon" aria-hidden="true">?</span>
                 FAQ
             </a>
         </div>
     </div>
-
     <main class="finus-main">
         <section class="finus-hero">
-            <img
-                src="{{ asset('assets/images/pusdai_batik.png') }}"
-                alt=""
-                class="finus-hero-batik"
-                aria-hidden="true"
-                onerror="this.style.display='none'"
-            >
+            <img src="{{ asset('assets/images/pusdai_batik.png') }}" alt="" class="finus-hero-batik" aria-hidden="true" onerror="this.style.display='none'">
             <div class="finus-container finus-hero-grid">
                 <div class="finus-hero-content" id="informasi">
                     <div class="finus-eyebrow">
                         <span class="finus-eyebrow-dot"></span>
                         Sistem Informasi Keuangan Masjid
                     </div>
-
                     <h1 class="finus-hero-title">Selamat Datang</h1>
                     <h2 class="finus-hero-subtitle">Website Masjid PUSDAI Jawa Barat</h2>
-
                     <p class="finus-hero-description">
                         FINUS membantu pengelolaan <strong>keuangan masjid</strong>,
                         transaksi jamaah, data pegawai, penggajian, presensi,
                         serta laporan dalam satu sistem yang aman, tertib,
                         dan transparan.
                     </p>
-
                     <div class="finus-hero-actions" id="layanan">
-                        <a href="{{ route('login.jamaah') }}" class="finus-primary-button"
-                           data-page-loading="Membuka layanan jamaah...">
+                        <a href="{{ route('login.jamaah') }}" class="finus-primary-button" data-page-loading="Membuka layanan jamaah...">
                             Masuk sebagai Jamaah <span aria-hidden="true">→</span>
                         </a>
                     </div>
-
                     <div class="finus-hero-meta">
                         <div class="finus-meta-item"><span class="finus-meta-icon">✓</span>Data terintegrasi</div>
                         <div class="finus-meta-item"><span class="finus-meta-icon">◎</span>Transparansi keuangan</div>
@@ -3003,87 +2385,69 @@
                 </div>
             </div>
         </section>
-
-        <section
-            class="finus-section finus-section-soft"
-            id="keunggulan"
-        >
+        <section class="finus-section finus-section-soft" id="keunggulan">
             <div class="finus-container">
                 <div class="finus-section-heading finus-reveal">
                     <span class="finus-section-kicker">
                         Keunggulan FINUS
                     </span>
-
                     <h2 class="finus-section-title">
                         Satu sistem untuk pengelolaan masjid yang lebih tertib
                     </h2>
-
                     <p class="finus-section-copy">
                         FINUS menghadirkan layanan Jamaah yang sederhana, transparan,
                         dan mudah digunakan, sementara pengelolaan internal tetap
                         berjalan melalui portal khusus Operator dan Pegawai.
                     </p>
                 </div>
-
                 <div class="finus-feature-grid">
                     <article class="finus-feature-card finus-scroll-card" style="--scroll-delay: 0ms">
                         <div class="finus-feature-icon" aria-hidden="true">
                             ✓
                         </div>
-
                         <h3 class="finus-feature-title">
                             Transparansi Keuangan
                         </h3>
-
                         <p class="finus-feature-copy">
                             Pencatatan transaksi dan laporan keuangan
                             tersusun dalam satu alur yang lebih mudah
                             dipantau.
                         </p>
-
                         <ul class="finus-feature-list">
                             <li>Riwayat transaksi jamaah</li>
                             <li>Pengeluaran dan jurnal umum</li>
                             <li>Laporan yang lebih terstruktur</li>
                         </ul>
                     </article>
-
                     <article class="finus-feature-card is-blue finus-scroll-card" style="--scroll-delay: 110ms">
                         <div class="finus-feature-icon" aria-hidden="true">
                             ◎
                         </div>
-
                         <h3 class="finus-feature-title">
                             Pengelolaan Terintegrasi
                         </h3>
-
                         <p class="finus-feature-copy">
                             Data pegawai, presensi, jabatan, dan
                             penggajian dikelola dalam satu aplikasi.
                         </p>
-
                         <ul class="finus-feature-list">
                             <li>Data pegawai dan jabatan</li>
                             <li>Presensi serta penggajian</li>
                             <li>Hak akses berdasarkan peran</li>
                         </ul>
                     </article>
-
                     <article class="finus-feature-card is-purple finus-scroll-card" style="--scroll-delay: 220ms">
                         <div class="finus-feature-icon" aria-hidden="true">
                             ⌁
                         </div>
-
                         <h3 class="finus-feature-title">
                             Nyaman di Semua Perangkat
                         </h3>
-
                         <p class="finus-feature-copy">
                             Antarmuka menyesuaikan ukuran layar agar
                             tetap nyaman digunakan dari HP hingga
                             desktop.
                         </p>
-
                         <ul class="finus-feature-list">
                             <li>Navigasi responsif</li>
                             <li>Tombol ramah layar sentuh</li>
@@ -3093,70 +2457,53 @@
                 </div>
             </div>
         </section>
-
-        <section
-            class="finus-section finus-section-dark"
-            id="alur"
-        >
+        <section class="finus-section finus-section-dark" id="alur">
             <div class="finus-container">
                 <div class="finus-section-heading finus-reveal">
                     <span class="finus-section-kicker">
                         Alur Akses
                     </span>
-
                     <h2 class="finus-section-title">
                         Masuk ke FINUS dalam tiga langkah
                     </h2>
-
                     <p class="finus-section-copy">
                         Pilih peran, lakukan verifikasi apabila
                         dibutuhkan, kemudian masuk ke dashboard yang
                         sesuai.
                     </p>
                 </div>
-
                 <div class="finus-flow-grid">
                     <article class="finus-flow-step finus-scroll-card" style="--scroll-delay: 0ms">
                         <span class="finus-flow-number">01</span>
-
                         <h3 class="finus-flow-title">
                             Pilih peran
                         </h3>
-
                         <p class="finus-flow-copy">
                             Tentukan akses sebagai Operator, Pegawai,
                             atau Jamaah melalui menu yang tersedia.
                         </p>
-
                         <span class="finus-flow-arrow" aria-hidden="true">
                             →
                         </span>
                     </article>
-
                     <article class="finus-flow-step finus-scroll-card" style="--scroll-delay: 110ms">
                         <span class="finus-flow-number">02</span>
-
                         <h3 class="finus-flow-title">
                             Verifikasi akses
                         </h3>
-
                         <p class="finus-flow-copy">
                             Operator dan Pegawai memasukkan kode akses
                             sebelum membuka halaman login.
                         </p>
-
                         <span class="finus-flow-arrow" aria-hidden="true">
                             →
                         </span>
                     </article>
-
                     <article class="finus-flow-step finus-scroll-card" style="--scroll-delay: 220ms">
                         <span class="finus-flow-number">03</span>
-
                         <h3 class="finus-flow-title">
                             Buka dashboard
                         </h3>
-
                         <p class="finus-flow-copy">
                             Setelah login berhasil, sistem mengarahkan
                             pengguna ke dashboard sesuai hak aksesnya.
@@ -3165,8 +2512,6 @@
                 </div>
             </div>
         </section>
-
-
         <section class="finus-section finus-faq-section" id="faq">
             <div class="finus-container finus-faq-layout">
                 <div class="finus-faq-heading finus-reveal">
@@ -3176,7 +2521,6 @@
                         Informasi singkat mengenai akses, keamanan, dan penggunaan layanan FINUS.
                     </p>
                 </div>
-
                 <div class="finus-faq-list">
                     <details class="finus-faq-item finus-scroll-card" style="--scroll-delay: 0ms">
                         <summary>Siapa saja yang dapat menggunakan FINUS?</summary>
@@ -3185,7 +2529,6 @@
                             Operator serta Pegawai menggunakan portal pengelola yang terpisah.
                         </p>
                     </details>
-
                     <details class="finus-faq-item finus-scroll-card" style="--scroll-delay: 90ms">
                         <summary>Bagaimana Operator dan Pegawai masuk ke FINUS?</summary>
                         <p>
@@ -3194,7 +2537,6 @@
                             pada layanan publik untuk Jamaah.
                         </p>
                     </details>
-
                     <details class="finus-faq-item finus-scroll-card" style="--scroll-delay: 180ms">
                         <summary>Apakah FINUS dapat digunakan melalui HP dan tablet?</summary>
                         <p>
@@ -3206,32 +2548,18 @@
             </div>
         </section>
     </main>
-
     <footer class="finus-footer" id="kontak">
         <div class="finus-container finus-footer-inner">
             <div class="finus-footer-brand finus-reveal">
-                <img
-                    src="{{ asset('assets/images/FINUS_login.png') }}"
-                    alt="FINUS PUSDAI"
-                    class="finus-footer-logo"
-                    loading="lazy"
-                    decoding="async"
-                >
-
+                <img src="{{ asset('assets/images/FINUS_login.png') }}" alt="FINUS PUSDAI" class="finus-footer-logo" loading="lazy" decoding="async">
                 <div class="finus-footer-text">
                     <strong>FINUS PUSDAI</strong>
                     <span>Sistem Informasi Keuangan Masjid PUSDAI Jawa Barat</span>
                 </div>
             </div>
-
             <address class="finus-footer-address finus-reveal">
                 <span class="finus-footer-heading">Alamat PUSDAI Jawa Barat</span>
-                <a
-                    href="https://www.google.com/maps/search/?api=1&query=Jalan+Diponegoro+No+63+Bandung+40122"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="finus-footer-contact"
-                >
+                <a href="https://www.google.com/maps/search/?api=1&query=Jalan+Diponegoro+No+63+Bandung+40122" target="_blank" rel="noopener noreferrer" class="finus-footer-contact">
                     <span class="finus-footer-contact-icon" aria-hidden="true">⌖</span>
                     <span>Jalan Diponegoro No. 63, Bandung, Jawa Barat 40122</span>
                 </a>
@@ -3244,7 +2572,6 @@
                     <span>pusdaijabar@gmail.com</span>
                 </a>
             </address>
-
             <nav class="finus-footer-links finus-reveal" aria-label="Navigasi footer">
                 <span class="finus-footer-heading">Navigasi</span>
                 <a href="#informasi" class="finus-footer-link">Tentang FINUS</a>
@@ -3254,28 +2581,23 @@
                 <a href="#faq" class="finus-footer-link">FAQ</a>
             </nav>
         </div>
-
         <div class="finus-container finus-footer-bottom finus-reveal">
             <span>© {{ date('Y') }} FINUS PUSDAI Jawa Barat.</span>
             <span>Dibuat untuk pengelolaan masjid yang tertib dan transparan.</span>
         </div>
     </footer>
-
     <div class="finus-modal" id="codeModal" role="dialog" aria-modal="true"
          aria-labelledby="accessModalTitle" aria-hidden="true">
         <div class="finus-modal-dialog">
             <button type="button" class="finus-modal-close" id="closeAccessModal"
                     aria-label="Tutup dialog">×</button>
-
             <div class="finus-modal-content">
                 <div class="finus-modal-icon" aria-hidden="true">🔐</div>
                 <h2 class="finus-modal-title" id="accessModalTitle">Masukkan Kode Akses</h2>
                 <p class="finus-modal-copy" id="accessModalCopy">
                     Kode akses diperlukan sebelum membuka halaman login.
                 </p>
-
                 <label for="accessCodeInput" class="finus-field-label">Kode Akses FINUS</label>
-
                 <div class="finus-code-field-wrap">
                     <input type="password" id="accessCodeInput" class="finus-code-field"
                            placeholder="Masukkan kode akses" autocomplete="one-time-code" maxlength="100">
@@ -3284,9 +2606,7 @@
                         <img src="{{ asset('assets/images/ShowPassword.png') }}" alt="Tampilkan kode akses">
                     </button>
                 </div>
-
                 <p class="finus-form-message" id="attemptInfo" aria-live="polite"></p>
-
                 <div class="finus-modal-actions">
                     <button type="button" id="verifyBtn" class="finus-verify-button">
                         <span id="verifySpinner" class="finus-spinner" hidden></span>
@@ -3297,7 +2617,6 @@
             </div>
         </div>
     </div>
-
     <script>
     (() => {
         const state = {
@@ -3306,7 +2625,6 @@
             cooldownTimer: null,
             lastFocusedElement: null,
         };
-
         const body = document.body;
         const pageLoader = document.getElementById('pageLoader');
         const pageLoaderTitle = document.getElementById('pageLoaderTitle');
@@ -3324,32 +2642,21 @@
         const mobileMenuButton = document.getElementById('mobileMenuButton');
         const mobileMenuIcon = document.getElementById('mobileMenuIcon');
         const mobileMenuPanel = document.getElementById('mobileMenuPanel');
-
-        const csrfToken =
-            document.querySelector('meta[name="csrf-token"]')?.content
-            || "{{ csrf_token() }}";
-
-        const pageHeader =
-            document.querySelector('.finus-header');
-
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "{{ csrf_token() }}";
+        const pageHeader = document.querySelector('.finus-header');
         const updateHeaderState = () => {
             pageHeader?.classList.toggle(
                 'is-scrolled',
                 window.scrollY > 18
             );
         };
-
         updateHeaderState();
-
         window.addEventListener(
             'scroll',
             updateHeaderState,
             { passive: true }
         );
-
-        const revealElements =
-            document.querySelectorAll('.finus-reveal');
-
+        const revealElements = document.querySelectorAll('.finus-reveal');
         if (
             'IntersectionObserver' in window
             && !window.matchMedia(
@@ -3363,11 +2670,9 @@
                             if (!entry.isIntersecting) {
                                 return;
                             }
-
                             entry.target.classList.add(
                                 'is-visible'
                             );
-
                             revealObserver.unobserve(
                                 entry.target
                             );
@@ -3379,7 +2684,6 @@
                             '0px 0px -45px 0px',
                     }
                 );
-
             revealElements.forEach(element => {
                 revealObserver.observe(element);
             });
@@ -3388,15 +2692,12 @@
                 element.classList.add('is-visible');
             });
         }
-
-
         /*
          * Kartu tidak di-unobserve agar animasinya bisa muncul lagi
          * ketika pengguna kembali men-scroll ke kartu tersebut.
          */
         const scrollCards = document.querySelectorAll('.finus-scroll-card');
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
         if ('IntersectionObserver' in window && !reduceMotion) {
             const scrollCardObserver = new IntersectionObserver(
                 entries => {
@@ -3405,7 +2706,6 @@
                             entry.target.classList.add('is-inview');
                             return;
                         }
-
                         if (!entry.isIntersecting) {
                             entry.target.classList.remove('is-inview');
                         }
@@ -3416,29 +2716,24 @@
                     rootMargin: '0px 0px -7% 0px',
                 }
             );
-
             scrollCards.forEach(card => scrollCardObserver.observe(card));
         } else {
             scrollCards.forEach(card => card.classList.add('is-inview'));
         }
-
         const setMessage = (message = '', type = '') => {
             attemptInfo.textContent = message;
             attemptInfo.classList.toggle('is-error', type === 'error');
             attemptInfo.classList.toggle('is-success', type === 'success');
         };
-
         const showPageLoader = (title = 'Membuka halaman...') => {
             pageLoaderTitle.textContent = title;
             pageLoader.classList.add('is-visible');
             pageLoader.setAttribute('aria-hidden', 'false');
             body.classList.add('is-locked');
         };
-
         const hidePageLoader = () => {
             pageLoader.classList.remove('is-visible');
             pageLoader.setAttribute('aria-hidden', 'true');
-
             if (
                 !codeModal.classList.contains('is-open')
                 && !mobileMenuPanel.classList.contains('is-open')
@@ -3446,101 +2741,77 @@
                 body.classList.remove('is-locked');
             }
         };
-
         const closeAllDropdowns = exceptId => {
             document.querySelectorAll('.finus-dropdown.is-open').forEach(dropdown => {
                 if (dropdown.id === exceptId) return;
-
                 dropdown.classList.remove('is-open');
-
                 document
                     .querySelector(`[data-dropdown-toggle="${dropdown.id}"]`)
                     ?.setAttribute('aria-expanded', 'false');
             });
         };
-
         const toggleDropdown = button => {
             const dropdown = document.getElementById(button.dataset.dropdownToggle);
             if (!dropdown) return;
-
             const willOpen = !dropdown.classList.contains('is-open');
-
             closeAllDropdowns(willOpen ? dropdown.id : null);
             dropdown.classList.toggle('is-open', willOpen);
             button.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
         };
-
         const closeMobileMenu = () => {
             mobileMenuPanel.classList.remove('is-open');
             mobileMenuPanel.setAttribute('aria-hidden', 'true');
             mobileMenuButton.setAttribute('aria-expanded', 'false');
             mobileMenuIcon.textContent = '☰';
-
             if (!codeModal.classList.contains('is-open')) {
                 body.classList.remove('is-locked');
             }
         };
-
         const toggleMobileMenu = () => {
             const willOpen = !mobileMenuPanel.classList.contains('is-open');
-
             mobileMenuPanel.classList.toggle('is-open', willOpen);
             mobileMenuPanel.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
             mobileMenuButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
             mobileMenuIcon.textContent = willOpen ? '×' : '☰';
             body.classList.toggle('is-locked', willOpen);
-
             if (willOpen) closeAllDropdowns();
         };
-
         const resetAccessModal = () => {
             if (state.cooldownTimer) {
                 clearInterval(state.cooldownTimer);
                 state.cooldownTimer = null;
             }
-
             input.value = '';
             input.type = 'password';
             input.disabled = false;
-
             verifyButton.disabled = false;
             verifyText.textContent = 'Verifikasi';
             verifySpinner.hidden = true;
-
             const image = togglePassword.querySelector('img');
             image.src = "{{ asset('assets/images/ShowPassword.png') }}";
             image.alt = 'Tampilkan kode akses';
-
             togglePassword.setAttribute('aria-label', image.alt);
             setMessage('');
         };
-
         const openAccessModal = (type, url, trigger = null) => {
             state.currentType = type;
             state.currentUrl = url;
             state.lastFocusedElement = trigger || document.activeElement;
-
             resetAccessModal();
             closeMobileMenu();
             closeAllDropdowns();
-
             const isAdmin = type === 'admin';
-
             modalTitle.textContent = isAdmin
                 ? 'Kode Akses Operator'
                 : 'Kode Akses Pegawai';
-
             modalCopy.textContent = isAdmin
                 ? 'Masukkan kode akses operator sebelum membuka halaman login admin.'
                 : 'Masukkan kode akses pegawai sebelum membuka halaman login pegawai.';
-
             codeModal.classList.add('is-open');
             codeModal.setAttribute('aria-hidden', 'false');
             body.classList.add('is-locked');
-
             setTimeout(() => input.focus(), 130);
         };
-
         const closeAccessModal = () => {
             codeModal.classList.remove('is-open');
             codeModal.setAttribute('aria-hidden', 'true');
@@ -3548,7 +2819,6 @@
             resetAccessModal();
             state.lastFocusedElement?.focus?.();
         };
-
         const setVerifying = isVerifying => {
             input.disabled = isVerifying;
             verifyButton.disabled = isVerifying;
@@ -3557,87 +2827,55 @@
                 ? 'Memverifikasi...'
                 : 'Verifikasi';
         };
-
         const startCooldown = seconds => {
             let remaining = Math.max(0, Number(seconds) || 0);
-
             input.disabled = true;
             verifyButton.disabled = true;
             verifySpinner.hidden = true;
-
             const update = () => {
                 if (remaining <= 0) {
                     clearInterval(state.cooldownTimer);
                     state.cooldownTimer = null;
-
                     input.disabled = false;
                     verifyButton.disabled = false;
                     verifyText.textContent = 'Verifikasi';
-
                     setMessage('Kode dapat dicoba kembali.', 'success');
                     input.focus();
                     return;
                 }
-
                 verifyText.textContent = `Tunggu ${remaining} dtk`;
-
                 setMessage(
                     `Terlalu banyak percobaan. Coba kembali dalam ${remaining} detik.`,
                     'error'
                 );
-
                 remaining--;
             };
-
             update();
             state.cooldownTimer = setInterval(update, 1000);
         };
-
         const parseResponse = async response => {
             const contentType = response.headers.get('content-type') || '';
-
             if (!contentType.includes('application/json')) {
                 const text = await response.text().catch(() => '');
-
                 console.error('Respons non-JSON:', response.status, text);
-
                 throw new Error(
                     `Server mengembalikan respons tidak valid (${response.status}).`
                 );
             }
-
             return response.json();
         };
-
-        const logoutCurrentUser = async logoutUrl => {
-            await fetch(logoutUrl, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-            });
-        };
-
         const checkCode = async () => {
             if (verifyButton.disabled) return;
-
             const code = input.value.trim();
-
             if (!code) {
                 setMessage('Kode akses wajib diisi.', 'error');
                 input.focus();
                 return;
             }
-
             setMessage('');
             setVerifying(true);
-
             const controller = new AbortController();
             const requestTimeout = setTimeout(() => controller.abort(), 12000);
-
             try {
                 const response = await fetch(
                     "{{ route('verify.code', [], false) }}",
@@ -3657,170 +2895,100 @@
                         }),
                     }
                 );
-
                 clearTimeout(requestTimeout);
-
                 const data = await parseResponse(response);
-
                 if (!response.ok) {
                     if (response.status === 419) {
                         throw new Error(
                             'Sesi berakhir. Muat ulang halaman lalu coba kembali.'
                         );
                     }
-
                     if (response.status === 422 && data?.errors) {
                         const firstKey = Object.keys(data.errors)[0];
                         const firstMessage = firstKey
                             ? data.errors[firstKey]?.[0]
                             : null;
-
                         throw new Error(
                             firstMessage || data.message || 'Data belum valid.'
                         );
                     }
-
                     throw new Error(
                         data?.message
                         || `Terjadi kesalahan server (${response.status}).`
                     );
                 }
-
                 if (data.status === 'success') {
                     setMessage(
                         'Kode benar. Mengarahkan ke halaman login...',
                         'success'
                     );
-
                     verifyText.textContent = 'Mengarahkan...';
                     verifySpinner.hidden = false;
-
                     setTimeout(() => {
                         showPageLoader('Membuka halaman login...');
                         window.location.href = data.redirect || state.currentUrl;
                     }, 650);
-
                     return;
                 }
-
                 if (data.status === 'misconfigured') {
                     setMessage(
                         data.message || 'Kode akses belum dikonfigurasi.',
                         'error'
                     );
-
                     setVerifying(false);
                     input.focus();
                     return;
                 }
-
                 if (data.status === 'already_logged_in') {
-                    const currentRole = data.current_role;
-                    const requestedType = data.requested_type || state.currentType;
-                    const desiredRole = requestedType === 'admin'
-                        ? 'admin'
-                        : 'pegawai';
-
-                    if (data.redirect && currentRole === desiredRole) {
-                        setMessage(
-                            'Anda sudah login. Membuka dashboard...',
-                            'success'
-                        );
-
-                        setTimeout(() => {
-                            showPageLoader('Membuka dashboard...');
-                            window.location.href = data.redirect;
-                        }, 450);
-
-                        return;
-                    }
-
-                    const roleLabel = requestedType === 'admin'
-                        ? 'Operator'
-                        : 'Pegawai';
-
-                    const agreeToLogout = window.confirm(
-                        `Anda masih login sebagai ${currentRole || 'pengguna lain'}. Logout terlebih dahulu untuk login sebagai ${roleLabel}?`
+                    setMessage(
+                        'Akun role tersebut sudah login. Membuka dashboard...',
+                        'success'
                     );
-
-                    if (agreeToLogout && data.logout_url) {
-                        try {
-                            await logoutCurrentUser(data.logout_url);
-                            showPageLoader('Membersihkan sesi login...');
-                            window.location.reload();
-                            return;
-                        } catch (logoutError) {
-                            console.error('Logout gagal:', logoutError);
-
-                            setMessage(
-                                'Logout gagal. Silakan coba kembali.',
-                                'error'
-                            );
-
-                            setVerifying(false);
-                            return;
-                        }
-                    }
-
-                    if (data.redirect) {
-                        showPageLoader('Membuka dashboard aktif...');
-                        window.location.href = data.redirect;
-                        return;
-                    }
-
-                    setVerifying(false);
-                    input.focus();
+                    setTimeout(() => {
+                        showPageLoader('Membuka dashboard...');
+                        window.location.href = data.redirect || state.currentUrl;
+                    }, 450);
                     return;
                 }
-
                 if (data.status === 'error') {
                     setMessage(
                         `Kode salah. Percobaan ${data.attempts || 1} dari 3.`,
                         'error'
                     );
-
                     setVerifying(false);
                     input.value = '';
                     input.focus();
                     return;
                 }
-
                 if (data.status === 'locked' || data.status === 'cooldown') {
                     startCooldown(data.remaining);
                     return;
                 }
-
                 throw new Error(
                     data.message || 'Respons server tidak dikenali.'
                 );
             } catch (error) {
                 clearTimeout(requestTimeout);
-
                 console.error('Verifikasi kode gagal:', error);
-
                 setMessage(
                     error.name === 'AbortError'
                         ? 'Proses terlalu lama. Periksa koneksi lalu coba kembali.'
                         : error.message || 'Terjadi gangguan jaringan.',
                     'error'
                 );
-
                 setVerifying(false);
                 input.focus();
             }
         };
-
         document.querySelectorAll('[data-dropdown-toggle]').forEach(button => {
             button.addEventListener('click', event => {
                 event.stopPropagation();
                 toggleDropdown(button);
             });
         });
-
         document.querySelectorAll('[data-access-role]').forEach(trigger => {
             trigger.addEventListener('click', event => {
                 event.preventDefault();
-
                 openAccessModal(
                     trigger.dataset.accessRole,
                     trigger.dataset.accessUrl || trigger.getAttribute('href'),
@@ -3828,7 +2996,6 @@
                 );
             });
         });
-
         document.querySelectorAll('[data-open-role-selector]').forEach(button => {
             button.addEventListener('click', () => {
                 document.getElementById('layanan')?.scrollIntoView({
@@ -3837,7 +3004,6 @@
                 });
             });
         });
-
         document.querySelectorAll('[data-page-loading]').forEach(link => {
             link.addEventListener('click', event => {
                 if (
@@ -3848,13 +3014,11 @@
                 ) {
                     return;
                 }
-
                 showPageLoader(
                     link.dataset.pageLoading || 'Membuka halaman...'
                 );
             });
         });
-
         document.querySelectorAll('a[href="#"]').forEach(link => {
             link.addEventListener('click', event => {
                 event.preventDefault();
@@ -3862,74 +3026,57 @@
                 closeMobileMenu();
             });
         });
-
         document.addEventListener('click', event => {
             if (!event.target.closest('.finus-nav-group')) {
                 closeAllDropdowns();
             }
         });
-
         mobileMenuButton.addEventListener('click', toggleMobileMenu);
-
         mobileMenuPanel.addEventListener('click', event => {
             if (event.target.closest('a[href^="#"]')) {
                 closeMobileMenu();
             }
         });
-
         closeModalButton.addEventListener('click', closeAccessModal);
         cancelModalButton.addEventListener('click', closeAccessModal);
         verifyButton.addEventListener('click', checkCode);
-
         input.addEventListener('keydown', event => {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 checkCode();
             }
         });
-
         togglePassword.addEventListener('click', () => {
             const image = togglePassword.querySelector('img');
             const willShow = input.type === 'password';
-
             input.type = willShow ? 'text' : 'password';
-
             image.src = willShow
                 ? "{{ asset('assets/images/HidePassword.png') }}"
                 : "{{ asset('assets/images/ShowPassword.png') }}";
-
             image.alt = willShow
                 ? 'Sembunyikan kode akses'
                 : 'Tampilkan kode akses';
-
             togglePassword.setAttribute('aria-label', image.alt);
             input.focus();
         });
-
         codeModal.addEventListener('click', event => {
             if (event.target === codeModal) {
                 closeAccessModal();
             }
         });
-
         document.addEventListener('keydown', event => {
             if (event.key !== 'Escape') return;
-
             if (codeModal.classList.contains('is-open')) {
                 closeAccessModal();
                 return;
             }
-
             if (mobileMenuPanel.classList.contains('is-open')) {
                 closeMobileMenu();
                 return;
             }
-
             closeAllDropdowns();
         });
-
         window.addEventListener('pageshow', hidePageLoader);
-
         window.matchMedia('(min-width: 721px)').addEventListener('change', event => {
             if (event.matches) closeMobileMenu();
         });

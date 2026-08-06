@@ -1,5 +1,5 @@
 @php
-    $navUser = auth()->user();
+    $navUser = $currentUser;
     $roleLabel = $navUser?->isAdmin()
         ? 'Administrator'
         : ($navUser?->isPegawai() ? 'Pegawai' : 'Jamaah');
@@ -9,7 +9,6 @@
         : 'FINUS';
     $initial = mb_strtoupper(mb_substr(trim($navUser?->name ?? 'F'), 0, 1));
 @endphp
-
 <style>
     .header.finus-topbar {
         position: fixed !important;
@@ -47,7 +46,6 @@
         height: 100%;
         align-items: center !important;
     }
-
     /* Reset style bawaan template agar tombol hamburger benar-benar sejajar. */
     button.finus-topbar-toggle {
         position: static !important;
@@ -57,12 +55,10 @@
         line-height: 1 !important;
         transform: none !important;
     }
-
     button.finus-topbar-toggle:hover,
     button.finus-topbar-toggle:focus-visible {
         transform: none !important;
     }
-
     .finus-topbar-toggle > span {
         display: flex !important;
         flex-direction: column;
@@ -217,37 +213,23 @@
         .finus-user-chevron { display: none; }
     }
 </style>
-
 <header class="header finus-topbar" aria-label="Header aplikasi">
     <div class="finus-topbar-inner">
         <div class="finus-topbar-left">
-            <button
-                type="button"
-                class="hamburger sidebar-toggle finus-topbar-toggle"
-                aria-label="Buka atau tutup menu navigasi"
-                aria-controls="finusSidebar"
-            >
+            <button type="button" class="hamburger sidebar-toggle finus-topbar-toggle" aria-label="Buka atau tutup menu navigasi" aria-controls="finusSidebar">
                 <span aria-hidden="true">
                     <span class="line"></span>
                     <span class="line"></span>
                     <span class="line"></span>
                 </span>
             </button>
-
             <div class="finus-topbar-context">
                 <span class="finus-topbar-eyebrow">{{ $roleLabel }} FINUS</span>
                 <span class="finus-topbar-title">{{ $pageContext }}</span>
             </div>
         </div>
-
         <div class="dropdown">
-            <button
-                type="button"
-                class="finus-topbar-user dropdown-toggle"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-            >
+            <button type="button" class="finus-topbar-user dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <span class="finus-user-avatar" aria-hidden="true">{{ $initial }}</span>
                 <span class="finus-user-copy">
                     <strong>{{ $navUser->first_name }}</strong>
@@ -255,7 +237,6 @@
                 </span>
                 <i class="fa-solid fa-chevron-down finus-user-chevron" aria-hidden="true"></i>
             </button>
-
             <div class="dropdown-menu dropdown-menu-right finus-user-menu">
                 <div class="finus-user-menu-head">
                     <span class="finus-user-avatar" aria-hidden="true">{{ $initial }}</span>
@@ -265,11 +246,11 @@
                     </span>
                 </div>
                 <div class="dropdown-divider"></div>
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ $logoutRoute }}">
                     @csrf
                     <button class="finus-logout-button" type="submit">
                         <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
-                        Keluar dari FINUS
+                        Keluar dari akun {{ $roleLabel }}
                     </button>
                 </form>
             </div>

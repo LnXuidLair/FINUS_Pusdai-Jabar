@@ -31,26 +31,20 @@ class JamaahController extends Controller
             ], 'created_at')
             ->orderBy('name')
             ->get();
-
         return view('jamaah.index', compact('jamaahs'));
     }
-
     public function dashboard(Request $request)
     {
         /** @var \App\Models\User $jamaah */
         $jamaah = $request->user();
         $jenisLabels = $this->jenisLabels();
-
         $transaksiBerhasilSaya = ZiswafPenerimaan::query()
             ->where('muzakki_id', $jamaah->id)
             ->where('status_verifikasi', 'diterima');
-
         $totalTransaksiSaya = (int) (clone $transaksiBerhasilSaya)
             ->sum('nominal');
-
         $jumlahTransaksiSaya = (clone $transaksiBerhasilSaya)
             ->count();
-
         $totalZakatSaya = (int) (clone $transaksiBerhasilSaya)
             ->whereIn('jenis_ziswaf', [
                 'zakat_maal',
@@ -58,21 +52,17 @@ class JamaahController extends Controller
                 'zakat_penghasilan',
             ])
             ->sum('nominal');
-
         $totalInfakSaya = (int) (clone $transaksiBerhasilSaya)
             ->where('jenis_ziswaf', 'infaq')
             ->sum('nominal');
-
         $totalWakafSaya = (int) (clone $transaksiBerhasilSaya)
             ->where('jenis_ziswaf', 'wakaf')
             ->sum('nominal');
-
         $riwayatSaya = (clone $transaksiBerhasilSaya)
             ->latest('tanggal')
             ->latest('id')
             ->limit(8)
             ->get();
-
         $agendaKegiatan = collect([
             [
                 'judul' => 'Kajian Rutin Subuh',
@@ -99,7 +89,6 @@ class JamaahController extends Controller
                 'deskripsi' => 'Kegiatan belajar memperbaiki bacaan Al-Qur\'an.',
             ],
         ]);
-
         return view('dashboard.jamaah', compact(
             'jamaah',
             'jenisLabels',
@@ -112,7 +101,6 @@ class JamaahController extends Controller
             'agendaKegiatan'
         ));
     }
-
     /**
      * Menampilkan seluruh riwayat transaksi milik jamaah yang sedang login.
      */
@@ -120,9 +108,7 @@ class JamaahController extends Controller
     {
         $filters = $this->validatedTransactionFilters($request);
         $query = $this->jamaahTransactionQuery($request, $filters);
-
         $ringkasanQuery = clone $query;
-
         $ringkasan = [
             'jumlah' => (clone $ringkasanQuery)->count(),
             'nominal' => (int) (clone $ringkasanQuery)->sum('nominal'),
@@ -136,13 +122,11 @@ class JamaahController extends Controller
                 })
                 ->sum('nominal'),
         ];
-
         $transaksi = $query
             ->latest('tanggal')
             ->latest('id')
             ->paginate(10)
             ->withQueryString();
-
         return view('jamaah.riwayat-transaksi', [
             'jamaah' => $request->user(),
             'transaksi' => $transaksi,
@@ -153,7 +137,6 @@ class JamaahController extends Controller
             'metodeLabels' => $this->metodeLabels(),
         ]);
     }
-
     /**
      * Menampilkan laporan transaksi pribadi berdasarkan periode.
      */
@@ -163,18 +146,13 @@ class JamaahController extends Controller
             $request,
             defaultPeriod: true
         );
-
         $filters['status'] = 'diterima';
-
         $query = $this->jamaahTransactionQuery($request, $filters);
-
         // Query laporan: eksklusikan transaksi yang dibatalkan/ditolak
         // agar tidak mengganggu chart dan grafik
         $laporanQuery = (clone $query)
             ->whereNotIn('status_verifikasi', ['ditolak', 'dibatalkan']);
-
         $summaryQuery = clone $query;
-
         $summary = [
             'jumlah' => (clone $summaryQuery)->count(),
             'total' => (int) (clone $summaryQuery)->sum('nominal'),
@@ -182,7 +160,6 @@ class JamaahController extends Controller
             'pending' => 0,
             'ditolak' => 0,
         ];
-
         $perJenis = (clone $query)
             ->select('jenis_ziswaf')
             ->selectRaw('COUNT(*) AS jumlah_transaksi')
@@ -190,32 +167,26 @@ class JamaahController extends Controller
             ->groupBy('jenis_ziswaf')
             ->orderByDesc('total')
             ->get();
-
         $monthlyRaw = (clone $query)
             ->selectRaw("DATE_FORMAT(tanggal, '%Y-%m') AS bulan")
             ->selectRaw('COALESCE(SUM(nominal), 0) AS total')
             ->groupBy('bulan')
             ->orderBy('bulan')
             ->pluck('total', 'bulan');
-
         [$chartLabels, $chartData] = $this->buildMonthlyChart(
             Carbon::parse($filters['tanggal_mulai'])->startOfMonth(),
             Carbon::parse($filters['tanggal_selesai'])->startOfMonth(),
             $monthlyRaw->all()
         );
-
         $jenisChartLabels = $perJenis
             ->map(fn (ZiswafPenerimaan $item): string => $this->jenisLabels()[$item->jenis_ziswaf]
                 ?? ucfirst(str_replace('_', ' ', $item->jenis_ziswaf)))
             ->values();
-
         $jenisChartData = $perJenis->pluck('total')->map(fn ($value): int => (int) $value)->values();
-
         $transaksiLaporan = (clone $query)
             ->latest('tanggal')
             ->latest('id')
             ->get();
-
         return view('jamaah.laporan-transaksi', [
             'jamaah' => $request->user(),
             'filters' => $filters,
@@ -231,7 +202,6 @@ class JamaahController extends Controller
             'metodeLabels' => $this->metodeLabels(),
         ]);
     }
-
     /**
      * Mengunduh laporan pribadi dalam format CSV tanpa package tambahan.
      */
@@ -241,25 +211,20 @@ class JamaahController extends Controller
             $request,
             defaultPeriod: true
         );
-
         $filters['status'] = 'diterima';
-
         $transaksi = $this->jamaahTransactionQuery($request, $filters)
             ->whereNotIn('status_verifikasi', ['ditolak', 'dibatalkan'])
             ->latest('tanggal')
             ->latest('id')
             ->get();
-
         $namaFile = sprintf(
             'laporan-transaksi-berhasil-%s-%s.csv',
-            auth()->id(),
+            $request->user()->id,
             now()->format('Ymd-His')
         );
-
         $jenisLabels = $this->jenisLabels();
         $statusLabels = $this->statusLabels();
         $metodeLabels = $this->metodeLabels();
-
         return response()->streamDownload(
             function () use (
                 $transaksi,
@@ -268,14 +233,11 @@ class JamaahController extends Controller
                 $metodeLabels
             ): void {
                 $output = fopen('php://output', 'wb');
-
                 if ($output === false) {
                     return;
                 }
-
                 // BOM agar karakter Indonesia terbaca benar di Microsoft Excel.
                 fwrite($output, "\xEF\xBB\xBF");
-
                 fputcsv($output, [
                     'Referensi',
                     'Tanggal',
@@ -286,10 +248,8 @@ class JamaahController extends Controller
                     'Keterangan',
                     'Catatan Verifikasi',
                 ], ';');
-
                 foreach ($transaksi as $item) {
                     $status = $item->status_verifikasi ?: 'pending';
-
                     fputcsv($output, [
                         $item->order_id ?: 'ZSF-' . $item->id,
                         optional($item->tanggal)->format('d/m/Y'),
@@ -302,33 +262,27 @@ class JamaahController extends Controller
                         $item->catatan_verifikasi ?? '-',
                     ], ';');
                 }
-
                 fclose($output);
             },
             $namaFile,
             ['Content-Type' => 'text/csv; charset=UTF-8']
         );
     }
-
     public function createTransaksi(string $jenis)
     {
         $config = $this->transaksiConfig($jenis);
         $paymentGatewayReady = $this->isPaymentGatewayReady();
-
         return view('jamaah.transaksi-ziswaf', compact(
             'jenis',
             'config',
             'paymentGatewayReady'
         ));
     }
-
     public function storeTransaksi(Request $request, string $jenis)
     {
         $config = $this->transaksiConfig($jenis);
         $paymentGatewayReady = $this->isPaymentGatewayReady();
-
         $minimalNominal = $paymentGatewayReady ? 10000 : 1000;
-
         $rules = [
             'jenis_ziswaf' => [
                 'required',
@@ -345,7 +299,6 @@ class JamaahController extends Controller
             ],
             'keterangan' => ['nullable', 'string', 'max:1000'],
         ];
-
         if (! $paymentGatewayReady) {
             $rules['bukti_pembayaran'] = [
                 'required',
@@ -354,41 +307,31 @@ class JamaahController extends Controller
                 'max:2048',
             ];
         }
-
         $messages = [
             'jenis_ziswaf.required' => 'Jenis transaksi wajib dipilih.',
             'jenis_ziswaf.in' => 'Jenis transaksi tidak valid.',
-
             'nominal.required' => 'Nominal wajib diisi.',
             'nominal.integer' => 'Nominal harus berupa angka.',
             'nominal.min' => $paymentGatewayReady
                 ? 'Minimal nominal pembayaran melalui Midtrans adalah Rp10.000.'
                 : 'Minimal nominal transaksi adalah Rp1.000.',
-
             'metode_pembayaran.required' => 'Metode pembayaran wajib dipilih.',
             'metode_pembayaran.in' => 'Metode pembayaran tidak valid.',
-
             'bukti_pembayaran.required' => 'Bukti pembayaran wajib diunggah untuk pembayaran manual.',
             'bukti_pembayaran.file' => 'Bukti pembayaran harus berupa file.',
             'bukti_pembayaran.mimes' => 'Bukti pembayaran harus berformat JPG, JPEG, PNG, atau PDF.',
             'bukti_pembayaran.max' => 'Ukuran bukti pembayaran maksimal 2 MB.',
         ];
-
         $validated = $request->validate($rules, $messages);
-
         $user = $request->user();
-
         // Format pendek: ZSF-{base36 dari unix timestamp}-{3 digit random}
         // Contoh: ZSF-l8n4kx-427 (~14 karakter, unik, sesuai standar Midtrans)
         $orderId = 'ZSF-' . base_convert((string) now()->timestamp, 10, 36) . '-' . random_int(100, 999);
-
         $buktiPembayaranPath = null;
-
         if (! $paymentGatewayReady && $request->hasFile('bukti_pembayaran')) {
             $buktiPembayaranPath = $request->file('bukti_pembayaran')
                 ->store('bukti-pembayaran-ziswaf', 'public');
         }
-
         $transaksi = ZiswafPenerimaan::create([
             'order_id' => $orderId,
             'payment_gateway' => $paymentGatewayReady ? 'midtrans' : 'manual',
@@ -405,15 +348,12 @@ class JamaahController extends Controller
                 'catatan' => 'Perhitungan saat ini mengikuti nominal yang diinput jamaah.',
             ],
         ]);
-
         if (! $paymentGatewayReady) {
             return redirect()
                 ->route('jamaah.riwayat.index')
                 ->with('success', $config['successMessage'] . ' Menunggu verifikasi admin.');
         }
-
         $this->configureMidtrans();
-
         $params = [
             'transaction_details' => [
                 'order_id' => $orderId,
@@ -441,53 +381,44 @@ class JamaahController extends Controller
                 'finish' => route('jamaah.riwayat.index'),
             ],
         ];
-
         try {
             $snapToken = Snap::getSnapToken($params);
         } catch (Throwable $exception) {
             report($exception);
-
             $transaksi->update([
                 'payment_status' => 'gateway_error',
                 'status_verifikasi' => 'pending',
                 'catatan_verifikasi' => 'Gagal membuat token pembayaran Midtrans. Silakan ulangi pembayaran atau hubungi admin.',
             ]);
-
             return back()
                 ->withInput()
                 ->withErrors([
                     'metode_pembayaran' => 'Gagal menghubungkan ke Midtrans. Periksa Server Key, Client Key, mode Sandbox/Production, dan koneksi internet.',
                 ]);
         }
-
         $transaksi->update([
             'snap_token' => $snapToken,
         ]);
-
         return redirect()
             ->route('jamaah.pembayaran.show', $transaksi)
             ->with('success', 'Transaksi berhasil dibuat. Silakan lanjutkan pembayaran.');
     }
-
     public function showPembayaran(Request $request, ZiswafPenerimaan $transaksi)
     {
         abort_unless(
             (int) $transaksi->muzakki_id === (int) $request->user()->id,
             403
         );
-
         if ($transaksi->payment_gateway !== 'midtrans') {
             return redirect()
                 ->route('jamaah.riwayat.index')
                 ->with('warning', 'Transaksi ini menggunakan pembayaran manual dan menunggu verifikasi admin.');
         }
-
         if (! $this->isPaymentGatewayReady() || ! $transaksi->snap_token) {
             return redirect()
                 ->route('jamaah.riwayat.index')
                 ->with('warning', 'Payment gateway belum aktif atau token pembayaran belum tersedia.');
         }
-
         return view('jamaah.pembayaran-midtrans', [
             'transaksi' => $transaksi,
             'clientKey' => config('services.midtrans.client_key'),
@@ -496,38 +427,32 @@ class JamaahController extends Controller
             'metodeLabels' => $this->metodeLabels(),
         ]);
     }
-
     public function batalPembayaran(Request $request, ZiswafPenerimaan $transaksi)
     {
         abort_unless(
             (int) $transaksi->muzakki_id === (int) $request->user()->id,
             403
         );
-
         // Hanya bisa dibatalkan jika masih pending & via midtrans dengan snap_token
         $bisaBatal = $transaksi->payment_gateway === 'midtrans'
             && ! empty($transaksi->snap_token)
             && in_array($transaksi->status_verifikasi, ['pending', null], true)
             && in_array($transaksi->payment_status, ['pending', null, ''], true);
-
         if (! $bisaBatal) {
             return redirect()
                 ->route('jamaah.riwayat.index')
                 ->with('warning', 'Transaksi ini tidak dapat dibatalkan karena sudah diproses atau tidak memenuhi syarat pembatalan.');
         }
-
         $transaksi->update([
             'payment_status' => 'cancel',
             'status_verifikasi' => 'dibatalkan',
             'catatan_verifikasi' => 'Dibatalkan oleh jamaah.',
             'snap_token' => null,
         ]);
-
         return redirect()
             ->route('jamaah.riwayat.index')
             ->with('success', 'Transaksi berhasil dibatalkan.');
     }
-
     public function midtransNotification(Request $request)
     {
         if (! $this->isPaymentGatewayReady()) {
@@ -535,38 +460,30 @@ class JamaahController extends Controller
                 'message' => 'Payment gateway is disabled.',
             ], 403);
         }
-
         $serverKey = config('services.midtrans.server_key');
-
         $orderId = (string) $request->input('order_id');
         $statusCode = (string) $request->input('status_code');
         $grossAmount = (string) $request->input('gross_amount');
         $signatureKey = (string) $request->input('signature_key');
-
         $validSignature = hash(
             'sha512',
             $orderId . $statusCode . $grossAmount . $serverKey
         );
-
         if (! hash_equals($validSignature, $signatureKey)) {
             return response()->json([
                 'message' => 'Invalid signature.',
             ], 403);
         }
-
         $transaksi = ZiswafPenerimaan::where('order_id', $orderId)->first();
-
         if (! $transaksi) {
             return response()->json([
                 'message' => 'Transaksi tidak ditemukan.',
             ], 404);
         }
-
         $transactionStatus = (string) $request->input('transaction_status');
         $fraudStatus = $request->input('fraud_status');
         $paymentType = $request->input('payment_type');
         $transactionId = $request->input('transaction_id');
-
         if (
             in_array($transaksi->payment_status, ['settlement', 'capture'], true)
             && $transactionStatus === 'pending'
@@ -575,7 +492,6 @@ class JamaahController extends Controller
                 'message' => 'Notification ignored because transaction already paid.',
             ]);
         }
-
         if (
             $transactionStatus === 'settlement'
             || ($transactionStatus === 'capture' && in_array($fraudStatus, ['accept', null, ''], true))
@@ -590,12 +506,10 @@ class JamaahController extends Controller
                 'verified_at' => now(),
                 'paid_at' => $transaksi->paid_at ?? now(),
             ]);
-
             return response()->json([
                 'message' => 'Payment accepted.',
             ]);
         }
-
         if ($transactionStatus === 'pending') {
             $transaksi->update([
                 'payment_status' => 'pending',
@@ -604,12 +518,10 @@ class JamaahController extends Controller
                 'fraud_status' => $fraudStatus,
                 'status_verifikasi' => 'pending',
             ]);
-
             return response()->json([
                 'message' => 'Payment pending.',
             ]);
         }
-
         if (in_array($transactionStatus, ['deny', 'cancel', 'expire', 'failure'], true)) {
             $transaksi->update([
                 'payment_status' => $transactionStatus,
@@ -620,30 +532,25 @@ class JamaahController extends Controller
                 'catatan_verifikasi' => 'Pembayaran gagal, dibatalkan, atau kedaluwarsa melalui payment gateway.',
                 'verified_at' => now(),
             ]);
-
             return response()->json([
                 'message' => 'Payment failed.',
             ]);
         }
-
         $transaksi->update([
             'payment_status' => $transactionStatus ?: $transaksi->payment_status,
             'payment_type' => $paymentType,
             'transaction_id' => $transactionId,
             'fraud_status' => $fraudStatus,
         ]);
-
         return response()->json([
             'message' => 'Notification received.',
         ]);
     }
-
     private function penerimaanResmiQuery(): Builder
     {
         return ZiswafPenerimaan::query()
             ->where('status_verifikasi', 'diterima');
     }
-
     private function validatedTransactionFilters(
         Request $request,
         bool $defaultPeriod = false
@@ -669,7 +576,6 @@ class JamaahController extends Controller
                 'after_or_equal:tanggal_mulai',
             ],
         ]);
-
         if ($defaultPeriod) {
             $filters['tanggal_mulai'] = $filters['tanggal_mulai']
                 ?? now()->startOfYear()->toDateString();
@@ -677,10 +583,8 @@ class JamaahController extends Controller
             $filters['tanggal_selesai'] = $filters['tanggal_selesai']
                 ?? now()->toDateString();
         }
-
         return $filters;
     }
-
     /**
      * Query selalu dibatasi dengan muzakki_id user yang sedang login.
      */
@@ -689,16 +593,13 @@ class JamaahController extends Controller
         array $filters
     ): Builder {
         $query = ZiswafPenerimaan::query()
-            ->where('muzakki_id', auth()->id());
-
+            ->where('muzakki_id', $request->user()->id);
         if (! empty($filters['q'])) {
             $search = trim($filters['q']);
             $referenceId = null;
-
             if (preg_match('/(?:ZSF-|ZISWAF-)?([a-z0-9]+)/i', $search, $matches)) {
                 $referenceId = (int) $matches[1];
             }
-
             $query->where(function ($builder) use (
                 $search,
                 $referenceId
@@ -711,11 +612,9 @@ class JamaahController extends Controller
                 }
             });
         }
-
         if (! empty($filters['jenis'])) {
             $query->where('jenis_ziswaf', $filters['jenis']);
         }
-
         if (! empty($filters['status'])) {
             if ($filters['status'] === 'pending') {
                 $query->where(function ($builder): void {
@@ -726,22 +625,17 @@ class JamaahController extends Controller
                 $query->where('status_verifikasi', $filters['status']);
             }
         }
-
         if (! empty($filters['metode'])) {
             $query->where('metode_pembayaran', $filters['metode']);
         }
-
         if (! empty($filters['tanggal_mulai'])) {
             $query->whereDate('tanggal', '>=', $filters['tanggal_mulai']);
         }
-
         if (! empty($filters['tanggal_selesai'])) {
             $query->whereDate('tanggal', '<=', $filters['tanggal_selesai']);
         }
-
         return $query;
     }
-
     private function buildMonthlyChart(
         Carbon $start,
         Carbon $end,
@@ -750,31 +644,24 @@ class JamaahController extends Controller
         $labels = [];
         $data = [];
         $cursor = $start->copy();
-
         // Batasi perulangan untuk menghindari rentang yang tidak wajar.
         $maximumMonths = 120;
         $iteration = 0;
-
         while ($cursor->lte($end) && $iteration < $maximumMonths) {
             $key = $cursor->format('Y-m');
-
             $labels[] = $cursor->translatedFormat('M Y');
             $data[] = (int) ($raw[$key] ?? 0);
-
             $cursor->addMonth();
             $iteration++;
         }
-
         return [$labels, $data];
     }
-
     private function isPaymentGatewayReady(): bool
     {
         return (bool) config('services.midtrans.enabled')
             && filled(config('services.midtrans.server_key'))
             && filled(config('services.midtrans.client_key'));
     }
-
     private function configureMidtrans(): void
     {
         MidtransConfig::$serverKey = config('services.midtrans.server_key');
@@ -782,7 +669,6 @@ class JamaahController extends Controller
         MidtransConfig::$isSanitized = (bool) config('services.midtrans.is_sanitized');
         MidtransConfig::$is3ds = (bool) config('services.midtrans.is_3ds');
     }
-
     private function enabledPaymentsFor(
         string $metode,
         ?string $bankVaPilihan = null,
@@ -790,21 +676,17 @@ class JamaahController extends Controller
     ): array {
         $validBankVa  = ['bca_va', 'bni_va', 'bri_va', 'permata_va', 'other_va'];
         $validEwallet = ['gopay', 'shopeepay', 'dana'];
-
         return match ($metode) {
             'qris' => [
                 'qris',
                 'other_qris',
             ],
-
             'virtual_account' => in_array($bankVaPilihan, $validBankVa, true)
                 ? [$bankVaPilihan]
                 : ['bca_va', 'bni_va', 'bri_va', 'permata_va', 'other_va'],
-
             'e_wallet' => in_array($ewalletPilihan, $validEwallet, true)
                 ? [$ewalletPilihan]
                 : ['gopay', 'shopeepay', 'dana'],
-
             default => [
                 'qris',
                 'other_qris',
@@ -819,11 +701,9 @@ class JamaahController extends Controller
             ],
         };
     }
-
     private function transaksiConfig(string $jenis): array
     {
         $paymentGatewayReady = $this->isPaymentGatewayReady();
-
         $metodeOptions = $paymentGatewayReady
             ? [
                 'qris' => 'QRIS',
@@ -834,7 +714,6 @@ class JamaahController extends Controller
                 'manual_transfer' => 'Transfer Bank Manual',
                 'qris_manual' => 'QRIS Manual',
             ];
-
         return match ($jenis) {
             'zakat' => [
                 'title' => 'Transaksi Zakat',
@@ -846,7 +725,6 @@ class JamaahController extends Controller
                 'metodeOptions' => $metodeOptions,
                 'successMessage' => 'Transaksi zakat berhasil dibuat.',
             ],
-
             'infak' => [
                 'title' => 'Transaksi Infak',
                 'subtitle' => 'Catat transaksi infak jamaah.',
@@ -856,7 +734,6 @@ class JamaahController extends Controller
                 'metodeOptions' => $metodeOptions,
                 'successMessage' => 'Transaksi infak berhasil dibuat.',
             ],
-
             'wakaf' => [
                 'title' => 'Transaksi Wakaf',
                 'subtitle' => 'Catat transaksi wakaf jamaah.',
@@ -866,11 +743,9 @@ class JamaahController extends Controller
                 'metodeOptions' => $metodeOptions,
                 'successMessage' => 'Transaksi wakaf berhasil dibuat.',
             ],
-
             default => abort(404),
         };
     }
-
     private function jenisLabels(): array
     {
         return [
@@ -883,7 +758,6 @@ class JamaahController extends Controller
             'fidyah' => 'Fidyah',
         ];
     }
-
     private function statusLabels(): array
     {
         return [
@@ -893,7 +767,6 @@ class JamaahController extends Controller
             'dibatalkan' => 'Dibatalkan',
         ];
     }
-
     private function metodeLabels(): array
     {
         return [

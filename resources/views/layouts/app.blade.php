@@ -82,11 +82,7 @@
         body.finus-sidebar-lock {
             overflow: hidden;
         }
-        a,
-        button,
-        input,
-        select,
-        textarea {
+        a, button, input, select, textarea {
             -webkit-tap-highlight-color: transparent;
         }
         .finus-skip-link {
@@ -683,14 +679,41 @@
     </style>
 </head>
 @php
-    $currentUser = auth()->user();
+    $routeMiddleware = collect(request()->route()?->gatherMiddleware() ?? []);
+    $currentGuard = null;
+    foreach (['admin', 'pegawai', 'jamaah'] as $guardName) {
+        $usesGuard = $routeMiddleware->contains(function ($middleware) use ($guardName) {
+            return is_string($middleware)
+                && str_starts_with($middleware, 'auth:')
+                && in_array($guardName, explode(',', substr($middleware, 5)), true);
+        });
+        if ($usesGuard) {
+            $currentGuard = $guardName;
+            break;
+        }
+    }
+    if (! $currentGuard) {
+        $currentGuard = match (true) {
+            request()->routeIs('dashboard', 'admin.*') => 'admin',
+            request()->routeIs('pegawai.*') => 'pegawai',
+            request()->routeIs('jamaah.*') => 'jamaah',
+            default => null,
+        };
+    }
+    $currentUser = $currentGuard ? auth($currentGuard)->user() : null;
     $roleClass = $currentUser ? 'role-' . $currentUser->role : 'role-guest';
+    $logoutRoute = $currentGuard
+        ? route('logout.' . $currentGuard)
+        : route('logout');
+    $heartbeatRoute = $currentGuard
+        ? route('session.heartbeat.' . $currentGuard)
+        : null;
 @endphp
 <body class="finus-layout {{ $roleClass }}">
     <a href="#main-content" class="finus-skip-link">
         Lewati ke konten utama
     </a>
-    @auth
+    @if($currentUser)
         @if($currentUser->isAdmin())
             @include('layouts.sidebar-admin')
         @elseif($currentUser->isPegawai())
@@ -700,11 +723,11 @@
         @endif
         @include('layouts.navigation')
         <div class="finus-sidebar-backdrop" id="finusSidebarBackdrop" aria-hidden="true"></div>
-    @endauth
+    @endif
     <div class="content-wrap">
         <main class="main" id="main-content" tabindex="-1">
             <div class="container-fluid finus-content-container">
-                @auth
+                @if($currentUser)
                     @php
                         $hidePageHeader =
                             request()->routeIs(
@@ -775,7 +798,7 @@
                             </nav>
                         </section>
                     @endunless
-                @endauth
+                @endif
                 @php
                     $flashMessages = [
                         'success' => [
@@ -840,11 +863,11 @@
             </div>
         </main>
     </div>
-    @auth
-        <form id="idle-logout-form" method="POST" action="{{ route('logout') }}" class="d-none">
+    @if($currentUser)
+        <form id="idle-logout-form" method="POST" action="{{ $logoutRoute }}" class="d-none">
             @csrf
         </form>
-    @endauth
+    @endif
     @stack('modals')
     {{-- Urutan JS: jQuery -> Bootstrap -> plugin/template -> script halaman --}}
     <script src="{{ asset('assets/js/lib/jquery.min.js') }}"></script>
@@ -873,7 +896,7 @@
             });
         })();
     </script>
-    @auth
+    @if($currentUser)
         <script>
             (() => {
                 const userName = @json($currentUser->name);
@@ -1102,7 +1125,7 @@
                 const idleTimeout = 15 * 60 * 1000;
                 const heartbeatInterval = 4 * 60 * 1000;
                 const activityWriteInterval = 5000;
-                const activityKey = 'finus:last-activity:{{ $currentUser->id }}';
+                const activityKey = 'finus:last-activity:{{ $currentGuard }}:{{ $currentUser->id }}';
                 const logoutForm = document.getElementById('idle-logout-form');
                 const csrfToken = document.querySelector(
                     'meta[name="csrf-token"]'
@@ -1155,7 +1178,7 @@
                     }
                     try {
                         const response = await fetch(
-                            '{{ route('session.heartbeat') }}',
+                            @json($heartbeatRoute),
                             {
                                 method: 'POST',
                                 credentials: 'same-origin',
@@ -1219,8 +1242,7 @@
                 );
             })();
         </script>
-    @endauth
-
+    @endif
     <script>
         (() => {
             const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1245,7 +1267,6 @@
             candidates.forEach(element => observer.observe(element));
         })();
     </script>
-
     @stack('scripts')
 </body>
 </html>
