@@ -147,8 +147,10 @@ Route::middleware(['auth:jamaah', 'verified', 'role:jamaah'])
             ->name('transaksi.store');
         Route::get('/pembayaran/{transaksi}', [JamaahController::class, 'showPembayaran'])
             ->name('pembayaran.show');
-        Route::delete('/pembayaran/{transaksi}/batal', [JamaahController::class, 'batalPembayaran'])
+       Route::delete('/pembayaran/{transaksi}/batal', [JamaahController::class, 'batalPembayaran'])
             ->name('pembayaran.batal');
+        Route::get('/pembayaran/{transaksi}/cek-status', [JamaahController::class, 'cekStatusPembayaran'])
+            ->name('pembayaran.cek-status');
         Route::get('/riwayat-transaksi', [JamaahController::class, 'riwayat'])
             ->name('riwayat.index');
         Route::get('/laporan-transaksi', [JamaahController::class, 'laporan'])

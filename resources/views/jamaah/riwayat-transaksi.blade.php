@@ -14,22 +14,152 @@
         [
             'label' => 'Jumlah Transaksi',
             'value' => number_format($ringkasan['jumlah'], 0, ',', '.'),
-            'icon' => 'fa-receipt',
+            'icon'  => 'fa-receipt',
             'color' => '#179B40',
-            'soft' => '#EAF8EE',
+            'soft'  => '#EAF8EE',
         ],
         [
             'label' => 'Total Nominal',
             'value' => $rupiah($ringkasan['nominal']),
-            'icon' => 'fa-wallet',
+            'icon'  => 'fa-wallet',
             'color' => '#2563EB',
-            'soft' => '#EDF4FF',
+            'soft'  => '#EDF4FF',
         ],
-        
+        [
+            'label' => 'Total Berhasil',
+            'value' => $rupiah($ringkasan['diterima']),
+            'icon'  => 'fa-circle-check',
+            'color' => '#059669',
+            'soft'  => '#D1FAE5',
+        ],
+        [
+            'label' => 'Pending / Gagal',
+            'value' => $rupiah($ringkasan['pending']),
+            'icon'  => 'fa-circle-xmark',
+            'color' => '#DC2626',
+            'soft'  => '#FEE2E2',
+        ],
     ];
 @endphp
 
 @include('layouts.partials.finus-ui')
+
+<style>
+    /* ── Status row highlight ── */
+    .jt-row-diterima {
+        border-left: 4px solid #22c55e;
+        background: linear-gradient(90deg, #f0fdf4 0%, transparent 20%);
+    }
+    .jt-row-ditolak,
+    .jt-row-dibatalkan {
+        border-left: 4px solid #f87171;
+        background: linear-gradient(90deg, #fff5f5 0%, transparent 20%);
+    }
+    .jt-row-pending {
+        border-left: 4px solid #fbbf24;
+        background: linear-gradient(90deg, #fffbeb 0%, transparent 20%);
+    }
+    .jt-row-pending-pay {
+        border-left: 4px solid #3b82f6;
+        background: linear-gradient(90deg, #eff6ff 0%, transparent 20%);
+    }
+
+    /* ── Status pill premium ── */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 11px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+    .status-pill i { font-size: 11px; }
+
+    .status-pill-diterima   { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .status-pill-ditolak    { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .status-pill-dibatalkan { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
+    .status-pill-pending    { background: #fef9c3; color: #92400e; border: 1px solid #fde68a; }
+    .status-pill-bayar      { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+
+    /* ── Banner ringkasan berhasil / gagal ── */
+    .rw-banner-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+    .rw-banner {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 20px 22px;
+        border-radius: 18px;
+        border: 1.5px solid transparent;
+        text-decoration: none;
+        transition: transform .2s ease, box-shadow .2s ease;
+        cursor: pointer;
+    }
+    .rw-banner:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 28px rgba(0,0,0,.1);
+        text-decoration: none;
+    }
+    .rw-banner-success {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-color: #86efac;
+    }
+    .rw-banner-danger {
+        background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%);
+        border-color: #fca5a5;
+    }
+    .rw-banner-icon {
+        width: 56px; height: 56px;
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    .rw-banner-success .rw-banner-icon { background: linear-gradient(135deg, #16a34a, #22c55e); color: #fff; }
+    .rw-banner-danger  .rw-banner-icon { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; }
+    .rw-banner-body { flex: 1; min-width: 0; }
+    .rw-banner-label {
+        font-size: 11px; font-weight: 800;
+        text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px;
+    }
+    .rw-banner-success .rw-banner-label { color: #166534; }
+    .rw-banner-danger  .rw-banner-label { color: #991b1b; }
+    .rw-banner-amount { font-size: 20px; font-weight: 900; line-height: 1.1; }
+    .rw-banner-success .rw-banner-amount { color: #15803d; }
+    .rw-banner-danger  .rw-banner-amount { color: #b91c1c; }
+    .rw-banner-meta { font-size: 11px; color: #6b7280; margin-top: 4px; }
+    .rw-banner-arrow {
+        font-size: 14px;
+        flex-shrink: 0;
+        opacity: .45;
+        transition: opacity .2s, transform .2s;
+    }
+    .rw-banner:hover .rw-banner-arrow { opacity: 1; transform: translateX(3px); }
+    .rw-banner-success .rw-banner-arrow { color: #15803d; }
+    .rw-banner-danger  .rw-banner-arrow { color: #b91c1c; }
+
+    /* ── Nominal di tabel ── */
+    .rw-nominal-diterima { color: #15803d; font-weight: 800; }
+    .rw-nominal-gagal    { color: #b91c1c; font-weight: 700; }
+    .rw-nominal-pending  { color: #92400e; font-weight: 700; }
+
+    /* ── Sub-keterangan di kolom nominal & referensi ── */
+    .rw-sub { font-size: 10.5px; font-weight: 600; display: block; margin-top: 3px; }
+    .rw-sub-ok  { color: #16a34a; }
+    .rw-sub-bad { color: #ef4444; }
+
+    @media (max-width: 640px) {
+        .rw-banner-grid { grid-template-columns: 1fr; }
+    }
+</style>
 
 <div class="jt-page">
     <section class="jt-heading">
@@ -95,6 +225,40 @@
         @endforeach
     </section>
 
+    @php
+        $jumlahDiterima = $transaksi->where('status_verifikasi', 'diterima')->count();
+        $jumlahGagal    = $transaksi->whereIn('status_verifikasi', ['ditolak', 'dibatalkan'])->count();
+        $jumlahPending  = $transaksi->filter(fn($t) => in_array($t->status_verifikasi, ['pending', null]))->count();
+    @endphp
+
+    <div class="rw-banner-grid">
+        <a href="{{ route('jamaah.riwayat.index', array_merge(request()->query(), ['status' => 'diterima'])) }}"
+           class="rw-banner rw-banner-success">
+            <div class="rw-banner-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="rw-banner-body">
+                <div class="rw-banner-label">Transaksi Berhasil</div>
+                <div class="rw-banner-amount">{{ $rupiah($ringkasan['diterima']) }}</div>
+                <div class="rw-banner-meta">{{ $jumlahDiterima }} transaksi diterima &middot; Klik untuk filter</div>
+            </div>
+            <i class="fa-solid fa-arrow-right rw-banner-arrow"></i>
+        </a>
+
+        <a href="{{ route('jamaah.riwayat.index', array_merge(request()->query(), ['status' => 'ditolak'])) }}"
+           class="rw-banner rw-banner-danger">
+            <div class="rw-banner-icon">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </div>
+            <div class="rw-banner-body">
+                <div class="rw-banner-label">Transaksi Gagal / Dibatalkan</div>
+                <div class="rw-banner-amount">{{ $jumlahGagal }} transaksi</div>
+                <div class="rw-banner-meta">{{ $jumlahPending }} masih menunggu &middot; Klik untuk filter</div>
+            </div>
+            <i class="fa-solid fa-arrow-right rw-banner-arrow"></i>
+        </a>
+    </div>
+
     <section class="jt-card jt-filter-card">
         <header class="jt-card-head">
             <div class="jt-title-row">
@@ -128,6 +292,18 @@
                         <option value="">Semua jenis</option>
                         @foreach($riwayatJenisFilterLabels as $value => $label)
                             <option value="{{ $value }}" @selected(($filters['jenis'] ?? '') === $value)>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="jt-field">
+                    <label for="status">Status</label>
+                    <select id="status" name="status" class="jt-control">
+                        <option value="">Semua status</option>
+                        @foreach($statusLabels as $value => $label)
+                            <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>
                                 {{ $label }}
                             </option>
                         @endforeach
@@ -186,6 +362,7 @@
             <table class="jt-table">
                 <thead>
                     <tr>
+                        <th style="width:6px;padding:0;"></th>
                         <th>Referensi</th>
                         <th>Tanggal</th>
                         <th>Jenis</th>
@@ -198,25 +375,55 @@
                 <tbody>
                     @forelse($transaksi as $item)
                         @php
-                            $status = $item->status_verifikasi ?: 'pending';
-                            $referensi = $item->order_id ?: 'ZSF-' . $item->id;
+                            $status     = $item->status_verifikasi ?: 'pending';
+                            $referensi  = $item->order_id ?: 'ZSF-' . $item->id;
+                            $isGagal    = in_array($status, ['ditolak', 'dibatalkan']);
+                            $isBerhasil = $status === 'diterima';
 
-                            // Cek apakah transaksi bisa dilanjutkan pembayarannya
                             $bisaBayar = $status === 'pending'
                                 && $item->payment_gateway === 'midtrans'
                                 && !empty($item->snap_token)
                                 && in_array($item->payment_status, ['pending', null, ''], true);
+
+                            $rowClass = match(true) {
+                                $bisaBayar  => 'jt-row-pending-pay',
+                                $isBerhasil => 'jt-row-diterima',
+                                $isGagal    => 'jt-row-ditolak',
+                                default     => 'jt-row-pending',
+                            };
+
+                            $pillConfig = match($status) {
+                                'diterima'   => ['class' => 'status-pill-diterima',   'icon' => 'fa-circle-check',   'label' => 'Berhasil'],
+                                'ditolak'    => ['class' => 'status-pill-ditolak',    'icon' => 'fa-circle-xmark',   'label' => 'Ditolak'],
+                                'dibatalkan' => ['class' => 'status-pill-dibatalkan', 'icon' => 'fa-ban',            'label' => 'Dibatalkan'],
+                                default      => $bisaBayar
+                                    ? ['class' => 'status-pill-bayar',   'icon' => 'fa-clock',          'label' => 'Belum Dibayar']
+                                    : ['class' => 'status-pill-pending', 'icon' => 'fa-hourglass-half', 'label' => 'Menunggu'],
+                            };
+
+                            $nominalClass = match(true) {
+                                $isBerhasil => 'rw-nominal-diterima',
+                                $isGagal    => 'rw-nominal-gagal',
+                                default     => 'rw-nominal-pending',
+                            };
                         @endphp
 
-                        <tr class="{{ $bisaBayar ? 'jt-row-pending-pay' : '' }}">
+                        <tr class="{{ $rowClass }}">
+                            <td style="padding:0;width:6px;"></td>
+
                             <td class="jt-reference">
-                                {{ $referensi }}
-                                @if($bisaBayar)
-                                    <span class="jt-badge-pay-indicator">Belum Dibayar</span>
+                                <span style="font-weight:700;font-size:12.5px;">{{ $referensi }}</span>
+                                @if($item->catatan_verifikasi)
+                                    <span class="rw-sub" style="color:#6b7280;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                                          title="{{ $item->catatan_verifikasi }}">
+                                        {{ Str::limit($item->catatan_verifikasi, 40) }}
+                                    </span>
                                 @endif
                             </td>
 
-                            <td>{{ $item->tanggal?->format('d/m/Y') }}</td>
+                            <td style="white-space:nowrap;font-size:13px;">
+                                {{ $item->tanggal?->format('d/m/Y') }}
+                            </td>
 
                             <td>
                                 <span class="jt-type">
@@ -224,12 +431,29 @@
                                 </span>
                             </td>
 
-                            <td class="jt-money">{{ $rupiah($item->nominal) }}</td>
+                            <td class="jt-money {{ $nominalClass }}">
+                                {{ $rupiah($item->nominal) }}
+                                @if($isBerhasil)
+                                    <span class="rw-sub rw-sub-ok">
+                                        <i class="fa-solid fa-check" style="margin-right:2px;"></i>Tersalurkan
+                                    </span>
+                                @elseif($isGagal)
+                                    <span class="rw-sub rw-sub-bad">
+                                        <i class="fa-solid fa-triangle-exclamation" style="margin-right:2px;"></i>Tidak Tersalurkan
+                                    </span>
+                                @endif
+                            </td>
 
                             <td>
-                                <span class="jt-badge jt-badge-{{ $status }}">
-                                    {{ $statusLabels[$status] ?? ucfirst($status) }}
+                                <span class="status-pill {{ $pillConfig['class'] }}">
+                                    <i class="fa-solid {{ $pillConfig['icon'] }}"></i>
+                                    {{ $pillConfig['label'] }}
                                 </span>
+                                @if($item->verified_at && $isBerhasil)
+                                    <span class="rw-sub" style="color:#6b7280;">
+                                        {{ $item->verified_at->format('d/m/Y H:i') }}
+                                    </span>
+                                @endif
                             </td>
 
                             <td class="jt-actions">
@@ -243,6 +467,18 @@
                                             <i class="fa-solid fa-credit-card"></i>
                                             <span>Bayar</span>
                                         </a>
+
+                                        <a
+                                            href="{{ route('jamaah.pembayaran.cek-status', $item) }}"
+                                            class="jt-btn"
+                                            title="Cek Status Pembayaran"
+                                            style="font-size:11px;padding:6px 10px;"
+                                            onclick="this.innerHTML='<i class=\'fa-solid fa-circle-notch fa-spin\'></i> Mengecek...';"
+                                        >
+                                            <i class="fa-solid fa-rotate"></i>
+                                            <span>Cek Status</span>
+                                        </a>
+
                                         <form
                                             method="POST"
                                             action="{{ route('jamaah.pembayaran.batal', $item) }}"
@@ -268,7 +504,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="jt-empty">
+                            <td colspan="7" class="jt-empty">
                                 <i class="fa-regular fa-folder-open"></i>
                                 Tidak ada transaksi yang sesuai dengan filter.
                             </td>

@@ -124,6 +124,28 @@
         transition: all 0.25s ease;
     }
 
+    /* Warna ikon per-jenis saat non-aktif — kontras jelas */
+    .option-card[data-value="zakat_maal"] .option-icon,
+    .option-card[data-value="zakat_fitrah"] .option-icon {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .option-card[data-value="zakat_penghasilan"] .option-icon {
+        background: #e0e7ff;
+        color: #4338ca;
+    }
+
+    .option-card[data-value="infaq"] .option-icon {
+        background: #cffafe;
+        color: #0e7490;
+    }
+
+    .option-card[data-value="wakaf"] .option-icon {
+        background: #fef3c7;
+        color: #b45309;
+    }
+
     .option-card.active .option-icon {
         background: var(--secondary);
         color: white;
@@ -383,14 +405,14 @@
                                 @if(count($jenisOptions) === 1)
                                     <input type="hidden" name="jenis_ziswaf" id="jenis_ziswaf" value="{{ $singleJenisKey }}">
                                     <div class="option-grid">
-                                        <div class="option-card active" style="pointer-events: none;">
+                                        <div class="option-card active" data-jenis="{{ $singleJenisKey }}" style="pointer-events: none;">
                                             <div class="option-icon">
                                                 @if($singleJenisKey === 'infaq')
-                                                    <i class="fa-solid fa-circle-dollar-to-slot text-success"></i>
+                                                    <i class="fa-solid fa-circle-dollar-to-slot"></i>
                                                 @elseif($singleJenisKey === 'wakaf')
-                                                    <i class="fa fa-mosque text-success"></i>
+                                                    <i class="fa-solid fa-mosque"></i>
                                                 @else
-                                                    <i class="fa fa-coins text-success"></i>
+                                                    <i class="fa-solid fa-coins"></i>
                                                 @endif
                                             </div>
                                             <h6 class="option-title">{{ $jenisOptions[$singleJenisKey] }}</h6>
@@ -414,11 +436,15 @@
                                             <div class="option-card @if(old('jenis_ziswaf') === $value) active @endif" data-value="{{ $value }}">
                                                 <div class="option-icon">
                                                     @if($value === 'zakat_maal')
-                                                        <i class="fa fa-coins"></i>
+                                                        <i class="fa-solid fa-coins"></i>
                                                     @elseif($value === 'zakat_penghasilan')
-                                                        <i class="fa fa-briefcase"></i>
+                                                        <i class="fa-solid fa-briefcase"></i>
+                                                    @elseif($value === 'infaq')
+                                                        <i class="fa-solid fa-circle-dollar-to-slot"></i>
+                                                    @elseif($value === 'wakaf')
+                                                        <i class="fa-solid fa-mosque"></i>
                                                     @else
-                                                        <i class="fa fa-heart"></i>
+                                                        <i class="fa-solid fa-hand-holding-dollar"></i>
                                                     @endif
                                                 </div>
                                                 <h6 class="option-title">{{ $label }}</h6>
@@ -446,11 +472,14 @@
 
                                     <div class="form-group mb-2">
                                         <label>Total Harta Wajib Zakat</label>
-                                        <input type="number"
-                                            id="harta_maal"
-                                            class="form-control"
-                                            min="0"
-                                            placeholder="Contoh: 10000000">
+                                        <div class="input-group-currency">
+                                            <span class="currency-addon">Rp</span>
+                                            <input type="text"
+                                                id="harta_maal"
+                                                class="form-control currency-input"
+                                                inputmode="numeric"
+                                                placeholder="Contoh: 10.000.000">
+                                        </div>
                                     </div>
 
                                     <div class="formula-box">
@@ -483,29 +512,38 @@
 
                                     <div class="form-group mb-2">
                                         <label>Penghasilan Utama</label>
-                                        <input type="number"
-                                            id="penghasilan_utama"
-                                            class="form-control"
-                                            min="0"
-                                            placeholder="Contoh: 5000000">
+                                        <div class="input-group-currency">
+                                            <span class="currency-addon">Rp</span>
+                                            <input type="text"
+                                                id="penghasilan_utama"
+                                                class="form-control currency-input"
+                                                inputmode="numeric"
+                                                placeholder="Contoh: 5.000.000">
+                                        </div>
                                     </div>
 
                                     <div class="form-group mb-2">
                                         <label>Penghasilan Lain</label>
-                                        <input type="number"
-                                            id="penghasilan_lain"
-                                            class="form-control"
-                                            min="0"
-                                            placeholder="Contoh: 500000">
+                                        <div class="input-group-currency">
+                                            <span class="currency-addon">Rp</span>
+                                            <input type="text"
+                                                id="penghasilan_lain"
+                                                class="form-control currency-input"
+                                                inputmode="numeric"
+                                                placeholder="Contoh: 500.000">
+                                        </div>
                                     </div>
 
                                     <div class="form-group mb-2">
                                         <label>Pengurang/Kebutuhan Pokok</label>
-                                        <input type="number"
-                                            id="pengurang_penghasilan"
-                                            class="form-control"
-                                            min="0"
-                                            placeholder="Contoh: 1000000">
+                                        <div class="input-group-currency">
+                                            <span class="currency-addon">Rp</span>
+                                            <input type="text"
+                                                id="pengurang_penghasilan"
+                                                class="form-control currency-input"
+                                                inputmode="numeric"
+                                                placeholder="Contoh: 1.000.000">
+                                        </div>
                                     </div>
 
                                     <div class="formula-box">
@@ -535,14 +573,18 @@
                                 <label for="nominal">Nominal Transaksi</label>
                                 <div class="input-group-currency">
                                     <span class="currency-addon">Rp</span>
-                                    <input type="number"
+                                    <input type="text"
+                                        id="nominal_display"
+                                        class="form-control @error('nominal') is-invalid @enderror"
+                                        inputmode="numeric"
+                                        value="{{ old('nominal') ? number_format(old('nominal'), 0, ',', '.') : '' }}"
+                                        placeholder="50.000"
+                                        required
+                                        autocomplete="off">
+                                    <input type="hidden"
                                         name="nominal"
                                         id="nominal"
-                                        class="form-control @error('nominal') is-invalid @enderror"
-                                        value="{{ old('nominal') }}"
-                                        min="{{ $minimalNominal }}"
-                                        placeholder="50000"
-                                        required>
+                                        value="{{ old('nominal') }}">
                                 </div>
                                 <small class="small-muted d-block mt-2">
                                     Minimal transaksi {{ $paymentGatewayReady ? 'Rp10.000' : 'Rp1.000' }}
@@ -780,7 +822,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const jenisZiswaf = document.getElementById('jenis_ziswaf');
+    // nominal hidden (nilai numerik asli, dikirim ke server)
     const nominal = document.getElementById('nominal');
+    // nominal_display (format ribuan, ditampilkan ke user)
+    const nominalDisplay = document.getElementById('nominal_display');
 
     const kalkulatorMaal = document.getElementById('kalkulator-zakat-maal');
     const kalkulatorPenghasilan = document.getElementById('kalkulator-zakat-penghasilan');
@@ -809,6 +854,81 @@ document.addEventListener('DOMContentLoaded', function () {
     let nilaiMaal = 0;
     let nilaiPenghasilan = 0;
 
+    // ============================================================
+    //  Utility: format / parse angka ribuan (ID: titik sebagai
+    //  pemisah ribuan, tidak ada desimal)
+    // ============================================================
+    function formatRibuan(value) {
+        // Hapus semua karakter selain angka
+        const digits = String(value).replace(/\D/g, '');
+        if (!digits) return '';
+        return parseInt(digits, 10).toLocaleString('id-ID');
+    }
+
+    function unformatRibuan(value) {
+        // Strip titik pemisah ribuan, kembalikan string digit
+        return String(value).replace(/\./g, '').replace(/\D/g, '');
+    }
+
+    /**
+     * Pasang auto-format ribuan pada sebuah input text.
+     * Setiap kali user mengetik, nilai akan diformat otomatis.
+     * Kembalikan fungsi getter yang mengembalikan nilai numerik asli.
+     */
+    function attachCurrencyInput(inputEl) {
+        if (!inputEl) return () => 0;
+
+        inputEl.addEventListener('input', function () {
+            const raw = unformatRibuan(this.value);
+            const cursorPos = this.selectionStart;
+            const prevLen = this.value.length;
+
+            this.value = raw ? parseInt(raw, 10).toLocaleString('id-ID') : '';
+
+            // Pertahankan posisi kursor agar tidak loncat ke akhir
+            const newLen = this.value.length;
+            const diff = newLen - prevLen;
+            try {
+                this.setSelectionRange(cursorPos + diff, cursorPos + diff);
+            } catch(e) {}
+        });
+
+        // Hanya izinkan angka dan tombol navigasi
+        inputEl.addEventListener('keydown', function (e) {
+            const allowed = [
+                'Backspace','Delete','Tab','Escape','Enter','Home','End',
+                'ArrowLeft','ArrowRight','ArrowUp','ArrowDown'
+            ];
+            if (allowed.includes(e.key)) return;
+            if ((e.ctrlKey || e.metaKey) && ['a','c','v','x','z'].includes(e.key.toLowerCase())) return;
+            if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+        });
+
+        // Kembalikan getter nilai numerik
+        return function () {
+            return parseInt(unformatRibuan(inputEl.value) || '0', 10);
+        };
+    }
+
+    // ============================================================
+    //  Pasang currency format ke semua field keuangan
+    // ============================================================
+    const getHartaMaal          = attachCurrencyInput(hartaMaal);
+    const getPenghasilanUtama   = attachCurrencyInput(penghasilanUtama);
+    const getPenghasilanLain    = attachCurrencyInput(penghasilanLain);
+    const getPengurang          = attachCurrencyInput(pengurangPenghasilan);
+    const getNominalDisplay     = attachCurrencyInput(nominalDisplay);
+
+    // Sync nominalDisplay → nominal (hidden) setiap kali user mengetik
+    if (nominalDisplay && nominal) {
+        nominalDisplay.addEventListener('input', function () {
+            nominal.value = unformatRibuan(this.value) || '';
+        });
+    }
+
+    // ============================================================
+    //  Format Rupiah untuk hasil kalkulasi
+    // ============================================================
     function rupiah(value) {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -817,6 +937,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }).format(value || 0);
     }
 
+    // ============================================================
+    //  Kalkulator
+    // ============================================================
     function hideAllCalculator() {
         if (kalkulatorMaal) {
             kalkulatorMaal.style.display = 'none';
@@ -850,7 +973,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function hitungMaal() {
-        const harta = parseInt(hartaMaal?.value || 0);
+        const harta = getHartaMaal();
         nilaiMaal = Math.floor(harta * 0.025);
 
         if (hasilMaal) {
@@ -858,11 +981,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-
     function hitungPenghasilan() {
-        const utama = parseInt(penghasilanUtama?.value || 0);
-        const lain = parseInt(penghasilanLain?.value || 0);
-        const pengurang = parseInt(pengurangPenghasilan?.value || 0);
+        const utama    = getPenghasilanUtama();
+        const lain     = getPenghasilanLain();
+        const pengurang = getPengurang();
 
         const bersih = Math.max((utama + lain) - pengurang, 0);
         nilaiPenghasilan = Math.floor(bersih * 0.025);
@@ -876,6 +998,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // ============================================================
+    //  Info Metode Pembayaran
+    // ============================================================
     function hideAllPaymentInfo() {
         [infoQris, infoVirtualAccount, infoEWallet, infoBankTransfer,
          infoManualTransfer, infoQrisManual].forEach(function (el) {
@@ -953,6 +1078,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // ============================================================
+    //  Card Clicks
+    // ============================================================
     // Sync Card Clicks for Jenis Ziswaf
     const jenisCards = document.querySelectorAll('#jenis_ziswaf_cards .option-card');
     jenisCards.forEach(card => {
@@ -981,7 +1109,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Sync File Selection for Dropzone
+    // ============================================================
+    //  Dropzone
+    // ============================================================
     const fileInput = document.getElementById('bukti_pembayaran');
     const badge = document.getElementById('file_info_badge');
     const badgeText = document.getElementById('file_name_text');
@@ -997,6 +1127,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ============================================================
+    //  Event Listeners — Kalkulator
+    // ============================================================
     if (jenisZiswaf) {
         jenisZiswaf.addEventListener('change', toggleJenisZakat);
         toggleJenisZakat();
@@ -1008,12 +1141,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (pakaiHasilMaal) {
         pakaiHasilMaal.addEventListener('click', function () {
-            if (nominal && nilaiMaal > 0) {
-                nominal.value = nilaiMaal;
+            if (nilaiMaal > 0) {
+                // Isi nominal_display dengan format ribuan
+                if (nominalDisplay) {
+                    nominalDisplay.value = nilaiMaal.toLocaleString('id-ID');
+                }
+                // Isi nominal (hidden) dengan nilai numerik
+                if (nominal) {
+                    nominal.value = nilaiMaal;
+                }
             }
         });
     }
-
 
     if (penghasilanUtama) {
         penghasilanUtama.addEventListener('input', hitungPenghasilan);
@@ -1029,8 +1168,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (pakaiHasilPenghasilan) {
         pakaiHasilPenghasilan.addEventListener('click', function () {
-            if (nominal && nilaiPenghasilan > 0) {
-                nominal.value = nilaiPenghasilan;
+            if (nilaiPenghasilan > 0) {
+                // Isi nominal_display dengan format ribuan
+                if (nominalDisplay) {
+                    nominalDisplay.value = nilaiPenghasilan.toLocaleString('id-ID');
+                }
+                // Isi nominal (hidden) dengan nilai numerik
+                if (nominal) {
+                    nominal.value = nilaiPenghasilan;
+                }
             }
         });
     }
@@ -1038,6 +1184,18 @@ document.addEventListener('DOMContentLoaded', function () {
     if (metodePembayaran) {
         metodePembayaran.addEventListener('change', toggleMetodePembayaran);
         toggleMetodePembayaran();
+    }
+
+    // ============================================================
+    //  Pastikan nominal hidden ter-update sebelum form submit
+    // ============================================================
+    const form = document.querySelector('form[action*="transaksi"]');
+    if (form) {
+        form.addEventListener('submit', function () {
+            if (nominalDisplay && nominal) {
+                nominal.value = unformatRibuan(nominalDisplay.value) || '';
+            }
+        });
     }
 });
 </script>

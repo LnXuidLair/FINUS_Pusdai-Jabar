@@ -763,12 +763,23 @@
 <script>
 (() => {
 
+    // Deteksi Zona Waktu Lokal
+    const getTimezoneName = () => {
+        const offset = new Date().getTimezoneOffset();
+        if (offset === -420) return 'WIB';
+        if (offset === -480) return 'WITA';
+        if (offset === -540) return 'WIT';
+        return ''; // Untuk zona waktu di luar Indonesia
+    };
+
+    const timezoneStr = getTimezoneName();
+
     // Live Clock
     const clockSpan = document.getElementById('live_clock_time');
     if (clockSpan) {
         setInterval(() => {
             const now = new Date();
-            clockSpan.textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+            clockSpan.textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + (timezoneStr ? ` ${timezoneStr}` : '');
         }, 1000);
     }
 
@@ -783,7 +794,7 @@
         }
 
         const date = new Date().toISOString().split('T')[0];
-        fetch(`https://api.aladhan.com/v1/timings/${date}?latitude=${lat}&longitude=${lng}&method=2`)
+        fetch(`https://api.aladhan.com/v1/timings/${date}?latitude=${lat}&longitude=${lng}&method=20`)
             .then(res => res.json())
             .then(data => {
                 const timings = data.data.timings;
@@ -795,6 +806,7 @@
                         cellVal.textContent = timings[p] || '--:--';
                     }
                 });
+
 
                 // Find next prayer
                 updateNextPrayer(timings);
