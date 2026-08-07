@@ -126,14 +126,10 @@
 
     /* Warna ikon per-jenis saat non-aktif — kontras jelas */
     .option-card[data-value="zakat_maal"] .option-icon,
-    .option-card[data-value="zakat_fitrah"] .option-icon {
+    .option-card[data-value="zakat_fitrah"] .option-icon,
+    .option-card[data-value="zakat_penghasilan"] .option-icon {
         background: #dcfce7;
         color: #15803d;
-    }
-
-    .option-card[data-value="zakat_penghasilan"] .option-icon {
-        background: #e0e7ff;
-        color: #4338ca;
     }
 
     .option-card[data-value="infaq"] .option-icon {
@@ -411,8 +407,10 @@
                                                     <i class="fa-solid fa-circle-dollar-to-slot"></i>
                                                 @elseif($singleJenisKey === 'wakaf')
                                                     <i class="fa-solid fa-mosque"></i>
+                                                @elseif($singleJenisKey === 'zakat_penghasilan')
+                                                    <i class="fa-solid fa-briefcase"></i>
                                                 @else
-                                                    <i class="fa-solid fa-coins"></i>
+                                                    <i class="fa-solid fa-hand-holding-heart"></i>
                                                 @endif
                                             </div>
                                             <h6 class="option-title">{{ $jenisOptions[$singleJenisKey] }}</h6>
@@ -436,7 +434,7 @@
                                             <div class="option-card @if(old('jenis_ziswaf') === $value) active @endif" data-value="{{ $value }}">
                                                 <div class="option-icon">
                                                     @if($value === 'zakat_maal')
-                                                        <i class="fa-solid fa-coins"></i>
+                                                        <i class="fa-solid fa-hand-holding-heart"></i>
                                                     @elseif($value === 'zakat_penghasilan')
                                                         <i class="fa-solid fa-briefcase"></i>
                                                     @elseif($value === 'infaq')
