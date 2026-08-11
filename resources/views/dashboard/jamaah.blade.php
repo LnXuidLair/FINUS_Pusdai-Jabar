@@ -584,15 +584,15 @@
         <div class="col-lg-5 mt-4 mt-lg-0">
             <div class="quick-actions-row">
                 <a href="{{ route('jamaah.transaksi.create', 'zakat') }}" class="btn-quick-action">
-                    <i class="fa fa-coins"></i>
+                    <i class="fa-solid fa-hand-holding-heart"></i>
                     Bayar Zakat
                 </a>
                 <a href="{{ route('jamaah.transaksi.create', 'infak') }}" class="btn-quick-action">
-                    <i class="fa fa-hand-holding-heart"></i>
+                    <i class="fa-solid fa-circle-dollar-to-slot"></i>
                     Bayar Infak
                 </a>
                 <a href="{{ route('jamaah.transaksi.create', 'wakaf') }}" class="btn-quick-action">
-                    <i class="fa fa-mosque"></i>
+                    <i class="fa-solid fa-mosque"></i>
                     Wakaf
                 </a>
             </div>
@@ -668,7 +668,7 @@
         <div class="finus-stat-card finus-stat-green">
             <div class="finus-stat-top">
                 <div class="finus-stat-icon finus-stat-icon-green">
-                    <i class="fa fa-coins"></i>
+                    <i class="fa-solid fa-hand-holding-heart"></i>
                 </div>
                 <span class="finus-stat-badge finus-stat-badge-green">Zakat</span>
             </div>
@@ -687,7 +687,7 @@
         <div class="finus-stat-card finus-stat-blue">
             <div class="finus-stat-top">
                 <div class="finus-stat-icon finus-stat-icon-blue">
-                    <i class="fa fa-hand-holding-heart"></i>
+                    <i class="fa-solid fa-circle-dollar-to-slot"></i>
                 </div>
                 <span class="finus-stat-badge finus-stat-badge-blue">Infak</span>
             </div>
@@ -706,7 +706,7 @@
         <div class="finus-stat-card finus-stat-yellow">
             <div class="finus-stat-top">
                 <div class="finus-stat-icon finus-stat-icon-yellow">
-                    <i class="fa fa-mosque"></i>
+                    <i class="fa-solid fa-mosque"></i>
                 </div>
                 <span class="finus-stat-badge finus-stat-badge-yellow">Wakaf</span>
             </div>
