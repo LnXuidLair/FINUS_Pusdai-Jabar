@@ -618,16 +618,6 @@
                     </button>
 
 
-                    {{-- Cek Status: fallback jika webhook tidak terkirim --}}
-                    <a
-                        href="{{ route('jamaah.pembayaran.cek-status', $transaksi) }}"
-                        class="pay-btn-check"
-                        id="check-status-btn"
-                        onclick="this.innerHTML='<i class=\'fa-solid fa-circle-notch fa-spin\'></i> Mengecek status...'; this.style.pointerEvents='none';"
-                    >
-                        <i class="fa-solid fa-rotate"></i>
-                        Sudah Bayar? Cek Status
-                    </a>
 
                     {{-- Batalkan transaksi --}}
                     <form
@@ -698,33 +688,140 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const payButton = document.getElementById('pay-button');
+    const pollStatusText = document.getElementById('poll-status-text');
+    const pollSpinIcon = document.getElementById('poll-spin-icon');
 
-    if (!payButton) {
-        return;
+    // =====================================================================
+    // Polling otomatis status pembayaran setiap 5 detik.
+    // Ketika Midtrans mengkonfirmasi pembayaran (settlement/capture),
+    // halaman akan langsung redirect tanpa perlu tindakan dari jamaah.
+    // =====================================================================
+    const POLL_URL  = "{{ route('jamaah.pembayaran.poll-status', $transaksi) }}";
+    const POLL_INTERVAL_MS = 5000; // 5 detik
+    const MAX_POLLS = 120;         // berhenti polling setelah ~10 menit
+    let pollCount = 0;
+    let pollTimer = null;
+    let isRedirecting = false;
+
+    function setPollText(text, spin) {
+        if (pollStatusText) pollStatusText.textContent = text;
+        if (pollSpinIcon) {
+            if (spin) {
+                pollSpinIcon.classList.add('fa-spin');
+            } else {
+                pollSpinIcon.classList.remove('fa-spin');
+            }
+        }
     }
 
-    payButton.addEventListener('click', function () {
-        payButton.disabled = true;
-        payButton.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Membuka halaman bayar...';
+    function doPoll() {
+        if (isRedirecting) return;
+
+        pollCount++;
+        if (pollCount > MAX_POLLS) {
+            clearInterval(pollTimer);
+            setPollText('Cek otomatis dihentikan. Silakan refresh halaman.', false);
+            return;
+        }
+
+        fetch(POLL_URL, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            credentials: 'same-origin',
+        })
+        .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        })
+        .then(function (data) {
+            if (data.status === 'paid') {
+                isRedirecting = true;
+                clearInterval(pollTimer);
+                setPollText('Pembayaran terkonfirmasi! Mengalihkan...', true);
+                // Tunda sedikit agar jamaah sempat melihat pesan sukses
+                setTimeout(function () {
+                    window.location.href = data.redirect_url || "{{ route('jamaah.riwayat.index') }}";
+                }, 1200);
+            } else if (data.status === 'failed') {
+                isRedirecting = true;
+                clearInterval(pollTimer);
+                setPollText('Pembayaran gagal/kedaluwarsa. Mengalihkan...', false);
+                setTimeout(function () {
+                    window.location.href = data.redirect_url || "{{ route('jamaah.riwayat.index') }}";
+                }, 1500);
+            } else if (data.status === 'pending') {
+                setPollText('Mendeteksi pembayaran otomatis...', true);
+            } else {
+                // status lain (gateway_disabled, not_midtrans, error) — berhenti polling
+                clearInterval(pollTimer);
+                setPollText('', false);
+                if (pollSpinIcon) pollSpinIcon.style.display = 'none';
+            }
+        })
+        .catch(function () {
+            // Jika gagal fetch (misal network error), biarkan tetap polling
+            setPollText('Mendeteksi pembayaran otomatis...', true);
+        });
+    }
+
+    // Mulai polling
+    pollTimer = setInterval(doPoll, POLL_INTERVAL_MS);
+    // Poll pertama sedikit lebih cepat (2 detik)
+    setTimeout(doPoll, 2000);
+
+    // =====================================================================
+    // Buka Snap otomatis saat halaman dimuat
+    // =====================================================================
+    function openSnap() {
+        if (payButton) {
+            payButton.disabled = true;
+            payButton.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Membuka halaman bayar...';
+        }
 
         window.snap.pay('{{ $transaksi->snap_token }}', {
             onSuccess: function () {
+                isRedirecting = true;
+                clearInterval(pollTimer);
                 window.location.href = "{{ route('jamaah.riwayat.index') }}";
             },
             onPending: function () {
-                window.location.href = "{{ route('jamaah.riwayat.index') }}";
+                if (payButton) {
+                    payButton.disabled = false;
+                    payButton.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                }
             },
             onError: function () {
-                payButton.disabled = false;
-                payButton.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                if (payButton) {
+                    payButton.disabled = false;
+                    payButton.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                }
                 alert('Pembayaran gagal. Silakan coba lagi atau hubungi admin.');
             },
             onClose: function () {
-                payButton.disabled = false;
-                payButton.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                if (payButton) {
+                    payButton.disabled = false;
+                    payButton.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                }
             }
         });
+    }
+
+    // Buka Snap otomatis begitu halaman selesai dimuat
+    window.addEventListener('load', function () {
+        openSnap();
     });
+
+    // =====================================================================
+    // Tombol Bayar Sekarang — fallback jika popup tidak muncul otomatis
+    // =====================================================================
+    if (payButton) {
+        payButton.addEventListener('click', function () {
+            openSnap();
+        });
+    }
 });
 </script>
 @endpush

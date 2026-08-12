@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AgendaKegiatanController;
 use App\Http\Controllers\AccessCodeController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -115,6 +116,10 @@ Route::middleware(['auth:admin', 'role:admin'])->group(function () {
             Route::get('/arus-kas-psak', [LaporanController::class, 'arusKasDariJurnal'])
                 ->name('arus-kas-psak');
         });
+        Route::resource('agenda-kegiatan', AgendaKegiatanController::class)
+            ->except(['show']);
+        Route::patch('agenda-kegiatan/{agendaKegiatan}/toggle', [AgendaKegiatanController::class, 'toggleAktif'])
+            ->name('agenda-kegiatan.toggle');
     });
 });
 Route::middleware(['auth:pegawai', 'role:pegawai'])
@@ -151,6 +156,8 @@ Route::middleware(['auth:jamaah', 'verified', 'role:jamaah'])
             ->name('pembayaran.batal');
         Route::get('/pembayaran/{transaksi}/cek-status', [JamaahController::class, 'cekStatusPembayaran'])
             ->name('pembayaran.cek-status');
+        Route::get('/pembayaran/{transaksi}/poll-status', [JamaahController::class, 'pollStatusPembayaran'])
+            ->name('pembayaran.poll-status');
         Route::get('/riwayat-transaksi', [JamaahController::class, 'riwayat'])
             ->name('riwayat.index');
         Route::get('/laporan-transaksi', [JamaahController::class, 'laporan'])

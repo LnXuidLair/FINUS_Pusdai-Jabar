@@ -25,20 +25,6 @@
             'color' => '#2563EB',
             'soft'  => '#EDF4FF',
         ],
-        [
-            'label' => 'Total Berhasil',
-            'value' => $rupiah($ringkasan['diterima']),
-            'icon'  => 'fa-circle-check',
-            'color' => '#059669',
-            'soft'  => '#D1FAE5',
-        ],
-        [
-            'label' => 'Pending / Gagal',
-            'value' => $rupiah($ringkasan['pending']),
-            'icon'  => 'fa-circle-xmark',
-            'color' => '#DC2626',
-            'soft'  => '#FEE2E2',
-        ],
     ];
 @endphp
 
@@ -156,6 +142,15 @@
     .rw-sub-ok  { color: #16a34a; }
     .rw-sub-bad { color: #ef4444; }
 
+    /* ── Perbesar icon pada kartu stat riwayat ── */
+    .jt-grid-2 .jt-stat .jt-icon {
+        width: 64px;
+        min-width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        font-size: 28px;
+    }
+
     @media (max-width: 640px) {
         .rw-banner-grid { grid-template-columns: 1fr; }
     }
@@ -205,7 +200,7 @@
         </div>
     @endif
 
-    <section class="jt-grid jt-grid-4">
+    <section class="jt-grid jt-grid-2">
         @foreach($summaryCards as $card)
             <article
                 class="jt-card jt-stat"
@@ -227,8 +222,6 @@
 
     @php
         $jumlahDiterima = $transaksi->where('status_verifikasi', 'diterima')->count();
-        $jumlahGagal    = $transaksi->whereIn('status_verifikasi', ['ditolak', 'dibatalkan'])->count();
-        $jumlahPending  = $transaksi->filter(fn($t) => in_array($t->status_verifikasi, ['pending', null]))->count();
     @endphp
 
     <div class="rw-banner-grid">
@@ -245,15 +238,15 @@
             <i class="fa-solid fa-arrow-right rw-banner-arrow"></i>
         </a>
 
-        <a href="{{ route('jamaah.riwayat.index', array_merge(request()->query(), ['status' => 'ditolak'])) }}"
+        <a href="{{ route('jamaah.riwayat.index', array_merge(request()->query(), ['status' => 'dibatalkan'])) }}"
            class="rw-banner rw-banner-danger">
             <div class="rw-banner-icon">
                 <i class="fa-solid fa-circle-xmark"></i>
             </div>
             <div class="rw-banner-body">
                 <div class="rw-banner-label">Transaksi Gagal / Dibatalkan</div>
-                <div class="rw-banner-amount">{{ $jumlahGagal }} transaksi</div>
-                <div class="rw-banner-meta">{{ $jumlahPending }} masih menunggu &middot; Klik untuk filter</div>
+                <div class="rw-banner-amount">{{ $rupiah($ringkasan['pending']) }}</div>
+                <div class="rw-banner-meta">{{ $ringkasan['jumlah_gagal'] }} transaksi gagal &middot; Klik untuk filter</div>
             </div>
             <i class="fa-solid fa-arrow-right rw-banner-arrow"></i>
         </a>
@@ -408,7 +401,7 @@
                             };
                         @endphp
 
-                        <tr class="{{ $rowClass }}">
+                        <tr class="{{ $rowClass }}" @if($bisaBayar) data-poll-row data-poll-id="{{ $item->id }}" data-poll-url="{{ route('jamaah.pembayaran.poll-status', $item) }}" @endif>
                             <td style="padding:0;width:6px;"></td>
 
                             <td class="jt-reference">
@@ -445,9 +438,9 @@
                             </td>
 
                             <td>
-                                <span class="status-pill {{ $pillConfig['class'] }}">
-                                    <i class="fa-solid {{ $pillConfig['icon'] }}"></i>
-                                    {{ $pillConfig['label'] }}
+                                <span class="status-pill {{ $pillConfig['class'] }}" @if($bisaBayar) id="pill-{{ $item->id }}" @endif>
+                                    <i class="fa-solid {{ $pillConfig['icon'] }}" @if($bisaBayar) id="pill-icon-{{ $item->id }}" @endif></i>
+                                    <span @if($bisaBayar) id="pill-text-{{ $item->id }}" @endif>{{ $pillConfig['label'] }}</span>
                                 </span>
                                 @if($item->verified_at && $isBerhasil)
                                     <span class="rw-sub" style="color:#6b7280;">
@@ -468,16 +461,6 @@
                                             <span>Bayar</span>
                                         </a>
 
-                                        <a
-                                            href="{{ route('jamaah.pembayaran.cek-status', $item) }}"
-                                            class="jt-btn"
-                                            title="Cek Status Pembayaran"
-                                            style="font-size:11px;padding:6px 10px;"
-                                            onclick="this.innerHTML='<i class=\'fa-solid fa-circle-notch fa-spin\'></i> Mengecek...';"
-                                        >
-                                            <i class="fa-solid fa-rotate"></i>
-                                            <span>Cek Status</span>
-                                        </a>
 
                                         <form
                                             method="POST"
@@ -528,3 +511,134 @@
     </section>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Kumpulkan semua baris transaksi yang masih menunggu pembayaran (bisaBayar)
+    const pollRows = document.querySelectorAll('[data-poll-row]');
+
+    if (pollRows.length === 0) return; // Tidak ada transaksi pending, tidak perlu polling
+
+    const POLL_INTERVAL_MS = 7000; // Cek setiap 7 detik
+    const MAX_POLLS = 60;          // Berhenti setelah ~7 menit
+    let pollCount = 0;
+    let activePolls = new Set();
+
+    // Tandai semua pill sebagai "sedang dicek" dengan ikon spin
+    pollRows.forEach(function (row) {
+        const id = row.getAttribute('data-poll-id');
+        const icon = document.getElementById('pill-icon-' + id);
+        if (icon) {
+            icon.classList.remove('fa-clock');
+            icon.classList.add('fa-rotate', 'fa-spin');
+        }
+        activePolls.add(id);
+    });
+
+    function pollAll() {
+        if (activePolls.size === 0) return;
+
+        pollCount++;
+        if (pollCount > MAX_POLLS) {
+            // Kembalikan ikon ke semula, hentikan polling
+            activePolls.forEach(function (id) {
+                const icon = document.getElementById('pill-icon-' + id);
+                if (icon) {
+                    icon.classList.remove('fa-rotate', 'fa-spin');
+                    icon.classList.add('fa-clock');
+                }
+            });
+            clearInterval(timer);
+            return;
+        }
+
+        activePolls.forEach(function (id) {
+            const row = document.querySelector('[data-poll-id="' + id + '"]');
+            if (!row) return;
+
+            const url = row.getAttribute('data-poll-url');
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            })
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (data) {
+                if (data.status === 'paid') {
+                    // Pembayaran berhasil — update pill langsung di halaman
+                    activePolls.delete(id);
+
+                    const pill  = document.getElementById('pill-' + id);
+                    const icon  = document.getElementById('pill-icon-' + id);
+                    const text  = document.getElementById('pill-text-' + id);
+
+                    if (pill) {
+                        pill.className = 'status-pill status-pill-diterima';
+                    }
+                    if (icon) {
+                        icon.className = 'fa-solid fa-circle-check';
+                    }
+                    if (text) {
+                        text.textContent = 'Berhasil';
+                    }
+
+                    // Update warna baris
+                    if (row) {
+                        row.classList.remove('jt-row-pending-pay', 'jt-row-pending');
+                        row.classList.add('jt-row-diterima');
+                    }
+
+                    // Sembunyikan tombol Bayar & Batal di baris tersebut
+                    const actionGroup = row.querySelector('.jt-action-group');
+                    if (actionGroup) {
+                        actionGroup.innerHTML = '<span class="jt-action-none">&mdash;</span>';
+                    }
+
+                    // Jika semua sudah selesai, hentikan polling
+                    if (activePolls.size === 0) clearInterval(timer);
+
+                } else if (data.status === 'failed') {
+                    activePolls.delete(id);
+
+                    const pill = document.getElementById('pill-' + id);
+                    const icon = document.getElementById('pill-icon-' + id);
+                    const text = document.getElementById('pill-text-' + id);
+
+                    if (pill) pill.className = 'status-pill status-pill-ditolak';
+                    if (icon) icon.className = 'fa-solid fa-circle-xmark';
+                    if (text) text.textContent = 'Ditolak';
+
+                    if (row) {
+                        row.classList.remove('jt-row-pending-pay', 'jt-row-pending');
+                        row.classList.add('jt-row-ditolak');
+                    }
+
+                    const actionGroup = row.querySelector('.jt-action-group');
+                    if (actionGroup) {
+                        actionGroup.innerHTML = '<span class="jt-action-none">&mdash;</span>';
+                    }
+
+                    if (activePolls.size === 0) clearInterval(timer);
+                }
+                // status 'pending' atau 'error' — biarkan tetap polling
+            })
+            .catch(function () {
+                // Network error — biarkan coba lagi di interval berikutnya
+            });
+        });
+    }
+
+    // Poll pertama 3 detik setelah halaman dimuat
+    setTimeout(pollAll, 3000);
+    var timer = setInterval(pollAll, POLL_INTERVAL_MS);
+});
+</script>
+@endpush
