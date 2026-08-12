@@ -467,14 +467,16 @@
         box-shadow: 0 10px 25px rgba(16, 185, 129, 0.06);
     }
     .agenda-badge-new {
-        background: #e6fcf0;
-        color: #047857;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 4px 10px;
+        background: #d1fae5;
+        color: #065f46;
+        font-size: 10.5px;
+        font-weight: 800;
+        padding: 4px 11px;
         border-radius: 30px;
         text-transform: uppercase;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.07em;
+        border: 1.5px solid #6ee7b7;
+        box-shadow: 0 1px 4px rgba(16,185,129,.15);
     }
 
     /* Expenses Summary */
@@ -730,7 +732,19 @@
                         <h5 class="mb-1 font-weight-bold text-dark">Agenda & Kegiatan Masjid</h5>
                         <p class="mb-0 text-muted small">Ikuti berbagai kegiatan kajian, sosial, dan ibadah di Masjid Pusdai.</p>
                     </div>
-                    <span class="badge badge-soft-success font-weight-bold px-3 py-2">Terjadwal</span>
+                    <span style="
+                        background: linear-gradient(135deg, #059669, #10b981);
+                        color: #ffffff;
+                        font-size: 11.5px;
+                        font-weight: 800;
+                        padding: 6px 16px;
+                        border-radius: 30px;
+                        letter-spacing: 0.06em;
+                        text-transform: uppercase;
+                        box-shadow: 0 3px 10px rgba(16,185,129,.35);
+                        border: 1.5px solid #34d399;
+                        text-shadow: 0 1px 3px rgba(0,0,0,.15);
+                    ">Terjadwal</span>
                 </div>
                 <div class="agenda-grid">
                     @forelse(($agendaKegiatan ?? []) as $agenda)

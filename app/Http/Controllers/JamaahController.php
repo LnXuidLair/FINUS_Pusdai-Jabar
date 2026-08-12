@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgendaKegiatan;
 use App\Models\User;
 use App\Models\ZiswafPenerimaan;
 use Carbon\Carbon;
@@ -63,32 +64,18 @@ class JamaahController extends Controller
             ->latest('id')
             ->limit(8)
             ->get();
-        $agendaKegiatan = collect([
-            [
-                'judul' => 'Kajian Rutin Subuh',
-                'hari' => 'Setiap Ahad',
-                'waktu' => '05.15 - 06.30 WIB',
-                'lokasi' => 'Aula Masjid Pusdai',
-                'kategori' => 'Kajian',
-                'deskripsi' => 'Kajian pekanan untuk jamaah umum setelah salat Subuh.',
-            ],
-            [
-                'judul' => 'Jumat Berkah',
-                'hari' => 'Setiap Jumat',
-                'waktu' => '11.00 - selesai',
-                'lokasi' => 'Area Masjid',
-                'kategori' => 'Sosial',
-                'deskripsi' => 'Pembagian konsumsi dan sedekah untuk jamaah Jumat.',
-            ],
-            [
-                'judul' => 'Kelas Tahsin Al-Qur\'an',
-                'hari' => 'Setiap Sabtu',
-                'waktu' => '16.00 - 17.30 WIB',
-                'lokasi' => 'Ruang Belajar',
-                'kategori' => 'Pendidikan',
-                'deskripsi' => 'Kegiatan belajar memperbaiki bacaan Al-Qur\'an.',
-            ],
-        ]);
+        $agendaKegiatan = AgendaKegiatan::aktif()
+            ->orderBy('urutan')
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($item) => [
+                'judul'     => $item->judul,
+                'hari'      => $item->hari,
+                'waktu'     => $item->waktu,
+                'lokasi'    => $item->lokasi,
+                'kategori'  => $item->kategori_label,
+                'deskripsi' => $item->deskripsi,
+            ]);
         return view('dashboard.jamaah', compact(
             'jamaah',
             'jenisLabels',
@@ -117,10 +104,22 @@ class JamaahController extends Controller
                 ->sum('nominal'),
             'pending' => (int) (clone $ringkasanQuery)
                 ->where(function ($builder): void {
-                    $builder->where('status_verifikasi', 'pending')
+                    // Nominal pending/gagal: semua transaksi yang tidak berhasil
+                    // mencakup: dibatalkan, ditolak, pending, atau status kosong/NULL
+                    $builder->where('status_verifikasi', 'dibatalkan')
+                        ->orWhere('status_verifikasi', 'ditolak')
+                        ->orWhere('status_verifikasi', 'pending')
                         ->orWhereNull('status_verifikasi');
                 })
                 ->sum('nominal'),
+            'jumlah_gagal' => (clone $ringkasanQuery)
+                ->where(function ($builder): void {
+                    $builder->where('status_verifikasi', 'dibatalkan')
+                        ->orWhere('status_verifikasi', 'ditolak')
+                        ->orWhere('status_verifikasi', 'pending')
+                        ->orWhereNull('status_verifikasi');
+                })
+                ->count(),
         ];
         $transaksi = $query
             ->latest('tanggal')
@@ -651,6 +650,104 @@ class JamaahController extends Controller
                     . '. Tidak ada perubahan yang dilakukan.'
             );
     }
+
+    /**
+     * Poll status pembayaran Midtrans — mengembalikan JSON.
+     * Digunakan oleh polling otomatis di halaman pembayaran
+     * sehingga jamaah tidak perlu menekan tombol "Cek Status" secara manual.
+     */
+    public function pollStatusPembayaran(
+        Request $request,
+        ZiswafPenerimaan $transaksi
+    ) {
+        abort_unless(
+            (int) $transaksi->muzakki_id === (int) $request->user()->id,
+            403
+        );
+
+        if ($transaksi->payment_gateway !== 'midtrans') {
+            return response()->json(['status' => 'not_midtrans'], 200);
+        }
+
+        if (! $this->isPaymentGatewayReady()) {
+            return response()->json(['status' => 'gateway_disabled'], 200);
+        }
+
+        // Jika transaksi sudah selesai di sisi lokal, kembalikan langsung tanpa
+        // memanggil Midtrans API lagi
+        if (in_array($transaksi->payment_status, ['settlement', 'capture'], true)) {
+            return response()->json([
+                'status'       => 'paid',
+                'redirect_url' => route('jamaah.riwayat.index'),
+            ]);
+        }
+
+        if (in_array($transaksi->payment_status, ['deny', 'cancel', 'expire', 'failure'], true)) {
+            return response()->json([
+                'status'       => 'failed',
+                'redirect_url' => route('jamaah.riwayat.index'),
+            ]);
+        }
+
+        try {
+            $this->configureMidtrans();
+            $statusResponse = \Midtrans\Transaction::status($transaksi->order_id);
+        } catch (\Throwable $exception) {
+            report($exception);
+            return response()->json(['status' => 'error', 'message' => 'Gagal menghubungi Midtrans.'], 200);
+        }
+
+        $transactionStatus = (string) ($statusResponse->transaction_status ?? '');
+        $fraudStatus       = $statusResponse->fraud_status ?? null;
+        $paymentType       = $statusResponse->payment_type ?? null;
+        $transactionId     = $statusResponse->transaction_id ?? null;
+
+        if (
+            $transactionStatus === 'settlement'
+            || (
+                $transactionStatus === 'capture'
+                && in_array($fraudStatus, ['accept', null, ''], true)
+            )
+        ) {
+            $transaksi->update([
+                'payment_status'      => $transactionStatus,
+                'payment_type'        => $paymentType,
+                'transaction_id'      => $transactionId,
+                'fraud_status'        => $fraudStatus,
+                'status_verifikasi'   => 'diterima',
+                'catatan_verifikasi'  => 'Pembayaran terkonfirmasi otomatis melalui polling status.',
+                'verified_at'         => now(),
+                'paid_at'             => $transaksi->paid_at ?? now(),
+            ]);
+
+            return response()->json([
+                'status'       => 'paid',
+                'redirect_url' => route('jamaah.riwayat.index'),
+            ]);
+        }
+
+        if (in_array($transactionStatus, ['deny', 'cancel', 'expire', 'failure'], true)) {
+            $transaksi->update([
+                'payment_status'     => $transactionStatus,
+                'payment_type'       => $paymentType,
+                'transaction_id'     => $transactionId,
+                'fraud_status'       => $fraudStatus,
+                'status_verifikasi'  => 'ditolak',
+                'catatan_verifikasi' => 'Pembayaran gagal/kedaluwarsa (deteksi otomatis).',
+                'verified_at'        => now(),
+                'snap_token'         => null,
+            ]);
+
+            return response()->json([
+                'status'       => 'failed',
+                'redirect_url' => route('jamaah.riwayat.index'),
+            ]);
+        }
+
+        // masih pending
+        return response()->json(['status' => 'pending']);
+    }
+
     public function midtransNotification(Request $request)
     {
         if (! $this->isPaymentGatewayReady()) {

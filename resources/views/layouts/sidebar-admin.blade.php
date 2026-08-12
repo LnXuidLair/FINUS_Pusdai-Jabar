@@ -1159,6 +1159,18 @@
                         <span>Laporan Keuangan</span>
                     </a>
                 </li>
+
+                <li class="label">Konten Masjid</li>
+
+                <li>
+                    <a
+                        href="{{ route('admin.agenda-kegiatan.index') }}"
+                        class="{{ request()->routeIs('admin.agenda-kegiatan.*') ? 'active' : '' }}"
+                    >
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Agenda Kegiatan</span>
+                    </a>
+                </li>
             </ul>
 
         </div>
