@@ -206,17 +206,46 @@
 
                 <div class="ag-field-row">
                     <div class="ag-field">
-                        <label for="hari">Hari / Jadwal <span class="req">*</span></label>
-                        <input type="text" id="hari" name="hari" value="{{ old('hari') }}"
-                               placeholder="contoh: Setiap Ahad" required>
-                        @error('hari') <div class="ag-error">{{ $message }}</div> @enderror
+                        <label for="tipe_jadwal">Tipe Jadwal <span class="req">*</span></label>
+                        <select id="tipe_jadwal" name="tipe_jadwal" required onchange="toggleScheduleType()">
+                            <option value="rutin" {{ old('tipe_jadwal', 'rutin') === 'rutin' ? 'selected' : '' }}>Berulang / Rutin</option>
+                            <option value="sekali" {{ old('tipe_jadwal') === 'sekali' ? 'selected' : '' }}>Sekali Peristiwa (Pilih Tanggal)</option>
+                        </select>
+                        @error('tipe_jadwal') <div class="ag-error">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="ag-field">
-                        <label for="waktu">Waktu <span class="req">*</span></label>
-                        <input type="text" id="waktu" name="waktu" value="{{ old('waktu') }}"
-                               placeholder="contoh: 05.15 - 06.30 WIB" required>
-                        @error('waktu') <div class="ag-error">{{ $message }}</div> @enderror
+                        <label>Waktu Kegiatan <span class="req">*</span></label>
+                        <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
+                            <input type="time" id="waktu_mulai" name="waktu_mulai" value="{{ old('waktu_mulai') }}" required style="flex: 1; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px;">
+                            <span style="font-size: 13px; color: #64748B; font-weight: 700;">s/d</span>
+                            <input type="time" id="waktu_selesai" name="waktu_selesai" value="{{ old('waktu_selesai') }}" required style="flex: 1; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px;">
+                        </div>
+                        @error('waktu_mulai') <div class="ag-error">{{ $message }}</div> @enderror
+                        @error('waktu_selesai') <div class="ag-error">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <div class="ag-field-row" id="row_detail_jadwal">
+                    <div class="ag-field" id="field_hari_rutin">
+                        <label for="hari_rutin">Hari Rutin <span class="req">*</span></label>
+                        <select id="hari_rutin" name="hari_rutin">
+                            <option value="">-- Pilih Hari --</option>
+                            @foreach(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ahad'] as $day)
+                                <option value="{{ $day }}" {{ old('hari_rutin') === $day ? 'selected' : '' }}>Setiap {{ $day }}</option>
+                            @endforeach
+                        </select>
+                        @error('hari_rutin') <div class="ag-error">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="ag-field d-none" id="field_tanggal">
+                        <label for="tanggal">Tanggal Kegiatan <span class="req">*</span></label>
+                        <input type="date" id="tanggal" name="tanggal" value="{{ old('tanggal') }}" style="padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; width: 100%;">
+                        @error('tanggal') <div class="ag-error">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="ag-field">
+                        <!-- Spacer -->
                     </div>
                 </div>
 
@@ -257,4 +286,28 @@
     </div>
 
 </div>
+
+<script>
+function toggleScheduleType() {
+    const type = document.getElementById('tipe_jadwal').value;
+    const fieldRutin = document.getElementById('field_hari_rutin');
+    const fieldTanggal = document.getElementById('field_tanggal');
+    const inputRutin = document.getElementById('hari_rutin');
+    const inputTanggal = document.getElementById('tanggal');
+
+    if (type === 'rutin') {
+        fieldRutin.classList.remove('d-none');
+        fieldTanggal.classList.add('d-none');
+        inputRutin.setAttribute('required', 'required');
+        inputTanggal.removeAttribute('required');
+    } else {
+        fieldRutin.classList.add('d-none');
+        fieldTanggal.classList.remove('d-none');
+        inputTanggal.setAttribute('required', 'required');
+        inputRutin.removeAttribute('required');
+    }
+}
+// Jalankan langsung saat halaman termuat
+document.addEventListener('DOMContentLoaded', toggleScheduleType);
+</script>
 @endsection

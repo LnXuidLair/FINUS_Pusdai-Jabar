@@ -5,9 +5,6 @@
 @section('content')
 @include('layouts.partials.finus-ui')
 
-@push('styles')
-@include('admin.agenda-kegiatan.create')
-@endpush
 
 <style>
     .ag-form-page { padding: 8px 0 40px; }
@@ -39,7 +36,7 @@
 
     .ag-form-header {
         padding: 28px 32px;
-        background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+        background: linear-gradient(135deg, #064e1a 0%, #0e7a2e 50%, #179b40 100%);
         color: #fff;
         position: relative;
         overflow: hidden;
@@ -99,7 +96,7 @@
 
     .ag-field input:focus,
     .ag-field select:focus,
-    .ag-field textarea:focus { border-color: #3b82f6; }
+    .ag-field textarea:focus { border-color: #179b40; }
 
     .ag-field textarea { resize: vertical; min-height: 90px; }
     .ag-field-hint { font-size: 11px; color: var(--jt-muted); margin-top: 5px; }
@@ -117,7 +114,7 @@
     .ag-toggle-wrap input[type="checkbox"] {
         width: 18px;
         height: 18px;
-        accent-color: #3b82f6;
+        accent-color: #179b40;
         cursor: pointer;
         flex-shrink: 0;
     }
@@ -148,7 +145,7 @@
 
     .ag-btn-save {
         padding: 10px 24px;
-        background: linear-gradient(135deg, #1e40af, #3b82f6);
+        background: linear-gradient(135deg, #064e1a, #179b40);
         border: none;
         border-radius: 10px;
         font-size: 13px;
@@ -157,7 +154,7 @@
         cursor: pointer;
         transition: transform .2s, box-shadow .2s;
     }
-    .ag-btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(59,130,246,.3); }
+    .ag-btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(23,155,64,.3); }
 
     .ag-error { color: #ef4444; font-size: 11px; margin-top: 4px; }
 </style>
@@ -210,21 +207,75 @@
                     </div>
                 </div>
 
+                @php
+                    $wMulai = old('waktu_mulai', $agenda->waktu_mulai);
+                    $wSelesai = old('waktu_selesai', $agenda->waktu_selesai);
+                    if (!$wMulai || !$wSelesai) {
+                        $parts = explode(' - ', str_replace(' WIB', '', $agenda->waktu));
+                        if (count($parts) === 2) {
+                            $wMulai = str_replace('.', ':', trim($parts[0]));
+                            $wSelesai = str_replace('.', ':', trim($parts[1]));
+                        }
+                    }
+                    if ($wMulai) $wMulai = substr(str_replace('.', ':', $wMulai), 0, 5);
+                    if ($wSelesai) $wSelesai = substr(str_replace('.', ':', $wSelesai), 0, 5);
+
+                    $tJadwal = old('tipe_jadwal', $agenda->tipe_jadwal ?? 'rutin');
+                    $hRutin = old('hari_rutin', $agenda->hari_rutin);
+                    $tgl = old('tanggal', $agenda->tanggal ? \Carbon\Carbon::parse($agenda->tanggal)->format('Y-m-d') : null);
+
+                    if (!$agenda->tipe_jadwal) {
+                        if (str_starts_with($agenda->hari, 'Setiap ')) {
+                            $tJadwal = 'rutin';
+                            $hRutin = str_replace('Setiap ', '', $agenda->hari);
+                        } else {
+                            $tJadwal = 'sekali';
+                        }
+                    }
+                @endphp
+
                 <div class="ag-field-row">
                     <div class="ag-field">
-                        <label for="hari">Hari / Jadwal <span class="req">*</span></label>
-                        <input type="text" id="hari" name="hari"
-                               value="{{ old('hari', $agenda->hari) }}"
-                               placeholder="contoh: Setiap Ahad" required>
-                        @error('hari') <div class="ag-error">{{ $message }}</div> @enderror
+                        <label for="tipe_jadwal">Tipe Jadwal <span class="req">*</span></label>
+                        <select id="tipe_jadwal" name="tipe_jadwal" required onchange="toggleScheduleType()">
+                            <option value="rutin" {{ $tJadwal === 'rutin' ? 'selected' : '' }}>Berulang / Rutin</option>
+                            <option value="sekali" {{ $tJadwal === 'sekali' ? 'selected' : '' }}>Sekali Peristiwa (Pilih Tanggal)</option>
+                        </select>
+                        @error('tipe_jadwal') <div class="ag-error">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="ag-field">
-                        <label for="waktu">Waktu <span class="req">*</span></label>
-                        <input type="text" id="waktu" name="waktu"
-                               value="{{ old('waktu', $agenda->waktu) }}"
-                               placeholder="contoh: 05.15 - 06.30 WIB" required>
-                        @error('waktu') <div class="ag-error">{{ $message }}</div> @enderror
+                        <label>Waktu Kegiatan <span class="req">*</span></label>
+                        <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
+                            <input type="time" id="waktu_mulai" name="waktu_mulai" value="{{ $wMulai }}" required style="flex: 1; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px;">
+                            <span style="font-size: 13px; color: #64748B; font-weight: 700;">s/d</span>
+                            <input type="time" id="waktu_selesai" name="waktu_selesai" value="{{ $wSelesai }}" required style="flex: 1; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px;">
+                        </div>
+                        @error('waktu_mulai') <div class="ag-error">{{ $message }}</div> @enderror
+                        @error('waktu_selesai') <div class="ag-error">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <div class="ag-field-row" id="row_detail_jadwal">
+                    <div class="ag-field" id="field_hari_rutin">
+                        <label for="hari_rutin">Hari Rutin <span class="req">*</span></label>
+                        <select id="hari_rutin" name="hari_rutin">
+                            <option value="">-- Pilih Hari --</option>
+                            @foreach(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ahad'] as $day)
+                                <option value="{{ $day }}" {{ $hRutin === $day ? 'selected' : '' }}>Setiap {{ $day }}</option>
+                            @endforeach
+                        </select>
+                        @error('hari_rutin') <div class="ag-error">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="ag-field d-none" id="field_tanggal">
+                        <label for="tanggal">Tanggal Kegiatan <span class="req">*</span></label>
+                        <input type="date" id="tanggal" name="tanggal" value="{{ $tgl }}" style="padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; width: 100%;">
+                        @error('tanggal') <div class="ag-error">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="ag-field">
+                        <!-- Spacer -->
                     </div>
                 </div>
 
@@ -266,4 +317,28 @@
     </div>
 
 </div>
+
+<script>
+function toggleScheduleType() {
+    const type = document.getElementById('tipe_jadwal').value;
+    const fieldRutin = document.getElementById('field_hari_rutin');
+    const fieldTanggal = document.getElementById('field_tanggal');
+    const inputRutin = document.getElementById('hari_rutin');
+    const inputTanggal = document.getElementById('tanggal');
+
+    if (type === 'rutin') {
+        fieldRutin.classList.remove('d-none');
+        fieldTanggal.classList.add('d-none');
+        inputRutin.setAttribute('required', 'required');
+        inputTanggal.removeAttribute('required');
+    } else {
+        fieldRutin.classList.add('d-none');
+        fieldTanggal.classList.remove('d-none');
+        inputTanggal.setAttribute('required', 'required');
+        inputRutin.removeAttribute('required');
+    }
+}
+// Jalankan langsung saat halaman termuat
+document.addEventListener('DOMContentLoaded', toggleScheduleType);
+</script>
 @endsection

@@ -10,6 +10,9 @@
         ->except(['shadaqah', 'fidyah', 'zakat_fitrah'])
         ->all();
 
+    $jenisChartColors = ['#179B40', '#2563EB', '#0891B2', '#7C3AED', '#EA8B22', '#E5484D'];
+    $jenisCompositionTotal = (int) $perJenis->sum('total');
+
     $summaryCards = [
         [
             'label' => 'Total Pengajuan',
@@ -77,38 +80,6 @@
         </div>
     </div>
 
-    <section class="jt-heading">
-        <div class="jt-heading-main">
-            <span class="jt-icon"><i class="fa-solid fa-chart-column"></i></span>
-            <div>
-                <div class="jt-eyebrow">Laporan Pribadi</div>
-                <h1>Laporan Transaksi Jamaah</h1>
-                <p>
-                    Periode
-                    {{ \Carbon\Carbon::parse($filters['tanggal_mulai'])->translatedFormat('d F Y') }}
-                    sampai
-                    {{ \Carbon\Carbon::parse($filters['tanggal_selesai'])->translatedFormat('d F Y') }}.
-                </p>
-            </div>
-        </div>
-
-        <div class="jt-heading-actions">
-            <a class="jt-btn" href="{{ route('jamaah.riwayat.index') }}">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                Riwayat
-            </a>
-
-            <button
-                type="button"
-                class="jt-btn jt-btn-primary"
-                onclick="window.print()"
-            >
-                <i class="fa-solid fa-file-pdf"></i>
-                Cetak PDF
-            </button>
-        </div>
-    </section>
-
     <section class="jt-card jt-filter-card">
         <header class="jt-card-head">
             <div class="jt-title-row">
@@ -117,6 +88,22 @@
                     <h2>Periode Laporan</h2>
                     <p>Pilih rentang tanggal, jenis transaksi, dan status verifikasi.</p>
                 </div>
+            </div>
+
+            <div class="jt-filter-head-actions">
+                <a class="jt-btn" href="{{ route('jamaah.riwayat.index') }}">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    Riwayat
+                </a>
+
+                <button
+                    type="button"
+                    class="jt-btn jt-btn-primary"
+                    onclick="window.print()"
+                >
+                    <i class="fa-solid fa-file-pdf"></i>
+                    Cetak PDF
+                </button>
             </div>
         </header>
 
@@ -186,7 +173,7 @@
         </div>
     </section>
 
-    <section class="jt-grid jt-grid-4">
+    <section class="jt-grid jt-grid-4 jt-print-summary-cards">
         @foreach($summaryCards as $card)
             <article
                 class="jt-card jt-stat"
@@ -206,7 +193,7 @@
         @endforeach
     </section>
 
-    <section class="jt-grid jt-grid-2">
+    <section class="jt-grid jt-grid-2 jt-print-chart-section">
         <article class="jt-card">
             <header class="jt-card-head">
                 <div class="jt-title-row">
@@ -219,6 +206,11 @@
             </header>
 
             <div class="jt-card-body">
+                <div class="jt-monthly-chart-legend" aria-hidden="true">
+                    <span></span>
+                    <strong>Nominal Transaksi</strong>
+                </div>
+
                 <div class="jt-chart">
                     <canvas id="jtMonthlyChart"></canvas>
                 </div>
@@ -237,14 +229,54 @@
             </header>
 
             <div class="jt-card-body">
-                <div class="jt-chart-small">
-                    <canvas id="jtTypeChart"></canvas>
+                <div class="jt-type-composition">
+                    <div class="jt-chart-small">
+                        <canvas id="jtTypeChart"></canvas>
+                    </div>
+
+                    <div class="jt-type-detail">
+                        <div class="jt-type-detail-summary">
+                            <span>Total komposisi</span>
+                            <strong>{{ $rupiah($jenisCompositionTotal) }}</strong>
+                            <small>{{ number_format($perJenis->count(), 0, ',', '.') }} kategori tercatat</small>
+                        </div>
+
+                        <div class="jt-type-detail-list">
+                            @forelse($perJenis as $item)
+                                @php
+                                    $percentage = $jenisCompositionTotal > 0
+                                        ? round(((int) $item->total / $jenisCompositionTotal) * 100, 1)
+                                        : 0;
+                                    $color = $jenisChartColors[$loop->index % count($jenisChartColors)];
+                                @endphp
+
+                                <div class="jt-type-detail-item" style="--type-color: {{ $color }}">
+                                    <div class="jt-type-detail-main">
+                                        <span class="jt-type-dot"></span>
+                                        <div>
+                                            <strong>{{ $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf }}</strong>
+                                            <small>{{ number_format($item->jumlah_transaksi, 0, ',', '.') }} transaksi</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="jt-type-detail-value">
+                                        <strong>{{ number_format($percentage, 1, ',', '.') }}%</strong>
+                                        <span>{{ $rupiah($item->total) }}</span>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="jt-type-detail-empty">
+                                    Belum ada transaksi untuk ditampilkan pada komposisi jenis.
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
                 </div>
             </div>
         </article>
     </section>
 
-    <section class="jt-card">
+    <section class="jt-card jt-report-breakdown-section">
         <header class="jt-card-head">
             <div class="jt-title-row">
                 <span class="jt-icon"><i class="fa-solid fa-layer-group"></i></span>
@@ -275,7 +307,7 @@
         </div>
     </section>
 
-    <section class="jt-card">
+    <section class="jt-card jt-report-detail-section">
         <header class="jt-card-head">
             <div class="jt-title-row">
                 <span class="jt-icon"><i class="fa-solid fa-table-list"></i></span>
@@ -402,6 +434,182 @@
         margin-top: 5px !important;
     }
 
+    .jt-filter-head-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 9px;
+    }
+
+    .jt-monthly-chart-legend {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin: 4px 0 8px;
+        color: #64748B;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .jt-monthly-chart-legend span {
+        width: 13px;
+        min-width: 13px;
+        height: 13px;
+        border: 2px solid #0E5423;
+        border-radius: 999px;
+        background: rgba(23, 155, 64, .72);
+    }
+
+    .jt-type-composition {
+        display: grid;
+        grid-template-columns: minmax(220px, .9fr) minmax(240px, 1fr);
+        gap: 18px;
+        align-items: center;
+    }
+
+    .jt-type-composition .jt-chart-small {
+        min-height: 300px;
+    }
+
+    .jt-type-detail {
+        display: grid;
+        gap: 12px;
+        align-self: stretch;
+        align-content: center;
+    }
+
+    .jt-type-detail-summary {
+        padding-bottom: 12px;
+        border-bottom: 1px solid #E2E8F0;
+    }
+
+    .jt-type-detail-summary span,
+    .jt-type-detail-summary small,
+    .jt-type-detail-value span,
+    .jt-type-detail-main small {
+        color: #64748B;
+        font-size: 12px;
+    }
+
+    .jt-type-detail-summary strong {
+        display: block;
+        margin-top: 3px;
+        color: #0E5423;
+        font-size: 22px;
+        font-weight: 850;
+    }
+
+    .jt-type-detail-list {
+        display: grid;
+        gap: 0;
+    }
+
+    .jt-type-detail-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 11px 0;
+        border-bottom: 1px solid #E2E8F0;
+    }
+
+    .jt-type-detail-item:last-child {
+        border-bottom: 0;
+    }
+
+    .jt-type-detail-main {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .jt-type-dot {
+        width: 10px;
+        min-width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--type-color);
+    }
+
+    .jt-type-detail-main strong,
+    .jt-type-detail-value strong {
+        display: block;
+        color: #1E293B;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .jt-type-detail-value {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .jt-type-detail-value strong {
+        color: #0E5423;
+    }
+
+    .jt-type-detail-empty {
+        padding: 14px 0;
+        color: #64748B;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .jt-report-breakdown-section .jt-card-head h2,
+    .jt-report-detail-section .jt-card-head h2 {
+        font-size: 17px;
+    }
+
+    .jt-report-breakdown-section .jt-card-head p,
+    .jt-report-detail-section .jt-card-head p {
+        font-size: 13px;
+    }
+
+    .jt-report-breakdown-section .jt-breakdown-item strong {
+        font-size: 14px;
+    }
+
+    .jt-report-breakdown-section .jt-breakdown-item small {
+        font-size: 12px;
+    }
+
+    .jt-report-breakdown-section .jt-money {
+        font-size: 15px;
+    }
+
+    .jt-report-detail-section .jt-table th {
+        font-size: 12px;
+    }
+
+    .jt-report-detail-section .jt-table td {
+        font-size: 14px;
+    }
+
+    .jt-report-detail-section .jt-reference,
+    .jt-report-detail-section .jt-money {
+        font-size: 14.5px;
+    }
+
+    .jt-report-detail-section .jt-type,
+    .jt-report-detail-section .jt-badge {
+        font-size: 12px;
+    }
+
+    @media (max-width: 767px) {
+        .jt-filter-head-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .jt-type-composition {
+            grid-template-columns: 1fr;
+        }
+    }
+
     @media print {
         /* Hide layout wrappers and unwanted blocks */
         .sidebar,
@@ -524,7 +732,7 @@
         .jt-print-meta-table {
             width: 100%;
             margin-bottom: 20px;
-            border: 1px solid #CBD5E1;
+            border: 2px solid #64748B;
             border-radius: 8px;
             border-collapse: separate;
             border-spacing: 0;
@@ -536,14 +744,18 @@
             padding: 10px 14px;
             font-size: 11px;
             vertical-align: middle;
-            border-bottom: 1px solid #E2E8F0;
+            border-bottom: 1.5px solid #94A3B8;
         }
 
         .jt-print-meta-table tr:last-child td {
             border-bottom: none;
         }
 
-        /* 4-grid stats cards style for printing */
+        section.jt-print-summary-cards {
+            display: none !important;
+        }
+
+        /* 4-grid stats cards style for printing when reused outside PDF export */
         .jt-grid-4 {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
@@ -552,8 +764,12 @@
             page-break-inside: avoid;
         }
 
+        .jt-grid-4.jt-print-summary-cards {
+            display: none !important;
+        }
+
         .jt-stat {
-            border: 1.5px solid #CBD5E1 !important;
+            border: 2px solid #94A3B8 !important;
             background: #FFFFFF !important;
             border-radius: 12px !important;
             padding: 14px !important;
@@ -618,19 +834,23 @@
             page-break-inside: avoid;
         }
 
+        .jt-print-chart-section {
+            display: none !important;
+        }
+
         .jt-card {
-            border: 1px solid #CBD5E1 !important;
+            border: 1.25px solid #8FA3B8 !important;
             box-shadow: none !important;
-            border-radius: 12px !important;
+            border-radius: 8px !important;
             page-break-inside: avoid;
             margin-bottom: 0 !important;
             background: #FFFFFF !important;
-            overflow: visible !important;
+            overflow: hidden !important;
         }
 
         .jt-card-head {
             padding: 10px 14px !important;
-            border-bottom: 1px solid #E2E8F0 !important;
+            border-bottom: 1.25px solid #B7C4D2 !important;
             background: #F8FAFC !important;
         }
 
@@ -649,6 +869,19 @@
 
         .jt-card-body {
             padding: 12px !important;
+        }
+
+        .jt-report-detail-section {
+            margin-top: 18px !important;
+        }
+
+        .jt-report-breakdown-section,
+        .jt-report-detail-section {
+            border-color: #8FA3B8 !important;
+        }
+
+        .jt-report-detail-section .jt-card-head {
+            border-bottom-color: #8FA3B8 !important;
         }
 
         .jt-chart,
@@ -675,11 +908,15 @@
         /* Breakdown list */
         .jt-breakdown {
             margin: 0 !important;
+            gap: 0 !important;
         }
 
         .jt-breakdown-item {
-            padding: 8px 0 !important;
-            border-bottom: 1px dashed #E2E8F0 !important;
+            padding: 10px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px solid #AEBCCC !important;
+            border-radius: 0 !important;
+            background: #FFFFFF !important;
         }
 
         .jt-breakdown-item:last-child {
@@ -704,8 +941,8 @@
 
         /* Details table print styling */
         .jt-table-wrap {
-            border-radius: 8px !important;
-            border: 1px solid #CBD5E1 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
             overflow: hidden;
             margin-bottom: 0 !important;
         }
@@ -721,14 +958,14 @@
             font-size: 10px !important;
             font-weight: 800 !important;
             padding: 8px 10px !important;
-            border-bottom: 1.5px solid #CBD5E1 !important;
+            border-bottom: 1.25px solid #8FA3B8 !important;
             text-transform: uppercase;
         }
 
         .jt-table td {
             padding: 8px 10px !important;
             font-size: 9.5px !important;
-            border-bottom: 1px solid #E2E8F0 !important;
+            border-bottom: 1px solid #B7C4D2 !important;
             color: #334155 !important;
         }
 
@@ -769,7 +1006,7 @@
         .jt-table tfoot th,
         .jt-table tfoot td {
             background: #F8FAFC !important;
-            border-top: 1.5px solid #CBD5E1 !important;
+            border-top: 1.25px solid #8FA3B8 !important;
             padding: 8px 10px !important;
             font-size: 11px !important;
             font-weight: 800 !important;
@@ -850,6 +1087,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const money = value => 'Rp ' + Number(value || 0).toLocaleString('id-ID');
+    const jenisChartData = @json($jenisChartData).map(value => Number(value || 0));
+    const jenisChartTotal = jenisChartData.reduce((total, value) => total + value, 0);
 
     const monthlyCanvas = document.getElementById('jtMonthlyChart');
 
@@ -873,12 +1112,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        labels: {
-                            color: '#64748B',
-                            usePointStyle: true,
-                            boxWidth: 7,
-                            font: { size: 10, weight: '600' }
-                        }
+                        display: false
                     },
                     tooltip: {
                         callbacks: {
@@ -889,14 +1123,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { color: '#64748B', font: { size: 10 } }
+                        ticks: { color: '#64748B', font: { size: 12 } }
                     },
                     y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(100,116,139,.14)' },
                         ticks: {
                             color: '#64748B',
-                            font: { size: 10 },
+                            font: { size: 12 },
                             callback: money
                         }
                     }
@@ -908,20 +1142,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const typeCanvas = document.getElementById('jtTypeChart');
 
     if (typeCanvas) {
+        const centerLabelPlugin = {
+            id: 'jtDoughnutCenterLabel',
+            afterDraw(chart) {
+                const { ctx, chartArea } = chart;
+
+                if (!chartArea) {
+                    return;
+                }
+
+                const firstArc = chart.getDatasetMeta(0).data[0];
+                const centerX = firstArc?.x ?? (chartArea.left + chartArea.right) / 2;
+                const centerY = firstArc?.y ?? (chartArea.top + chartArea.bottom) / 2;
+
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                if (jenisChartTotal > 0) {
+                    ctx.fillStyle = '#64748B';
+                    ctx.font = '600 12px Nunito, sans-serif';
+                    ctx.fillText('Total', centerX, centerY - 10);
+
+                    ctx.fillStyle = '#0E5423';
+                    ctx.font = '800 14px Nunito, sans-serif';
+                    ctx.fillText(money(jenisChartTotal), centerX, centerY + 10);
+                } else {
+                    ctx.fillStyle = '#64748B';
+                    ctx.font = '700 13px Nunito, sans-serif';
+                    ctx.fillText('Belum ada data', centerX, centerY);
+                }
+
+                ctx.restore();
+            }
+        };
+
         new Chart(typeCanvas, {
             type: 'doughnut',
             data: {
                 labels: @json($jenisChartLabels),
                 datasets: [{
-                    data: @json($jenisChartData),
-                    backgroundColor: [
-                        '#179B40',
-                        '#2563EB',
-                        '#0891B2',
-                        '#7C3AED',
-                        '#EA8B22',
-                        '#E5484D'
-                    ],
+                    data: jenisChartData,
+                    backgroundColor: @json($jenisChartColors),
                     borderColor: '#FFFFFF',
                     borderWidth: 4,
                     hoverOffset: 5
@@ -937,8 +1199,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         labels: {
                             color: '#64748B',
                             usePointStyle: true,
-                            boxWidth: 7,
-                            font: { size: 10, weight: '600' }
+                            pointStyle: 'circle',
+                            boxWidth: 14,
+                            boxHeight: 8,
+                            padding: 14,
+                            font: { size: 11, weight: '600' }
                         }
                     },
                     tooltip: {
@@ -947,7 +1212,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 }
-            }
+            },
+            plugins: [centerLabelPlugin]
         });
     }
 

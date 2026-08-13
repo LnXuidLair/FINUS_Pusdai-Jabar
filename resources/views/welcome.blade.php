@@ -205,13 +205,40 @@
         }
         .finus-hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
         .finus-meta-item{
-            display:inline-flex;align-items:center;gap:8px;min-height:37px;padding:0 12px;
+            display:inline-flex;align-items:center;gap:10px;min-height:42px;padding:0 14px;
             border:1px solid rgba(8,83,32,.12);border-radius:11px;background:rgba(255,255,255,.63);
-            color:#466452;font-size:11px;font-weight:800;backdrop-filter:blur(7px)
+            color:#466452;font-size:12px;font-weight:800;backdrop-filter:blur(7px)
         }
         .finus-meta-icon{
-            display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
-            border-radius:7px;background:var(--g100);color:var(--g700)
+            position:relative;display:inline-flex;align-items:center;justify-content:center;width:28px;min-width:28px;height:28px;
+            border-radius:9px;background:var(--g100);color:var(--g700);font-size:0
+        }
+        .finus-meta-icon::before,
+        .finus-meta-icon::after{
+            content:"";position:absolute;display:block
+        }
+        .finus-meta-icon.is-integrated::before,
+        .finus-hero-meta .finus-meta-item:nth-child(1) .finus-meta-icon::before{
+            width:13px;height:8px;border-left:2px solid currentColor;border-bottom:2px solid currentColor;
+            transform:translateY(-1px) rotate(-45deg)
+        }
+        .finus-meta-icon.is-transparent::before,
+        .finus-hero-meta .finus-meta-item:nth-child(2) .finus-meta-icon::before{
+            width:14px;height:14px;border:2px solid currentColor;border-radius:999px
+        }
+        .finus-meta-icon.is-transparent::after,
+        .finus-hero-meta .finus-meta-item:nth-child(2) .finus-meta-icon::after{
+            width:4px;height:4px;border-radius:999px;background:currentColor;
+            box-shadow:-5px 0 0 currentColor,5px 0 0 currentColor,0 -5px 0 currentColor,0 5px 0 currentColor
+        }
+        .finus-meta-icon.is-responsive::before,
+        .finus-hero-meta .finus-meta-item:nth-child(3) .finus-meta-icon::before{
+            width:14px;height:10px;border:2px solid currentColor;border-radius:2px
+        }
+        .finus-meta-icon.is-responsive::after,
+        .finus-hero-meta .finus-meta-item:nth-child(3) .finus-meta-icon::after{
+            bottom:5px;width:10px;height:2px;border-radius:999px;background:currentColor;
+            box-shadow:0 4px 0 currentColor
         }
         /* ROLE CARD */
         .finus-role-card{
@@ -453,7 +480,7 @@
             .finus-hero-actions{display:grid;grid-template-columns:1fr;margin-top:24px}
             .finus-primary-button,.finus-secondary-button{width:100%}
             .finus-hero-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-            .finus-meta-item{justify-content:center;padding:0 8px;font-size:10px}
+            .finus-meta-item{justify-content:center;padding:0 10px;font-size:11px}
             .finus-role-card{border-radius:20px}
             .finus-role-title{font-size:20px}
             .finus-role-link{grid-template-columns:39px minmax(0,1fr) auto;min-height:56px}

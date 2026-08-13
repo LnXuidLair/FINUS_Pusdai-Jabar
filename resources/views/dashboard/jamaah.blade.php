@@ -451,6 +451,83 @@
         gap: 16px;
         margin-top: 10px;
     }
+    .agenda-grid.owl-carousel {
+        display: block !important;
+        position: relative;
+        padding: 10px 42px !important; /* Memberi ruang di kiri-kanan agar tombol panah aman di dalam */
+        margin-top: 10px;
+    }
+    .agenda-grid.owl-carousel .owl-item {
+        padding: 5px 0;
+    }
+    .agenda-grid.owl-carousel .owl-nav {
+        position: absolute;
+        top: 40% !important;
+        left: 0;
+        right: 0;
+        transform: translateY(-50%);
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        pointer-events: none;
+        z-index: 10;
+        height: 0 !important; /* Mencegah tinggi navigasi mengganggu layout */
+    }
+    .agenda-grid.owl-carousel .owl-nav button.owl-prev,
+    .agenda-grid.owl-carousel .owl-nav button.owl-next {
+        width: 44px;
+        height: 44px;
+        border-radius: 50% !important;
+        background: #ffffff !important;
+        color: #0e5423 !important;
+        border: 1.5px solid #e2e8f0 !important;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.12) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        pointer-events: auto;
+        position: static !important; /* Gunakan static agar sejajar otomatis lewat flexbox */
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .agenda-grid.owl-carousel .owl-nav button.owl-prev:hover,
+    .agenda-grid.owl-carousel .owl-nav button.owl-next:hover {
+        background: #0e5423 !important;
+        color: #ffffff !important;
+        border-color: #0e5423 !important;
+        transform: scale(1.08);
+        box-shadow: 0 6px 20px rgba(14, 84, 35, 0.25) !important;
+    }
+    .agenda-grid.owl-carousel .owl-nav button.disabled {
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+    .agenda-grid.owl-carousel .owl-dots {
+        text-align: center;
+        margin-top: 15px;
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+    }
+    .agenda-grid.owl-carousel .owl-dots .owl-dot span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #cbd5e1 !important;
+        display: block;
+        transition: all 0.2s ease;
+    }
+    .agenda-grid.owl-carousel .owl-dots .owl-dot.active span {
+        background: #10b981 !important;
+        width: 20px;
+        border-radius: 4px;
+    }
+    @media (max-width: 991px) {
+        .agenda-grid.owl-carousel .owl-nav {
+            display: none !important;
+        }
+    }
     .agenda-card-item {
         background: #f8fafc;
         border: 1.5px solid #e2e8f0;
@@ -746,7 +823,7 @@
                         text-shadow: 0 1px 3px rgba(0,0,0,.15);
                     ">Terjadwal</span>
                 </div>
-                <div class="agenda-grid">
+                <div class="agenda-grid owl-carousel owl-theme">
                     @forelse(($agendaKegiatan ?? []) as $agenda)
                         <div class="agenda-card-item">
                             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -938,5 +1015,39 @@
         getPrayerTimes(defaultLat, defaultLng, false);
     }
 })();
+</script>
+<script src="{{ asset('assets/js/lib/owl-carousel/owl.carousel.min.js') }}"></script>
+<script>
+$(document).ready(function() {
+    const agendaCarousel = $('.agenda-grid');
+    if (agendaCarousel.length && agendaCarousel.find('.agenda-card-item').length > 0) {
+        agendaCarousel.owlCarousel({
+            loop: true,
+            margin: 16,
+            nav: true,
+            dots: true,
+            navText: [
+                '<i class="fa-solid fa-arrow-left"></i>',
+                '<i class="fa-solid fa-arrow-right"></i>'
+            ],
+            responsive: {
+                0: {
+                    items: 1
+                },
+                768: {
+                    items: 2
+                },
+                992: {
+                    items: 3
+                }
+            }
+        });
+
+        // Trigger refresh setelah animasi reveal selesai agar kalkulasi lebar tepat
+        setTimeout(function() {
+            agendaCarousel.trigger('refresh.owl.carousel');
+        }, 350);
+    }
+});
 </script>
 @endpush

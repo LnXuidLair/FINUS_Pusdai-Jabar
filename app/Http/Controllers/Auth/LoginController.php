@@ -162,14 +162,25 @@ class LoginController extends Controller
             return response()->json([
                 'status' => 'logged_out',
                 'guard' => $guard,
-                'redirect' => route('home'),
+                'redirect' => route($this->loginRouteForGuard($guard)),
             ]);
         }
-        return redirect()->route('home')->with(
+        return redirect()->route($this->loginRouteForGuard($guard))->with(
             'success',
             'Anda berhasil keluar dari akun ' . ucfirst($guard) . '.'
         );
     }
+
+    private function loginRouteForGuard(string $guard): string
+    {
+        return match ($guard) {
+            User::ROLE_ADMIN => 'login.admin',
+            User::ROLE_PEGAWAI => 'login.staff',
+            User::ROLE_JAMAAH => 'login.jamaah',
+            default => 'login',
+        };
+    }
+
     private function guardFromReferer(Request $request): ?string
     {
         $path = parse_url(
