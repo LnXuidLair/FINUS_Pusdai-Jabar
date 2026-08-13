@@ -38,14 +38,17 @@ class AgendaKegiatanController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'judul'     => 'required|string|max:150',
-            'kategori'  => 'required|in:kajian,sosial,pendidikan,ibadah',
-            'hari'      => 'required|string|max:100',
-            'waktu'     => 'required|string|max:100',
-            'lokasi'    => 'required|string|max:150',
-            'deskripsi' => 'nullable|string|max:500',
-            'urutan'    => 'nullable|integer|min:0|max:999',
-            'is_aktif'  => 'boolean',
+            'judul'         => 'required|string|max:150',
+            'kategori'      => 'required|in:kajian,sosial,pendidikan,ibadah',
+            'tipe_jadwal'   => 'required|in:rutin,sekali',
+            'hari_rutin'    => 'required_if:tipe_jadwal,rutin|nullable|string|max:50',
+            'tanggal'       => 'required_if:tipe_jadwal,sekali|nullable|date',
+            'waktu_mulai'   => 'required|string|max:10',
+            'waktu_selesai' => 'required|string|max:10',
+            'lokasi'        => 'required|string|max:150',
+            'deskripsi'     => 'nullable|string|max:500',
+            'urutan'        => 'nullable|integer|min:0|max:999',
+            'is_aktif'      => 'boolean',
         ]);
 
         $validated['is_aktif'] = $request->boolean('is_aktif', true);
@@ -75,14 +78,17 @@ class AgendaKegiatanController extends Controller
     public function update(Request $request, AgendaKegiatan $agendaKegiatan): RedirectResponse
     {
         $validated = $request->validate([
-            'judul'     => 'required|string|max:150',
-            'kategori'  => 'required|in:kajian,sosial,pendidikan,ibadah',
-            'hari'      => 'required|string|max:100',
-            'waktu'     => 'required|string|max:100',
-            'lokasi'    => 'required|string|max:150',
-            'deskripsi' => 'nullable|string|max:500',
-            'urutan'    => 'nullable|integer|min:0|max:999',
-            'is_aktif'  => 'boolean',
+            'judul'         => 'required|string|max:150',
+            'kategori'      => 'required|in:kajian,sosial,pendidikan,ibadah',
+            'tipe_jadwal'   => 'required|in:rutin,sekali',
+            'hari_rutin'    => 'required_if:tipe_jadwal,rutin|nullable|string|max:50',
+            'tanggal'       => 'required_if:tipe_jadwal,sekali|nullable|date',
+            'waktu_mulai'   => 'required|string|max:10',
+            'waktu_selesai' => 'required|string|max:10',
+            'lokasi'        => 'required|string|max:150',
+            'deskripsi'     => 'nullable|string|max:500',
+            'urutan'        => 'nullable|integer|min:0|max:999',
+            'is_aktif'      => 'boolean',
         ]);
 
         $validated['is_aktif'] = $request->boolean('is_aktif', false);

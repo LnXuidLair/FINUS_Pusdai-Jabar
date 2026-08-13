@@ -194,9 +194,14 @@
         border-radius: 10px;
         color: var(--jamaah-accent-light) !important;
         background: rgba(255, 255, 255, .09);
-        font-size: 14px !important;
+        font-size: 16px !important;
+        line-height: 1 !important;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
         transition: color .22s ease, background .22s ease, transform .22s ease !important;
+    }
+
+    .jamaah-sidebar ul li a i::before {
+        display: block;
     }
 
     .jamaah-sidebar ul li a:hover {
@@ -904,7 +909,7 @@
                         href="{{ route('jamaah.dashboard') }}"
                         class="{{ request()->routeIs('jamaah.dashboard') ? 'active' : '' }}"
                     >
-                        <i class="fa-solid fa-house"></i>
+                        <i class="fa-solid fa-house-chimney"></i>
                         <span>Beranda</span>
                     </a>
                 </li>

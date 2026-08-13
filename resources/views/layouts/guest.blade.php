@@ -164,16 +164,39 @@
         .auth-home-link:hover { transform: translateY(-2px); background: #fff; box-shadow: 0 12px 24px rgba(0, 45, 16, .20); }
         .auth-home-link:focus-visible { outline: 3px solid rgba(255,255,255,.55); outline-offset: 3px; }
         .auth-home-icon {
+            position: relative;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 26px;
+            min-width: 26px;
             height: 26px;
             border-radius: 8px;
             background: var(--auth-green-50);
             color: var(--auth-green-700);
-            font-size: 16px;
+            font-size: 0;
             line-height: 1;
+        }
+        .auth-home-icon::before {
+            content: "";
+            position: absolute;
+            top: 8px;
+            width: 12px;
+            height: 10px;
+            border: 2px solid currentColor;
+            border-top: 0;
+            border-radius: 2px 2px 3px 3px;
+        }
+        .auth-home-icon::after {
+            content: "";
+            position: absolute;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-left: 2px solid currentColor;
+            border-top: 2px solid currentColor;
+            transform: rotate(45deg);
+            transform-origin: center;
         }
 
         .auth-layout {
@@ -317,15 +340,60 @@
             backdrop-filter: blur(8px);
         }
         .auth-feature span {
+            position: relative;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 27px;
+            min-width: 27px;
             height: 27px;
             border-radius: 9px;
             background: var(--auth-green-50);
             color: var(--auth-green-700);
-            font-size: 13px;
+            font-size: 0;
+        }
+        .auth-feature-icon::before,
+        .auth-feature-icon::after {
+            content: "";
+            position: absolute;
+            display: block;
+        }
+        .auth-feature-icon.is-safe::before {
+            width: 12px;
+            height: 7px;
+            border-left: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: translateY(-1px) rotate(-45deg);
+        }
+        .auth-feature-icon.is-transparent::before {
+            width: 14px;
+            height: 14px;
+            border: 2px solid currentColor;
+            border-radius: 999px;
+        }
+        .auth-feature-icon.is-transparent::after {
+            width: 4px;
+            height: 4px;
+            border-radius: 999px;
+            background: currentColor;
+            box-shadow:
+                -5px 0 0 currentColor,
+                5px 0 0 currentColor,
+                0 -5px 0 currentColor,
+                0 5px 0 currentColor;
+        }
+        .auth-feature-icon.is-integrated::before {
+            width: 16px;
+            height: 2px;
+            border-radius: 999px;
+            background: currentColor;
+            box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor;
+        }
+        .auth-feature-icon.is-integrated::after {
+            width: 2px;
+            height: 14px;
+            border-radius: 999px;
+            background: currentColor;
         }
         .auth-hero-note {
             display: flex;
@@ -966,7 +1034,7 @@
         <h1 class="auth-header-title">@yield('header-title', 'FINUS')</h1>
 
         <a href="{{ route('home') }}" class="auth-home-link" data-loading-title="Kembali ke beranda...">
-            <span class="auth-home-icon" aria-hidden="true">⌂</span>
+            <span class="auth-home-icon" aria-hidden="true"></span>
             <span class="auth-home-link-text">Beranda</span>
         </a>
     </header>
@@ -983,9 +1051,9 @@
                     <p class="auth-hero-copytext">@yield('hero-copy', 'Sistem Informasi Keuangan Masjid yang aman, tertib, dan transparan.')</p>
 
                     <div class="auth-features" aria-label="Keunggulan FINUS">
-                        <div class="auth-feature"><span aria-hidden="true">✓</span>Aman</div>
-                        <div class="auth-feature"><span aria-hidden="true">◎</span>Transparan</div>
-                        <div class="auth-feature"><span aria-hidden="true">≡</span>Terintegrasi</div>
+                        <div class="auth-feature"><span class="auth-feature-icon is-safe" aria-hidden="true"></span>Aman</div>
+                        <div class="auth-feature"><span class="auth-feature-icon is-transparent" aria-hidden="true"></span>Transparan</div>
+                        <div class="auth-feature"><span class="auth-feature-icon is-integrated" aria-hidden="true"></span>Terintegrasi</div>
                     </div>
 
                     <p class="auth-hero-note">FINUS PUSDAI Jawa Barat</p>
