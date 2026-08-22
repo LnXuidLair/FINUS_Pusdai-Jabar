@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#0FB442">
     <meta name="color-scheme" content="light">
 
-    <title>FINUS | PUSDAI Jawa Barat</title>
+    <title>Portal Pengelola | FINUS PUSDAI Jawa Barat</title>
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=21">
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=21">
@@ -1479,8 +1479,7 @@
             padding-bottom: calc(14px + env(safe-area-inset-bottom));
             border-top: 1px solid rgba(255, 255, 255, .09);
             color: rgba(255, 255, 255, .48);
-            font-size: 10px;
-            font-weight: 700;
+            font-size: 9.5px;
             line-height: 1.5;
         }
         #faq,
@@ -2230,7 +2229,6 @@
                 transition: none !important;
             }
         }
-        /* PUBLIC HOMEPAGE — hero tetap sederhana, seluruh peran masuk dari dropdown Login */
         .finus-hero-grid {
             grid-template-columns: minmax(0, 900px) !important;
             justify-content: start;
@@ -2255,6 +2253,86 @@
                 width: 100%;
             }
         }
+        .finus-management-label {
+            display: inline-flex;
+            align-items: center;
+            min-height: 36px;
+            padding: 0 12px;
+            border: 1px solid rgba(255,255,255,.22);
+            border-radius: 999px;
+            background: rgba(255,255,255,.08);
+            color: rgba(255,255,255,.88);
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .10em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .finus-management-hero .finus-hero-grid {
+            grid-template-columns: minmax(0,1.12fr) minmax(350px,.78fr) !important;
+            align-items: center;
+            gap: clamp(40px,5.4vw,76px);
+        }
+        .finus-management-hero .finus-hero-content {
+            max-width: 665px;
+        }
+        .finus-management-hero .finus-role-card {
+            display: block;
+            width: min(100%,430px);
+            justify-self: end;
+        }
+        .finus-management-hero .finus-role-link {
+            width: 100%;
+            font-family: inherit;
+            text-align: left;
+        }
+        .finus-management-footer .finus-footer-inner {
+            align-items: center;
+        }
+        .finus-management-footer-note {
+            max-width: 420px;
+            margin: 0;
+            color: rgba(255,255,255,.66);
+            font-size: 10.5px;
+            line-height: 1.6;
+            text-align: right;
+        }
+        @media (max-width:980px) {
+            .finus-management-hero .finus-hero-grid {
+                grid-template-columns: 1fr !important;
+                gap: 30px;
+            }
+            .finus-management-hero .finus-role-card {
+                justify-self: start;
+                width: min(100%,650px);
+            }
+        }
+        @media (max-width:720px) {
+            .finus-management-label {
+                min-height: 32px;
+                padding-inline: 10px;
+                font-size: 8.5px;
+            }
+            .finus-management-footer .finus-footer-inner {
+                align-items: flex-start;
+            }
+            .finus-management-footer-note {
+                text-align: left;
+            }
+        }
+    </style>
+
+    <style>
+        /* FINUS management footer refresh */
+        .finus-management-footer{position:relative;overflow:hidden;background:linear-gradient(135deg,#011F0B 0%,#033D18 50%,#075923 100%);border-top:1px solid rgba(126,255,135,.12)}
+        .finus-management-footer::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 10% 15%,rgba(126,255,135,.12),transparent 22rem),radial-gradient(circle at 90% 120%,rgba(34,186,81,.10),transparent 22rem);pointer-events:none}
+        .finus-management-footer .finus-footer-inner,.finus-management-footer .finus-footer-bottom{position:relative}
+        .finus-management-footer .finus-footer-inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.72fr);align-items:center;gap:34px;padding-top:38px;padding-bottom:30px}
+        .finus-management-footer .finus-footer-brand{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:15px}.finus-management-footer .finus-footer-logo{height:47px;max-width:150px}.finus-management-footer .finus-footer-text{gap:5px}.finus-management-footer .finus-footer-text strong{font-size:12px;color:#fff}.finus-management-footer .finus-footer-text span{max-width:290px;line-height:1.65}
+        .finus-management-footer-note{justify-self:end;max-width:390px;padding:13px 16px;margin:0;border:1px solid rgba(126,255,135,.12);border-radius:14px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.72);font-size:10.8px;line-height:1.7;text-align:left;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+        .finus-management-footer .finus-footer-bottom{padding-top:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.10);color:rgba(255,255,255,.52)}
+        .finus-management-footer .finus-footer-bottom::before{content:"";position:absolute;top:-1px;left:0;width:96px;height:1px;background:#7EFF87}
+        @media(max-width:720px){.finus-management-footer .finus-footer-inner{grid-template-columns:1fr;gap:20px;padding-top:30px}.finus-management-footer-note{justify-self:start;max-width:none}.finus-management-footer .finus-footer-bottom{align-items:flex-start;flex-direction:column;gap:5px}}
     </style>
 </head>
 <body>
@@ -2274,463 +2352,319 @@
                     <span class="finus-brand-subtitle">Sistem Informasi Keuangan Masjid</span>
                 </span>
             </div>
-            <nav class="finus-nav" aria-label="Navigasi utama">
-                <div class="finus-nav-group finus-login-group">
-                    <a href="{{ route('login.jamaah') }}" class="finus-nav-button" data-page-loading="Membuka login jamaah...">
-                        <span class="finus-nav-button-icon" aria-hidden="true">↪</span>
-                        <span class="finus-nav-button-text">Masuk</span>
-                    </a>
-                </div>
-                <div class="finus-nav-group finus-about-group">
-                    <button type="button" class="finus-nav-button" data-dropdown-toggle="aboutDropdown" aria-expanded="false" aria-controls="aboutDropdown">
-                        <span class="finus-nav-button-icon" aria-hidden="true">i</span>
-                        <span class="finus-nav-button-text">Tentang</span>
-                        <span class="finus-nav-chevron" aria-hidden="true"></span>
-                    </button>
-                    <div class="finus-dropdown" id="aboutDropdown" role="menu">
-                        <div class="finus-dropdown-label">PUSDAI Jawa Barat</div>
-                        <a href="https://pusdai.or.id/Lahirnya_Sebuah_Gagasan" class="finus-dropdown-link" target="_blank" rel="noopener noreferrer" role="menuitem">
-                            <span class="finus-dropdown-link-icon" aria-hidden="true">✦</span>
-                            Sambutan
-                        </a>
-                        <a href="#informasi" class="finus-dropdown-link" role="menuitem">
-                            <span class="finus-dropdown-link-icon" aria-hidden="true">◎</span>
-                            Tentang FINUS
-                        </a>
-                        <a href="{{ route('visi-misi') }}" class="finus-dropdown-link" data-page-loading="Membuka halaman visi dan misi..." role="menuitem">
-                            <span class="finus-dropdown-link-icon" aria-hidden="true">✧</span>
-                            Visi &amp; Misi
-                        </a>
-                        <a href="#keunggulan" class="finus-dropdown-link" role="menuitem">
-                            <span class="finus-dropdown-link-icon" aria-hidden="true">✓</span>
-                            Keunggulan
-                        </a>
-                    </div>
-                </div>
-                <div class="finus-nav-group finus-desktop-more-group">
-                    <button type="button" class="finus-nav-button finus-menu-button" data-dropdown-toggle="moreDropdown" aria-label="Buka menu informasi tambahan" aria-expanded="false" aria-controls="moreDropdown">
-                        <span class="finus-nav-button-icon" aria-hidden="true">☰</span>
-                    </button>
-                    <div class="finus-dropdown" id="moreDropdown" role="menu">
-                        <div class="finus-dropdown-label">Informasi lainnya</div>
-                        <a href="#kontak" class="finus-dropdown-link" role="menuitem">
-                            <span class="finus-dropdown-link-icon" aria-hidden="true">✉</span>
-                            Contacts
-                        </a>
-                        <a href="{{ route('location') }}" class="finus-dropdown-link" data-page-loading="Membuka peta lokasi PUSDAI..." role="menuitem">
-                            <span class="finus-dropdown-link-icon" aria-hidden="true">⌖</span>
-                            Location
-                        </a>
-                        <a href="#faq" class="finus-dropdown-link" role="menuitem">
-                            <span class="finus-dropdown-link-icon" aria-hidden="true">?</span>
-                            FAQ
-                        </a>
-                    </div>
-                </div>
-                <button type="button" class="finus-nav-button finus-menu-button finus-mobile-menu-button" id="mobileMenuButton" aria-label="Buka menu" aria-expanded="false" aria-controls="mobileMenuPanel">
-                    <span
-                        class="finus-nav-button-icon"
-                        id="mobileMenuIcon"
-                        aria-hidden="true"
-                    >☰</span>
-                </button>
-            </nav>
+            <span class="finus-management-label">Portal Pengelola</span>
         </div>
     </header>
-    <div class="finus-mobile-panel" id="mobileMenuPanel" aria-hidden="true">
-        <div class="finus-mobile-menu-grid">
-            <div class="finus-mobile-menu-title">Menu FINUS</div>
-            <a href="#informasi" class="finus-mobile-menu-link">
-                <span class="finus-mobile-menu-link-icon" aria-hidden="true">i</span>
-                Tentang FINUS
-            </a>
-            <a href="{{ route('visi-misi') }}" class="finus-mobile-menu-link" data-page-loading="Membuka halaman visi dan misi...">
-                <span class="finus-mobile-menu-link-icon" aria-hidden="true">✧</span>
-                Visi &amp; Misi
-            </a>
-            <a href="#keunggulan" class="finus-mobile-menu-link">
-                <span class="finus-mobile-menu-link-icon" aria-hidden="true">✓</span>
-                Keunggulan FINUS
-            </a>
-            <div class="finus-mobile-menu-title">Informasi lainnya</div>
-            <a href="#kontak" class="finus-mobile-menu-link">
-                <span class="finus-mobile-menu-link-icon" aria-hidden="true">✉</span>
-                Contacts
-            </a>
-            <a href="{{ route('location') }}" class="finus-mobile-menu-link" data-page-loading="Membuka peta lokasi PUSDAI...">
-                <span class="finus-mobile-menu-link-icon" aria-hidden="true">⌖</span>
-                Location
-            </a>
-            <a href="#faq" class="finus-mobile-menu-link">
-                <span class="finus-mobile-menu-link-icon" aria-hidden="true">?</span>
-                FAQ
-            </a>
-        </div>
-    </div>
     <main class="finus-main">
-        <section class="finus-hero">
+        <section class="finus-hero finus-management-hero">
             <img src="{{ asset('assets/images/pusdai_batik.png') }}" alt="" class="finus-hero-batik" aria-hidden="true" onerror="this.style.display='none'">
             <div class="finus-container finus-hero-grid">
-                <div class="finus-hero-content" id="informasi">
+                <div class="finus-hero-content">
                     <div class="finus-eyebrow">
                         <span class="finus-eyebrow-dot"></span>
-                        Sistem Informasi Keuangan Masjid
+                        Akses Internal FINUS
                     </div>
                     <h1 class="finus-hero-title">Selamat Datang</h1>
-                    <h2 class="finus-hero-subtitle">Website Masjid PUSDAI Jawa Barat</h2>
+                    <h2 class="finus-hero-subtitle">Portal Pengelola FINUS</h2>
                     <p class="finus-hero-description">
-                        FINUS memudahkan Jamaah mengakses layanan <strong>Zakat, Infak, dan Wakaf</strong>, melakukan pembayaran, serta memantau riwayat transaksi dalam satu layanan yang sederhana, aman, dan transparan.
+                        Portal ini digunakan oleh <strong>Operator dan Pegawai PUSDAI Jawa Barat</strong>
+                        untuk masuk ke sistem FINUS sesuai hak akses masing-masing.
+                        Pilih akses pada panel di samping untuk melanjutkan.
                     </p>
-                    <div class="finus-hero-actions" id="layanan">
-                        <a href="{{ route('register.jamaah') }}" class="finus-primary-button" data-page-loading="Membuka login jamaah...">
-                            Daftar Jamaah <span aria-hidden="true">→</span>
-                        </a>
-                    </div>
                     <div class="finus-hero-meta">
-                        <div class="finus-meta-item"><span class="finus-meta-icon">✓</span>Transaksi tercatat</div>
-                        <div class="finus-meta-item"><span class="finus-meta-icon">◎</span>Riwayat transparan</div>
-                        <div class="finus-meta-item"><span class="finus-meta-icon">⌁</span>Responsif di semua perangkat</div>
+                        <div class="finus-meta-item">
+                            <span class="finus-meta-icon is-integrated" aria-hidden="true"></span>
+                            Akses terpisah
+                        </div>
+                        <div class="finus-meta-item">
+                            <span class="finus-meta-icon is-transparent" aria-hidden="true"></span>
+                            Verifikasi kode akses
+                        </div>
+                        <div class="finus-meta-item">
+                            <span class="finus-meta-icon is-responsive" aria-hidden="true"></span>
+                            Responsif di semua perangkat
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
-        <section class="finus-section finus-section-soft" id="keunggulan">
-            <div class="finus-container">
-                <div class="finus-section-heading finus-reveal">
-                    <span class="finus-section-kicker">
-                        Keunggulan FINUS
-                    </span>
-                    <h2 class="finus-section-title">
-                        Satu sistem untuk pengelolaan masjid yang lebih tertib
-                    </h2>
-                    <p class="finus-section-copy">
-                        FINUS menghadirkan layanan Jamaah yang sederhana, transparan, dan mudah digunakan untuk mengakses transaksi ZISWAF serta memantau aktivitas transaksi secara mandiri.
+                <aside class="finus-role-card" aria-label="Pilihan akses pengelola">
+                    <span class="finus-role-card-kicker">Akses Internal</span>
+                    <h2 class="finus-role-title">Pilih akses pengelola</h2>
+                    <p class="finus-role-copy">
+                        Gunakan akses sesuai peran Anda. Kode akses akan diverifikasi sebelum halaman login dibuka.
                     </p>
-                </div>
-                <div class="finus-feature-grid">
-                    <article class="finus-feature-card finus-scroll-card" style="--scroll-delay: 0ms">
-                        <div class="finus-feature-icon" aria-hidden="true">
-                            ✓
-                        </div>
-                        <h3 class="finus-feature-title">
-                            Transparansi Keuangan
-                        </h3>
-                        <p class="finus-feature-copy">
-                            Setiap transaksi Jamaah tersimpan dalam riwayat sehingga status dan nominal dapat dipantau dengan lebih jelas.
-                        </p>
-                        <ul class="finus-feature-list">
-                            <li>Riwayat transaksi pribadi</li>
-                            <li>Status pembayaran yang jelas</li>
-                            <li>Laporan transaksi pribadi</li>
-                        </ul>
-                    </article>
-                    <article class="finus-feature-card is-blue finus-scroll-card" style="--scroll-delay: 110ms">
-                        <div class="finus-feature-icon" aria-hidden="true">
-                            ◎
-                        </div>
-                        <h3 class="finus-feature-title">
-                            Layanan ZISWAF
-                        </h3>
-                        <p class="finus-feature-copy">
-                            Jamaah dapat memilih layanan Zakat, Infak, atau Wakaf sesuai kebutuhan melalui satu aplikasi.
-                        </p>
-                        <ul class="finus-feature-list">
-                            <li>Zakat Maal dan Zakat Penghasilan</li>
-                            <li>Infak melalui FINUS</li>
-                            <li>Wakaf melalui FINUS</li>
-                        </ul>
-                    </article>
-                    <article class="finus-feature-card is-purple finus-scroll-card" style="--scroll-delay: 220ms">
-                        <div class="finus-feature-icon" aria-hidden="true">
-                            ⌁
-                        </div>
-                        <h3 class="finus-feature-title">
-                            Nyaman di Semua Perangkat
-                        </h3>
-                        <p class="finus-feature-copy">
-                            Antarmuka menyesuaikan ukuran layar agar tetap nyaman digunakan dari HP hingga desktop.
-                        </p>
-                        <ul class="finus-feature-list">
-                            <li>Navigasi responsif</li>
-                            <li>Tombol ramah layar sentuh</li>
-                            <li>Tampilan konsisten dan ringan</li>
-                        </ul>
-                    </article>
-                </div>
-            </div>
-        </section>
-        <section class="finus-section finus-section-dark" id="alur">
-            <div class="finus-container">
-                <div class="finus-section-heading finus-reveal">
-                    <span class="finus-section-kicker">
-                        Alur Layanan
-                    </span>
-                    <h2 class="finus-section-title">
-                        Gunakan FINUS dalam tiga langkah
-                    </h2>
-                    <p class="finus-section-copy">
-                        Masuk atau buat akun Jamaah, pilih layanan yang dibutuhkan, kemudian pantau transaksi melalui dashboard pribadi.
-                    </p>
-                </div>
-                <div class="finus-flow-grid">
-                    <article class="finus-flow-step finus-scroll-card" style="--scroll-delay: 0ms">
-                        <span class="finus-flow-number">01</span>
-                        <h3 class="finus-flow-title">
-                            Masuk atau Daftar
-                        </h3>
-                        <p class="finus-flow-copy">
-                            Masuk menggunakan akun Jamaah yang sudah terdaftar atau buat akun baru untuk mulai menggunakan FINUS.
-                        </p>
-                        <span class="finus-flow-arrow" aria-hidden="true">
-                            →
-                        </span>
-                    </article>
-                    <article class="finus-flow-step finus-scroll-card" style="--scroll-delay: 110ms">
-                        <span class="finus-flow-number">02</span>
-                        <h3 class="finus-flow-title">
-                            Pilih Layanan
-                        </h3>
-                        <p class="finus-flow-copy">
-                            Pilih transaksi Zakat, Infak, atau Wakaf sesuai kebutuhan dan lanjutkan metode pembayaran yang tersedia.
-                        </p>
-                        <span class="finus-flow-arrow" aria-hidden="true">
-                            →
-                        </span>
-                    </article>
-                    <article class="finus-flow-step finus-scroll-card" style="--scroll-delay: 220ms">
-                        <span class="finus-flow-number">03</span>
-                        <h3 class="finus-flow-title">
-                            Pantau Transaksi
-                        </h3>
-                        <p class="finus-flow-copy">
-                            Lihat status pembayaran, riwayat transaksi, dan laporan pribadi secara langsung melalui dashboard Jamaah.
-                        </p>
-                    </article>
-                </div>
-            </div>
-        </section>
-        <section class="finus-section finus-faq-section" id="faq">
-            <div class="finus-container finus-faq-layout">
-                <div class="finus-faq-heading finus-reveal">
-                    <span class="finus-section-kicker">FAQ FINUS</span>
-                    <h2 class="finus-section-title">Pertanyaan yang sering ditanyakan</h2>
-                    <p class="finus-section-copy">
-                        Informasi singkat mengenai akses, keamanan, dan penggunaan layanan FINUS.
-                    </p>
-                </div>
-                <div class="finus-faq-list">
-                    <details class="finus-faq-item finus-scroll-card" style="--scroll-delay: 0ms">
-                        <summary>Apa yang dapat dilakukan Jamaah melalui FINUS?</summary>
-                        <p>
-                            Jamaah dapat membuat akun, melakukan transaksi Zakat, Infak, dan Wakaf, serta melihat status pembayaran, riwayat, dan laporan transaksi pribadi.
-                        </p>
-                    </details>
-                    <details class="finus-faq-item finus-scroll-card" style="--scroll-delay: 90ms">
-                        <summary>Bagaimana cara mulai menggunakan FINUS?</summary>
-                        <p>
-                            Pilih tombol Login jika sudah memiliki akun Jamaah atau pilih Daftar Jamaah untuk membuat akun baru, lalu ikuti proses verifikasi yang tersedia.
-                        </p>
-                    </details>
-                    <details class="finus-faq-item finus-scroll-card" style="--scroll-delay: 180ms">
-                        <summary>Apakah FINUS dapat digunakan melalui HP dan tablet?</summary>
-                        <p>
-                            Ya. Tata letak, navigasi, kartu, formulir, dan tombol telah dibuat responsif untuk desktop, laptop, tablet, serta berbagai ukuran layar ponsel.
-                        </p>
-                    </details>
-                </div>
+                    <div class="finus-role-list">
+                        <button type="button" class="finus-role-link" data-access-role="admin" data-access-url="{{ route('login.admin') }}">
+                            <span class="finus-role-icon" aria-hidden="true">◆</span>
+                            <span>
+                                <span class="finus-role-name">Operator</span>
+                                <span class="finus-role-description">Akses pengelolaan utama FINUS</span>
+                            </span>
+                            <span class="finus-role-arrow" aria-hidden="true">→</span>
+                        </button>
+                        <button type="button" class="finus-role-link" data-access-role="staff" data-access-url="{{ route('login.staff') }}">
+                            <span class="finus-role-icon" aria-hidden="true">♟</span>
+                            <span>
+                                <span class="finus-role-name">Pegawai</span>
+                                <span class="finus-role-description">Akses layanan dan aktivitas pegawai</span>
+                            </span>
+                            <span class="finus-role-arrow" aria-hidden="true">→</span>
+                        </button>
+                    </div>
+                    <div class="finus-role-security">
+                        <span aria-hidden="true">🔐</span>
+                        <span>Masukkan kode akses yang telah diberikan sebelum melanjutkan ke halaman login.</span>
+                    </div>
+                </aside>
             </div>
         </section>
     </main>
-    <footer class="finus-footer" id="kontak">
+    <footer class="finus-footer finus-management-footer">
         <div class="finus-container finus-footer-inner">
-            <div class="finus-footer-brand finus-reveal">
+            <div class="finus-footer-brand">
                 <img src="{{ asset('assets/images/FINUS_login.png') }}" alt="FINUS PUSDAI" class="finus-footer-logo" loading="lazy" decoding="async">
                 <div class="finus-footer-text">
                     <strong>FINUS PUSDAI</strong>
                     <span>Sistem Informasi Keuangan Masjid PUSDAI Jawa Barat</span>
                 </div>
             </div>
-            <address class="finus-footer-address finus-reveal">
-                <span class="finus-footer-heading">Alamat PUSDAI Jawa Barat</span>
-                <a href="https://www.google.com/maps/search/?api=1&query=Jalan+Diponegoro+No+63+Bandung+40122" target="_blank" rel="noopener noreferrer" class="finus-footer-contact">
-                    <span class="finus-footer-contact-icon" aria-hidden="true">⌖</span>
-                    <span>Jalan Diponegoro No. 63, Bandung, Jawa Barat 40122</span>
-                </a>
-                <a href="tel:+62227217531" class="finus-footer-contact">
-                    <span class="finus-footer-contact-icon" aria-hidden="true">☎</span>
-                    <span>(022) 7217531</span>
-                </a>
-                <a href="mailto:pusdaijabar@gmail.com" class="finus-footer-contact">
-                    <span class="finus-footer-contact-icon" aria-hidden="true">✉</span>
-                    <span>pusdaijabar@gmail.com</span>
-                </a>
-            </address>
-            <nav class="finus-footer-links finus-reveal" aria-label="Navigasi footer">
-                <span class="finus-footer-heading">Navigasi</span>
-                <a href="#informasi" class="finus-footer-link">Tentang FINUS</a>
-                <a href="{{ route('visi-misi') }}" class="finus-footer-link" data-page-loading="Membuka halaman visi dan misi...">Visi &amp; Misi</a>
-                <a href="#keunggulan" class="finus-footer-link">Keunggulan</a>
-                <a href="{{ route('location') }}" class="finus-footer-link" data-page-loading="Membuka peta lokasi PUSDAI...">Location</a>
-                <a href="#faq" class="finus-footer-link">FAQ</a>
-            </nav>
+            <p class="finus-management-footer-note">
+                Portal khusus pengelola FINUS PUSDAI Jawa Barat.
+            </p>
         </div>
         <div class="finus-container finus-footer-bottom">
             <span>© {{ date('Y') }} FINUS PUSDAI Jawa Barat.</span>
-            <span>Dibuat untuk pengelolaan masjid yang tertib dan transparan.</span>
+            <span>Portal Pengelola FINUS.</span>
         </div>
     </footer>
+    <div class="finus-modal" id="codeModal" role="dialog" aria-modal="true" aria-labelledby="accessModalTitle" aria-hidden="true">
+        <div class="finus-modal-dialog">
+            <button type="button" class="finus-modal-close" id="closeAccessModal" aria-label="Tutup dialog">×</button>
+            <div class="finus-modal-content">
+                <div class="finus-modal-icon" aria-hidden="true">🔐</div>
+                <h2 class="finus-modal-title" id="accessModalTitle">Masukkan Kode Akses</h2>
+                <p class="finus-modal-copy" id="accessModalCopy">
+                    Kode akses diperlukan sebelum membuka halaman login.
+                </p>
+                <label for="accessCodeInput" class="finus-field-label">Kode Akses FINUS</label>
+                <div class="finus-code-field-wrap">
+                    <input type="password" id="accessCodeInput" class="finus-code-field" placeholder="Masukkan kode akses" autocomplete="one-time-code" maxlength="100">
+                    <button type="button" class="finus-toggle-password" id="togglePassword" aria-label="Tampilkan kode akses">
+                        <img src="{{ asset('assets/images/ShowPassword.png') }}" alt="Tampilkan kode akses">
+                    </button>
+                </div>
+                <p class="finus-form-message" id="attemptInfo" aria-live="polite"></p>
+                <div class="finus-modal-actions">
+                    <button type="button" id="verifyBtn" class="finus-verify-button">
+                        <span id="verifySpinner" class="finus-spinner" hidden></span>
+                        <span id="verifyText">Verifikasi</span>
+                    </button>
+                    <button type="button" id="cancelAccessModal" class="finus-cancel-button">Batal</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
     (() => {
+        const state = {
+            currentType: null,
+            currentUrl: null,
+            cooldownTimer: null,
+            lastFocusedElement: null,
+        };
         const body = document.body;
         const pageLoader = document.getElementById('pageLoader');
         const pageLoaderTitle = document.getElementById('pageLoaderTitle');
-        const mobileMenuButton = document.getElementById('mobileMenuButton');
-        const mobileMenuIcon = document.getElementById('mobileMenuIcon');
-        const mobileMenuPanel = document.getElementById('mobileMenuPanel');
+        const codeModal = document.getElementById('codeModal');
+        const modalTitle = document.getElementById('accessModalTitle');
+        const modalCopy = document.getElementById('accessModalCopy');
+        const input = document.getElementById('accessCodeInput');
+        const attemptInfo = document.getElementById('attemptInfo');
+        const verifyButton = document.getElementById('verifyBtn');
+        const verifyText = document.getElementById('verifyText');
+        const verifySpinner = document.getElementById('verifySpinner');
+        const togglePassword = document.getElementById('togglePassword');
+        const closeModalButton = document.getElementById('closeAccessModal');
+        const cancelModalButton = document.getElementById('cancelAccessModal');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "{{ csrf_token() }}";
         const pageHeader = document.querySelector('.finus-header');
+        const setMessage = (message = '', type = '') => {
+            attemptInfo.textContent = message;
+            attemptInfo.classList.remove('is-error', 'is-success');
+            if(type) attemptInfo.classList.add(type);
+        };
+        const showPageLoader = (message = 'Membuka halaman...') => {
+            if(!pageLoader) return;
+            pageLoaderTitle.textContent = message;
+            pageLoader.classList.add('is-visible');
+            pageLoader.setAttribute('aria-hidden', 'false');
+        };
         const updateHeaderState = () => {
             pageHeader?.classList.toggle('is-scrolled', window.scrollY > 18);
         };
         updateHeaderState();
         window.addEventListener('scroll', updateHeaderState, { passive: true });
-        const revealElements = document.querySelectorAll('.finus-reveal');
-        if(
-            'IntersectionObserver' in window
-            && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ){
-            const revealObserver = new IntersectionObserver(
-                entries => {
-                    entries.forEach(entry => {
-                        if (!entry.isIntersecting) return;
-                        entry.target.classList.add('is-visible');
-                        revealObserver.unobserve(entry.target);
-                    });
-                },
-                {
-                    threshold: .14,
-                    rootMargin: '0px 0px -45px 0px',
-                }
-            );
-
-            revealElements.forEach(element => revealObserver.observe(element));
-        }else{
-            revealElements.forEach(element => element.classList.add('is-visible'));
-        }
-        const scrollCards = document.querySelectorAll('.finus-scroll-card');
-        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if('IntersectionObserver' in window && !reduceMotion){
-            const scrollCardObserver = new IntersectionObserver(
-                entries => {
-                    entries.forEach(entry => {
-                        if(entry.intersectionRatio >= 0.16){
-                            entry.target.classList.add('is-inview');
-                            return;
-                        }
-                        if(!entry.isIntersecting){
-                            entry.target.classList.remove('is-inview');
-                        }
-                    });
-                },
-                {
-                    threshold: [0, 0.16, 0.45],
-                    rootMargin: '0px 0px -7% 0px',
-                }
-            );
-            scrollCards.forEach(card => scrollCardObserver.observe(card));
-        }else{
-            scrollCards.forEach(card => card.classList.add('is-inview'));
-        }
-        const showPageLoader = (title = 'Membuka halaman...') => {
-            pageLoaderTitle.textContent = title;
-            pageLoader.classList.add('is-visible');
-            pageLoader.setAttribute('aria-hidden', 'false');
-            body.classList.add('is-locked');
-        };
-        const hidePageLoader = () => {
-            pageLoader.classList.remove('is-visible');
-            pageLoader.setAttribute('aria-hidden', 'true');
-            if(!mobileMenuPanel.classList.contains('is-open')) {
-                body.classList.remove('is-locked');
+        const resetModal = () => {
+            if(state.cooldownTimer){
+                clearInterval(state.cooldownTimer);
+                state.cooldownTimer = null;
             }
+            input.value = '';
+            input.type = 'password';
+            input.disabled = false;
+            verifyButton.disabled = false;
+            verifySpinner.hidden = true;
+            verifyText.textContent = 'Verifikasi';
+            setMessage('');
         };
-        const closeAllDropdowns = exceptId => {
-            document.querySelectorAll('.finus-dropdown.is-open').forEach(dropdown => {
-                if(dropdown.id === exceptId) return;
-                dropdown.classList.remove('is-open');
-                document
-                    .querySelector(`[data-dropdown-toggle="${dropdown.id}"]`)
-                    ?.setAttribute('aria-expanded', 'false');
-            });
+        const openAccessModal = (type, url, trigger = null) => {
+            state.currentType = type;
+            state.currentUrl = url;
+            state.lastFocusedElement = trigger;
+            resetModal();
+            const isAdmin = type === 'admin';
+            modalTitle.textContent = isAdmin ? 'Kode Akses Operator' : 'Kode Akses Pegawai';
+            modalCopy.textContent = isAdmin
+                ? 'Masukkan kode akses Operator sebelum membuka halaman login Admin.'
+                : 'Masukkan kode akses Pegawai sebelum membuka halaman login Pegawai.';
+            codeModal.classList.add('is-open');
+            codeModal.setAttribute('aria-hidden', 'false');
+            body.classList.add('is-locked');
+            requestAnimationFrame(() => input.focus());
         };
-        const toggleDropdown = button => {
-            const dropdown = document.getElementById(button.dataset.dropdownToggle);
-            if(!dropdown) return;
-            const willOpen = !dropdown.classList.contains('is-open');
-            closeAllDropdowns(willOpen ? dropdown.id : null);
-            dropdown.classList.toggle('is-open', willOpen);
-            button.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-        };
-        const closeMobileMenu = () => {
-            mobileMenuPanel.classList.remove('is-open');
-            mobileMenuPanel.setAttribute('aria-hidden', 'true');
-            mobileMenuButton.setAttribute('aria-expanded', 'false');
-            mobileMenuIcon.textContent = '☰';
+        const closeAccessModal = () => {
+            codeModal.classList.remove('is-open');
+            codeModal.setAttribute('aria-hidden', 'true');
             body.classList.remove('is-locked');
+            resetModal();
+            state.lastFocusedElement?.focus?.();
         };
-        const toggleMobileMenu = () => {
-            const willOpen = !mobileMenuPanel.classList.contains('is-open');
-            mobileMenuPanel.classList.toggle('is-open', willOpen);
-            mobileMenuPanel.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
-            mobileMenuButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-            mobileMenuIcon.textContent = willOpen ? '×' : '☰';
-            body.classList.toggle('is-locked', willOpen);
-            if (willOpen) closeAllDropdowns();
-        };
-        document.querySelectorAll('[data-dropdown-toggle]').forEach(button => {
-            button.addEventListener('click', event => {
-                event.stopPropagation();
-                toggleDropdown(button);
-            });
-        });
-        document.querySelectorAll('[data-page-loading]').forEach(link => {
-            link.addEventListener('click', event => {
-                if (
-                    event.ctrlKey
-                    || event.metaKey
-                    || event.shiftKey
-                    || link.target === '_blank'
-                ) {
+        const startCooldown = (seconds) => {
+            let remaining = Math.max(1, Number(seconds) || 30);
+            input.disabled = true;
+            verifyButton.disabled = true;
+            const render = () => {
+                setMessage(`Terlalu banyak percobaan. Coba lagi dalam ${remaining} detik.`, 'is-error');
+            };
+            render();
+            state.cooldownTimer = setInterval(() => {
+                remaining -= 1;
+                if(remaining <= 0){
+                    clearInterval(state.cooldownTimer);
+                    state.cooldownTimer = null;
+                    input.disabled = false;
+                    verifyButton.disabled = false;
+                    setMessage('Silakan coba kembali.', 'is-success');
+                    input.focus();
                     return;
                 }
-                showPageLoader(link.dataset.pageLoading || 'Membuka halaman...');
-            });
-        });
-        document.querySelectorAll('a[href^="#"]').forEach(link => {
-            link.addEventListener('click', () => {
-                closeAllDropdowns();
-                closeMobileMenu();
-            });
-        });
-        document.addEventListener('click', event => {
-            if (!event.target.closest('.finus-nav-group')) {
-                closeAllDropdowns();
-            }
-        });
-        mobileMenuButton.addEventListener('click', toggleMobileMenu);
-        mobileMenuPanel.addEventListener('click', event => {
-            if (event.target.closest('a')) closeMobileMenu();
-        });
-        document.addEventListener('keydown', event => {
-            if (event.key !== 'Escape') return;
-            if (mobileMenuPanel.classList.contains('is-open')) {
-                closeMobileMenu();
+                render();
+            }, 1000);
+        };
+        const verifyAccessCode = async () => {
+            const code = input.value.trim();
+            if(!state.currentType || !code){
+                setMessage('Kode akses wajib diisi.', 'is-error');
+                input.focus();
                 return;
             }
-            closeAllDropdowns();
+            input.disabled = true;
+            verifyButton.disabled = true;
+            verifySpinner.hidden = false;
+            verifyText.textContent = 'Memeriksa...';
+            setMessage('Memverifikasi kode akses...');
+            try{
+                const response = await fetch("{{ route('verify.code', [], false) }}",{
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        type: state.currentType,
+                        code,
+                    }),
+                });
+                let data = {};
+                try {
+                    data = await response.json();
+                }catch (_){
+                    data = {};
+                }
+                if(data.status === 'success'){
+                    setMessage('Kode akses benar. Mengarahkan...', 'is-success');
+                    showPageLoader('Membuka halaman login...');
+                    window.location.href = data.redirect || state.currentUrl;
+                    return;
+                }
+                if(data.status === 'already_logged_in'){
+                    setMessage('Akun sudah masuk. Mengarahkan ke dashboard...', 'is-success');
+                    showPageLoader('Membuka dashboard...');
+                    window.location.href = data.redirect || state.currentUrl;
+                    return;
+                }
+                if(data.status === 'locked' || data.status === 'cooldown'){
+                    verifySpinner.hidden = true;
+                    verifyText.textContent = 'Verifikasi';
+                    startCooldown(data.remaining || 30);
+                    return;
+                }
+                if(data.status === 'misconfigured'){
+                    setMessage(data.message || 'Kode akses belum dikonfigurasi.', 'is-error');
+                }else if(data.status === 'error'){
+                    const max = data.max_attempts || 3;
+                    setMessage(`${data.message || 'Kode akses salah.'} (${data.attempts || 1}/${max})`, 'is-error');
+                    input.value = '';
+                }else if(response.status === 422){
+                    setMessage('Kode akses tidak valid.', 'is-error');
+                }else{
+                    setMessage(data.message || 'Verifikasi gagal. Silakan coba kembali.', 'is-error');
+                }
+            }catch(error){
+                console.error('Access-code verification failed:', error);
+                setMessage('Tidak dapat terhubung ke server. Silakan coba kembali.', 'is-error');
+            }
+            input.disabled = false;
+            verifyButton.disabled = false;
+            verifySpinner.hidden = true;
+            verifyText.textContent = 'Verifikasi';
+            input.focus();
+        };
+        document.querySelectorAll('[data-access-role]').forEach(trigger => {
+            trigger.addEventListener('click', () => {
+                openAccessModal(
+                    trigger.dataset.accessRole,
+                    trigger.dataset.accessUrl,
+                    trigger
+                );
+            });
         });
-        window.addEventListener('pageshow', hidePageLoader);
-        window.matchMedia('(min-width: 721px)').addEventListener('change', event => {
-            if (event.matches) closeMobileMenu();
+        verifyButton.addEventListener('click', verifyAccessCode);
+        closeModalButton.addEventListener('click', closeAccessModal);
+        cancelModalButton.addEventListener('click', closeAccessModal);
+        input.addEventListener('keydown', event => {
+            if(event.key === 'Enter'){
+                event.preventDefault();
+                verifyAccessCode();
+            }
+        });
+        togglePassword.addEventListener('click', () => {
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            togglePassword.setAttribute(
+                'aria-label',
+                showing ? 'Tampilkan kode akses' : 'Sembunyikan kode akses'
+            );
+        });
+        codeModal.addEventListener('click', event => {
+            if(event.target === codeModal) closeAccessModal();
+        });
+        document.addEventListener('keydown', event => {
+            if(event.key === 'Escape' && codeModal.classList.contains('is-open')){
+                closeAccessModal();
+            }
         });
     })();
     </script>

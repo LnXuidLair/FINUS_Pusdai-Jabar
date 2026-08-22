@@ -7,10 +7,16 @@
     <section class="fmu-hero">
         <div class="fmu-hero-main">
             <span class="fmu-hero-icon"><i class="fa-solid fa-calendar-check"></i></span>
-            <div><h1>Isi Presensi Harian</h1><p>Pilih status kehadiran, tambahkan keterangan, dan unggah bukti presensi.</p></div>
+            <div><h1>Isi Presensi Harian</h1><p>Kirim presensi dan tunggu persetujuan admin sebelum kehadiran dihitung dalam penggajian.</p></div>
         </div>
         <div class="fmu-hero-actions"><span class="fmu-hero-badge"><i class="fa-solid fa-calendar-day"></i>{{ now()->translatedFormat('d F Y') }}</span></div>
     </section>
+
+    @if($errors->has('presensi'))<div class="alert alert-danger">{{ $errors->first('presensi') }}</div>@endif
+    <div class="alert alert-info" style="border-radius:14px;font-size:13px">
+        <i class="fa-solid fa-circle-info"></i>
+        Presensi yang Anda kirim akan berstatus <strong>Menunggu Persetujuan</strong>. Kehadiran baru dihitung ke gaji setelah di-ACC admin.
+    </div>
 
     <form method="POST" action="{{ route('pegawai.presensi.store') }}" enctype="multipart/form-data" class="fmu-card" id="staffAttendanceForm">
         @csrf
@@ -39,8 +45,8 @@
 
                 <div class="fmu-field">
                     <label class="fmu-label" for="keterangan">Keterangan tambahan</label>
-                    <textarea name="keterangan" id="keterangan" class="fmu-textarea @error('keterangan') is-invalid @enderror" placeholder="Contoh: hadir tepat waktu, rapat divisi, atau izin sakit.">{{ old('keterangan') }}</textarea>
-                    <span class="fmu-help">Berikan penjelasan singkat terutama untuk status izin atau lembur.</span>
+                    <textarea name="keterangan" id="keterangan" class="fmu-textarea @error('keterangan') is-invalid @enderror" placeholder="Contoh: hadir tepat waktu, rapat divisi, atau alasan izin.">{{ old('keterangan') }}</textarea>
+                    <span class="fmu-help">Berikan penjelasan terutama untuk izin atau lembur.</span>
                     @error('keterangan')<span class="fmu-error">{{ $message }}</span>@enderror
                 </div>
 
@@ -50,7 +56,7 @@
                         <span>
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                             <strong>Klik atau seret foto bukti ke sini</strong>
-                            <span>JPG, JPEG, atau PNG. Maksimal mengikuti batas validasi sistem.</span>
+                            <span>JPG, JPEG, atau PNG. Maksimal 1 MB.</span>
                             <span class="fmu-file-name" id="attendanceFileName"></span>
                         </span>
                     </label>
@@ -89,7 +95,10 @@
     dropzone?.addEventListener('drop', event => {
         const file = event.dataTransfer?.files?.[0];
         if (!file || !input) return;
-        const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files; showFile(file);
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        input.files = transfer.files;
+        showFile(file);
     });
 })();
 </script>

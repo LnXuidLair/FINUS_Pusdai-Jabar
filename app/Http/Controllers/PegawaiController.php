@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\GajiJabatan;
 use App\Models\Pegawai;
+use App\Models\Penggajian;
+use App\Models\Presensi;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -12,27 +14,6 @@ use Illuminate\Validation\Rule;
 class PegawaiController extends Controller
 {
     private const STAFF_DOMAIN = 'stafffinuspusdai.org';
-
-    public function verifyStaff(Request $request)
-    {
-        $validated = $request->validate([
-            'nip' => ['required', 'string', 'max:255'],
-        ]);
-
-        $pegawai = Pegawai::where('nip', $validated['nip'])->first();
-
-        if (! $pegawai) {
-            return response()->json(['valid' => false]);
-        }
-
-        return response()->json([
-            'valid' => true,
-            'verified' => (bool) $pegawai->is_verified,
-            'redirect' => $pegawai->is_verified
-                ? null
-                : route('activate.staff', $pegawai->nip),
-        ]);
-    }
 
     public function index()
     {
@@ -68,9 +49,31 @@ class PegawaiController extends Controller
 
     public function show($id)
     {
-        $pegawai = Pegawai::findOrFail($id);
+        $pegawai = Pegawai::with('gajiJabatan')->findOrFail($id);
 
-        return view('pegawai.show', compact('pegawai'));
+        $jumlahHadirDisetujui = Presensi::where('id_pegawai', $pegawai->id)
+            ->whereMonth('tanggal', now()->month)
+            ->whereYear('tanggal', now()->year)
+            ->where('status', 'hadir')
+            ->where('is_approved', true)
+            ->whereNotNull('approved_at')
+            ->distinct()
+            ->count('tanggal');
+
+        $presensiMenunggu = Presensi::where('id_pegawai', $pegawai->id)
+            ->where('is_approved', false)
+            ->count();
+
+        $penggajianTerakhir = Penggajian::where('id_pegawai', $pegawai->id)
+            ->orderByDesc('periode')
+            ->first();
+
+        return view('pegawai.show', compact(
+            'pegawai',
+            'jumlahHadirDisetujui',
+            'presensiMenunggu',
+            'penggajianTerakhir'
+        ));
     }
 
     public function edit($id)

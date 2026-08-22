@@ -42,9 +42,18 @@ class InactivityLogout
                     'guard' => $guard,
                 ], 401);
             }
-            return redirect()->route('home')->with(
+            $redirectRoute = match ($guard) {
+                User::ROLE_ADMIN,
+                User::ROLE_PEGAWAI => 'management.access',
+
+                User::ROLE_JAMAAH => 'home',
+
+                default => 'home',
+            };
+
+            return redirect()->route($redirectRoute)->with(
                 'warning',
-                'Akun ' . ucfirst($guard) . ' otomatis keluar karena tidak ada aktivitas.'
+                'Akun ' . ucfirst($guard) . ' otomatis keluar karena tidak aktif selama 15 menit.'
             );
         }
         $request->session()->put($activityKey, now()->timestamp);

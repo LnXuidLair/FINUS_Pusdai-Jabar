@@ -741,51 +741,41 @@
 
 @section('content')
 @include('layouts.partials.finus-ui')
+@php
+    $sudahDibayar = $penggajians->where('status_penggajian', 'sudah_dibayar')->count();
+    $belumDibayar = $penggajians->where('status_penggajian', 'belum_dibayar')->count();
+@endphp
 <div class="finus-data-page" data-finus-data-page>
     <section class="finus-data-hero">
         <div class="finus-data-hero-left">
-            <div class="finus-data-hero-icon">
-                <i class="fa-solid fa-wallet"></i>
-            </div>
+            <div class="finus-data-hero-icon"><i class="fa-solid fa-wallet"></i></div>
             <div>
                 <h1 class="finus-data-hero-title">Penggajian</h1>
                 <p class="finus-data-hero-subtitle" data-record-subtitle data-label="data penggajian">
-                    Kelola {{ number_format($totalData) }} data penggajian pegawai.
+                    Gaji dihitung otomatis dari presensi hadir yang telah di-ACC admin.
                 </p>
             </div>
         </div>
-
         <div class="finus-data-hero-actions">
-            <a href="{{ route('admin.penggajian.create') }}" class="finus-data-add">
-                <i class="fa-solid fa-plus"></i>
-                Proses Gaji
-            </a>
+            <span class="finus-data-add" style="cursor:default"><i class="fa-solid fa-calculator"></i>Otomatis dari Presensi</span>
         </div>
     </section>
 
+    @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
+    @if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
+
     <section class="finus-data-summary">
         <article class="finus-data-stat finus-stat-blue">
-            <div class="finus-data-stat-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-            <div>
-                <span class="finus-data-stat-label">Total Data</span>
-                <strong class="finus-data-stat-value">{{ number_format($totalData) }}</strong>
-            </div>
+            <div class="finus-data-stat-icon"><i class="fa-solid fa-users"></i></div>
+            <div><span class="finus-data-stat-label">Total Pegawai</span><strong class="finus-data-stat-value">{{ number_format($penggajians->count()) }}</strong></div>
         </article>
-
         <article class="finus-data-stat finus-stat-green">
             <div class="finus-data-stat-icon"><i class="fa-solid fa-money-check-dollar"></i></div>
-            <div>
-                <span class="finus-data-stat-label">Total Penggajian</span>
-                <strong class="finus-data-stat-value">Rp {{ number_format($totalGaji, 0, ',', '.') }}</strong>
-            </div>
+            <div><span class="finus-data-stat-label">Total Gaji Periode</span><strong class="finus-data-stat-value">Rp {{ number_format($penggajians->sum('total_gaji'), 0, ',', '.') }}</strong></div>
         </article>
-
         <article class="finus-data-stat finus-stat-purple">
             <div class="finus-data-stat-icon"><i class="fa-solid fa-list-check"></i></div>
-            <div>
-                <span class="finus-data-stat-label">Jenis Status</span>
-                <strong class="finus-data-stat-value">{{ number_format($totalStatus) }}</strong>
-            </div>
+            <div><span class="finus-data-stat-label">Dibayar / Belum</span><strong class="finus-data-stat-value">{{ $sudahDibayar }} / {{ $belumDibayar }}</strong></div>
         </article>
     </section>
 
@@ -795,37 +785,26 @@
                 <div class="finus-data-card-icon"><i class="fa-solid fa-users-gear"></i></div>
                 <div>
                     <h2 class="finus-data-card-title">Daftar Penggajian</h2>
-                    <p class="finus-data-card-description">
-                        Ringkasan periode, kehadiran, total gaji, dan status pembayaran.
-                    </p>
+                    <p class="finus-data-card-description">Admin hanya menentukan status pembayaran. Nominal dan kehadiran dihitung sistem.</p>
                 </div>
             </div>
-
-            <div class="finus-data-visible">
-                <i class="fa-solid fa-database"></i>
-                <span data-visible-count>{{ $totalData }}</span>
-                data ditampilkan
-            </div>
+            <div class="finus-data-visible"><i class="fa-solid fa-database"></i><span data-visible-count>{{ $penggajians->count() }}</span> data ditampilkan</div>
         </header>
 
-        <div class="finus-data-toolbar">
+        <div class="finus-data-toolbar" style="display:flex;gap:14px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap">
+            <form method="GET" action="{{ route('admin.penggajian.index') }}" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+                <div>
+                    <label for="periode" style="display:block;font-size:11px;font-weight:800;margin-bottom:6px;color:#64748B">PERIODE</label>
+                    <input type="month" id="periode" name="periode" value="{{ $periode }}" class="finus-data-search" style="width:190px;padding-left:12px;padding-right:12px" required>
+                </div>
+                <button type="submit" class="finus-data-add" style="border-color:#D6E9DC"><i class="fa-solid fa-filter"></i>Tampilkan</button>
+            </form>
+
             <div class="finus-data-search-wrap">
                 <i class="fa-solid fa-magnifying-glass finus-data-search-icon"></i>
-                <input
-                    type="search"
-                    class="finus-data-search"
-                    data-finus-search
-                    placeholder="Ketik dari awal pegawai, periode, total, atau status..."
-                    autocomplete="off"
-                >
-                <button type="button" class="finus-data-clear" data-finus-clear aria-label="Hapus pencarian">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+                <input type="search" class="finus-data-search" data-finus-search placeholder="Ketik dari awal pegawai, jabatan, periode, total, atau status..." autocomplete="off">
+                <button type="button" class="finus-data-clear" data-finus-clear aria-label="Hapus pencarian"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <p class="finus-data-search-help">
-                <i class="fa-solid fa-circle-info"></i>
-                Pencarian dimulai dari karakter pertama setiap data.
-            </p>
         </div>
 
         <div class="finus-data-table-area">
@@ -833,101 +812,57 @@
                 <table class="finus-data-table">
                     <thead>
                         <tr>
-                            <th width="70">No.</th>
+                            <th width="60">No.</th>
                             <th>Pegawai</th>
-                            <th width="155">Periode</th>
-                            <th width="135">Kehadiran</th>
-                            <th width="190">Total Gaji</th>
-                            <th width="170">Status</th>
+                            <th width="145">Jabatan</th>
+                            <th width="145">Gaji/Hari</th>
+                            <th width="125">Kehadiran ACC</th>
+                            <th width="165">Total Gaji</th>
+                            <th width="150">Status</th>
+                            <th width="130">Tanggal Bayar</th>
+                            <th width="165">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($penggajians as $item)
                             @php
-                                $pegawaiNama = optional($item->pegawai)->nama_pegawai ?? '-';
+                                $pegawaiNama = $item->pegawai?->nama_pegawai ?? '-';
+                                $jabatan = $item->pegawai?->jabatan ?? '-';
+                                $sudahBayar = $item->status_penggajian === 'sudah_dibayar';
+                                $gajiTersedia = $item->pegawai?->gajiJabatan !== null;
                                 $totalFormatted = 'Rp ' . number_format($item->total_gaji, 0, ',', '.');
-                                $totalRaw = preg_replace('/\D+/', '', (string) $item->total_gaji);
-                                $statusText = trim((string) $item->status_penggajian);
-                                $statusLower = mb_strtolower($statusText);
-
-                                $statusClass = str_contains($statusLower, 'lunas')
-                                    || str_contains($statusLower, 'selesai')
-                                    || str_contains($statusLower, 'dibayar')
-                                        ? 'finus-status-success'
-                                        : (str_contains($statusLower, 'pending')
-                                            || str_contains($statusLower, 'proses')
-                                            || str_contains($statusLower, 'menunggu')
-                                                ? 'finus-status-warning'
-                                                : (str_contains($statusLower, 'gagal')
-                                                    || str_contains($statusLower, 'batal')
-                                                        ? 'finus-status-danger'
-                                                        : 'finus-status-neutral'));
+                                $gajiHarianFormatted = 'Rp ' . number_format($item->gaji_perhari, 0, ',', '.');
                             @endphp
-
-                            <tr
-                                data-search-row
-                                data-search-start="{{ $pegawaiNama }}|{{ $item->periode }}|{{ $item->jumlah_kehadiran }}|{{ $totalFormatted }}|{{ $totalRaw }}|{{ $statusText }}"
-                            >
-                                <td data-label="Nomor">
-                                    <span class="finus-data-number" data-row-number>{{ $loop->iteration }}</span>
+                            <tr data-search-row data-search-start="{{ $pegawaiNama }}|{{ $jabatan }}|{{ $item->periode }}|{{ $item->jumlah_kehadiran }}|{{ $totalFormatted }}|{{ $item->status_penggajian }}">
+                                <td data-label="Nomor"><span class="finus-data-number" data-row-number>{{ $loop->iteration }}</span></td>
+                                <td data-label="Pegawai"><span class="finus-data-primary"><span class="finus-data-primary-icon"><i class="fa-solid fa-user-tie"></i></span>{{ $pegawaiNama }}</span></td>
+                                <td data-label="Jabatan"><span class="finus-data-chip">{{ $jabatan }}</span></td>
+                                <td data-label="Gaji/Hari">
+                                    @if($gajiTersedia)<span class="finus-data-money">{{ $gajiHarianFormatted }}</span>@else<span class="text-danger">Belum diatur</span>@endif
                                 </td>
-                                <td data-label="Pegawai">
-                                    <span class="finus-data-primary">
-                                        <span class="finus-data-primary-icon">
-                                            <i class="fa-solid fa-user-tie"></i>
-                                        </span>
-                                        {{ $pegawaiNama }}
-                                    </span>
-                                </td>
-                                <td data-label="Periode">
-                                    <span class="finus-data-chip blue">
-                                        <i class="fa-solid fa-calendar-days"></i>
-                                        {{ $item->periode }}
-                                    </span>
-                                </td>
-                                <td data-label="Kehadiran">
-                                    <span class="finus-data-chip green">
-                                        <i class="fa-solid fa-calendar-check"></i>
-                                        {{ $item->jumlah_kehadiran }} hari
-                                    </span>
-                                </td>
-                                <td data-label="Total Gaji">
-                                    <span class="finus-data-money">
-                                        <i class="fa-solid fa-money-bill-wave"></i>
-                                        {{ $totalFormatted }}
-                                    </span>
-                                </td>
-                                <td data-label="Status">
-                                    <span class="finus-data-status {{ $statusClass }}">
-                                        {{ $statusText ?: 'Belum ditentukan' }}
-                                    </span>
+                                <td data-label="Kehadiran ACC"><span class="finus-data-chip green"><i class="fa-solid fa-calendar-check"></i>{{ $item->jumlah_kehadiran }} hari</span></td>
+                                <td data-label="Total Gaji"><span class="finus-data-money">{{ $totalFormatted }}</span></td>
+                                <td data-label="Status"><span class="finus-data-status {{ $sudahBayar ? 'finus-status-success' : 'finus-status-warning' }}">{{ $sudahBayar ? 'Sudah Dibayar' : 'Belum Dibayar' }}</span></td>
+                                <td data-label="Tanggal Bayar">{{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}</td>
+                                <td data-label="Aksi">
+                                    @if($gajiTersedia)
+                                        <form method="POST" action="{{ route('admin.penggajian.status', $item) }}" onsubmit="return confirm('{{ $sudahBayar ? 'Ubah status menjadi Belum Dibayar?' : 'Pastikan gaji sudah dikirim. Tandai sebagai Sudah Dibayar?' }}')">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="status_penggajian" value="{{ $sudahBayar ? 'belum_dibayar' : 'sudah_dibayar' }}">
+                                            <button type="submit" class="finus-data-edit" style="{{ $sudahBayar ? '' : 'border-color:#BDE5C7;background:#EFFAF2;color:#166534!important' }}">
+                                                <i class="fa-solid {{ $sudahBayar ? 'fa-rotate-left' : 'fa-check' }}"></i>{{ $sudahBayar ? 'Belum Dibayar' : 'Tandai Dibayar' }}
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="text-muted" style="font-size:11px">Atur Gaji Jabatan</span>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="6" class="finus-data-empty">
-                                    <div class="finus-data-empty-icon">
-                                        <i class="fa-solid fa-wallet"></i>
-                                    </div>
-                                    <div class="finus-data-empty-title">Belum ada data penggajian</div>
-                                    <p class="finus-data-empty-text">
-                                        Tekan tombol Proses Gaji untuk membuat penggajian pertama.
-                                    </p>
-                                </td>
-                            </tr>
+                            <tr><td colspan="9" class="finus-data-empty"><div class="finus-data-empty-icon"><i class="fa-solid fa-wallet"></i></div><div class="finus-data-empty-title">Belum ada pegawai</div></td></tr>
                         @endforelse
-
-                        <tr data-empty-search-row style="display:none;">
-                            <td colspan="6" class="finus-data-empty">
-                                <div class="finus-data-empty-icon">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                </div>
-                                <div class="finus-data-empty-title">Penggajian tidak ditemukan</div>
-                                <p class="finus-data-empty-text">
-                                    Coba ketik kata kunci dari karakter pertama.
-                                </p>
-                            </td>
-                        </tr>
+                        <tr data-empty-search-row style="display:none;"><td colspan="9" class="finus-data-empty"><div class="finus-data-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div><div class="finus-data-empty-title">Penggajian tidak ditemukan</div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -939,77 +874,35 @@
 @push('scripts')
 <script>
 (() => {
-    const normalize = value => (value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
-
+    const normalize = value => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     document.querySelectorAll('[data-finus-data-page]').forEach(page => {
         const input = page.querySelector('[data-finus-search]');
         const clearButton = page.querySelector('[data-finus-clear]');
         const rows = Array.from(page.querySelectorAll('[data-search-row]'));
         const emptyRow = page.querySelector('[data-empty-search-row]');
         const visibleElements = page.querySelectorAll('[data-visible-count]');
-        const subtitle = page.querySelector('[data-record-subtitle]');
-        const label = subtitle?.dataset.label || 'data';
-
         if (!input) return;
-
         const filterRows = () => {
             const keyword = normalize(input.value);
             let visible = 0;
-
             rows.forEach(row => {
-                const values = (row.dataset.searchStart || '')
-                    .split('|')
-                    .map(normalize)
-                    .filter(Boolean);
-
-                // Pencarian tetap dimulai dari karakter pertama setiap nilai.
-                const matches = keyword === ''
-                    || values.some(value => value.startsWith(keyword));
-
+                const values = (row.dataset.searchStart || '').split('|').map(normalize).filter(Boolean);
+                const matches = keyword === '' || values.some(value => value.startsWith(keyword));
                 row.style.display = matches ? '' : 'none';
-
                 if (matches) {
                     visible++;
                     const number = row.querySelector('[data-row-number]');
                     if (number) number.textContent = visible;
                 }
             });
-
-            if (emptyRow) {
-                emptyRow.style.display =
-                    visible === 0 && rows.length > 0 ? '' : 'none';
-            }
-
-            visibleElements.forEach(element => {
-                element.textContent = visible;
-            });
-
-            if (subtitle) {
-                subtitle.textContent =
-                    `Menampilkan ${visible} ${label} pada daftar saat ini.`;
-            }
-
-            if (clearButton) {
-                clearButton.style.display =
-                    input.value.trim() ? 'flex' : 'none';
-            }
+            if (emptyRow) emptyRow.style.display = visible === 0 && rows.length > 0 ? '' : 'none';
+            visibleElements.forEach(el => el.textContent = visible);
+            if (clearButton) clearButton.style.display = input.value.trim() ? 'flex' : 'none';
         };
-
         input.addEventListener('input', filterRows);
-
-        clearButton?.addEventListener('click', () => {
-            input.value = '';
-            input.focus();
-            filterRows();
-        });
-
+        clearButton?.addEventListener('click', () => { input.value = ''; input.focus(); filterRows(); });
         filterRows();
     });
 })();
-
 </script>
 @endpush
