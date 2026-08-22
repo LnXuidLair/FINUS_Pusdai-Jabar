@@ -743,91 +743,83 @@
 
 @section('content')
 @include('layouts.partials.finus-ui')
+@php
+    $totalData = $presensis->count();
+    $totalDisetujui = $presensis->where('is_approved', true)->count();
+    $totalMenunggu = $presensis->where('is_approved', false)->count();
+@endphp
 <div class="finus-data-page" data-finus-data-page>
     <section class="finus-data-hero">
         <div class="finus-data-hero-left">
-            <div class="finus-data-hero-icon">
-                <i class="fa-solid fa-calendar-check"></i>
-            </div>
+            <div class="finus-data-hero-icon"><i class="fa-solid fa-calendar-check"></i></div>
             <div>
                 <h1 class="finus-data-hero-title">Presensi</h1>
                 <p class="finus-data-hero-subtitle" data-record-subtitle data-label="catatan presensi">
-                    Kelola {{ number_format($totalData) }} catatan presensi pegawai.
+                    Kelola {{ number_format($totalData) }} catatan presensi dan approval pegawai.
                 </p>
             </div>
         </div>
-
         <div class="finus-data-hero-actions">
             <a href="{{ route('admin.presensi.create') }}" class="finus-data-add">
-                <i class="fa-solid fa-plus"></i>
-                Tambah Presensi
+                <i class="fa-solid fa-plus"></i>Tambah Presensi
             </a>
         </div>
     </section>
 
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="alert alert-danger">
+            @foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach
+        </div>
+    @endif
+
     <section class="finus-data-summary">
         <article class="finus-data-stat finus-stat-blue">
             <div class="finus-data-stat-icon"><i class="fa-solid fa-clipboard-list"></i></div>
-            <div>
-                <span class="finus-data-stat-label">Total Catatan</span>
-                <strong class="finus-data-stat-value">{{ number_format($totalData) }}</strong>
-            </div>
+            <div><span class="finus-data-stat-label">Total Catatan</span><strong class="finus-data-stat-value">{{ number_format($totalData) }}</strong></div>
         </article>
-
         <article class="finus-data-stat finus-stat-green">
-            <div class="finus-data-stat-icon"><i class="fa-solid fa-user-check"></i></div>
-            <div>
-                <span class="finus-data-stat-label">Status Hadir</span>
-                <strong class="finus-data-stat-value">{{ number_format($totalHadir) }}</strong>
-            </div>
+            <div class="finus-data-stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div><span class="finus-data-stat-label">Sudah Di-ACC</span><strong class="finus-data-stat-value">{{ number_format($totalDisetujui) }}</strong></div>
         </article>
-
         <article class="finus-data-stat finus-stat-amber">
-            <div class="finus-data-stat-icon"><i class="fa-solid fa-user-clock"></i></div>
-            <div>
-                <span class="finus-data-stat-label">Status Lainnya</span>
-                <strong class="finus-data-stat-value">{{ number_format($totalTidakHadir) }}</strong>
-            </div>
+            <div class="finus-data-stat-icon"><i class="fa-solid fa-clock"></i></div>
+            <div><span class="finus-data-stat-label">Menunggu ACC</span><strong class="finus-data-stat-value">{{ number_format($totalMenunggu) }}</strong></div>
         </article>
     </section>
 
     <section class="finus-data-card">
         <header class="finus-data-card-head">
             <div class="finus-data-card-title-wrap">
-                <div class="finus-data-card-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                <div class="finus-data-card-icon"><i class="fa-solid fa-list-check"></i></div>
                 <div>
                     <h2 class="finus-data-card-title">Daftar Presensi</h2>
-                    <p class="finus-data-card-description">
-                        Catatan tanggal, pegawai, dan status kehadiran.
-                    </p>
+                    <p class="finus-data-card-description">Presensi pegawai harus di-ACC sebelum dihitung ke penggajian.</p>
                 </div>
             </div>
-
-            <div class="finus-data-visible">
-                <i class="fa-solid fa-database"></i>
-                <span data-visible-count>{{ $totalData }}</span>
-                data ditampilkan
-            </div>
+            <div class="finus-data-visible"><i class="fa-solid fa-database"></i><span data-visible-count>{{ $totalData }}</span> data ditampilkan</div>
         </header>
 
-        <div class="finus-data-toolbar">
+        <div class="finus-data-toolbar" style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap">
             <div class="finus-data-search-wrap">
                 <i class="fa-solid fa-magnifying-glass finus-data-search-icon"></i>
-                <input
-                    type="search"
-                    class="finus-data-search"
-                    data-finus-search
-                    placeholder="Ketik dari awal tanggal, pegawai, atau status..."
-                    autocomplete="off"
-                >
-                <button type="button" class="finus-data-clear" data-finus-clear aria-label="Hapus pencarian">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+                <input type="search" class="finus-data-search" data-finus-search placeholder="Ketik dari awal tanggal, pegawai, status, atau approval..." autocomplete="off">
+                <button type="button" class="finus-data-clear" data-finus-clear aria-label="Hapus pencarian"><i class="fa-solid fa-xmark"></i></button>
+                <p class="finus-data-search-help"><i class="fa-solid fa-circle-info"></i>Pencarian dimulai dari karakter pertama setiap data.</p>
             </div>
-            <p class="finus-data-search-help">
-                <i class="fa-solid fa-circle-info"></i>
-                Pencarian dimulai dari karakter pertama setiap data.
-            </p>
+
+            <form id="bulkApproveForm" method="POST" action="{{ route('admin.presensi.approve-bulk') }}">
+                @csrf
+                @method('PATCH')
+                <button type="submit" class="finus-data-add" id="bulkApproveButton" disabled style="border-color:#D6E9DC">
+                    <i class="fa-solid fa-check-double"></i><span id="bulkApproveText">ACC Dipilih</span>
+                </button>
+            </form>
         </div>
 
         <div class="finus-data-table-area">
@@ -835,10 +827,15 @@
                 <table class="finus-data-table">
                     <thead>
                         <tr>
-                            <th width="70">No.</th>
-                            <th width="175">Tanggal</th>
+                            <th width="45"><input type="checkbox" id="selectAllPresensi" aria-label="Pilih semua presensi yang terlihat"></th>
+                            <th width="65">No.</th>
+                            <th width="150">Tanggal</th>
                             <th>Pegawai</th>
-                            <th width="180">Status</th>
+                            <th width="135">Status</th>
+                            <th>Keterangan</th>
+                            <th width="110">Bukti</th>
+                            <th width="145">Approval</th>
+                            <th width="205">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -847,69 +844,65 @@
                                 $pegawaiNama = optional($item->pegawai)->nama_pegawai ?? '-';
                                 $statusText = trim((string) $item->status);
                                 $statusLower = mb_strtolower($statusText);
-
-                                $statusClass = $statusLower === 'hadir'
-                                    ? 'finus-status-success'
-                                    : ($statusLower === 'izin'
-                                        ? 'finus-status-info'
-                                        : ($statusLower === 'sakit'
-                                            ? 'finus-status-warning'
-                                            : (in_array($statusLower, ['alpha', 'alpa', 'tidak hadir'])
-                                                ? 'finus-status-danger'
-                                                : 'finus-status-neutral')));
+                                $approved = (bool) $item->is_approved;
+                                $approvalText = $approved ? 'Disetujui' : 'Menunggu';
+                                $statusClass = match ($statusLower) {
+                                    'hadir' => 'finus-status-success',
+                                    'izin' => 'finus-status-info',
+                                    'sakit' => 'finus-status-warning',
+                                    'lembur' => 'finus-status-neutral',
+                                    default => 'finus-status-danger',
+                                };
                             @endphp
-
-                            <tr
-                                data-search-row
-                                data-search-start="{{ $item->tanggal }}|{{ $pegawaiNama }}|{{ $statusText }}"
-                            >
-                                <td data-label="Nomor">
-                                    <span class="finus-data-number" data-row-number>{{ $loop->iteration }}</span>
+                            <tr data-search-row data-search-start="{{ $item->tanggal }}|{{ $pegawaiNama }}|{{ $statusText }}|{{ $approvalText }}|{{ $item->keterangan ?? '' }}">
+                                <td data-label="Pilih">
+                                    @if(! $approved)
+                                        <input type="checkbox" class="presensi-checkbox" name="presensi_ids[]" value="{{ $item->id }}" form="bulkApproveForm">
+                                    @else
+                                        <i class="fa-solid fa-check" style="color:#179B40"></i>
+                                    @endif
                                 </td>
-                                <td data-label="Tanggal">
-                                    <span class="finus-data-chip blue">
-                                        <i class="fa-solid fa-calendar-day"></i>
-                                        {{ $item->tanggal }}
-                                    </span>
-                                </td>
+                                <td data-label="Nomor"><span class="finus-data-number" data-row-number>{{ $loop->iteration }}</span></td>
+                                <td data-label="Tanggal"><span class="finus-data-chip blue"><i class="fa-solid fa-calendar-day"></i>{{ $item->tanggal }}</span></td>
                                 <td data-label="Pegawai">
-                                    <span class="finus-data-primary">
-                                        <span class="finus-data-primary-icon">
-                                            <i class="fa-solid fa-user"></i>
-                                        </span>
-                                        {{ $pegawaiNama }}
-                                    </span>
+                                    <span class="finus-data-primary"><span class="finus-data-primary-icon"><i class="fa-solid fa-user"></i></span>{{ $pegawaiNama }}</span>
                                 </td>
-                                <td data-label="Status">
-                                    <span class="finus-data-status {{ $statusClass }}">
-                                        {{ $statusText ?: 'Belum ditentukan' }}
-                                    </span>
+                                <td data-label="Status"><span class="finus-data-status {{ $statusClass }}">{{ $statusText ?: 'Belum ditentukan' }}</span></td>
+                                <td data-label="Keterangan">{{ $item->keterangan ?: '-' }}</td>
+                                <td data-label="Bukti">
+                                    @if($item->bukti_kehadiran)
+                                        <a href="{{ asset('storage/' . $item->bukti_kehadiran) }}" target="_blank" rel="noopener" class="finus-data-edit"><i class="fa-solid fa-eye"></i>Lihat</a>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td data-label="Approval">
+                                    <span class="finus-data-status {{ $approved ? 'finus-status-success' : 'finus-status-warning' }}">{{ $approvalText }}</span>
+                                </td>
+                                <td data-label="Aksi">
+                                    <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap">
+                                        @if(! $approved)
+                                            <form method="POST" action="{{ route('admin.presensi.approve', $item) }}">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="finus-data-edit" style="border-color:#BDE5C7;background:#EFFAF2;color:#166534!important"><i class="fa-solid fa-check"></i>ACC</button>
+                                            </form>
+                                        @endif
+                                        <a href="{{ route('admin.presensi.edit', $item) }}" class="finus-data-edit"><i class="fa-solid fa-pen"></i>Edit</a>
+                                        <form method="POST" action="{{ route('admin.presensi.destroy', $item) }}" onsubmit="return confirm('Hapus presensi ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="finus-data-edit" style="border-color:#F1C6CB;background:#FFF3F4;color:#B91C1C!important"><i class="fa-solid fa-trash"></i>Hapus</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="4" class="finus-data-empty">
-                                    <div class="finus-data-empty-icon">
-                                        <i class="fa-solid fa-calendar-xmark"></i>
-                                    </div>
-                                    <div class="finus-data-empty-title">Belum ada data presensi</div>
-                                    <p class="finus-data-empty-text">
-                                        Tekan tombol Tambah Presensi untuk memasukkan catatan pertama.
-                                    </p>
-                                </td>
-                            </tr>
+                            <tr><td colspan="9" class="finus-data-empty"><div class="finus-data-empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div><div class="finus-data-empty-title">Belum ada data presensi</div></td></tr>
                         @endforelse
 
                         <tr data-empty-search-row style="display:none;">
-                            <td colspan="4" class="finus-data-empty">
-                                <div class="finus-data-empty-icon">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                </div>
-                                <div class="finus-data-empty-title">Presensi tidak ditemukan</div>
-                                <p class="finus-data-empty-text">
-                                    Coba ketik kata kunci dari karakter pertama.
-                                </p>
-                            </td>
+                            <td colspan="9" class="finus-data-empty"><div class="finus-data-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div><div class="finus-data-empty-title">Presensi tidak ditemukan</div></td>
                         </tr>
                     </tbody>
                 </table>
@@ -922,77 +915,74 @@
 @push('scripts')
 <script>
 (() => {
-    const normalize = value => (value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
+    const normalize = value => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const page = document.querySelector('[data-finus-data-page]');
+    if (!page) return;
 
-    document.querySelectorAll('[data-finus-data-page]').forEach(page => {
-        const input = page.querySelector('[data-finus-search]');
-        const clearButton = page.querySelector('[data-finus-clear]');
-        const rows = Array.from(page.querySelectorAll('[data-search-row]'));
-        const emptyRow = page.querySelector('[data-empty-search-row]');
-        const visibleElements = page.querySelectorAll('[data-visible-count]');
-        const subtitle = page.querySelector('[data-record-subtitle]');
-        const label = subtitle?.dataset.label || 'data';
+    const input = page.querySelector('[data-finus-search]');
+    const clearButton = page.querySelector('[data-finus-clear]');
+    const rows = Array.from(page.querySelectorAll('[data-search-row]'));
+    const emptyRow = page.querySelector('[data-empty-search-row]');
+    const visibleElements = page.querySelectorAll('[data-visible-count]');
+    const subtitle = page.querySelector('[data-record-subtitle]');
+    const selectAll = document.getElementById('selectAllPresensi');
+    const checkboxes = Array.from(document.querySelectorAll('.presensi-checkbox'));
+    const bulkButton = document.getElementById('bulkApproveButton');
+    const bulkText = document.getElementById('bulkApproveText');
 
-        if (!input) return;
-
-        const filterRows = () => {
-            const keyword = normalize(input.value);
-            let visible = 0;
-
-            rows.forEach(row => {
-                const values = (row.dataset.searchStart || '')
-                    .split('|')
-                    .map(normalize)
-                    .filter(Boolean);
-
-                // Pencarian tetap dimulai dari karakter pertama setiap nilai.
-                const matches = keyword === ''
-                    || values.some(value => value.startsWith(keyword));
-
-                row.style.display = matches ? '' : 'none';
-
-                if (matches) {
-                    visible++;
-                    const number = row.querySelector('[data-row-number]');
-                    if (number) number.textContent = visible;
-                }
-            });
-
-            if (emptyRow) {
-                emptyRow.style.display =
-                    visible === 0 && rows.length > 0 ? '' : 'none';
-            }
-
-            visibleElements.forEach(element => {
-                element.textContent = visible;
-            });
-
-            if (subtitle) {
-                subtitle.textContent =
-                    `Menampilkan ${visible} ${label} pada daftar saat ini.`;
-            }
-
-            if (clearButton) {
-                clearButton.style.display =
-                    input.value.trim() ? 'flex' : 'none';
-            }
-        };
-
-        input.addEventListener('input', filterRows);
-
-        clearButton?.addEventListener('click', () => {
-            input.value = '';
-            input.focus();
-            filterRows();
-        });
-
-        filterRows();
+    const visiblePendingCheckboxes = () => checkboxes.filter(cb => {
+        const row = cb.closest('[data-search-row]');
+        return row && row.style.display !== 'none';
     });
-})();
 
+    const updateBulkState = () => {
+        const visible = visiblePendingCheckboxes();
+        const selectedAll = checkboxes.filter(cb => cb.checked);
+        if (bulkButton) bulkButton.disabled = selectedAll.length === 0;
+        if (bulkText) bulkText.textContent = selectedAll.length ? `ACC Dipilih (${selectedAll.length})` : 'ACC Dipilih';
+        if (selectAll) {
+            const selectedVisible = visible.filter(cb => cb.checked).length;
+            selectAll.checked = visible.length > 0 && selectedVisible === visible.length;
+            selectAll.indeterminate = selectedVisible > 0 && selectedVisible < visible.length;
+            selectAll.disabled = visible.length === 0;
+        }
+    };
+
+    const filterRows = () => {
+        const keyword = normalize(input?.value);
+        let visible = 0;
+        rows.forEach(row => {
+            const values = (row.dataset.searchStart || '').split('|').map(normalize).filter(Boolean);
+            const matches = keyword === '' || values.some(value => value.startsWith(keyword));
+            row.style.display = matches ? '' : 'none';
+            if (matches) {
+                visible++;
+                const number = row.querySelector('[data-row-number]');
+                if (number) number.textContent = visible;
+            }
+        });
+        if (emptyRow) emptyRow.style.display = visible === 0 && rows.length > 0 ? '' : 'none';
+        visibleElements.forEach(el => el.textContent = visible);
+        if (subtitle) subtitle.textContent = `Menampilkan ${visible} catatan presensi pada daftar saat ini.`;
+        if (clearButton) clearButton.style.display = input?.value.trim() ? 'flex' : 'none';
+        updateBulkState();
+    };
+
+    input?.addEventListener('input', filterRows);
+    clearButton?.addEventListener('click', () => { input.value = ''; input.focus(); filterRows(); });
+
+    selectAll?.addEventListener('change', () => {
+        visiblePendingCheckboxes().forEach(cb => cb.checked = selectAll.checked);
+        updateBulkState();
+    });
+    checkboxes.forEach(cb => cb.addEventListener('change', updateBulkState));
+
+    document.getElementById('bulkApproveForm')?.addEventListener('submit', event => {
+        const selected = checkboxes.filter(cb => cb.checked).length;
+        if (!selected || !confirm(`ACC ${selected} presensi sekaligus?`)) event.preventDefault();
+    });
+
+    filterRows();
+})();
 </script>
 @endpush

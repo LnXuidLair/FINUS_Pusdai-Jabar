@@ -8,40 +8,90 @@ use App\Models\Pengeluaran;
 use App\Models\Penggajian;
 use App\Models\Presensi;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $request->user()->isAdmin() || abort(403, 'Anda tidak memiliki akses.');
+        $request->user()->isAdmin()
+            || abort(403, 'Anda tidak memiliki akses.');
 
         $bulan = now()->month;
         $tahun = now()->year;
 
-        $pengeluaranBulanan = Pengeluaran::selectRaw('MONTH(tanggal) AS bulan, SUM(jumlah) AS total')
+        /*
+         * Hanya pengeluaran operasional yang sudah resmi yang masuk dashboard.
+         * Penggajian dihitung terpisah agar tidak terjadi double counting.
+         */
+        $pengeluaranResmi = Pengeluaran::query()
+            ->whereNull('id_penggajian')
+            ->whereNull('referensi_penggajian_id')
+            ->where(function (Builder $query): void {
+                $query->whereNull('jenis')
+                    ->orWhere('jenis', '!=', 'gaji');
+            })
+            ->where(function (Builder $query): void {
+                $query->where('status_verifikasi', 'diterima')
+                    ->orWhereNull('status_verifikasi');
+            });
+
+        $pengeluaranBulanan = (clone $pengeluaranResmi)
+            ->selectRaw('MONTH(tanggal) AS bulan')
+            ->selectRaw(
+                'COALESCE(SUM(COALESCE(NULLIF(nominal, 0), jumlah, 0)), 0) AS total'
+            )
             ->whereYear('tanggal', $tahun)
-            ->groupBy('bulan')
+            ->groupByRaw('MONTH(tanggal)')
             ->pluck('total', 'bulan');
 
-        $penggajianBulanan = Penggajian::selectRaw('MONTH(tanggal) AS bulan, SUM(total_gaji) AS total')
+        $pengeluaranBulanIni = (int) (clone $pengeluaranResmi)
+            ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
-            ->groupBy('bulan')
+            ->selectRaw(
+                'COALESCE(SUM(COALESCE(NULLIF(nominal, 0), jumlah, 0)), 0) AS total'
+            )
+            ->value('total');
+
+        /*
+         * Gaji baru dianggap sebagai pengeluaran ketika status sudah dibayar.
+         */
+        $penggajianResmi = Penggajian::query()
+            ->where('status_penggajian', 'sudah_dibayar')
+            ->whereNotNull('tanggal');
+
+        $penggajianBulanan = (clone $penggajianResmi)
+            ->selectRaw(
+                'MONTH(tanggal) AS bulan, COALESCE(SUM(total_gaji), 0) AS total'
+            )
+            ->whereYear('tanggal', $tahun)
+            ->groupByRaw('MONTH(tanggal)')
             ->pluck('total', 'bulan');
+
+        $gajiBulanIni = (int) (clone $penggajianResmi)
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->sum('total_gaji');
 
         return view('dashboard.admin', [
             'jumlahPegawai' => Pegawai::count(),
-            'jumlahJamaah' => User::where('role', User::ROLE_JAMAAH)->count(),
-            'pengeluaranBulanIni' => Pengeluaran::whereMonth('tanggal', $bulan)
-                ->whereYear('tanggal', $tahun)
-                ->sum('jumlah'),
-            'gajiBulanIni' => Penggajian::whereMonth('tanggal', $bulan)
-                ->whereYear('tanggal', $tahun)
-                ->sum('total_gaji'),
-            'jurnalBulanIni' => Jurnal::whereMonth('tanggal', $bulan)
+            'jumlahJamaah' => User::where(
+                'role',
+                User::ROLE_JAMAAH
+            )->count(),
+            'pengeluaranBulanIni' => $pengeluaranBulanIni,
+            'gajiBulanIni' => $gajiBulanIni,
+            'jurnalBulanIni' => Jurnal::whereMonth(
+                    'tanggal',
+                    $bulan
+                )
                 ->whereYear('tanggal', $tahun)
                 ->count(),
-            'presensiHariIni' => Presensi::whereDate('tanggal', today())->count(),
+            'presensiHariIni' => Presensi::whereDate(
+                'tanggal',
+                today()
+            )->count(),
             'pengeluaranBulanan' => $pengeluaranBulanan,
             'penggajianBulanan' => $penggajianBulanan,
         ]);

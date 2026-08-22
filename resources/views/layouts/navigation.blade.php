@@ -1,7 +1,7 @@
 @php
     $navUser = $currentUser;
     $roleLabel = $navUser?->isAdmin()
-        ? 'Administrator'
+        ? 'Admin'
         : ($navUser?->isPegawai() ? 'Pegawai' : 'Jamaah');
     $rawPageContext = trim($__env->yieldContent('title'));
     $pageContext = $rawPageContext !== ''

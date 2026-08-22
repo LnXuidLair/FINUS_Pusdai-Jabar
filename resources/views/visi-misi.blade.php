@@ -142,7 +142,61 @@
             letter-spacing:-.04em;
         }
         .hero-copy { max-width:680px; margin:20px auto 0; color:var(--muted); font-size:clamp(14px,1.6vw,18px); line-height:1.8; font-weight:600; }
-
+        .auth-home-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            justify-self: end;
+            gap: 9px;
+            min-height: 42px;
+            padding: 0 15px;
+            border: 1px solid rgba(255, 255, 255, .46);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .95);
+            color: var(--auth-green-900);
+            font-size: 12px;
+            font-weight: 800;
+            text-decoration: none;
+            box-shadow: 0 8px 20px rgba(0, 45, 16, .15);
+            transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+        .auth-home-link:hover { transform: translateY(-2px); background: #fff; box-shadow: 0 12px 24px rgba(0, 45, 16, .20); }
+        .auth-home-link:focus-visible { outline: 3px solid rgba(255,255,255,.55); outline-offset: 3px; }
+        .auth-home-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            min-width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            background: var(--auth-green-50);
+            color: var(--auth-green-700);
+            font-size: 0;
+            line-height: 1;
+        }
+        .auth-home-icon::before {
+            content: "";
+            position: absolute;
+            top: 8px;
+            width: 12px;
+            height: 10px;
+            border: 2px solid currentColor;
+            border-top: 0;
+            border-radius: 2px 2px 3px 3px;
+        }
+        .auth-home-icon::after {
+            content: "";
+            position: absolute;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-left: 2px solid currentColor;
+            border-top: 2px solid currentColor;
+            transform: rotate(45deg);
+            transform-origin: center;
+        }
         .content-section { position:relative; padding:clamp(58px,7vw,96px) 0; }
         .vision-grid { display:grid; grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); gap:22px; align-items:stretch; }
         .vision-card,.mission-panel,.value-card {
@@ -221,6 +275,54 @@
             html { scroll-behavior:auto; }
             .scroll-card,.scroll-fade { opacity:1!important; filter:none!important; transform:none!important; transition:none!important; }
         }
+        @media (max-width: 767.98px) {
+            .auth-home-link { min-height: 38px; padding: 0 11px; border-radius: 11px; }
+            .auth-home-link-text { display: none; }
+            .auth-home-icon { width: 25px; height: 25px; }
+        }
+    </style>
+
+    <style>
+        /* FINUS UI refresh */
+        .hero{padding:clamp(58px,7vw,92px) 0 clamp(52px,6vw,78px);min-height:430px;display:flex;align-items:center}
+        .hero-inner{max-width:980px}
+        .hero-inner::before{content:"";display:block;width:72px;height:5px;margin:0 auto 22px;border-radius:999px;background:linear-gradient(90deg,var(--g300),var(--g500),var(--g800));box-shadow:0 8px 26px rgba(17,138,55,.18)}
+        .hero-title{max-width:900px;margin-inline:auto;text-wrap:balance}
+        .hero-copy{max-width:760px}
+        .content-section{padding:clamp(48px,6vw,84px) 0}
+        .vision-grid{grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:28px}
+        .vision-card,.mission-panel,.value-card{border-radius:28px;box-shadow:0 24px 70px rgba(3,61,24,.11)}
+        .vision-card{display:flex;flex-direction:column;justify-content:center;min-height:610px;padding:clamp(34px,5vw,58px);isolation:isolate}
+        .vision-card::before{content:"";position:absolute;right:-85px;top:-85px;width:240px;height:240px;border:46px solid rgba(255,255,255,.065);border-radius:50%;z-index:-1}
+        .vision-card::after{content:"VISI";position:absolute;right:-4px;bottom:-32px;color:rgba(255,255,255,.045);font:900 112px/1 "Nunito",sans-serif;letter-spacing:-.06em;z-index:-1}
+        .card-icon{width:64px;height:64px;border-radius:20px;font-size:28px;box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+        .vision-title{font-size:clamp(30px,3.3vw,44px);text-wrap:balance}
+        .vision-copy{font-size:14px;line-height:1.9}
+        .mission-panel{padding:clamp(32px,4vw,48px);background:linear-gradient(180deg,#fff,#FBFEFC)}
+        .mission-panel::before{content:"04 MISI UTAMA";display:inline-flex;margin-bottom:18px;padding:7px 10px;border-radius:999px;background:var(--g100);color:var(--g800);font-size:9px;font-weight:900;letter-spacing:.14em}
+        .mission-list{gap:12px;margin-top:24px}
+        .mission-item{position:relative;overflow:hidden;grid-template-columns:50px minmax(0,1fr);gap:15px;padding:18px;border-radius:18px;background:#F8FDF9;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+        .mission-item::after{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(var(--g300),var(--g700));opacity:0;transition:opacity .2s ease}
+        .mission-item:hover{transform:translateX(4px);border-color:rgba(17,138,55,.2);box-shadow:0 12px 28px rgba(3,61,24,.07)}
+        .mission-item:hover::after{opacity:1}
+        .mission-number{width:50px;height:50px;border-radius:15px;font-size:13px}
+        .mission-item h3{font-size:15.5px}
+        .values-section{position:relative;overflow:hidden;background:linear-gradient(180deg,#EDF8F0 0%,#F8FDF9 70%,#fff 100%)}
+        .values-section::before{content:"";position:absolute;left:50%;top:0;width:min(900px,90vw);height:1px;background:linear-gradient(90deg,transparent,rgba(17,138,55,.25),transparent);transform:translateX(-50%)}
+        .values-heading{margin-bottom:42px}
+        .values-grid{gap:20px}
+        .value-card{min-height:235px;padding:30px;transition:transform .24s ease,box-shadow .24s ease,border-color .24s ease}
+        .value-card:hover{transform:translateY(-7px);border-color:rgba(17,138,55,.2);box-shadow:0 30px 70px rgba(3,61,24,.14)}
+        .value-icon{width:54px;height:54px;border-radius:17px;box-shadow:0 9px 22px rgba(17,138,55,.09)}
+        .value-card h3{font-size:18px}
+        .value-card p{font-size:13px;line-height:1.75}
+        .page-footer{position:relative;overflow:hidden;padding:0;background:linear-gradient(135deg,#012A0F,#033D18 52%,#075923);color:rgba(255,255,255,.72)}
+        .page-footer::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 12% 20%,rgba(126,255,135,.10),transparent 20rem);pointer-events:none}
+        .footer-inner{position:relative;display:grid;grid-template-columns:1.2fr .8fr;align-items:center;gap:30px;padding-top:34px;padding-bottom:34px}
+        .footer-brand{gap:16px}.footer-logo{height:48px;max-width:155px}.footer-copy{font-size:11.5px;line-height:1.7}
+        .footer-links{gap:8px}.footer-links a{padding:9px 12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.045);transition:.2s ease}.footer-links a:hover{background:rgba(255,255,255,.10);transform:translateY(-2px)}
+        @media(max-width:900px){.vision-card{min-height:auto}.vision-grid{gap:20px}.footer-inner{grid-template-columns:1fr}}
+        @media(max-width:720px){.hero{min-height:365px}.vision-card,.mission-panel,.value-card{border-radius:22px}.mission-item{grid-template-columns:44px minmax(0,1fr)}.mission-number{width:44px;height:44px}.footer-inner{padding-top:28px;padding-bottom:28px}.footer-links{justify-content:flex-start}}
     </style>
 </head>
 <body>
@@ -229,13 +331,9 @@
             <img src="{{ asset('assets/images/FINUS_Welcome.png') }}" alt="FINUS PUSDAI" class="page-logo">
 
             <nav class="page-nav" aria-label="Navigasi halaman">
-                <a href="{{ route('home') }}" class="page-nav-link">
-                    <span aria-hidden="true">←</span>
-                    <span class="page-nav-label">Beranda</span>
-                </a>
-                <a href="{{ route('location') }}" class="page-nav-link">
-                    <span aria-hidden="true">⌖</span>
-                    <span class="page-nav-label">Location</span>
+                <a href="{{ route('home') }}" class="auth-home-link" data-loading-title="Kembali ke beranda...">
+                    <span class="auth-home-icon" aria-hidden="true"></span>
+                    <span class="auth-home-link-text">Beranda</span>
                 </a>
             </nav>
         </div>

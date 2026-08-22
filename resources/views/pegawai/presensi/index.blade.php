@@ -1,51 +1,52 @@
 @extends('layouts.app')
 @section('title', 'Presensi Saya')
 @section('hide-page-header', '1')
-@php
-    $presensiCollection = $presensis instanceof \Illuminate\Contracts\Pagination\Paginator ? collect($presensis->items()) : collect($presensis);
-    $totalPresensi = method_exists($presensis, 'total') ? $presensis->total() : $presensiCollection->count();
-    $totalHadir = $presensiCollection->where('status', 'hadir')->count();
-    $totalIzin = $presensiCollection->where('status', 'izin')->count();
-    $totalLembur = $presensiCollection->where('status', 'lembur')->count();
-@endphp
 @section('content')
 @include('layouts.partials.finus-ui')
 <div class="fmu-page">
     <section class="fmu-hero">
         <div class="fmu-hero-main">
             <span class="fmu-hero-icon"><i class="fa-solid fa-calendar-check"></i></span>
-            <div><h1>Presensi Saya</h1><p>Pantau seluruh riwayat kehadiran dan bukti presensi harian Anda.</p></div>
+            <div><h1>Presensi Saya</h1><p>Pantau riwayat kehadiran dan status persetujuan admin.</p></div>
         </div>
         <div class="fmu-hero-actions"><a href="{{ route('pegawai.presensi.create') }}" class="fmu-btn" style="background:#fff;color:#0E5423!important"><i class="fa-solid fa-plus"></i>Isi Presensi</a></div>
     </section>
 
+    @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
+
     <section class="fmu-grid fmu-grid-4 mb-3">
         <article class="fmu-stat" style="--fmu-stat-color:#2563EB;--fmu-stat-soft:#EEF4FF"><span class="fmu-stat-icon"><i class="fa-solid fa-list-check"></i></span><div class="fmu-stat-copy"><small>Total Presensi</small><strong>{{ number_format($totalPresensi,0,',','.') }}</strong></div></article>
-        <article class="fmu-stat" style="--fmu-stat-color:#179B40;--fmu-stat-soft:#EAF8EE"><span class="fmu-stat-icon"><i class="fa-solid fa-user-check"></i></span><div class="fmu-stat-copy"><small>Hadir</small><strong>{{ number_format($totalHadir,0,',','.') }}</strong></div></article>
-        <article class="fmu-stat" style="--fmu-stat-color:#D97706;--fmu-stat-soft:#FFF7E6"><span class="fmu-stat-icon"><i class="fa-solid fa-envelope"></i></span><div class="fmu-stat-copy"><small>Izin</small><strong>{{ number_format($totalIzin,0,',','.') }}</strong></div></article>
-        <article class="fmu-stat" style="--fmu-stat-color:#7C3AED;--fmu-stat-soft:#F5F0FF"><span class="fmu-stat-icon"><i class="fa-solid fa-moon"></i></span><div class="fmu-stat-copy"><small>Lembur</small><strong>{{ number_format($totalLembur,0,',','.') }}</strong></div></article>
+        <article class="fmu-stat" style="--fmu-stat-color:#179B40;--fmu-stat-soft:#EAF8EE"><span class="fmu-stat-icon"><i class="fa-solid fa-calendar-check"></i></span><div class="fmu-stat-copy"><small>Hari Hadir Di-ACC</small><strong>{{ number_format($totalHadirDisetujui,0,',','.') }}</strong></div></article>
+        <article class="fmu-stat" style="--fmu-stat-color:#7C3AED;--fmu-stat-soft:#F5F0FF"><span class="fmu-stat-icon"><i class="fa-solid fa-check-double"></i></span><div class="fmu-stat-copy"><small>Total Disetujui</small><strong>{{ number_format($totalDisetujui,0,',','.') }}</strong></div></article>
+        <article class="fmu-stat" style="--fmu-stat-color:#D97706;--fmu-stat-soft:#FFF7E6"><span class="fmu-stat-icon"><i class="fa-solid fa-clock"></i></span><div class="fmu-stat-copy"><small>Menunggu Approval</small><strong>{{ number_format($totalMenunggu,0,',','.') }}</strong></div></article>
     </section>
 
     <section class="fmu-card">
         <div class="fmu-card-head">
-            <div class="fmu-card-head-main"><span class="fmu-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></span><div><h2>Riwayat Presensi</h2><p>Gunakan pencarian untuk menemukan data berdasarkan karakter awal.</p></div></div>
-            <div style="width:min(100%,310px)"><div class="fmu-input-icon-wrap"><i class="fa-solid fa-magnifying-glass"></i><input id="staffAttendanceSearch" type="search" class="fmu-control" placeholder="Cari tanggal, status, atau keterangan..."></div></div>
+            <div class="fmu-card-head-main"><span class="fmu-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></span><div><h2>Riwayat Presensi</h2><p>Hanya status Hadir yang sudah disetujui yang dihitung sebagai hari gaji.</p></div></div>
+            <div style="width:min(100%,310px)"><div class="fmu-input-icon-wrap"><i class="fa-solid fa-magnifying-glass"></i><input id="staffAttendanceSearch" type="search" class="fmu-control" placeholder="Cari tanggal, status, approval..."></div></div>
         </div>
         <div class="fmu-table-wrap">
             <table class="fmu-table">
-                <thead><tr><th style="width:65px">No</th><th>Hari / Tanggal</th><th>Status</th><th>Keterangan</th><th>Bukti</th></tr></thead>
+                <thead><tr><th style="width:65px">No</th><th>Hari / Tanggal</th><th>Status</th><th>Approval</th><th>Keterangan</th><th>Bukti</th></tr></thead>
                 <tbody>
                 @forelse($presensis as $item)
                     @php
                         $status = strtolower(trim((string) $item->status));
+                        $approved = (bool) $item->is_approved;
+                        $tanggalText = $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->translatedFormat('l, d F Y') : '-';
                         $badgeColor = $status === 'hadir' ? '#179B40' : ($status === 'izin' ? '#D97706' : '#7C3AED');
                         $badgeSoft = $status === 'hadir' ? '#EAF8EE' : ($status === 'izin' ? '#FFF7E6' : '#F5F0FF');
-                        $tanggalText = $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->translatedFormat('l, d F Y') : '-';
                     @endphp
-                    <tr data-attendance-row data-search="{{ $tanggalText }}|{{ $status }}|{{ $item->keterangan ?? '-' }}">
+                    <tr data-attendance-row data-search="{{ $tanggalText }}|{{ $status }}|{{ $approved ? 'disetujui' : 'menunggu' }}|{{ $item->keterangan ?? '-' }}">
                         <td data-row-number>{{ $loop->iteration }}</td>
                         <td class="font-weight-bold">{{ $tanggalText }}</td>
                         <td><span class="fmu-badge" style="--badge-color:{{ $badgeColor }};--badge-soft:{{ $badgeSoft }}">{{ ucfirst($status) }}</span></td>
+                        <td>
+                            <span class="fmu-badge" style="--badge-color:{{ $approved ? '#179B40' : '#D97706' }};--badge-soft:{{ $approved ? '#EAF8EE' : '#FFF7E6' }}">
+                                <i class="fa-solid {{ $approved ? 'fa-check' : 'fa-clock' }}"></i>{{ $approved ? 'Disetujui' : 'Menunggu' }}
+                            </span>
+                        </td>
                         <td>{{ $item->keterangan ?: '-' }}</td>
                         <td>
                             @if($item->bukti_kehadiran)
@@ -56,9 +57,9 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="fmu-empty"><i class="fa-regular fa-folder-open"></i>Belum ada riwayat presensi.</td></tr>
+                    <tr><td colspan="6" class="fmu-empty"><i class="fa-regular fa-folder-open"></i>Belum ada riwayat presensi.</td></tr>
                 @endforelse
-                <tr id="staffAttendanceEmpty" style="display:none"><td colspan="5" class="fmu-empty"><i class="fa-solid fa-magnifying-glass"></i>Data tidak ditemukan.</td></tr>
+                <tr id="staffAttendanceEmpty" style="display:none"><td colspan="6" class="fmu-empty"><i class="fa-solid fa-magnifying-glass"></i>Data tidak ditemukan.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -84,7 +85,8 @@
         });
         if (empty) empty.style.display = rows.length && !visible ? '' : 'none';
     };
-    input?.addEventListener('input', filter); filter();
+    input?.addEventListener('input', filter);
+    filter();
 })();
 </script>
 @endpush

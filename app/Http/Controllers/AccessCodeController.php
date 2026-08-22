@@ -1,13 +1,10 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-
 class AccessCodeController extends Controller
 {
     private const MAX_ATTEMPTS = 3;
@@ -23,10 +20,11 @@ class AccessCodeController extends Controller
             ? User::ROLE_ADMIN
             : User::ROLE_PEGAWAI;
         /*
-         * Hanya periksa guard yang diminta. Login Jamaah tidak lagi
-         * menghalangi login Admin/Pegawai dan sebaliknya.
+         * Hanya cek guard yang sedang diminta.
+         * Jadi Jamaah yang sudah login tetap boleh membuka akses Admin/Pegawai,
+         * dan sebaliknya, tanpa merusak multi-session.
          */
-        if (Auth::guard($guard)->check()) {
+        if(Auth::guard($guard)->check()){
             /** @var User $user */
             $user = Auth::guard($guard)->user();
             return response()->json([
@@ -35,13 +33,16 @@ class AccessCodeController extends Controller
                 'redirect' => $this->dashboardFor($user),
                 'current_role' => $user->role,
                 'requested_type' => $type,
+                'logout_url' => $type === 'admin'
+                    ? route('logout.admin')
+                    : route('logout.pegawai'),
             ]);
         }
         $code = trim($validated['code']);
         $expectedCode = $type === 'admin'
             ? config('finus.access_code_admin', env('ACCESS_CODE_ADMIN'))
             : config('finus.access_code_staff', env('ACCESS_CODE_STAFF'));
-        if (! is_string($expectedCode) || trim($expectedCode) === '') {
+        if(! is_string($expectedCode) || trim($expectedCode) === ''){
             return response()->json([
                 'status' => 'misconfigured',
                 'message' => 'Kode akses belum dikonfigurasi.',
@@ -50,19 +51,27 @@ class AccessCodeController extends Controller
         $attemptKey = "access_code_attempts:{$request->ip()}:{$type}";
         $cooldownKey = "access_code_cooldown:{$request->ip()}:{$type}";
         $cooldownUntil = (int) Cache::get($cooldownKey, 0);
-        if ($cooldownUntil > now()->timestamp) {
+        if($cooldownUntil > now()->timestamp){
             return response()->json([
                 'status' => 'cooldown',
                 'message' => 'Terlalu banyak percobaan.',
                 'remaining' => $cooldownUntil - now()->timestamp,
             ]);
         }
-        if ($cooldownUntil > 0) {
+        if($cooldownUntil > 0){
             Cache::forget($cooldownKey);
         }
-        if (hash_equals(trim($expectedCode), $code)) {
+        if(hash_equals(trim($expectedCode), $code)){
             Cache::forget($attemptKey);
             Cache::forget($cooldownKey);
+            /*
+             * Simpan bukti verifikasi di session. Middleware internal akan
+             * memeriksa nilai ini sebelum membuka login/register pengelola.
+             */
+            $request->session()->put(
+                "management_access.{$type}_verified_at",
+                now()->timestamp
+            );
             return response()->json([
                 'status' => 'success',
                 'redirect' => $this->accessDestination($type),
@@ -74,7 +83,7 @@ class AccessCodeController extends Controller
             $attempts,
             now()->addSeconds(self::COOLDOWN_SECONDS)
         );
-        if ($attempts >= self::MAX_ATTEMPTS) {
+        if($attempts >= self::MAX_ATTEMPTS){
             $cooldownUntil = now()->timestamp + self::COOLDOWN_SECONDS;
             Cache::put(
                 $cooldownKey,
@@ -97,7 +106,7 @@ class AccessCodeController extends Controller
     }
     private function accessDestination(string $type): string
     {
-        if ($type === 'staff') {
+        if($type === 'staff'){
             return route('login.staff');
         }
         return User::where('role', User::ROLE_ADMIN)->exists()
@@ -106,7 +115,7 @@ class AccessCodeController extends Controller
     }
     private function dashboardFor(User $user): string
     {
-        return match ($user->role) {
+        return match ($user->role){
             User::ROLE_ADMIN => route('dashboard'),
             User::ROLE_PEGAWAI => route('pegawai.dashboard'),
             User::ROLE_JAMAAH => route('jamaah.dashboard'),
