@@ -11,6 +11,9 @@
     $totalData = $pengeluaranItems->count();
     $totalNominal = (float) $pengeluaranItems->sum('jumlah');
     $totalKategori = $pengeluaranItems->pluck('kategori')->filter()->unique()->count();
+    $pengeluaranCreateRoute = request()->routeIs('pegawai.keuangan.*')
+        ? 'pegawai.keuangan.pengeluaran.create'
+        : 'admin.pengeluaran.create';
 @endphp
 
 @push('styles')
@@ -756,7 +759,7 @@
         </div>
 
         <div class="finus-data-hero-actions">
-            <a href="{{ route('admin.pengeluaran.create') }}" class="finus-data-add">
+            <a href="{{ route($pengeluaranCreateRoute) }}" class="finus-data-add">
                 <i class="fa-solid fa-plus"></i>
                 Tambah Pengeluaran
             </a>

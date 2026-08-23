@@ -83,7 +83,7 @@ class PenggajianController extends Controller
             );
 
             return redirect()
-                ->route('admin.penggajian.index', [
+                ->route($this->indexRoute($request), [
                     'periode' => $penggajian->periode,
                 ])
                 ->with(
@@ -97,12 +97,19 @@ class PenggajianController extends Controller
         );
 
         return redirect()
-            ->route('admin.penggajian.index', [
+            ->route($this->indexRoute($request), [
                 'periode' => $penggajian->periode,
             ])
             ->with(
                 'success',
                 'Status gaji berhasil diubah menjadi Belum Dibayar.'
             );
+    }
+
+    private function indexRoute(Request $request): string
+    {
+        return $request->routeIs('pegawai.keuangan.*')
+            ? 'pegawai.keuangan.penggajian.index'
+            : 'admin.penggajian.index';
     }
 }

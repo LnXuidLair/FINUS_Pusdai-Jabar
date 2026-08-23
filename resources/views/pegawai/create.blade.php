@@ -77,7 +77,7 @@
         <aside class="fmu-side-note">
             <h3><i class="fa-solid fa-shield-halved mr-2"></i>Panduan Data</h3>
             <p>Pastikan data cocok dengan identitas pegawai agar aktivasi akun dan laporan tidak keliru.</p>
-            <ul><li>NIP harus unik.</li><li>Jabatan menentukan profil dashboard.</li><li>Email akun dibuat otomatis.</li><li>Nomor telepon disimpan dalam format internasional.</li></ul>
+            <ul><li>NIP harus unik.</li><li>Jabatan menentukan profil dashboard dan hak akses otomatis.</li><li>Jabatan DKM/Keuangan membuka menu khusus.</li><li>Email akun dibuat otomatis.</li><li>Nomor telepon disimpan dalam format internasional.</li></ul>
         </aside>
     </div>
 </div>
