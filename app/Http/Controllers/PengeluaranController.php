@@ -132,7 +132,7 @@ class PengeluaranController extends Controller
         }
 
         return redirect()
-            ->route('admin.pengeluaran.index')
+            ->route($this->indexRoute($request))
             ->with('success', 'Data pengeluaran berhasil ditambahkan.');
     }
 
@@ -162,5 +162,12 @@ class PengeluaranController extends Controller
         return response()->json([
             'success' => true,
         ]);
+    }
+
+    private function indexRoute(Request $request): string
+    {
+        return $request->routeIs('pegawai.keuangan.*')
+            ? 'pegawai.keuangan.pengeluaran.index'
+            : 'admin.pengeluaran.index';
     }
 }

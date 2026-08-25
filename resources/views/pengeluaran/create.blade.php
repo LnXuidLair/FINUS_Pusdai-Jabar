@@ -1,11 +1,19 @@
 @extends('layouts.app')
 @section('title', 'Tambah Pengeluaran')
 @section('hide-page-header', '1')
+@php
+    $pengeluaranStoreRoute = request()->routeIs('pegawai.keuangan.*')
+        ? 'pegawai.keuangan.pengeluaran.store'
+        : 'admin.pengeluaran.store';
+    $pengeluaranIndexRoute = request()->routeIs('pegawai.keuangan.*')
+        ? 'pegawai.keuangan.pengeluaran.index'
+        : 'admin.pengeluaran.index';
+@endphp
 @section('content')
 @include('layouts.partials.finus-ui')
 <div class="fmu-page">
     <section class="fmu-hero"><div class="fmu-hero-main"><span class="fmu-hero-icon"><i class="fa-solid fa-receipt"></i></span><div><h1>Tambah Pengeluaran</h1><p>Catat pengeluaran masjid dan lampirkan bukti pembayaran bila tersedia.</p></div></div><div class="fmu-hero-actions"><span class="fmu-hero-badge"><i class="fa-solid fa-shield-halved"></i>Pencatatan Keuangan</span></div></section>
-    <form method="POST" action="{{ route('admin.pengeluaran.store') }}" enctype="multipart/form-data" class="fmu-card" id="expenseForm">
+    <form method="POST" action="{{ route($pengeluaranStoreRoute) }}" enctype="multipart/form-data" class="fmu-card" id="expenseForm">
         @csrf
         <div class="fmu-card-head"><div class="fmu-card-head-main"><span class="fmu-card-icon"><i class="fa-solid fa-pen-to-square"></i></span><div><h2>Data Pengeluaran</h2><p>Isi kategori, deskripsi, nominal, dan tanggal transaksi.</p></div></div></div>
         <div class="fmu-card-body">
@@ -17,7 +25,7 @@
                 <div class="fmu-field"><label class="fmu-label" for="bukti_pembayaran">Bukti Pembayaran</label><label class="fmu-upload" for="bukti_pembayaran"><span><i class="fa-solid fa-cloud-arrow-up"></i><strong>Pilih bukti pembayaran</strong><span>JPG, JPEG, PNG, atau PDF. Maksimal 2 MB.</span><span class="fmu-file-name" id="expenseFileName"></span></span></label><input type="file" id="bukti_pembayaran" name="bukti_pembayaran" accept=".jpg,.jpeg,.png,.pdf" class="d-none">@error('bukti_pembayaran')<span class="fmu-error">{{ $message }}</span>@enderror</div>
             </div>
         </div>
-        <div class="fmu-actions"><a href="{{ route('admin.pengeluaran.index') }}" class="fmu-btn"><i class="fa-solid fa-arrow-left"></i>Kembali</a><button type="submit" class="fmu-btn fmu-btn-primary"><i class="fa-solid fa-floppy-disk"></i>Simpan Pengeluaran</button></div>
+        <div class="fmu-actions"><a href="{{ route($pengeluaranIndexRoute) }}" class="fmu-btn"><i class="fa-solid fa-arrow-left"></i>Kembali</a><button type="submit" class="fmu-btn fmu-btn-primary"><i class="fa-solid fa-floppy-disk"></i>Simpan Pengeluaran</button></div>
     </form>
 </div>
 @endsection

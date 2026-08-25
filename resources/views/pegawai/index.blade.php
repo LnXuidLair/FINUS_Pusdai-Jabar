@@ -444,6 +444,7 @@
                             <th>Identitas Pegawai</th>
                             <th width="155">NIP</th>
                             <th width="180">Jabatan</th>
+                            <th width="150">Hak Akses</th>
                             <th width="145" class="text-center">Status</th>
                             <th width="150" class="text-center">Aksi</th>
                         </tr>
@@ -463,7 +464,7 @@
                             <tr
                                 data-search-row
                                 data-status="{{ $status }}"
-                                data-search-start="{{ $pegawai->nip }}|{{ $pegawai->nama_pegawai }}|{{ $pegawai->email }}|{{ $pegawai->jabatan }}|{{ $statusLabel }}"
+                                data-search-start="{{ $pegawai->nip }}|{{ $pegawai->nama_pegawai }}|{{ $pegawai->email }}|{{ $pegawai->jabatan }}|{{ $pegawai->akses_role_label }}|{{ $statusLabel }}"
                             >
                                 <td class="text-center" data-label="Nomor">
                                     <span class="employee-no" data-row-number>{{ $loop->iteration }}</span>
@@ -493,6 +494,13 @@
                                     <span class="employee-chip position">
                                         <i class="fa-solid fa-briefcase"></i>
                                         {{ $pegawai->jabatan }}
+                                    </span>
+                                </td>
+
+                                <td data-label="Hak Akses">
+                                    <span class="employee-chip">
+                                        <i class="fa-solid fa-key"></i>
+                                        {{ $pegawai->akses_role_label }}
                                     </span>
                                 </td>
 
@@ -539,7 +547,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="employee-empty">
+                                <td colspan="7" class="employee-empty">
                                     <i class="fa-solid fa-users-slash"></i>
                                     <strong>Belum ada data pegawai</strong>
                                     <span>Tekan tombol Tambah Pegawai untuk memasukkan data pertama.</span>
@@ -548,7 +556,7 @@
                         @endforelse
 
                         <tr id="emptySearchRow" style="display:none;">
-                            <td colspan="6" class="employee-empty">
+                            <td colspan="7" class="employee-empty">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                                 <strong>Data pegawai tidak ditemukan</strong>
                                 <span>Coba ketik dari karakter pertama atau ubah filter status.</span>

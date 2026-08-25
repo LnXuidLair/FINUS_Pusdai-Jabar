@@ -18,4 +18,9 @@ class GajiJabatan extends Model
     {
         return $this->hasMany(Pegawai::class, 'jabatan', 'jabatan');
     }
+
+    public function riwayat()
+    {
+        return $this->hasMany(GajiJabatanRiwayat::class, 'gaji_jabatan_id');
+    }
 }

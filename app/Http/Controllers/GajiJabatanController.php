@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GajiJabatan;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class GajiJabatanController extends Controller
@@ -56,7 +57,9 @@ class GajiJabatanController extends Controller
             ]
         );
 
-        GajiJabatan::create($validated);
+        $gajiJabatan = GajiJabatan::create($validated);
+
+        $this->catatRiwayatGaji($gajiJabatan, (int) $validated['gaji_perhari']);
 
         return redirect()
             ->route('admin.gaji-jabatan.index')
@@ -107,7 +110,14 @@ class GajiJabatanController extends Controller
 
         $jabatanLama = $gajiJabatan->jabatan;
 
+        $gajiLama = (int) $gajiJabatan->gaji_perhari;
+
         $gajiJabatan->update($validated);
+
+        if ($gajiLama !== (int) $validated['gaji_perhari']) {
+            $this->tutupRiwayatGajiAktif($gajiJabatan);
+            $this->catatRiwayatGaji($gajiJabatan, (int) $validated['gaji_perhari']);
+        }
 
         Pegawai::where('jabatan', $jabatanLama)
             ->update([
@@ -135,5 +145,23 @@ class GajiJabatanController extends Controller
 
         return redirect()->route('admin.gaji-jabatan.index')
             ->with('success', 'Data gaji jabatan berhasil dihapus.');
+    }
+
+    private function tutupRiwayatGajiAktif(GajiJabatan $gajiJabatan): void
+    {
+        $gajiJabatan->riwayat()
+            ->whereNull('berlaku_sampai')
+            ->update([
+                'berlaku_sampai' => now()->subDay()->toDateString(),
+            ]);
+    }
+
+    private function catatRiwayatGaji(GajiJabatan $gajiJabatan, int $gajiPerhari): void
+    {
+        $gajiJabatan->riwayat()->create([
+            'gaji_perhari' => $gajiPerhari,
+            'berlaku_mulai' => now()->toDateString(),
+            'created_by' => Auth::guard('admin')->id(),
+        ]);
     }
 }

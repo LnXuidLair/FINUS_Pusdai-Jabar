@@ -5,6 +5,13 @@
         'slug' => null,
         'color' => '#063959',
     ];
+    $pegawaiAccessRole = $pegawaiSidebar?->akses_role ?? \App\Models\Pegawai::AKSES_UMUM;
+    $canViewFinanceReports = in_array(
+        $pegawaiAccessRole,
+        [\App\Models\Pegawai::AKSES_DKM, \App\Models\Pegawai::AKSES_KEUANGAN],
+        true
+    );
+    $canManageFinance = $pegawaiAccessRole === \App\Models\Pegawai::AKSES_KEUANGAN;
 @endphp
 <style>
     :root {
@@ -706,7 +713,7 @@
                 <img src="{{ asset('assets/images/pusdai_dashboard.png') }}" alt="FINUS" style="max-width:130px" onerror="this.style.display='none'">
                 <div class="logo-title">Pegawai FINUS</div>
                 <div class="logo-sub-title">Jabatan: {{ $profileSidebar['jabatan'] }}</div>
-                <div class="finus-sidebar-role-chip">{{ $profileSidebar['jabatan'] }}</div>
+                <div class="finus-sidebar-role-chip">{{ $pegawaiSidebar?->akses_role_label ?? $profileSidebar['jabatan'] }}</div>
             </div>
             <ul>
                 <li class="menu-label">Dashboard</li>
@@ -732,7 +739,7 @@
                         <span>Isi Presensi</span>
                     </a>
                 </li>
-                <li class="menu-label">Laporan</li>
+                <li class="menu-label">Gaji Pribadi</li>
                 <li>
                     <a href="{{ route('pegawai.laporan-gaji.index') }}"
                         class="{{ request()->routeIs('pegawai.laporan-gaji.*') ? 'active' : '' }}">
@@ -740,6 +747,47 @@
                         <span>Laporan Gaji</span>
                     </a>
                 </li>
+                @if($canManageFinance)
+                    <li class="menu-label">Keuangan</li>
+                    <li>
+                        <a href="{{ route('pegawai.keuangan.pengeluaran.index') }}"
+                            class="{{ request()->routeIs('pegawai.keuangan.pengeluaran.*') ? 'active' : '' }}">
+                            <i class="ti-receipt"></i>
+                            <span>Pengeluaran</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('pegawai.keuangan.penggajian.index') }}"
+                            class="{{ request()->routeIs('pegawai.keuangan.penggajian.*') ? 'active' : '' }}">
+                            <i class="ti-wallet"></i>
+                            <span>Penggajian</span>
+                        </a>
+                    </li>
+                @endif
+                @if($canViewFinanceReports)
+                    <li class="menu-label">Laporan Keuangan</li>
+                    <li>
+                        <a href="{{ route('pegawai.laporan-keuangan.jurnal-umum') }}"
+                            class="{{ request()->routeIs('pegawai.laporan-keuangan.jurnal-umum') ? 'active' : '' }}">
+                            <i class="ti-agenda"></i>
+                            <span>Jurnal Umum</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('pegawai.laporan-keuangan.arus-kas') }}"
+                            class="{{ request()->routeIs('pegawai.laporan-keuangan.arus-kas') ? 'active' : '' }}">
+                            <i class="ti-bar-chart"></i>
+                            <span>Arus Kas</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('pegawai.laporan-keuangan.arus-kas-psak') }}"
+                            class="{{ request()->routeIs('pegawai.laporan-keuangan.arus-kas-psak') ? 'active' : '' }}">
+                            <i class="ti-stats-up"></i>
+                            <span>Arus Kas PSAK</span>
+                        </a>
+                    </li>
+                @endif
             </ul>
         </div>
     </div>

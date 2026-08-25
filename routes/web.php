@@ -149,6 +149,28 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
             ->name('laporan-gaji.index');
         Route::get('/laporan-gaji/{penggajian}/slip', [PegawaiDashboardController::class, 'downloadSlip'])
             ->name('laporan-gaji.slip');
+        Route::middleware('pegawai.access:dkm,keuangan')
+            ->prefix('laporan-keuangan')
+            ->name('laporan-keuangan.')
+            ->group(function () {
+                Route::get('/jurnal-umum', [LaporanController::class, 'jurnalUmum'])
+                    ->name('jurnal-umum');
+                Route::get('/arus-kas', [LaporanController::class, 'arusKas'])
+                    ->name('arus-kas');
+                Route::get('/arus-kas-psak', [LaporanController::class, 'arusKasDariJurnal'])
+                    ->name('arus-kas-psak');
+            });
+        Route::middleware('pegawai.access:keuangan')
+            ->prefix('keuangan')
+            ->name('keuangan.')
+            ->group(function () {
+                Route::resource('pengeluaran', PengeluaranController::class)
+                    ->only(['index', 'create', 'store', 'destroy']);
+                Route::get('penggajian', [PenggajianController::class, 'index'])
+                    ->name('penggajian.index');
+                Route::patch('penggajian/{penggajian}/status', [PenggajianController::class, 'updateStatus'])
+                    ->name('penggajian.status');
+            });
     });
 Route::middleware(['auth:jamaah', 'verified', 'role:jamaah',])
     ->prefix('jamaah')

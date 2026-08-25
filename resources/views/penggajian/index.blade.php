@@ -11,6 +11,12 @@
     $totalData = $penggajianItems->count();
     $totalGaji = (float) $penggajianItems->sum('total_gaji');
     $totalStatus = $penggajianItems->pluck('status_penggajian')->filter()->unique()->count();
+    $penggajianIndexRoute = request()->routeIs('pegawai.keuangan.*')
+        ? 'pegawai.keuangan.penggajian.index'
+        : 'admin.penggajian.index';
+    $penggajianStatusRoute = request()->routeIs('pegawai.keuangan.*')
+        ? 'pegawai.keuangan.penggajian.status'
+        : 'admin.penggajian.status';
 @endphp
 
 @push('styles')
@@ -792,7 +798,7 @@
         </header>
 
         <div class="finus-data-toolbar" style="display:flex;gap:14px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap">
-            <form method="GET" action="{{ route('admin.penggajian.index') }}" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+            <form method="GET" action="{{ route($penggajianIndexRoute) }}" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
                 <div>
                     <label for="periode" style="display:block;font-size:11px;font-weight:800;margin-bottom:6px;color:#64748B">PERIODE</label>
                     <input type="month" id="periode" name="periode" value="{{ $periode }}" class="finus-data-search" style="width:190px;padding-left:12px;padding-right:12px" required>
@@ -846,7 +852,7 @@
                                 <td data-label="Tanggal Bayar">{{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}</td>
                                 <td data-label="Aksi">
                                     @if($gajiTersedia)
-                                        <form method="POST" action="{{ route('admin.penggajian.status', $item) }}" onsubmit="return confirm('{{ $sudahBayar ? 'Ubah status menjadi Belum Dibayar?' : 'Pastikan gaji sudah dikirim. Tandai sebagai Sudah Dibayar?' }}')">
+                                        <form method="POST" action="{{ route($penggajianStatusRoute, $item) }}" onsubmit="return confirm('{{ $sudahBayar ? 'Ubah status menjadi Belum Dibayar?' : 'Pastikan gaji sudah dikirim. Tandai sebagai Sudah Dibayar?' }}')">
                                             @csrf
                                             @method('PATCH')
                                             <input type="hidden" name="status_penggajian" value="{{ $sudahBayar ? 'belum_dibayar' : 'sudah_dibayar' }}">
