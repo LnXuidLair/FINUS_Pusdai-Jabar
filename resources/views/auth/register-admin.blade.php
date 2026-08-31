@@ -92,8 +92,14 @@
                 </button>
             </div>
 
-            <button type="button" id="generate-admin-recovery" class="auth-button admin-recovery-generate"
-                    data-generate-url="{{ route('register.admin.recovery-code.generate') }}">
+            <button
+                type="button"
+                id="generate-admin-recovery"
+                class="auth-button admin-recovery-generate"
+                data-generate-url="{{ route('register.admin.recovery-code.generate') }}"
+                aria-label="Generate Recovery Code"
+                title="Generate Recovery Code"
+            >
                 <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
                 <span>Generate Code</span>
             </button>
@@ -114,36 +120,63 @@
 <style>
     .admin-recovery-row {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: stretch;
+        grid-template-columns: minmax(0, 1fr) 154px;
+        align-items: center;
         gap: 10px;
+        width: 100%;
     }
 
     .admin-recovery-row .auth-input-wrap {
+        width: 100%;
         min-width: 0;
     }
 
     .admin-recovery-generate {
-        width: auto !important;
-        min-width: 150px;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 7px;
+        width: 154px !important;
+        min-width: 154px !important;
+        min-height: 52px;
         margin: 0 !important;
-        padding-inline: 16px !important;
+        padding: 0 15px !important;
+        align-self: center;
         white-space: nowrap;
+        line-height: 1.2;
     }
 
     .admin-recovery-generate i {
-        margin-right: 6px;
+        flex: 0 0 auto;
+        margin: 0 !important;
+        font-size: 15px;
+        line-height: 1;
+    }
+
+    .admin-recovery-generate span {
+        display: inline-block;
+        min-width: 0;
+    }
+
+    .admin-recovery-generate:disabled {
+        cursor: wait;
+        opacity: .78;
     }
 
     @media (max-width: 575.98px) {
         .admin-recovery-row {
-            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-columns: minmax(0, 1fr) 52px;
             gap: 8px;
         }
 
         .admin-recovery-generate {
-            min-width: 0;
-            padding-inline: 12px !important;
+            width: 52px !important;
+            min-width: 52px !important;
+            max-width: 52px !important;
+            height: 52px;
+            min-height: 52px;
+            padding: 0 !important;
+            border-radius: 14px !important;
         }
 
         .admin-recovery-generate span {
@@ -151,7 +184,23 @@
         }
 
         .admin-recovery-generate i {
-            margin-right: 0;
+            font-size: 17px;
+        }
+    }
+
+    @media (max-width: 359.98px) {
+        .admin-recovery-row {
+            grid-template-columns: minmax(0, 1fr) 48px;
+            gap: 7px;
+        }
+
+        .admin-recovery-generate {
+            width: 48px !important;
+            min-width: 48px !important;
+            max-width: 48px !important;
+            height: 48px;
+            min-height: 48px;
+            border-radius: 13px !important;
         }
     }
 </style>
@@ -170,9 +219,22 @@
     button.addEventListener('click', async () => {
         if (button.disabled) return;
 
-        const originalText = button.textContent;
+        const label = button.querySelector('span');
+        const icon = button.querySelector('i');
+        const originalLabel = label?.textContent || 'Generate Code';
+        const originalIconClass = icon?.className || '';
+
         button.disabled = true;
-        button.textContent = 'Membuat kode...';
+        button.setAttribute('aria-busy', 'true');
+
+        if (label) {
+            label.textContent = 'Membuat...';
+        }
+
+        if (icon) {
+            icon.className = 'fa-solid fa-spinner fa-spin';
+        }
+
         if (status) status.textContent = '';
 
         try {
@@ -201,7 +263,7 @@
             recovery.dispatchEvent(new Event('input', { bubbles: true }));
 
             if (status) {
-                status.textContent = 'Recovery Code berhasil dibuat. Gunakan ikon mata untuk melihatnya dan simpan kode tersebut di tempat yang aman.';
+                status.textContent = 'Recovery Code berhasil dibuat. Silakan simpan kode tersebut di tempat yang aman.';
             }
 
             recovery.focus({ preventScroll: true });
@@ -211,7 +273,15 @@
             }
         } finally {
             button.disabled = false;
-            button.textContent = originalText;
+            button.removeAttribute('aria-busy');
+
+            if (label) {
+                label.textContent = originalLabel;
+            }
+
+            if (icon) {
+                icon.className = originalIconClass;
+            }
         }
     });
 })();
