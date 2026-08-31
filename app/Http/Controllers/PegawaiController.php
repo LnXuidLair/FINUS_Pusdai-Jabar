@@ -8,12 +8,14 @@ use App\Models\Penggajian;
 use App\Models\Presensi;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class PegawaiController extends Controller
 {
-    private const STAFF_DOMAIN = 'stafffinuspusdai.org';
+    private const STAFF_DOMAIN = 'staffpusdai.finus.id';
 
     public function index()
     {
@@ -41,15 +43,33 @@ class PegawaiController extends Controller
             ),
         ]);
 
-        Pegawai::create($request->validate($this->rules()));
+        $validated = $request->validate($this->rules());
+
+        DB::transaction(function () use ($validated): void {
+            Pegawai::create($validated);
+
+            $user = new User([
+                'name' => $validated['nama_pegawai'],
+                'email' => strtolower($validated['email']),
+                // Email institusi Pegawai tidak melalui verifikasi email publik.
+                'email_verified_at' => now(),
+                // Password acak ini tidak pernah diberikan kepada Pegawai.
+                // Password asli baru ditetapkan ketika proses aktivasi selesai.
+                'password' => Hash::make(Str::random(64)),
+                'role' => User::ROLE_PEGAWAI,
+            ]);
+
+            $user->rotateRecoveryCode();
+            $user->save();
+        });
 
         return redirect()->route('admin.pegawai.index')
-            ->with('success', 'Data pegawai berhasil ditambahkan.');
+            ->with('success', 'Data pegawai berhasil ditambahkan. Recovery Code telah dibuat otomatis.');
     }
 
     public function show($id)
     {
-        $pegawai = Pegawai::with('gajiJabatan')->findOrFail($id);
+        $pegawai = Pegawai::with(['gajiJabatan', 'user'])->findOrFail($id);
 
         $jumlahHadirDisetujui = Presensi::where('id_pegawai', $pegawai->id)
             ->whereMonth('tanggal', now()->month)
@@ -103,16 +123,36 @@ class PegawaiController extends Controller
 
         $validated = $request->validate($this->rules($pegawai));
 
-        $pegawai->update($validated);
+        DB::transaction(function () use ($pegawai, $oldEmail, $validated): void {
+            $pegawai->update($validated);
 
-        if ($oldEmail !== '' && $oldEmail !== strtolower($validated['email'])) {
-            User::where('email', $oldEmail)
-                ->where('role', 'pegawai')
-                ->update([
+            $user = User::query()
+                ->where('email', $oldEmail)
+                ->where('role', User::ROLE_PEGAWAI)
+                ->first();
+
+            if ($user) {
+                $user->forceFill([
                     'name' => $validated['nama_pegawai'],
                     'email' => strtolower($validated['email']),
-                ]);
-        }
+                ])->save();
+
+                return;
+            }
+
+            // Kompatibilitas untuk data Pegawai lama yang dibuat sebelum
+            // mekanisme User + Recovery Code diterapkan.
+            $user = new User([
+                'name' => $validated['nama_pegawai'],
+                'email' => strtolower($validated['email']),
+                'email_verified_at' => now(),
+                'password' => Hash::make(Str::random(64)),
+                'role' => User::ROLE_PEGAWAI,
+            ]);
+
+            $user->rotateRecoveryCode();
+            $user->save();
+        });
 
         return redirect()->route('admin.pegawai.index')
             ->with('success', 'Data pegawai berhasil diperbarui.');
@@ -127,7 +167,14 @@ class PegawaiController extends Controller
                 ->with('error', 'Pegawai tidak dapat dihapus karena memiliki data presensi atau penggajian.');
         }
 
-        $pegawai->delete();
+        DB::transaction(function () use ($pegawai): void {
+            User::query()
+                ->where('email', strtolower((string) $pegawai->email))
+                ->where('role', User::ROLE_PEGAWAI)
+                ->delete();
+
+            $pegawai->delete();
+        });
 
         return redirect()->route('admin.pegawai.index')
             ->with('success', 'Data pegawai berhasil dihapus.');
@@ -146,6 +193,7 @@ class PegawaiController extends Controller
 
         return view('dashboard.pegawai.kepsek.detail-pegawai', compact('pegawai'));
     }
+
     private function jabatanOptions(?string $current = null): array
     {
         return GajiJabatan::query()
@@ -159,6 +207,7 @@ class PegawaiController extends Controller
             ->values()
             ->all();
     }
+
     private function rules(?Pegawai $pegawai = null): array
     {
         return [
@@ -242,4 +291,5 @@ class PegawaiController extends Controller
             ->when($allowedUserEmail, fn ($query) => $query->where('email', '!=', $allowedUserEmail))
             ->exists();
     }
+
 }

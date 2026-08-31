@@ -1,5 +1,7 @@
 @extends('layouts.guest')
 
+@section('portal', 'jamaah')
+
 @section('title', 'FINUS | Login Jamaah')
 @section('header-title', 'Selamat Datang Jamaah')
 @section('panel-eyebrow', 'Akses Jamaah')
@@ -9,7 +11,7 @@
 @section('hero-copy', 'Terhubung dengan informasi dan layanan keuangan Masjid PUSDAI secara mudah dan transparan.')
 
 @section('content')
-<form method="POST" action="{{ route('login.jamaah') }}" class="auth-form" data-loading-title="Memeriksa akun jamaah...">
+<form method="POST" action="{{ route('login.jamaah') }}" class="auth-form" data-loading-title="Memasuki dashboard...">
     @csrf
 
     <div class="auth-context-card">
@@ -44,10 +46,10 @@
 
     <div class="auth-form-row">
         <label class="auth-checkbox"><input type="checkbox" name="remember" value="1" @checked(old('remember'))>Ingat saya</label>
-        <a href="{{ route('password.request') }}" class="auth-link auth-link-small">Lupa password?</a>
+        <a href="{{ route('password.request', ['portal' => 'jamaah']) }}" class="auth-link auth-link-small">Lupa password?</a>
     </div>
 
-    <button type="submit" class="auth-button" data-loading-text="Sedang masuk..." data-loading-title="Memeriksa akun jamaah...">
+    <button type="submit" class="auth-button" data-loading-text="Sedang masuk..." data-loading-title="Memasuki dashboard...">
         Masuk
     </button>
 

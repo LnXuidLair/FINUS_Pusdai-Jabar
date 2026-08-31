@@ -8,6 +8,24 @@
         ? html_entity_decode($rawPageContext, ENT_QUOTES | ENT_HTML5, 'UTF-8')
         : 'FINUS';
     $initial = mb_strtoupper(mb_substr(trim($navUser?->name ?? 'F'), 0, 1));
+    $navEmail = in_array($navUser?->role, [
+        \App\Models\User::ROLE_ADMIN,
+        \App\Models\User::ROLE_PEGAWAI,
+    ], true)
+        ? strtolower((string) $navUser?->email)
+        : $navUser?->email;
+
+    $profileRoute = match (true) {
+        $navUser?->isAdmin() => 'admin.profile',
+        $navUser?->isPegawai() => 'pegawai.profile',
+        default => 'jamaah.profile',
+    };
+
+    $settingsRoute = match (true) {
+        $navUser?->isAdmin() => 'admin.settings',
+        $navUser?->isPegawai() => 'pegawai.settings',
+        default => 'jamaah.settings',
+    };
 @endphp
 <style>
     .header.finus-topbar {
@@ -187,6 +205,82 @@
     .finus-user-menu-head .finus-user-avatar { width: 39px; min-width: 39px; height: 39px; }
     .finus-user-menu-head strong { display: block; color: #1C3424; font-size: 12px; }
     .finus-user-menu-head small { display: block; margin-top: 3px; color: #718078; font-size: 10px; word-break: break-word; }
+    .finus-user-menu-section {
+        display: grid;
+        gap: 4px;
+    }
+
+    .finus-account-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 7px 10px;
+        border-radius: 11px;
+        color: #294334;
+        text-decoration: none !important;
+        transition: background .18s ease, color .18s ease, transform .18s ease;
+    }
+
+    .finus-account-link:hover,
+    .finus-account-link:focus-visible {
+        background: #F1F8F3;
+        color: #0E6E2C;
+        outline: none;
+        transform: translateX(1px);
+    }
+
+    .finus-account-link.is-active {
+        background: #EAF8EE;
+        color: #0E6E2C;
+    }
+
+    .finus-account-link-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        min-width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: #ECF6EF;
+        color: #179B40;
+        font-size: 12px;
+    }
+
+    .finus-account-link.is-active .finus-account-link-icon {
+        background: #D9F2DF;
+        color: #0E6E2C;
+    }
+
+    .finus-account-link-copy {
+        display: grid;
+        min-width: 0;
+        flex: 1;
+        line-height: 1.2;
+    }
+
+    .finus-account-link-copy strong {
+        color: inherit;
+        font-size: 11.5px;
+        font-weight: 850;
+    }
+
+    .finus-account-link-copy small {
+        margin-top: 3px;
+        overflow: hidden;
+        color: #78877E;
+        font-size: 9.5px;
+        font-weight: 650;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .finus-account-link-chevron {
+        color: #9AA79F;
+        font-size: 9px;
+    }
+
     .finus-logout-button {
         display: flex;
         align-items: center;
@@ -242,10 +336,45 @@
                     <span class="finus-user-avatar" aria-hidden="true">{{ $initial }}</span>
                     <span>
                         <strong>{{ $navUser->name }}</strong>
-                        <small>{{ $navUser->email }}</small>
+                        <small>{{ $navEmail }}</small>
                     </span>
                 </div>
                 <div class="dropdown-divider"></div>
+
+                <div class="finus-user-menu-section" aria-label="Pengaturan akun">
+                    <a
+                        href="{{ route($profileRoute) }}"
+                        class="finus-account-link {{ request()->routeIs($profileRoute) ? 'is-active' : '' }}"
+                        @if(request()->routeIs($profileRoute)) aria-current="page" @endif
+                    >
+                        <span class="finus-account-link-icon" aria-hidden="true">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <span class="finus-account-link-copy">
+                            <strong>Profil Saya</strong>
+                            <small>Lihat informasi akun Anda</small>
+                        </span>
+                        <i class="fa-solid fa-chevron-right finus-account-link-chevron" aria-hidden="true"></i>
+                    </a>
+
+                    <a
+                        href="{{ route($settingsRoute) }}"
+                        class="finus-account-link {{ request()->routeIs($settingsRoute) ? 'is-active' : '' }}"
+                        @if(request()->routeIs($settingsRoute)) aria-current="page" @endif
+                    >
+                        <span class="finus-account-link-icon" aria-hidden="true">
+                            <i class="fa-solid fa-gear"></i>
+                        </span>
+                        <span class="finus-account-link-copy">
+                            <strong>Pengaturan</strong>
+                            <small>Keamanan dan pengaturan akun</small>
+                        </span>
+                        <i class="fa-solid fa-chevron-right finus-account-link-chevron" aria-hidden="true"></i>
+                    </a>
+                </div>
+
+                <div class="dropdown-divider"></div>
+
                 <form method="POST" action="{{ $logoutRoute }}">
                     @csrf
                     <button class="finus-logout-button" type="submit">

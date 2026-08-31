@@ -10,7 +10,7 @@
     <meta name="color-scheme" content="light">
     <meta name="supported-color-schemes" content="light">
 
-    <title>Kode Verifikasi FINUS</title>
+    <title>Kode OTP Reset Password FINUS</title>
 
     <style>
         html,
@@ -176,7 +176,7 @@
 
     {{-- Teks pratinjau yang muncul di daftar inbox --}}
     <div class="preheader">
-        Kode verifikasi akun FINUS Anda adalah {{ $kode }} dan berlaku selama 5 menit.
+        Kode OTP reset password FINUS Anda adalah {{ $code }}. Gunakan kode ini sebelum masa berlakunya berakhir.
     </div>
 
     <table
@@ -261,7 +261,7 @@
                                                         text-transform:uppercase;
                                                     "
                                                 >
-                                                    Verifikasi Akun Jamaah
+                                                    Reset Password Jamaah
                                                 </td>
                                             </tr>
                                         </table>
@@ -294,7 +294,7 @@
                                                 letter-spacing:.3px;
                                             "
                                         >
-                                            Verifikasi Akun FINUS
+                                            Reset Password FINUS
                                         </h1>
 
                                         <p
@@ -326,7 +326,7 @@
                                         >
                                             Assalamu’alaikum,
                                             <strong style="color:#0e5423;">
-                                                {{ $namaJamaah ?? 'Jamaah' }}
+                                                {{ $name ?? 'Jamaah' }}
                                             </strong>
                                         </p>
 
@@ -338,9 +338,9 @@
                                                 line-height:1.75;
                                             "
                                         >
-                                            Terima kasih telah melakukan pendaftaran akun
-                                            jamaah di FINUS. Masukkan kode berikut pada halaman
-                                            verifikasi untuk mengaktifkan akun Anda.
+                                            Kami menerima permintaan untuk mereset password akun
+                                            Jamaah FINUS Anda. Masukkan kode berikut pada halaman
+                                            reset password untuk melanjutkan proses perubahan password.
                                         </p>
 
                                         {{-- Kotak kode verifikasi --}}
@@ -374,7 +374,7 @@
                                                             text-transform:uppercase;
                                                         "
                                                     >
-                                                        Kode verifikasi Anda
+                                                        Kode OTP Anda
                                                     </p>
 
                                                     <table
@@ -386,7 +386,7 @@
                                                         style="margin:15px auto 0;"
                                                     >
                                                         <tr>
-                                                            @foreach(str_split((string) $kode) as $digit)
+                                                            @foreach(str_split((string) $code) as $digit)
                                                                 <td
                                                                     class="verification-digit"
                                                                     align="center"
@@ -416,8 +416,8 @@
                                                             line-height:1.6;
                                                         "
                                                     >
-                                                        Masukkan enam digit kode tersebut pada
-                                                        halaman verifikasi FINUS.
+                                                        Masukkan kode OTP tersebut pada halaman
+                                                        reset password FINUS.
                                                     </p>
                                                 </td>
                                             </tr>
@@ -478,7 +478,7 @@
                                                 >
                                                     Kode ini hanya berlaku selama
                                                     <strong style="color:#92400e;">
-                                                        5 menit
+                                                        {{ $expiresInSeconds }} detik
                                                     </strong>
                                                     sejak email diterima.
                                                 </td>
@@ -601,7 +601,7 @@
                                                                     line-height:1.65;
                                                                 "
                                                             >
-                                                                Jika kode kedaluwarsa, Silahkan minta kode baru
+                                                                Jika kode kedaluwarsa, Silahkanminta kode baru
                                                                 melalui sistem.
                                                             </td>
                                                         </tr>
@@ -642,9 +642,9 @@
                                                         line-height:1.7;
                                                     "
                                                 >
-                                                    Jika Anda tidak pernah membuat akun FINUS,
-                                                    abaikan email ini. Akun tidak akan aktif tanpa
-                                                    memasukkan kode verifikasi tersebut.
+                                                    Jika Anda tidak pernah meminta reset password FINUS,
+                                                    abaikan email ini. Password akun Anda tidak akan berubah
+                                                    tanpa memasukkan kode OTP dan menyelesaikan proses reset.
                                                 </td>
                                             </tr>
                                         </table>

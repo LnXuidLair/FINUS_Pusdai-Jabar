@@ -1,5 +1,7 @@
 @extends('layouts.guest')
 
+@section('portal', 'admin')
+
 @section('title', 'FINUS | Daftar Admin')
 @section('header-title', 'Registrasi Admin')
 @section('panel-eyebrow', 'Penyiapan Sistem')
@@ -16,7 +18,7 @@
         <span class="auth-context-icon" aria-hidden="true">1</span>
         <div>
             <p class="auth-context-title">Satu akun administrator utama</p>
-            <p class="auth-context-copy">Pastikan nama dan password sudah benar sebelum akun dibuat.</p>
+            <p class="auth-context-copy">Nama dapat diubah kembali melalui Profil. Email login Admin tetap dan tidak mengikuti perubahan nama.</p>
         </div>
     </div>
 
@@ -27,11 +29,13 @@
                autocomplete="name" required autofocus
                @error('name') aria-invalid="true" aria-describedby="name-error" @enderror>
         @error('name')<p class="auth-error" id="name-error" role="alert">{{ $message }}</p>@enderror
+    </div>
 
-        <div class="auth-email-preview" aria-live="polite">
-            Email login dibuat otomatis:
-            <strong id="admin-email-preview">nama@AdminFinusPusdai.org</strong>
-        </div>
+    <div class="auth-field-group">
+        <label for="admin-email" class="auth-label"><span class="auth-label-icon" aria-hidden="true">@</span>Email Admin</label>
+        <input id="admin-email" type="email" class="auth-field"
+               value="admin@pusdai.finus.id" readonly aria-readonly="true" tabindex="-1">
+        <p class="auth-help"><b>i</b>Email Admin dibuat tetap oleh FINUS dan tidak berubah ketika nama Admin diubah.</p>
     </div>
 
     <div class="auth-field-group">
@@ -73,33 +77,143 @@
         @error('password_confirmation')<p class="auth-error" role="alert">{{ $message }}</p>@enderror
     </div>
 
+    <div class="auth-field-group">
+        <label for="recovery_code" class="auth-label"><span class="auth-label-icon" aria-hidden="true">#</span>Recovery Code Admin <span class="auth-required">*</span></label>
+
+        <div class="admin-recovery-row">
+            <div class="auth-input-wrap">
+                <input id="recovery_code" type="password" name="recovery_code"
+                       value="{{ old('recovery_code') }}"
+                       class="auth-field auth-password-field" placeholder="Generate Code atau ketik sendiri"
+                       autocomplete="new-password" minlength="16" maxlength="64" required
+                       @error('recovery_code') aria-invalid="true" aria-describedby="recovery-code-error" @enderror>
+                <button type="button" data-toggle-password data-target="#recovery_code" aria-label="Tampilkan Recovery Code" aria-pressed="false">
+                    <img src="{{ asset('assets/images/ShowPassword.png') }}" alt="">
+                </button>
+            </div>
+
+            <button type="button" id="generate-admin-recovery" class="auth-button admin-recovery-generate"
+                    data-generate-url="{{ route('register.admin.recovery-code.generate') }}">
+                <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                <span>Generate Code</span>
+            </button>
+        </div>
+
+        <p class="auth-help"><b>i</b>Anda boleh memakai Generate Code atau mengetik sendiri. Minimal 16 dan maksimal 64 karakter, tanpa spasi, serta wajib memiliki huruf besar, huruf kecil, angka, dan simbol.</p>
+        <p id="recovery-generate-status" class="auth-help" aria-live="polite"></p>
+        @error('recovery_code')<p class="auth-error" id="recovery-code-error" role="alert">{{ $message }}</p>@enderror
+    </div>
+
     <button type="submit" class="auth-button" data-loading-text="Membuat akun..." data-loading-title="Membuat akun admin...">
         Buat Akun
     </button>
 </form>
 @endsection
 
+@push('styles')
+<style>
+    .admin-recovery-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .admin-recovery-row .auth-input-wrap {
+        min-width: 0;
+    }
+
+    .admin-recovery-generate {
+        width: auto !important;
+        min-width: 150px;
+        margin: 0 !important;
+        padding-inline: 16px !important;
+        white-space: nowrap;
+    }
+
+    .admin-recovery-generate i {
+        margin-right: 6px;
+    }
+
+    @media (max-width: 575.98px) {
+        .admin-recovery-row {
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 8px;
+        }
+
+        .admin-recovery-generate {
+            min-width: 0;
+            padding-inline: 12px !important;
+        }
+
+        .admin-recovery-generate span {
+            display: none;
+        }
+
+        .admin-recovery-generate i {
+            margin-right: 0;
+        }
+    }
+</style>
+@endpush
+
 @push('scripts')
 <script>
 (() => {
-    const input = document.getElementById('admin-name');
-    const preview = document.getElementById('admin-email-preview');
-    if (!input || !preview) return;
+    const button = document.getElementById('generate-admin-recovery');
+    const recovery = document.getElementById('recovery_code');
+    const status = document.getElementById('recovery-generate-status');
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
 
-    const update = () => {
-        const local = input.value
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9]+/g, '.')
-            .replace(/^\.+|\.+$/g, '');
+    if (!button || !recovery || !csrf) return;
 
-        preview.textContent = `${local || 'nama'}@AdminFinusPusdai.org`;
-    };
+    button.addEventListener('click', async () => {
+        if (button.disabled) return;
 
-    input.addEventListener('input', update);
-    update();
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Membuat kode...';
+        if (status) status.textContent = '';
+
+        try {
+            const response = await fetch(button.dataset.generateUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrf,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('generate-failed');
+            }
+
+            const data = await response.json();
+            const code = data.recovery_code || '';
+
+            if (!code) {
+                throw new Error('empty-code');
+            }
+
+            recovery.value = code;
+            recovery.dispatchEvent(new Event('input', { bubbles: true }));
+
+            if (status) {
+                status.textContent = 'Recovery Code berhasil dibuat. Gunakan ikon mata untuk melihatnya dan simpan kode tersebut di tempat yang aman.';
+            }
+
+            recovery.focus({ preventScroll: true });
+        } catch (error) {
+            if (status) {
+                status.textContent = 'Recovery Code belum berhasil dibuat. Silakan coba kembali atau ketik kode sendiri.';
+            }
+        } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    });
 })();
 </script>
 @endpush

@@ -342,15 +342,6 @@
             border:38px solid rgba(255,255,255,.065);border-radius:50%
         }
         .finus-modal-content{position:relative;z-index:2;padding:clamp(23px,5vw,32px)}
-        .finus-modal-close{
-            position:absolute;top:13px;right:13px;z-index:5;display:inline-flex;
-            align-items:center;justify-content:center;width:37px;height:37px;padding:0;
-            border:1px solid rgba(255,255,255,.18);border-radius:11px;
-            background:rgba(255,255,255,.10);color:#fff;font-size:23px;cursor:pointer;transition:.2s
-        }
-        .finus-modal-close:hover,.finus-modal-close:focus-visible{
-            background:rgba(255,255,255,.17);outline:none;transform:rotate(4deg)
-        }
         .finus-modal-icon{
             display:flex;align-items:center;justify-content:center;width:58px;height:58px;
             margin:0 auto 15px;border:1px solid rgba(255,255,255,.16);border-radius:18px;
@@ -2390,7 +2381,7 @@
                     <span class="finus-role-card-kicker">Akses Internal</span>
                     <h2 class="finus-role-title">Pilih akses pengelola</h2>
                     <p class="finus-role-copy">
-                        Gunakan akses sesuai peran Anda. Kode akses akan diverifikasi sebelum halaman login dibuka.
+                        Gunakan akses sesuai peran Anda. Kode akses akan diverifikasi sebelum portal autentikasi dibuka.
                     </p>
                     <div class="finus-role-list">
                         <button type="button" class="finus-role-link" data-access-role="admin" data-access-url="{{ route('login.admin') }}">
@@ -2412,7 +2403,7 @@
                     </div>
                     <div class="finus-role-security">
                         <span aria-hidden="true">🔐</span>
-                        <span>Masukkan kode akses yang telah diberikan sebelum melanjutkan ke halaman login.</span>
+                        <span>Masukkan kode akses yang telah diberikan sebelum melanjutkan ke portal autentikasi.</span>
                     </div>
                 </aside>
             </div>
@@ -2438,12 +2429,11 @@
     </footer>
     <div class="finus-modal" id="codeModal" role="dialog" aria-modal="true" aria-labelledby="accessModalTitle" aria-hidden="true">
         <div class="finus-modal-dialog">
-            <button type="button" class="finus-modal-close" id="closeAccessModal" aria-label="Tutup dialog">×</button>
             <div class="finus-modal-content">
                 <div class="finus-modal-icon" aria-hidden="true">🔐</div>
                 <h2 class="finus-modal-title" id="accessModalTitle">Masukkan Kode Akses</h2>
                 <p class="finus-modal-copy" id="accessModalCopy">
-                    Kode akses diperlukan sebelum membuka halaman login.
+                    Kode akses diperlukan sebelum membuka portal autentikasi.
                 </p>
                 <label for="accessCodeInput" class="finus-field-label">Kode Akses FINUS</label>
                 <div class="finus-code-field-wrap">
@@ -2483,7 +2473,6 @@
         const verifyText = document.getElementById('verifyText');
         const verifySpinner = document.getElementById('verifySpinner');
         const togglePassword = document.getElementById('togglePassword');
-        const closeModalButton = document.getElementById('closeAccessModal');
         const cancelModalButton = document.getElementById('cancelAccessModal');
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "{{ csrf_token() }}";
         const pageHeader = document.querySelector('.finus-header');
@@ -2524,8 +2513,8 @@
             const isAdmin = type === 'admin';
             modalTitle.textContent = isAdmin ? 'Kode Akses Operator' : 'Kode Akses Pegawai';
             modalCopy.textContent = isAdmin
-                ? 'Masukkan kode akses Operator sebelum membuka halaman login Admin.'
-                : 'Masukkan kode akses Pegawai sebelum membuka halaman login Pegawai.';
+                ? 'Masukkan kode akses Operator sebelum membuka portal autentikasi Operator.'
+                : 'Masukkan kode akses Pegawai sebelum membuka portal autentikasi Pegawai.';
             codeModal.classList.add('is-open');
             codeModal.setAttribute('aria-hidden', 'false');
             body.classList.add('is-locked');
@@ -2594,8 +2583,9 @@
                     data = {};
                 }
                 if(data.status === 'success'){
-                    setMessage('Kode akses benar. Mengarahkan...', 'is-success');
-                    showPageLoader('Membuka halaman login...');
+                    setMessage('Kode akses berhasil diverifikasi. Membuka portal autentikasi...', 'is-success');
+                    const portalRole = state.currentType === 'admin' ? 'Operator' : 'Pegawai';
+                    showPageLoader(`Membuka portal autentikasi ${portalRole}...`);
                     window.location.href = data.redirect || state.currentUrl;
                     return;
                 }
@@ -2642,7 +2632,6 @@
             });
         });
         verifyButton.addEventListener('click', verifyAccessCode);
-        closeModalButton.addEventListener('click', closeAccessModal);
         cancelModalButton.addEventListener('click', closeAccessModal);
         input.addEventListener('keydown', event => {
             if(event.key === 'Enter'){
@@ -2657,14 +2646,6 @@
                 'aria-label',
                 showing ? 'Tampilkan kode akses' : 'Sembunyikan kode akses'
             );
-        });
-        codeModal.addEventListener('click', event => {
-            if(event.target === codeModal) closeAccessModal();
-        });
-        document.addEventListener('keydown', event => {
-            if(event.key === 'Escape' && codeModal.classList.contains('is-open')){
-                closeAccessModal();
-            }
         });
     })();
     </script>

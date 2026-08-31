@@ -1,5 +1,7 @@
 @extends('layouts.guest')
 
+@section('portal', 'staff')
+
 @section('title', 'FINUS | Login Pegawai')
 @section('header-title', 'Selamat Datang Pegawai')
 @section('panel-eyebrow', 'Akses Pegawai')
@@ -26,21 +28,21 @@
     </div>
 @endif
 
-<form method="POST" action="{{ route('login.staff') }}" class="auth-form" data-loading-title="Memeriksa akun pegawai...">
+<form method="POST" action="{{ route('login.staff') }}" class="auth-form" data-loading-title="Memasuki portal pegawai...">
     @csrf
 
     <div class="auth-context-card">
         <span class="auth-context-icon" aria-hidden="true">P</span>
         <div>
             <p class="auth-context-title">Portal operasional pegawai</p>
-            <p class="auth-context-copy">Akun hanya dapat dipakai setelah data pegawai diverifikasi dan password dibuat.</p>
+            <p class="auth-context-copy">Akun hanya dapat dipakai setelah data pegawai diverifikasi dan password yang telah dibuat.</p>
         </div>
     </div>
 
     <div class="auth-field-group">
         <label for="email" class="auth-label"><span class="auth-label-icon" aria-hidden="true">@</span>Email Pegawai <span class="auth-required">*</span></label>
         <input id="email" type="email" name="email" value="{{ old('email') }}"
-               class="auth-field" placeholder="nama@StaffFinusPusdai.ac.id"
+               class="auth-field" placeholder="nama@staffpusdai.finus.id"
                autocomplete="username" inputmode="email" required autofocus
                @error('email') aria-invalid="true" aria-describedby="email-error" @enderror>
         @error('email')<p class="auth-error" id="email-error" role="alert">{{ $message }}</p>@enderror
@@ -61,10 +63,10 @@
 
     <div class="auth-form-row">
         <label class="auth-checkbox"><input type="checkbox" name="remember" value="1" @checked(old('remember'))>Ingat saya</label>
-        <a href="{{ route('password.request') }}" class="auth-link auth-link-small">Lupa password?</a>
+        <a href="{{ route('password.request', ['portal' => 'pegawai']) }}" class="auth-link auth-link-small">Lupa password?</a>
     </div>
 
-    <button type="submit" class="auth-button" data-loading-text="Sedang masuk..." data-loading-title="Memeriksa akun pegawai...">
+    <button type="submit" class="auth-button" data-loading-text="Sedang masuk..." data-loading-title="Memasuki portal pegawai...">
         Masuk
     </button>
 

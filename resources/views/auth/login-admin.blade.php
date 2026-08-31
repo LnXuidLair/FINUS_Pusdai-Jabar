@@ -1,5 +1,7 @@
 @extends('layouts.guest')
 
+@section('portal', 'admin')
+
 @section('title', 'FINUS | Login Admin')
 @section('header-title', 'Selamat Datang Admin')
 @section('panel-eyebrow', 'Akses Pengelola')
@@ -14,12 +16,14 @@
         <div class="auth-alert-icon" aria-hidden="true">✓</div>
         <div>
             <p class="auth-alert-title">Akun admin berhasil dibuat</p>
-            <p class="auth-alert-message">Gunakan email berikut: <strong class="auth-block auth-break-all">{{ session('admin_email') }}</strong></p>
+            <p class="auth-alert-message">
+                Gunakan email berikut: <strong class="auth-block auth-break-all">{{ session('admin_email') }}</strong>
+            </p>
         </div>
     </div>
 @endif
 
-<form method="POST" action="{{ route('login.admin') }}" class="auth-form" data-loading-title="Memeriksa akun admin...">
+<form method="POST" action="{{ route('login.admin') }}" class="auth-form" data-loading-title="Memasuki portal admin...">
     @csrf
 
     <div class="auth-context-card">
@@ -54,10 +58,10 @@
 
     <div class="auth-form-row">
         <label class="auth-checkbox"><input type="checkbox" name="remember" value="1" @checked(old('remember'))>Ingat saya</label>
-        <a href="{{ route('password.request') }}" class="auth-link auth-link-small">Lupa password?</a>
+        <a href="{{ route('password.request', ['portal' => 'admin']) }}" class="auth-link auth-link-small">Lupa password?</a>
     </div>
 
-    <button type="submit" class="auth-button" data-loading-text="Sedang masuk..." data-loading-title="Memeriksa akun admin...">
+    <button type="submit" class="auth-button" data-loading-text="Sedang masuk..." data-loading-title="Memasuki portal admin...">
         Masuk
     </button>
 
