@@ -1014,6 +1014,13 @@
 </head>
 
 <body>
+    @php
+        $authPortal = trim($__env->yieldContent('portal'));
+        $authHomeRoute = in_array($authPortal, ['admin', 'staff'], true)
+            ? 'management.access'
+            : 'home';
+    @endphp
+
     <a href="#auth-content" class="auth-skip-link">Lewati ke formulir</a>
 
     <div id="authLoadingOverlay" class="auth-loading-overlay" role="status" aria-live="polite" aria-hidden="true">
@@ -1025,7 +1032,7 @@
     </div>
 
     <header class="auth-header">
-        <a href="{{ route('home') }}" class="auth-brand" data-loading-title="Membuka beranda..." aria-label="FINUS PUSDAI - Beranda">
+        <a href="{{ route($authHomeRoute) }}" class="auth-brand" data-loading-title="Membuka beranda..." aria-label="FINUS PUSDAI - Beranda">
             <img src="{{ asset('assets/images/FINUS_login.png') }}" alt="FINUS PUSDAI"
                  onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='{{ asset('assets/images/pusdai_dashboard.png') }}';}else{this.hidden=true;document.getElementById('authBrandFallback').hidden=false;}">
             <span id="authBrandFallback" class="auth-brand-fallback" hidden>FINUS PUSDAI</span>
@@ -1033,7 +1040,7 @@
 
         <h1 class="auth-header-title">@yield('header-title', 'FINUS')</h1>
 
-        <a href="{{ route('home') }}" class="auth-home-link" data-loading-title="Kembali ke beranda...">
+        <a href="{{ route($authHomeRoute) }}" class="auth-home-link" data-loading-title="Kembali ke beranda...">
             <span class="auth-home-icon" aria-hidden="true"></span>
             <span class="auth-home-link-text">Beranda</span>
         </a>
@@ -1078,8 +1085,8 @@
                         $statusMessages = [
                             'verification-code-sent' => ['title' => 'Kode Verifikasi Dikirim', 'message' => 'Silakan periksa email dan masukkan kode untuk mengaktifkan akun.'],
                             'email-verified' => ['title' => 'Verifikasi Berhasil', 'message' => 'Akun jamaah berhasil diverifikasi. Silakan login.'],
-                            'password-reset-link-sent' => ['title' => 'Tautan Reset Dikirim', 'message' => 'Silakan periksa email untuk melanjutkan reset password.'],
                             'password-updated' => ['title' => 'Password Diperbarui', 'message' => 'Silakan masuk menggunakan password baru.'],
+                            'password-changed' => ['title' => 'Password Berhasil Diubah', 'message' => 'Password akun Anda telah diperbarui.'],
                             'account-activated' => ['title' => 'Akun Diaktifkan', 'message' => 'Akun sudah aktif dan dapat digunakan untuk login.'],
                         ];
                         $currentStatus = session('status');

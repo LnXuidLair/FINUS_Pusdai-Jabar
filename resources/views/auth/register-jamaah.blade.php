@@ -1,5 +1,7 @@
 @extends('layouts.guest')
 
+@section('portal', 'jamaah')
+
 @section('title', 'FINUS | Daftar Jamaah')
 @section('header-title', 'Registrasi Jamaah')
 @section('panel-eyebrow', 'Pendaftaran Jamaah')

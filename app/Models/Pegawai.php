@@ -45,6 +45,14 @@ class Pegawai extends Model
         ],
     ];
 
+    /**
+     * Email institusi Pegawai selalu disimpan dalam huruf kecil.
+     */
+    public function setEmailAttribute(?string $value): void
+    {
+        $this->attributes['email'] = strtolower(trim((string) $value));
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'email', 'email');

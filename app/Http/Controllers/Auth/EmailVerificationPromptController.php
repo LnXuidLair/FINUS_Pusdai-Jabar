@@ -16,9 +16,15 @@ class EmailVerificationPromptController extends Controller
         /** @var User|null $user */
         $user = Auth::guard(User::ROLE_JAMAAH)->user();
         abort_unless($user, 401);
+
+        if ($user->role !== User::ROLE_JAMAAH) {
+            abort(403);
+        }
+
         if ($user->hasVerifiedEmail()) {
             return redirect()->route('jamaah.dashboard');
         }
+
         return view('auth.verify-email');
     }
 }

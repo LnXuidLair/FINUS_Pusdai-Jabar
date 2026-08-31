@@ -51,7 +51,7 @@
                     </div>
                     <div class="fmu-field">
                         <label class="fmu-label" for="email_preview">Email Pegawai</label>
-                        <div class="fmu-input-icon-wrap"><i class="fa-solid fa-envelope"></i><input type="email" id="email_preview" value="otomatis@stafffinuspusdai.org" class="fmu-control" readonly></div>
+                        <div class="fmu-input-icon-wrap"><i class="fa-solid fa-envelope"></i><input type="email" id="email_preview" value="otomatis@staffpusdai.finus.id" class="fmu-control" readonly></div>
                         <span class="fmu-help">Dibuat otomatis dari dua kata pertama nama dan empat digit terakhir NIP.</span>
                         @error('email')<span class="fmu-error">{{ $message }}</span>@enderror
                     </div>
@@ -89,7 +89,7 @@
     const nameInput = document.querySelector('input[name="nama_pegawai"]');
     const nipInput = document.querySelector('input[name="nip"]');
     const emailPreview = document.getElementById('email_preview');
-    const domain = 'stafffinuspusdai.org';
+    const domain = 'staffpusdai.finus.id';
     const makeEmailPreview = () => {
         if (!nameInput || !nipInput || !emailPreview) return;
         const names = nameInput.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().split(/\s+/).filter(Boolean).slice(0,2).map(part => part.replace(/[^a-z0-9]/g,''));

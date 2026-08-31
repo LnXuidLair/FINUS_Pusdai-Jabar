@@ -1,5 +1,7 @@
 @extends('layouts.guest')
 
+@section('portal', 'jamaah')
+
 @section('title', 'FINUS | Verifikasi Kode')
 @section('header-title', 'Verifikasi Akun Jamaah')
 @section('panel-eyebrow', 'Langkah Verifikasi')
@@ -44,7 +46,7 @@
         </button>
     </form>
 
-    <form method="POST" action="{{ route('logout') }}" data-loading-title="Keluar dari akun...">
+    <form method="POST" action="{{ route('logout.jamaah') }}" data-loading-title="Keluar dari akun...">
         @csrf
         <button type="submit" class="auth-button-muted" data-loading-text="Keluar..." data-loading-title="Keluar dari akun...">
             Batalkan dan Keluar

@@ -1,5 +1,7 @@
 @extends('layouts.guest')
 
+@section('portal', 'staff')
+
 @section('title', 'FINUS | Aktivasi Akun Pegawai')
 @section('header-title', 'Aktivasi Akun Pegawai')
 @section('panel-eyebrow', 'Langkah Terakhir')

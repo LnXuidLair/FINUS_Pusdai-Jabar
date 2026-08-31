@@ -1,32 +1,32 @@
+@php
+    $portalSection = match($portal ?? 'jamaah') {
+        'admin' => 'admin',
+        'pegawai' => 'staff',
+        default => 'jamaah',
+    };
+@endphp
+
 @extends('layouts.guest')
 
+@section('portal', $portalSection)
 @section('title', 'FINUS | Reset Password')
 @section('header-title', 'Pemulihan Akun')
 @section('panel-eyebrow', 'Keamanan Akun')
 @section('panel-title', 'Buat Password Baru')
-@section('panel-copy', 'Gunakan password baru untuk mengamankan akun.')
+@section('panel-copy', 'Verifikasi pemulihan berhasil. Buat password baru untuk akun Anda.')
 @section('hero-title', 'Keamanan Akun FINUS')
 @section('hero-copy', 'Selesaikan proses reset password untuk memperoleh kembali akses ke akun Anda.')
 
 @section('content')
-<form method="POST" action="{{ route('password.update') }}" class="auth-form" data-loading-title="Memperbarui password...">
+<form method="POST" action="{{ route('password.update') }}" class="auth-form" data-loading-title="Membuat ulang password...">
     @csrf
-    <input type="hidden" name="token" value="{{ $token }}">
 
     <div class="auth-context-card">
         <span class="auth-context-icon" aria-hidden="true">✓</span>
         <div>
-            <p class="auth-context-title">Buat password yang berbeda</p>
-            <p class="auth-context-copy">Hindari menggunakan kembali password lama atau password dari akun lain.</p>
+            <p class="auth-context-title">Verifikasi pemulihan berhasil</p>
+            <p class="auth-context-copy">Masukkan password baru dan konfirmasi password untuk menyelesaikan proses.</p>
         </div>
-    </div>
-
-    <div class="auth-field-group">
-        <label for="email" class="auth-label"><span class="auth-label-icon" aria-hidden="true">@</span>Alamat Email <span class="auth-required">*</span></label>
-        <input id="email" type="email" name="email" value="{{ old('email', $email) }}"
-               class="auth-field" autocomplete="email" inputmode="email" required autofocus
-               @error('email') aria-invalid="true" aria-describedby="email-error" @enderror>
-        @error('email')<p class="auth-error" id="email-error" role="alert">{{ $message }}</p>@enderror
     </div>
 
     <div class="auth-field-group">
@@ -34,7 +34,7 @@
         <div class="auth-input-wrap">
             <input id="password" type="password" name="password" class="auth-field auth-password-field"
                    placeholder="Minimal 8 karakter" autocomplete="new-password"
-                   data-password-strength="resetStrength" required
+                   data-password-strength="resetStrength" required autofocus
                    @error('password') aria-invalid="true" aria-describedby="password-error" @enderror>
             <button type="button" data-toggle-password data-target="#password" aria-label="Tampilkan password" aria-pressed="false">
                 <img src="{{ asset('assets/images/ShowPassword.png') }}" alt="">
@@ -68,7 +68,7 @@
         @error('password_confirmation')<p class="auth-error" role="alert">{{ $message }}</p>@enderror
     </div>
 
-    <button type="submit" class="auth-button" data-loading-text="Menyimpan..." data-loading-title="Memperbarui password...">
+    <button type="submit" class="auth-button" data-loading-text="Menyimpan..." data-loading-title="Membuat ulang password...">
         Simpan Password Baru
     </button>
 </form>

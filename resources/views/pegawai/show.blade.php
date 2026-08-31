@@ -129,6 +129,98 @@
                         }}
                     </p>
 
+                    <div
+                        style="
+                            margin:14px 0 16px;
+                            padding:12px 10px;
+                            border:1px solid #CFE6D6;
+                            border-radius:12px;
+                            background:#F2FBF5;
+                        "
+                    >
+                        <small
+                            class="d-block"
+                            style="color:#64748B;font-weight:700"
+                        >
+                            Recovery Code
+                        </small>
+
+                        @php
+                            $recoveryCode = $pegawai->user?->recovery_code;
+                        @endphp
+
+                        @if($recoveryCode)
+                            <div
+                                style="
+                                    display:flex;
+                                    align-items:center;
+                                    gap:8px;
+                                    margin-top:7px;
+                                "
+                            >
+                                <input
+                                    id="pegawaiRecoveryCode"
+                                    type="password"
+                                    value="{{ $recoveryCode }}"
+                                    readonly
+                                    autocomplete="off"
+                                    aria-label="Recovery Code Pegawai"
+                                    style="
+                                        width:100%;
+                                        min-width:0;
+                                        padding:8px 10px;
+                                        border:1px solid #BFDAC7;
+                                        border-radius:9px;
+                                        background:#FFFFFF;
+                                        color:#0E5423;
+                                        font-size:13px;
+                                        font-weight:800;
+                                        letter-spacing:.04em;
+                                        outline:none;
+                                    "
+                                >
+
+                                <button
+                                    type="button"
+                                    id="togglePegawaiRecoveryCode"
+                                    aria-label="Tampilkan Recovery Code"
+                                    aria-pressed="false"
+                                    title="Tampilkan Recovery Code"
+                                    style="
+                                        width:38px;
+                                        height:38px;
+                                        flex:0 0 38px;
+                                        display:inline-flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        border:1px solid #BFDAC7;
+                                        border-radius:9px;
+                                        background:#FFFFFF;
+                                        color:#0E5423;
+                                        cursor:pointer;
+                                    "
+                                >
+                                    <i
+                                        id="pegawaiRecoveryCodeIcon"
+                                        class="fa-solid fa-eye"
+                                        aria-hidden="true"
+                                    ></i>
+                                </button>
+                            </div>
+                        @else
+                            <strong
+                                style="
+                                    display:block;
+                                    margin-top:5px;
+                                    color:#64748B;
+                                    font-size:13px;
+                                "
+                            >
+                                Belum tersedia
+                            </strong>
+                        @endif
+                    </div>
+
                     <small class="d-block mb-1">
                         Status Akun Pegawai
                     </small>
@@ -171,7 +263,7 @@
                         ],
                         [
                             'Email',
-                            $pegawai->email ?: '-',
+                            strtolower((string) ($pegawai->email ?: '-')),
                             'fa-envelope'
                         ],
                         [
@@ -386,4 +478,35 @@
         </div>
     </section>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('pegawaiRecoveryCode');
+        const button = document.getElementById('togglePegawaiRecoveryCode');
+        const icon = document.getElementById('pegawaiRecoveryCodeIcon');
+
+        if (!input || !button || !icon) {
+            return;
+        }
+
+        button.addEventListener('click', function () {
+            const isHidden = input.type === 'password';
+
+            input.type = isHidden ? 'text' : 'password';
+            button.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+            button.setAttribute(
+                'aria-label',
+                isHidden ? 'Sembunyikan Recovery Code' : 'Tampilkan Recovery Code'
+            );
+            button.setAttribute(
+                'title',
+                isHidden ? 'Sembunyikan Recovery Code' : 'Tampilkan Recovery Code'
+            );
+
+            icon.classList.toggle('fa-eye', !isHidden);
+            icon.classList.toggle('fa-eye-slash', isHidden);
+        });
+    });
+</script>
+
 @endsection

@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AgendaKegiatanController;
 use App\Http\Controllers\AccessCodeController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\StaffActivationController;
 use App\Http\Controllers\CoaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GajiJabatanController;
@@ -50,21 +53,26 @@ Route::middleware(['guest:admin', EnsureManagementAccess::class . ':admin'])
             ->name('register.admin');
         Route::post('/register/admin', [RegisterController::class, 'registerAdmin'])
             ->name('register.admin.post');
+        Route::post('/register/admin/recovery-code/generate', [RegisterController::class, 'generateAdminRecoveryCode'])
+            ->middleware('throttle:20,1')
+            ->name('register.admin.recovery-code.generate');
     });
 Route::middleware(['guest:pegawai', EnsureManagementAccess::class . ':staff',])
     ->group(function(){
         Route::view('/login/pegawai', 'auth.login-staff')
             ->name('login.staff');
         Route::post('/login/pegawai', [LoginController::class, 'staffLogin']);
-        Route::get('/register/pegawai', [RegisterController::class, 'showStaffActivation'])
+        Route::get('/register/pegawai', [StaffActivationController::class, 'create'])
             ->name('register.staff');
-        Route::post('/verifikasi/pegawai', [RegisterController::class, 'verifyStaff'])
+        Route::post('/verifikasi/pegawai', [StaffActivationController::class, 'verify'])
             ->middleware('throttle:10,1')
             ->name('verify.staff');
-        Route::get('/register/pegawai/akun', [RegisterController::class, 'showStaffAccountRegistration'])
+        Route::get('/register/pegawai/akun', [StaffActivationController::class, 'createPassword'])
             ->name('register.staff.account');
-        Route::post('/register/pegawai', [RegisterController::class, 'registerStaff'])
+        Route::post('/register/pegawai', [StaffActivationController::class, 'storePassword'])
             ->name('register.staff.post');
+        Route::get('/register/pegawai/selesai', [StaffActivationController::class, 'success'])
+            ->name('register.staff.success');
     });
 Route::middleware('guest:jamaah')
     ->group(function(){
@@ -80,6 +88,28 @@ Route::middleware(['auth:admin', 'role:admin'])
     ->group(function(){
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
+        Route::get('/admin/profil', [AccountController::class, 'adminProfile'])
+            ->name('admin.profile');
+        Route::patch('/admin/profil', [AccountController::class, 'updateAdminProfile'])
+            ->name('admin.profile.update');
+        Route::get('/admin/pengaturan', [AccountController::class, 'adminSettings'])
+            ->name('admin.settings');
+        Route::post('/admin/pengaturan/recovery-code/generate', [AccountController::class, 'generateAdminRecoveryCode'])
+            ->middleware('throttle:20,1')
+            ->name('admin.recovery-code.generate');
+        Route::patch('/admin/pengaturan/recovery-code', [AccountController::class, 'updateAdminRecoveryCode'])
+            ->middleware('throttle:10,1')
+            ->name('admin.recovery-code.update');
+        Route::get('/admin/ubah-password', function () {
+            return view('auth.change-password', [
+                'portal' => 'admin',
+                'updateRoute' => 'admin.password.update',
+                'backRoute' => 'admin.settings',
+            ]);
+        })->name('admin.password.edit');
+        Route::patch('/admin/ubah-password', [PasswordController::class, 'update'])
+            ->defaults('auth_guard', User::ROLE_ADMIN)
+            ->name('admin.password.update');
         Route::prefix('admin')
             ->name('admin.')
             ->group(function(){
@@ -136,6 +166,20 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
     ->prefix('pegawai')
     ->name('pegawai.')
     ->group(function(){
+        Route::get('/profil', [AccountController::class, 'pegawaiProfile'])
+            ->name('profile');
+        Route::get('/pengaturan', [AccountController::class, 'pegawaiSettings'])
+            ->name('settings');
+        Route::get('/ubah-password', function () {
+            return view('auth.change-password', [
+                'portal' => 'staff',
+                'updateRoute' => 'pegawai.password.update',
+                'backRoute' => 'pegawai.settings',
+            ]);
+        })->name('password.edit');
+        Route::patch('/ubah-password', [PasswordController::class, 'update'])
+            ->defaults('auth_guard', User::ROLE_PEGAWAI)
+            ->name('password.update');
         Route::get('/dashboard/{jabatan?}', [PegawaiDashboardController::class, 'index'])
             ->where('jabatan', '[a-z0-9-]+')
             ->name('dashboard');
@@ -176,6 +220,20 @@ Route::middleware(['auth:jamaah', 'verified', 'role:jamaah',])
     ->prefix('jamaah')
     ->name('jamaah.')
     ->group(function (){
+        Route::get('/profil', [AccountController::class, 'jamaahProfile'])
+            ->name('profile');
+        Route::get('/pengaturan', [AccountController::class, 'jamaahSettings'])
+            ->name('settings');
+        Route::get('/ubah-password', function () {
+            return view('auth.change-password', [
+                'portal' => 'jamaah',
+                'updateRoute' => 'jamaah.password.update',
+                'backRoute' => 'jamaah.settings',
+            ]);
+        })->name('password.edit');
+        Route::patch('/ubah-password', [PasswordController::class, 'update'])
+            ->defaults('auth_guard', User::ROLE_JAMAAH)
+            ->name('password.update');
         Route::get('/dashboard', [JamaahController::class, 'dashboard'])
             ->name('dashboard');
         Route::get('/transaksi/{jenis}', [JamaahController::class, 'createTransaksi'])

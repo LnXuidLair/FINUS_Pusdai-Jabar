@@ -931,13 +931,13 @@
                     );
                 }
                 const getGreeting = hour => {
-                    if (hour >= 4 && hour < 12) {
+                    if (hour >= 4 && hour < 11) {
                         return 'Selamat pagi';
                     }
-                    if (hour >= 12 && hour < 17) {
+                    if (hour >= 11 && hour < 15) {
                         return 'Selamat siang';
                     }
-                    if (hour >= 17 && hour < 21) {
+                    if (hour >= 15 && hour < 18) {
                         return 'Selamat sore';
                     }
                     return 'Selamat malam';
