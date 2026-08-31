@@ -750,6 +750,13 @@
                 @if($canManageFinance)
                     <li class="menu-label">Keuangan</li>
                     <li>
+                        <a href="{{ route('pegawai.keuangan.pemasukan.index') }}"
+                            class="{{ request()->routeIs('pegawai.keuangan.pemasukan.*') ? 'active' : '' }}">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                            <span>Pemasukan</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('pegawai.keuangan.pengeluaran.index') }}"
                             class="{{ request()->routeIs('pegawai.keuangan.pengeluaran.*') ? 'active' : '' }}">
                             <i class="ti-receipt"></i>
@@ -777,14 +784,7 @@
                         <a href="{{ route('pegawai.laporan-keuangan.arus-kas') }}"
                             class="{{ request()->routeIs('pegawai.laporan-keuangan.arus-kas') ? 'active' : '' }}">
                             <i class="ti-bar-chart"></i>
-                            <span>Arus Kas</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('pegawai.laporan-keuangan.arus-kas-psak') }}"
-                            class="{{ request()->routeIs('pegawai.laporan-keuangan.arus-kas-psak') ? 'active' : '' }}">
-                            <i class="ti-stats-up"></i>
-                            <span>Arus Kas PSAK</span>
+                            <span>Laporan Keuangan</span>
                         </a>
                     </li>
                 @endif

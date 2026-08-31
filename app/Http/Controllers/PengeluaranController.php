@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Coa;
 use App\Models\Pengeluaran;
 use App\Models\Penggajian;
 use Illuminate\Http\Request;
@@ -47,7 +48,7 @@ class PengeluaranController extends Controller
             ->map(function (Penggajian $gaji): object {
                 return (object) [
                     'id' => 'gaji_' . $gaji->id,
-                    'kategori' => 'Penggajian',
+                    'kategori' => 'Biaya Honorarium',
                     'deskripsi' => 'Gaji '
                         . ($gaji->pegawai?->nama_pegawai ?? 'Pegawai')
                         . ' periode '
@@ -77,7 +78,31 @@ class PengeluaranController extends Controller
 
     public function create()
     {
-        return view('pengeluaran.create');
+        // Ambil akun beban COA, kecualikan 5104 (Biaya Honorarium) karena otomatis dari Penggajian
+        $coaBeban = Coa::where('header_akun', 5)
+            ->where('kode_akun', '!=', '5104')
+            ->where('nama_akun', '!=', 'Biaya Honorarium')
+            ->orderBy('kode_akun')
+            ->get();
+
+        // Fallback jika data akun COA beban di database belum tersedia
+        if ($coaBeban->isEmpty()) {
+            $fallback = [
+                ['kode_akun' => '5101', 'nama_akun' => 'Biaya Bidang Idaroh'],
+                ['kode_akun' => '5102', 'nama_akun' => 'Biaya Bidang Imaroh'],
+                ['kode_akun' => '5103', 'nama_akun' => 'Biaya Bidang Riayah'],
+                ['kode_akun' => '5105', 'nama_akun' => 'Biaya Konsumsi'],
+                ['kode_akun' => '5106', 'nama_akun' => 'Biaya Administrasi Bank'],
+                ['kode_akun' => '5107', 'nama_akun' => 'Biaya Pemeliharaan'],
+                ['kode_akun' => '5108', 'nama_akun' => 'Biaya Kebersihan'],
+                ['kode_akun' => '5109', 'nama_akun' => 'Biaya Kegiatan'],
+                ['kode_akun' => '5110', 'nama_akun' => 'Biaya Pengadaan'],
+                ['kode_akun' => '5111', 'nama_akun' => 'Penyaluran ZISWAF'],
+            ];
+            $coaBeban = collect($fallback)->map(fn($item) => (object)$item);
+        }
+
+        return view('pengeluaran.create', compact('coaBeban'));
     }
 
     public function store(Request $request)
@@ -110,6 +135,20 @@ class PengeluaranController extends Controller
             $pengeluaran->jumlah = (int) $validated['jumlah'];
             $pengeluaran->tanggal = $validated['tanggal'];
             $pengeluaran->bukti_pembayaran = $path;
+
+            // Sambungkan otomatis ke akun COA debit jika ditemukan
+            $coaDebit = Coa::where('nama_akun', $validated['kategori'])
+                ->orWhere('kode_akun', explode(' - ', $validated['kategori'])[0])
+                ->first();
+            if ($coaDebit) {
+                $pengeluaran->coa_debit_id = $coaDebit->id;
+            }
+
+            // Default coa_kredit_id ke Kas (1101) jika ada
+            $coaKas = Coa::where('kode_akun', '1101')->first();
+            if ($coaKas) {
+                $pengeluaran->coa_kredit_id = $coaKas->id;
+            }
 
             /*
              * Pengeluaran yang dimasukkan langsung oleh admin adalah

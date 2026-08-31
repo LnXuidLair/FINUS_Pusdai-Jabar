@@ -19,3 +19,8 @@ yarn-error.log
 /.vscode
 .vercel
 .env*
+
+# Artefak Tugas Akhir / file sementara
+/output
+/tmp
+/tools
