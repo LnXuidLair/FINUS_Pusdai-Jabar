@@ -7,6 +7,42 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0E5423">
     <meta name="color-scheme" content="light">
+
+    {-- FINUS mengabaikan mode terang/gelap perangkat. Tema hanya mengikuti pilihan di FINUS. --}
+    <script>
+        (() => {
+            const storageKey = 'finus:appearance';
+            let theme = 'light';
+
+            try {
+                theme = localStorage.getItem(storageKey) === 'dark'
+                    ? 'dark'
+                    : 'light';
+            } catch (_) {
+                theme = 'light';
+            }
+
+            document.documentElement.dataset.finusTheme = theme;
+            document.documentElement.style.colorScheme = theme;
+
+            const colorSchemeMeta = document.querySelector(
+                'meta[name="color-scheme"]'
+            );
+            if (colorSchemeMeta) {
+                colorSchemeMeta.setAttribute('content', theme);
+            }
+
+            const themeColorMeta = document.querySelector(
+                'meta[name="theme-color"]'
+            );
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute(
+                    'content',
+                    theme === 'dark' ? '#08150D' : '#0E5423'
+                );
+            }
+        })();
+    </script>
     <title>
         @hasSection('title')
             @yield('title') | FINUS
@@ -676,6 +712,173 @@
             .finus-page-heading { border-radius: 15px; }
         }
 
+    
+        /* =====================================================
+           FINUS APPEARANCE
+           Default selalu LIGHT, tidak mengikuti dark mode device.
+           DARK hanya aktif jika pengguna memilihnya di FINUS.
+        ===================================================== */
+        html[data-finus-theme="light"] {
+            color-scheme: light;
+        }
+
+        html[data-finus-theme="dark"] {
+            color-scheme: dark;
+
+            --finus-page-bg: #0B130E;
+            --finus-surface: #121D16;
+            --finus-text: #EAF4ED;
+            --finus-muted: #A8B7AD;
+            --finus-border: #2B3E30;
+            --finus-shadow-sm: 0 3px 14px rgba(0, 0, 0, .25);
+            --finus-shadow-md: 0 18px 42px rgba(0, 0, 0, .32);
+            --finus-green-soft: #16321F;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout {
+            background:
+                radial-gradient(circle at 95% 5%, rgba(34, 186, 81, .07), transparent 24rem),
+                linear-gradient(180deg, #0B130E 0%, #0E1811 100%) !important;
+            color: var(--finus-text) !important;
+        }
+
+        html[data-finus-theme="dark"] .content-wrap,
+        html[data-finus-theme="dark"] .main,
+        html[data-finus-theme="dark"] .finus-content-container {
+            color: var(--finus-text);
+        }
+
+        html[data-finus-theme="dark"] .finus-page-heading,
+        html[data-finus-theme="dark"] .card,
+        html[data-finus-theme="dark"] .fmu-card,
+        html[data-finus-theme="dark"] .fmu-stat,
+        html[data-finus-theme="dark"] .fmu-side-note,
+        html[data-finus-theme="dark"] .modal-content,
+        html[data-finus-theme="dark"] .list-group-item {
+            border-color: var(--finus-border) !important;
+            background: #121D16 !important;
+            color: var(--finus-text) !important;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .22) !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-page-title,
+        html[data-finus-theme="dark"] .fmu-card h1,
+        html[data-finus-theme="dark"] .fmu-card h2,
+        html[data-finus-theme="dark"] .fmu-card h3,
+        html[data-finus-theme="dark"] .fmu-stat strong,
+        html[data-finus-theme="dark"] .card-title,
+        html[data-finus-theme="dark"] .modal-title {
+            color: var(--finus-text) !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-page-subtitle,
+        html[data-finus-theme="dark"] .fmu-card p,
+        html[data-finus-theme="dark"] .fmu-stat small,
+        html[data-finus-theme="dark"] .text-muted {
+            color: var(--finus-muted) !important;
+        }
+
+        html[data-finus-theme="dark"] .form-control,
+        html[data-finus-theme="dark"] .custom-select,
+        html[data-finus-theme="dark"] select,
+        html[data-finus-theme="dark"] textarea,
+        html[data-finus-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+        html[data-finus-theme="dark"] .fmu-control,
+        html[data-finus-theme="dark"] .fmu-select,
+        html[data-finus-theme="dark"] .fmu-textarea {
+            border-color: #314736 !important;
+            background: #0E1811 !important;
+            color: #EDF7EF !important;
+        }
+
+        html[data-finus-theme="dark"] .form-control:focus,
+        html[data-finus-theme="dark"] .custom-select:focus,
+        html[data-finus-theme="dark"] select:focus,
+        html[data-finus-theme="dark"] textarea:focus,
+        html[data-finus-theme="dark"] input:focus,
+        html[data-finus-theme="dark"] .fmu-control:focus,
+        html[data-finus-theme="dark"] .fmu-select:focus,
+        html[data-finus-theme="dark"] .fmu-textarea:focus {
+            border-color: #22BA51 !important;
+            background: #101C14 !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 0 0 4px rgba(34, 186, 81, .13) !important;
+        }
+
+        html[data-finus-theme="dark"] input::placeholder,
+        html[data-finus-theme="dark"] textarea::placeholder {
+            color: #718379 !important;
+            opacity: 1;
+        }
+
+        html[data-finus-theme="dark"] input[readonly],
+        html[data-finus-theme="dark"] textarea[readonly],
+        html[data-finus-theme="dark"] .form-control[readonly] {
+            background: #142119 !important;
+            color: #AFC0B4 !important;
+        }
+
+        html[data-finus-theme="dark"] table,
+        html[data-finus-theme="dark"] .table {
+            color: #E8F3EB !important;
+        }
+
+        html[data-finus-theme="dark"] .table th,
+        html[data-finus-theme="dark"] .table td,
+        html[data-finus-theme="dark"] table th,
+        html[data-finus-theme="dark"] table td {
+            border-color: #293B2E !important;
+        }
+
+        html[data-finus-theme="dark"] .table thead th,
+        html[data-finus-theme="dark"] table thead th {
+            background: #14221A !important;
+            color: #DCEAE0 !important;
+        }
+
+        html[data-finus-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+            background: rgba(255, 255, 255, .018) !important;
+        }
+
+        html[data-finus-theme="dark"] .dropdown-divider,
+        html[data-finus-theme="dark"] hr {
+            border-color: #2A3C2F !important;
+        }
+
+        html[data-finus-theme="dark"] .pagination .page-link {
+            border-color: #2B3F30 !important;
+            background: #121D16 !important;
+            color: #CFE0D3 !important;
+        }
+
+        html[data-finus-theme="dark"] .pagination .page-item.active .page-link {
+            border-color: #179B40 !important;
+            background: #179B40 !important;
+            color: #FFFFFF !important;
+        }
+
+        html[data-finus-theme="dark"] .alert:not(.finus-flash) {
+            filter: brightness(.86) saturate(.9);
+        }
+
+        html.finus-theme-changing *,
+        html.finus-theme-changing *::before,
+        html.finus-theme-changing *::after {
+            transition:
+                background-color .20s ease,
+                border-color .20s ease,
+                color .20s ease,
+                box-shadow .20s ease !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html.finus-theme-changing *,
+            html.finus-theme-changing *::before,
+            html.finus-theme-changing *::after {
+                transition: none !important;
+            }
+        }
+
     </style>
 </head>
 @php
@@ -1265,6 +1468,132 @@
                 });
             }, { threshold: .08 });
             candidates.forEach(element => observer.observe(element));
+        })();
+    </script>
+
+    <script>
+        (() => {
+            const storageKey = 'finus:appearance';
+            const root = document.documentElement;
+
+            const readTheme = () => {
+                try {
+                    return localStorage.getItem(storageKey) === 'dark'
+                        ? 'dark'
+                        : 'light';
+                } catch (_) {
+                    return root.dataset.finusTheme === 'dark'
+                        ? 'dark'
+                        : 'light';
+                }
+            };
+
+            const updateThemeControls = theme => {
+                const dark = theme === 'dark';
+
+                document
+                    .querySelectorAll('[data-finus-theme-toggle]')
+                    .forEach(button => {
+                        button.setAttribute(
+                            'aria-pressed',
+                            dark ? 'true' : 'false'
+                        );
+
+                        button.setAttribute(
+                            'title',
+                            dark
+                                ? 'Ubah ke mode terang'
+                                : 'Ubah ke mode gelap'
+                        );
+
+                        const label = button.querySelector(
+                            '[data-finus-theme-label]'
+                        );
+
+                        if (label) {
+                            label.textContent = dark
+                                ? 'Mode Gelap'
+                                : 'Mode Terang';
+                        }
+
+                        const icon = button.querySelector(
+                            '[data-finus-theme-icon]'
+                        );
+
+                        if (icon) {
+                            icon.className = dark
+                                ? 'fa-solid fa-moon'
+                                : 'fa-solid fa-sun';
+                        }
+                    });
+            };
+
+            const applyTheme = (theme, persist = true) => {
+                const normalized = theme === 'dark' ? 'dark' : 'light';
+
+                root.classList.add('finus-theme-changing');
+                root.dataset.finusTheme = normalized;
+                root.style.colorScheme = normalized;
+
+                const colorSchemeMeta = document.querySelector(
+                    'meta[name="color-scheme"]'
+                );
+
+                if (colorSchemeMeta) {
+                    colorSchemeMeta.setAttribute(
+                        'content',
+                        normalized
+                    );
+                }
+
+                const themeColorMeta = document.querySelector(
+                    'meta[name="theme-color"]'
+                );
+
+                if (themeColorMeta) {
+                    themeColorMeta.setAttribute(
+                        'content',
+                        normalized === 'dark'
+                            ? '#08150D'
+                            : '#0E5423'
+                    );
+                }
+
+                if (persist) {
+                    try {
+                        localStorage.setItem(
+                            storageKey,
+                            normalized
+                        );
+                    } catch (_) {}
+                }
+
+                updateThemeControls(normalized);
+
+                window.setTimeout(() => {
+                    root.classList.remove('finus-theme-changing');
+                }, 230);
+            };
+
+            updateThemeControls(readTheme());
+
+            document.addEventListener('click', event => {
+                const button = event.target.closest(
+                    '[data-finus-theme-toggle]'
+                );
+
+                if (!button) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                applyTheme(
+                    readTheme() === 'dark'
+                        ? 'light'
+                        : 'dark'
+                );
+            });
         })();
     </script>
     @stack('scripts')

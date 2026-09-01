@@ -7,6 +7,42 @@
     <meta name="theme-color" content="#075d2a">
     <meta name="color-scheme" content="light">
 
+    {-- FINUS mengabaikan mode terang/gelap perangkat. Tema hanya mengikuti pilihan di FINUS. --}
+    <script>
+        (() => {
+            const storageKey = 'finus:appearance';
+            let theme = 'light';
+
+            try {
+                theme = localStorage.getItem(storageKey) === 'dark'
+                    ? 'dark'
+                    : 'light';
+            } catch (_) {
+                theme = 'light';
+            }
+
+            document.documentElement.dataset.finusTheme = theme;
+            document.documentElement.style.colorScheme = theme;
+
+            const colorSchemeMeta = document.querySelector(
+                'meta[name="color-scheme"]'
+            );
+            if (colorSchemeMeta) {
+                colorSchemeMeta.setAttribute('content', theme);
+            }
+
+            const themeColorMeta = document.querySelector(
+                'meta[name="theme-color"]'
+            );
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute(
+                    'content',
+                    theme === 'dark' ? '#08150D' : '#075d2a'
+                );
+            }
+        })();
+    </script>
+
     <title>@yield('title', 'FINUS')</title>
 
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}?v=22">
@@ -1010,17 +1046,307 @@
             html { scroll-behavior: auto; }
             *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
         }
+    
+        /* =====================================================
+           FINUS APPEARANCE — GUEST / AUTH
+           Tidak mengikuti dark mode perangkat.
+        ===================================================== */
+        html[data-finus-theme="light"] {
+            color-scheme: light;
+        }
+
+        html[data-finus-theme="dark"] {
+            color-scheme: dark;
+
+            --auth-surface: #111C15;
+            --auth-page: #0A120D;
+            --auth-text: #EAF4ED;
+            --auth-muted: #A7B7AC;
+            --auth-border: #2A3F30;
+            --auth-green-50: #15301E;
+            --auth-green-100: #1A3B24;
+            --auth-danger-soft: #321A1A;
+            --auth-warning-soft: #2F2614;
+            --auth-info-soft: #13263A;
+            --auth-shadow-sm: 0 8px 24px rgba(0, 0, 0, .25);
+            --auth-shadow-lg: 0 28px 80px rgba(0, 0, 0, .42);
+        }
+
+        .auth-header-actions {
+            display: inline-flex;
+            align-items: center;
+            justify-self: end;
+            gap: 9px;
+        }
+
+        .auth-theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            min-width: 42px;
+            height: 42px;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, .46);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .95);
+            color: var(--auth-green-900);
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 45, 16, .15);
+            transition: transform .2s ease, background .2s ease;
+        }
+
+        .auth-theme-toggle:hover,
+        .auth-theme-toggle:focus-visible {
+            background: #FFFFFF;
+            outline: none;
+            transform: translateY(-2px);
+        }
+
+        .auth-theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .auth-theme-icon-moon {
+            display: none;
+        }
+
+        html[data-finus-theme="dark"] .auth-theme-icon-sun {
+            display: none;
+        }
+
+        html[data-finus-theme="dark"] .auth-theme-icon-moon {
+            display: block;
+        }
+
+        html[data-finus-theme="dark"] body {
+            background: #0A120D;
+            color: var(--auth-text);
+        }
+
+        html[data-finus-theme="dark"] .auth-card {
+            border-color: #304535;
+            background: rgba(17, 28, 21, .985);
+            box-shadow: var(--auth-shadow-lg);
+        }
+
+        html[data-finus-theme="dark"] .auth-card::before {
+            background: rgba(34, 168, 83, .075);
+        }
+
+        html[data-finus-theme="dark"] .auth-context-card {
+            border-color: var(--auth-border);
+            background: linear-gradient(135deg, #15231A, #132D1B);
+            color: #CDE0D2;
+        }
+
+        html[data-finus-theme="dark"] .auth-context-icon {
+            background: #1B2C20;
+            color: #7CEB93;
+            box-shadow: 0 5px 14px rgba(0, 0, 0, .18);
+        }
+
+        html[data-finus-theme="dark"] .auth-context-title,
+        html[data-finus-theme="dark"] .auth-label,
+        html[data-finus-theme="dark"] .auth-email-preview strong,
+        html[data-finus-theme="dark"] .auth-dialog-title,
+        html[data-finus-theme="dark"] .auth-loading-title {
+            color: #DDF0E2;
+        }
+
+        html[data-finus-theme="dark"] .auth-label-icon {
+            background: #17331F;
+            color: #79E790;
+        }
+
+        html[data-finus-theme="dark"] .auth-field {
+            border-color: #36503C;
+            background: #0E1811;
+            color: #EDF7EF;
+            box-shadow: none;
+        }
+
+        html[data-finus-theme="dark"] .auth-field::placeholder {
+            color: #75877B;
+        }
+
+        html[data-finus-theme="dark"] .auth-field:hover {
+            border-color: #4E6B56;
+        }
+
+        html[data-finus-theme="dark"] .auth-field:focus {
+            border-color: var(--auth-green-600);
+            background: #101D14;
+            color: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(34, 168, 83, .13);
+        }
+
+        html[data-finus-theme="dark"] .auth-field[readonly] {
+            background: #15221A;
+            color: #B5C7BA;
+        }
+
+        html[data-finus-theme="dark"] .auth-field[aria-invalid="true"] {
+            border-color: #B85D57;
+            background: #211415;
+        }
+
+        html[data-finus-theme="dark"] .auth-field:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 1000px #0E1811 inset;
+            -webkit-text-fill-color: #EDF7EF;
+        }
+
+        html[data-finus-theme="dark"] .auth-password-toggle:hover {
+            background: #17331F;
+        }
+
+        html[data-finus-theme="dark"] .auth-info-card,
+        html[data-finus-theme="dark"] .auth-email-preview,
+        html[data-finus-theme="dark"] .auth-dialog-details {
+            border-color: var(--auth-border);
+            background: #15251B;
+            color: #BDCEC2;
+        }
+
+        html[data-finus-theme="dark"] .auth-strength-bar {
+            background: #27392C;
+        }
+
+        html[data-finus-theme="dark"] .auth-code-icon,
+        html[data-finus-theme="dark"] .auth-dialog-icon {
+            border-color: #31543A;
+            background: linear-gradient(145deg, #17281D, #1B3A24);
+            color: #7BEA92;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, .22);
+        }
+
+        html[data-finus-theme="dark"] .auth-dialog {
+            border-color: #304535;
+            background: #111C15;
+            color: var(--auth-text);
+            box-shadow: 0 32px 85px rgba(0, 0, 0, .50);
+        }
+
+        html[data-finus-theme="dark"] .auth-loading-card {
+            border-color: #304535;
+            background: rgba(17, 28, 21, .99);
+            color: var(--auth-text);
+        }
+
+        html[data-finus-theme="dark"] .auth-loading-wheel {
+            border-color: #28402F;
+            border-top-color: #22A853;
+            border-right-color: #54D071;
+        }
+
+        html[data-finus-theme="dark"] .auth-loading-wheel::after {
+            background: #14251A;
+        }
+
+        html[data-finus-theme="dark"] .auth-button-secondary {
+            border-color: #31533A;
+            background: #16341F;
+            color: #CFF1D7;
+        }
+
+        html[data-finus-theme="dark"] .auth-button-muted {
+            border-color: #33453A;
+            background: #18221B;
+            color: #BAC8BF;
+        }
+
+        html[data-finus-theme="dark"] .auth-alert-success {
+            border-color: #285D37;
+            background: #15301D;
+            color: #A9E9B7;
+        }
+
+        html[data-finus-theme="dark"] .auth-alert-success .auth-alert-icon {
+            background: #1C4528;
+        }
+
+        html[data-finus-theme="dark"] .auth-alert-danger {
+            border-color: #75413E;
+            background: #2D1818;
+            color: #F1B6B0;
+        }
+
+        html[data-finus-theme="dark"] .auth-alert-danger .auth-alert-icon {
+            background: #47201E;
+        }
+
+        html[data-finus-theme="dark"] .auth-alert-warning {
+            border-color: #715A2D;
+            background: #2E2514;
+            color: #F2D08B;
+        }
+
+        html[data-finus-theme="dark"] .auth-alert-warning .auth-alert-icon {
+            background: #453719;
+        }
+
+        html[data-finus-theme="dark"] .auth-alert-info {
+            border-color: #315A7B;
+            background: #132638;
+            color: #AFCFEF;
+        }
+
+        html[data-finus-theme="dark"] .auth-alert-info .auth-alert-icon {
+            background: #183650;
+        }
+
+        html[data-finus-theme="dark"] .auth-theme-toggle,
+        html[data-finus-theme="dark"] .auth-home-link {
+            border-color: #385040;
+            background: #132119;
+            color: #BDEBC8;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .28);
+        }
+
+        html[data-finus-theme="dark"] .auth-theme-toggle:hover,
+        html[data-finus-theme="dark"] .auth-home-link:hover {
+            background: #192B1F;
+        }
+
+        @media (max-width: 520px) {
+            .auth-header-actions {
+                gap: 7px;
+            }
+
+            .auth-theme-toggle {
+                width: 42px;
+                min-width: 42px;
+            }
+        }
+
+        html.finus-theme-changing *,
+        html.finus-theme-changing *::before,
+        html.finus-theme-changing *::after {
+            transition:
+                background-color .20s ease,
+                border-color .20s ease,
+                color .20s ease,
+                box-shadow .20s ease !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html.finus-theme-changing *,
+            html.finus-theme-changing *::before,
+            html.finus-theme-changing *::after {
+                transition: none !important;
+            }
+        }
+
     </style>
 </head>
 
 <body>
-    @php
-        $authPortal = trim($__env->yieldContent('portal'));
-        $authHomeRoute = in_array($authPortal, ['admin', 'staff'], true)
-            ? 'management.access'
-            : 'home';
-    @endphp
-
     <a href="#auth-content" class="auth-skip-link">Lewati ke formulir</a>
 
     <div id="authLoadingOverlay" class="auth-loading-overlay" role="status" aria-live="polite" aria-hidden="true">
@@ -1032,7 +1358,7 @@
     </div>
 
     <header class="auth-header">
-        <a href="{{ route($authHomeRoute) }}" class="auth-brand" data-loading-title="Membuka beranda..." aria-label="FINUS PUSDAI - Beranda">
+        <a href="{{ route('home') }}" class="auth-brand" data-loading-title="Membuka beranda..." aria-label="FINUS PUSDAI - Beranda">
             <img src="{{ asset('assets/images/FINUS_login.png') }}" alt="FINUS PUSDAI"
                  onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='{{ asset('assets/images/pusdai_dashboard.png') }}';}else{this.hidden=true;document.getElementById('authBrandFallback').hidden=false;}">
             <span id="authBrandFallback" class="auth-brand-fallback" hidden>FINUS PUSDAI</span>
@@ -1040,10 +1366,31 @@
 
         <h1 class="auth-header-title">@yield('header-title', 'FINUS')</h1>
 
-        <a href="{{ route($authHomeRoute) }}" class="auth-home-link" data-loading-title="Kembali ke beranda...">
-            <span class="auth-home-icon" aria-hidden="true"></span>
-            <span class="auth-home-link-text">Beranda</span>
-        </a>
+        <div class="auth-header-actions">
+            <button
+                type="button"
+                class="auth-theme-toggle"
+                data-finus-theme-toggle
+                aria-label="Ubah mode tampilan FINUS"
+                aria-pressed="false"
+                title="Ubah mode tampilan"
+                data-no-loading
+            >
+                <svg class="auth-theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path>
+                </svg>
+                <svg class="auth-theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20.5 14.5A8 8 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"></path>
+                </svg>
+                <span class="sr-only" data-finus-theme-label>Mode Terang</span>
+            </button>
+
+            <a href="{{ route('home') }}" class="auth-home-link" data-loading-title="Kembali ke beranda...">
+                <span class="auth-home-icon" aria-hidden="true"></span>
+                <span class="auth-home-link-text">Beranda</span>
+            </a>
+        </div>
     </header>
 
     <main class="auth-layout" id="auth-content">
@@ -1085,8 +1432,8 @@
                         $statusMessages = [
                             'verification-code-sent' => ['title' => 'Kode Verifikasi Dikirim', 'message' => 'Silakan periksa email dan masukkan kode untuk mengaktifkan akun.'],
                             'email-verified' => ['title' => 'Verifikasi Berhasil', 'message' => 'Akun jamaah berhasil diverifikasi. Silakan login.'],
+                            'password-reset-link-sent' => ['title' => 'Tautan Reset Dikirim', 'message' => 'Silakan periksa email untuk melanjutkan reset password.'],
                             'password-updated' => ['title' => 'Password Diperbarui', 'message' => 'Silakan masuk menggunakan password baru.'],
-                            'password-changed' => ['title' => 'Password Berhasil Diubah', 'message' => 'Password akun Anda telah diperbarui.'],
                             'account-activated' => ['title' => 'Akun Diaktifkan', 'message' => 'Akun sudah aktif dan dapat digunakan untuk login.'],
                         ];
                         $currentStatus = session('status');
@@ -1313,6 +1660,121 @@
     })();
     </script>
 
+
+    <script>
+    (() => {
+        const storageKey = 'finus:appearance';
+        const root = document.documentElement;
+
+        const readTheme = () => {
+            try {
+                return localStorage.getItem(storageKey) === 'dark'
+                    ? 'dark'
+                    : 'light';
+            } catch (_) {
+                return root.dataset.finusTheme === 'dark'
+                    ? 'dark'
+                    : 'light';
+            }
+        };
+
+        const updateControls = theme => {
+            const dark = theme === 'dark';
+
+            document
+                .querySelectorAll('[data-finus-theme-toggle]')
+                .forEach(button => {
+                    button.setAttribute(
+                        'aria-pressed',
+                        dark ? 'true' : 'false'
+                    );
+
+                    button.setAttribute(
+                        'title',
+                        dark
+                            ? 'Ubah ke mode terang'
+                            : 'Ubah ke mode gelap'
+                    );
+
+                    const label = button.querySelector(
+                        '[data-finus-theme-label]'
+                    );
+
+                    if (label) {
+                        label.textContent = dark
+                            ? 'Mode Gelap'
+                            : 'Mode Terang';
+                    }
+                });
+        };
+
+        const applyTheme = theme => {
+            const normalized = theme === 'dark' ? 'dark' : 'light';
+
+            root.classList.add('finus-theme-changing');
+            root.dataset.finusTheme = normalized;
+            root.style.colorScheme = normalized;
+
+            const colorSchemeMeta = document.querySelector(
+                'meta[name="color-scheme"]'
+            );
+
+            if (colorSchemeMeta) {
+                colorSchemeMeta.setAttribute(
+                    'content',
+                    normalized
+                );
+            }
+
+            const themeColorMeta = document.querySelector(
+                'meta[name="theme-color"]'
+            );
+
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute(
+                    'content',
+                    normalized === 'dark'
+                        ? '#08150D'
+                        : '#075D2A'
+                );
+            }
+
+            try {
+                localStorage.setItem(
+                    storageKey,
+                    normalized
+                );
+            } catch (_) {}
+
+            updateControls(normalized);
+
+            window.setTimeout(() => {
+                root.classList.remove('finus-theme-changing');
+            }, 230);
+        };
+
+        updateControls(readTheme());
+
+        document.addEventListener('click', event => {
+            const button = event.target.closest(
+                '[data-finus-theme-toggle]'
+            );
+
+            if (!button) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            applyTheme(
+                readTheme() === 'dark'
+                    ? 'light'
+                    : 'dark'
+            );
+        });
+    })();
+    </script>
     @stack('scripts')
 </body>
 </html>

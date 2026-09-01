@@ -4,6 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#0FB442">
+    <meta name="color-scheme" content="light">
+
+    {{-- FINUS tidak mengikuti dark mode perangkat. Tema hanya mengikuti pilihan pengguna di FINUS. --}}
+    <script>
+        (() => {
+            const storageKey = 'finus:appearance';
+            let theme = 'light';
+
+            try {
+                theme = localStorage.getItem(storageKey) === 'dark'
+                    ? 'dark'
+                    : 'light';
+            } catch (_) {
+                theme = 'light';
+            }
+
+            const root = document.documentElement;
+            root.dataset.finusTheme = theme;
+            root.style.colorScheme = theme;
+
+            const colorSchemeMeta = document.querySelector(
+                'meta[name="color-scheme"]'
+            );
+
+            if (colorSchemeMeta) {
+                colorSchemeMeta.setAttribute('content', theme);
+            }
+
+            const themeColorMeta = document.querySelector(
+                'meta[name="theme-color"]'
+            );
+
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute(
+                    'content',
+                    theme === 'dark' ? '#08150D' : '#0FB442'
+                );
+            }
+        })();
+    </script>
+
 
     <title>Location | FINUS PUSDAI</title>
 
@@ -369,6 +410,168 @@
         @media(max-width:720px){.gps-card{border-radius:22px;padding:20px}.current-location-overlay{left:13px;right:13px;bottom:13px;grid-template-columns:36px minmax(0,1fr);padding:9px 10px}.current-location-icon{width:36px;height:36px}.current-location-state{grid-column:1/-1;justify-self:start;margin-left:47px}}
         @media(max-width:980px){.location-grid{gap:20px}.map-card{min-height:520px}.map-frame-wrap{min-height:500px}.footer-inner{grid-template-columns:1fr}}
         @media(max-width:720px){.hero{min-height:350px}.map-card{min-height:440px;border-radius:22px}.map-frame-wrap{min-height:420px;border-radius:16px}.info-card,.mini-card{border-radius:22px}.mini-card{padding-left:68px}.footer-inner{padding-top:28px;padding-bottom:28px}.footer-links{justify-content:flex-start}}
+    
+
+        /* =====================================================
+           MODE TAMPILAN FINUS
+           Default selalu terang dan tidak mengikuti mode perangkat.
+        ===================================================== */
+        html[data-finus-theme="light"] { color-scheme: light; }
+        html[data-finus-theme="dark"] { color-scheme: dark; }
+
+        .page-theme-toggle {
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:44px;
+            min-width:44px;
+            height:44px;
+            padding:0;
+            border:1px solid rgba(255,255,255,.34);
+            border-radius:13px;
+            background:rgba(255,255,255,.94);
+            color:var(--g950);
+            cursor:pointer;
+            box-shadow:0 9px 20px rgba(0,54,17,.14);
+            transition:transform .2s ease,background .2s ease,box-shadow .2s ease;
+        }
+
+        .page-theme-toggle:hover,
+        .page-theme-toggle:focus-visible {
+            background:#fff;
+            outline:none;
+            transform:translateY(-2px);
+            box-shadow:0 14px 28px rgba(0,54,17,.20);
+        }
+
+        .theme-icon {
+            width:20px;
+            height:20px;
+            fill:none;
+            stroke:currentColor;
+            stroke-width:2;
+            stroke-linecap:round;
+            stroke-linejoin:round;
+        }
+
+        .theme-icon-moon { display:none; }
+        html[data-finus-theme="dark"] .theme-icon-sun { display:none; }
+        html[data-finus-theme="dark"] .theme-icon-moon { display:block; }
+
+        html[data-finus-theme="dark"] {
+            --g50:#0A120D;
+            --text:#EAF4ED;
+            --muted:#A6B7AB;
+            --shadow:0 24px 65px rgba(0,0,0,.34);
+        }
+
+        html[data-finus-theme="dark"] body {
+            background:#0A120D;
+            color:var(--text);
+        }
+
+        html[data-finus-theme="dark"] .page-theme-toggle,
+        html[data-finus-theme="dark"] .auth-home-link {
+            border-color:#35503B;
+            background:#132119;
+            color:#BCEFC7;
+            box-shadow:0 9px 20px rgba(0,0,0,.24);
+        }
+
+        html[data-finus-theme="dark"] .page-theme-toggle:hover,
+        html[data-finus-theme="dark"] .auth-home-link:hover {
+            background:#192B1F;
+        }
+
+        html[data-finus-theme="dark"] .auth-home-icon {
+            background:#17331F;
+            color:#79E790;
+        }
+
+        html.finus-theme-changing *,
+        html.finus-theme-changing *::before,
+        html.finus-theme-changing *::after {
+            transition:
+                background-color .2s ease,
+                border-color .2s ease,
+                color .2s ease,
+                box-shadow .2s ease !important;
+        }
+
+        @media (max-width:720px) {
+            .page-theme-toggle {
+                width:44px;
+                min-width:44px;
+                height:44px;
+                border-radius:12px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html.finus-theme-changing *,
+            html.finus-theme-changing *::before,
+            html.finus-theme-changing *::after {
+                transition:none !important;
+            }
+        }
+
+        html[data-finus-theme="dark"] .hero {
+            background:
+                radial-gradient(circle at 10% 15%,rgba(34,186,81,.10),transparent 20rem),
+                radial-gradient(circle at 88% 12%,rgba(34,186,81,.07),transparent 24rem),
+                linear-gradient(180deg,#0E1811,#0A120D);
+        }
+
+        html[data-finus-theme="dark"] .eyebrow,
+        html[data-finus-theme="dark"] .map-card,
+        html[data-finus-theme="dark"] .mini-card,
+        html[data-finus-theme="dark"] .gps-card,
+        html[data-finus-theme="dark"] .travel-card,
+        html[data-finus-theme="dark"] .gps-position-item {
+            border-color:#2C4132;
+            background:#111C15;
+            color:#EAF4ED;
+            box-shadow:0 18px 48px rgba(0,0,0,.24);
+        }
+
+        html[data-finus-theme="dark"] .hero-title,
+        html[data-finus-theme="dark"] .mini-card h2,
+        html[data-finus-theme="dark"] .gps-card h2,
+        html[data-finus-theme="dark"] .travel-distance,
+        html[data-finus-theme="dark"] .gps-position-value {
+            color:#EAF4ED;
+        }
+
+        html[data-finus-theme="dark"] .hero-copy,
+        html[data-finus-theme="dark"] .mini-card p,
+        html[data-finus-theme="dark"] .gps-status,
+        html[data-finus-theme="dark"] .travel-time,
+        html[data-finus-theme="dark"] .travel-note,
+        html[data-finus-theme="dark"] .gps-position-label {
+            color:#A6B7AB;
+        }
+
+        html[data-finus-theme="dark"] .map-frame-wrap {
+            background:#17251B;
+        }
+
+        html[data-finus-theme="dark"] .location-correction,
+        html[data-finus-theme="dark"] .device-feature {
+            border-color:#2C4132;
+            background:#142119;
+            color:#D8E8DC;
+        }
+
+        html[data-finus-theme="dark"] .location-correction-input {
+            border-color:#36503C;
+            background:#0E1811;
+            color:#EDF7EF;
+        }
+
+        html[data-finus-theme="dark"] .location-correction-input::placeholder {
+            color:#74867A;
+        }
+
     </style>
 </head>
 <body>
@@ -377,6 +580,23 @@
             <img src="{{ asset('assets/images/FINUS_Welcome.png') }}" alt="FINUS PUSDAI" class="page-logo">
 
             <nav class="page-nav" aria-label="Navigasi halaman">
+                <button
+                    type="button"
+                    class="page-theme-toggle"
+                    data-finus-theme-toggle
+                    aria-label="Ubah mode tampilan FINUS"
+                    aria-pressed="false"
+                    title="Mode gelap"
+                >
+                    <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path>
+                    </svg>
+                    <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M20.5 14.5A8 8 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"></path>
+                    </svg>
+                </button>
+
                  <a href="{{ route('home') }}" class="auth-home-link" data-loading-title="Kembali ke beranda...">
                     <span class="auth-home-icon" aria-hidden="true"></span>
                     <span class="auth-home-link-text">Beranda</span>
@@ -1126,6 +1346,115 @@
                 }, { threshold:[0,.16,.45], rootMargin:'0px 0px -7% 0px' });
                 elements.forEach(element => observer.observe(element));
             }
+        })();
+    </script>
+
+    <script>
+        (() => {
+            const storageKey = 'finus:appearance';
+            const root = document.documentElement;
+
+            const readTheme = () => {
+                try {
+                    return localStorage.getItem(storageKey) === 'dark'
+                        ? 'dark'
+                        : 'light';
+                } catch (_) {
+                    return root.dataset.finusTheme === 'dark'
+                        ? 'dark'
+                        : 'light';
+                }
+            };
+
+            const updateThemeButtons = theme => {
+                const dark = theme === 'dark';
+
+                document
+                    .querySelectorAll('[data-finus-theme-toggle]')
+                    .forEach(button => {
+                        button.setAttribute(
+                            'aria-pressed',
+                            dark ? 'true' : 'false'
+                        );
+
+                        button.setAttribute(
+                            'aria-label',
+                            dark
+                                ? 'Ubah FINUS ke mode terang'
+                                : 'Ubah FINUS ke mode gelap'
+                        );
+
+                        button.setAttribute(
+                            'title',
+                            dark
+                                ? 'Mode terang'
+                                : 'Mode gelap'
+                        );
+                    });
+            };
+
+            const applyTheme = theme => {
+                const normalized = theme === 'dark' ? 'dark' : 'light';
+
+                root.classList.add('finus-theme-changing');
+                root.dataset.finusTheme = normalized;
+                root.style.colorScheme = normalized;
+
+                const colorSchemeMeta = document.querySelector(
+                    'meta[name="color-scheme"]'
+                );
+
+                if (colorSchemeMeta) {
+                    colorSchemeMeta.setAttribute(
+                        'content',
+                        normalized
+                    );
+                }
+
+                const themeColorMeta = document.querySelector(
+                    'meta[name="theme-color"]'
+                );
+
+                if (themeColorMeta) {
+                    themeColorMeta.setAttribute(
+                        'content',
+                        normalized === 'dark'
+                            ? '#08150D'
+                            : '#0FB442'
+                    );
+                }
+
+                try {
+                    localStorage.setItem(storageKey, normalized);
+                } catch (_) {}
+
+                updateThemeButtons(normalized);
+
+                window.setTimeout(() => {
+                    root.classList.remove('finus-theme-changing');
+                }, 220);
+            };
+
+            updateThemeButtons(readTheme());
+
+            document.addEventListener('click', event => {
+                const button = event.target.closest(
+                    '[data-finus-theme-toggle]'
+                );
+
+                if (!button) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                applyTheme(
+                    readTheme() === 'dark'
+                        ? 'light'
+                        : 'dark'
+                );
+            });
         })();
     </script>
 </body>
