@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#0FB442">
-    <meta name="color-scheme" content="light">
-
-    {{-- FINUS tidak mengikuti dark mode perangkat. Tema hanya mengikuti pilihan pengguna di FINUS. --}}
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <script>
         (() => {
             const storageKey = 'finus:appearance';
@@ -514,6 +513,25 @@
             background:linear-gradient(180deg,#0E1811,#0A120D);
         }
 
+    
+
+        /* FINUS memilih tema sendiri dan tidak mengikuti tema device. */
+        html[data-finus-theme="light"] {
+            color-scheme: light !important;
+            color-scheme: only light !important;
+        }
+
+        html[data-finus-theme="dark"] {
+            color-scheme: dark !important;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            html[data-finus-theme="light"] {
+                color-scheme: light !important;
+                color-scheme: only light !important;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -783,8 +801,10 @@
                 if (!button) {
                     return;
                 }
+
                 event.preventDefault();
                 event.stopPropagation();
+
                 applyTheme(
                     readTheme() === 'dark'
                         ? 'light'
@@ -793,5 +813,6 @@
             });
         })();
     </script>
+
 </body>
 </html>
