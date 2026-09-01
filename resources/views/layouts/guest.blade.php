@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#075d2a">
-    <meta name="color-scheme" content="light dark">
-    <meta name="supported-color-schemes" content="light dark">
+    <meta name="color-scheme" content="only light">
     <script>
         (() => {
             const storageKey = 'finus:appearance';
@@ -21,13 +20,20 @@
             }
 
             document.documentElement.dataset.finusTheme = theme;
-            document.documentElement.style.colorScheme = theme;
+            document.documentElement.style.setProperty(
+                'color-scheme',
+                theme === 'dark' ? 'dark' : 'only light',
+                'important'
+            );
 
             const colorSchemeMeta = document.querySelector(
                 'meta[name="color-scheme"]'
             );
             if (colorSchemeMeta) {
-                colorSchemeMeta.setAttribute('content', theme);
+                colorSchemeMeta.setAttribute(
+                    'content',
+                    theme === 'dark' ? 'dark' : 'only light'
+                );
             }
 
             const themeColorMeta = document.querySelector(
@@ -1050,9 +1056,7 @@
            FINUS APPEARANCE — GUEST / AUTH
            Tidak mengikuti dark mode perangkat.
         ===================================================== */
-        html[data-finus-theme="light"] {
-            color-scheme: light;
-        }
+        html[data-finus-theme="light"] { color-scheme: only light !important; }
 
         html[data-finus-theme="dark"] {
             color-scheme: dark;
@@ -1500,6 +1504,26 @@
             }
         }
 
+    
+
+        /* =====================================================
+           FINUS MANUAL THEME — FINAL FORCE-LIGHT GUARD
+           Mode device/OS tidak menentukan tampilan FINUS.
+        ===================================================== */
+        html[data-finus-theme="light"] {
+            color-scheme: only light !important;
+        }
+
+        html[data-finus-theme="dark"] {
+            color-scheme: dark !important;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            html[data-finus-theme="light"] {
+                color-scheme: only light !important;
+            }
+        }
+
     </style>
 </head>
 
@@ -1870,7 +1894,11 @@
 
             root.classList.add('finus-theme-changing');
             root.dataset.finusTheme = normalized;
-            root.style.colorScheme = normalized;
+            root.style.setProperty(
+                'color-scheme',
+                normalized === 'dark' ? 'dark' : 'only light',
+                'important'
+            );
 
             const colorSchemeMeta = document.querySelector(
                 'meta[name="color-scheme"]'
@@ -1879,7 +1907,7 @@
             if (colorSchemeMeta) {
                 colorSchemeMeta.setAttribute(
                     'content',
-                    normalized
+                    normalized === 'dark' ? 'dark' : 'only light'
                 );
             }
 
@@ -1941,7 +1969,11 @@
                 : 'light';
 
             root.dataset.finusTheme = theme;
-            root.style.colorScheme = theme;
+            root.style.setProperty(
+                'color-scheme',
+                theme === 'dark' ? 'dark' : 'only light',
+                'important'
+            );
             updateControls(theme);
 
             const colorSchemeMeta = document.querySelector(
@@ -1949,12 +1981,16 @@
             );
 
             if (colorSchemeMeta) {
-                colorSchemeMeta.setAttribute('content', theme);
+                colorSchemeMeta.setAttribute(
+                    'content',
+                    theme === 'dark' ? 'dark' : 'only light'
+                );
             }
 
             const themeColorMeta = document.querySelector(
                 'meta[name="theme-color"]'
             );
+
             if (themeColorMeta) {
                 themeColorMeta.setAttribute(
                     'content',
@@ -1966,6 +2002,7 @@
         });
     })();
     </script>
+
     @stack('scripts')
 </body>
 </html>

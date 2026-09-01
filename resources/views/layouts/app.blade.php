@@ -6,8 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0E5423">
-    <meta name="color-scheme" content="light dark">
-    <meta name="supported-color-schemes" content="light dark">
+    <meta name="color-scheme" content="only light">
     <script>
         (() => {
             const storageKey = 'finus:appearance';
@@ -22,13 +21,20 @@
             }
 
             document.documentElement.dataset.finusTheme = theme;
-            document.documentElement.style.colorScheme = theme;
+            document.documentElement.style.setProperty(
+                'color-scheme',
+                theme === 'dark' ? 'dark' : 'only light',
+                'important'
+            );
 
             const colorSchemeMeta = document.querySelector(
                 'meta[name="color-scheme"]'
             );
             if (colorSchemeMeta) {
-                colorSchemeMeta.setAttribute('content', theme);
+                colorSchemeMeta.setAttribute(
+                    'content',
+                    theme === 'dark' ? 'dark' : 'only light'
+                );
             }
 
             const themeColorMeta = document.querySelector(
@@ -717,9 +723,7 @@
            Default selalu LIGHT, tidak mengikuti dark mode device.
            DARK hanya aktif jika pengguna memilihnya di FINUS.
         ===================================================== */
-        html[data-finus-theme="light"] {
-            color-scheme: light;
-        }
+        html[data-finus-theme="light"] { color-scheme: only light !important; }
 
         html[data-finus-theme="dark"] {
             color-scheme: dark;
@@ -893,6 +897,26 @@
         @media (prefers-color-scheme: dark) {
             html[data-finus-theme="light"] {
                 color-scheme: light !important;
+                color-scheme: only light !important;
+            }
+        }
+
+    
+
+        /* =====================================================
+           FINUS MANUAL THEME — FINAL FORCE-LIGHT GUARD
+           Mode device/OS tidak menentukan tampilan FINUS.
+        ===================================================== */
+        html[data-finus-theme="light"] {
+            color-scheme: only light !important;
+        }
+
+        html[data-finus-theme="dark"] {
+            color-scheme: dark !important;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            html[data-finus-theme="light"] {
                 color-scheme: only light !important;
             }
         }
@@ -1551,7 +1575,11 @@
 
                 root.classList.add('finus-theme-changing');
                 root.dataset.finusTheme = normalized;
-                root.style.colorScheme = normalized;
+                root.style.setProperty(
+                'color-scheme',
+                normalized === 'dark' ? 'dark' : 'only light',
+                'important'
+            );
 
                 const colorSchemeMeta = document.querySelector(
                     'meta[name="color-scheme"]'
@@ -1559,9 +1587,9 @@
 
                 if (colorSchemeMeta) {
                     colorSchemeMeta.setAttribute(
-                        'content',
-                        normalized
-                    );
+                    'content',
+                    normalized === 'dark' ? 'dark' : 'only light'
+                );
                 }
 
                 const themeColorMeta = document.querySelector(
