@@ -7,6 +7,46 @@
     <meta name="theme-color" content="#0FB442">
     <meta name="color-scheme" content="light">
 
+    {{-- FINUS tidak mengikuti dark mode perangkat. Tema hanya mengikuti pilihan pengguna di FINUS. --}}
+    <script>
+        (() => {
+            const storageKey = 'finus:appearance';
+            let theme = 'light';
+
+            try {
+                theme = localStorage.getItem(storageKey) === 'dark'
+                    ? 'dark'
+                    : 'light';
+            } catch (_) {
+                theme = 'light';
+            }
+
+            const root = document.documentElement;
+            root.dataset.finusTheme = theme;
+            root.style.colorScheme = theme;
+
+            const colorSchemeMeta = document.querySelector(
+                'meta[name="color-scheme"]'
+            );
+
+            if (colorSchemeMeta) {
+                colorSchemeMeta.setAttribute('content', theme);
+            }
+
+            const themeColorMeta = document.querySelector(
+                'meta[name="theme-color"]'
+            );
+
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute(
+                    'content',
+                    theme === 'dark' ? '#08150D' : '#0FB442'
+                );
+            }
+        })();
+    </script>
+
+
     <title>FINUS | PUSDAI Jawa Barat</title>
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=21">
@@ -2255,6 +2295,423 @@
                 width: 100%;
             }
         }
+    
+
+        /* =====================================================
+           MODE TAMPILAN FINUS
+           Default selalu terang dan tidak mengikuti mode perangkat.
+        ===================================================== */
+        html[data-finus-theme="light"] { color-scheme:light; }
+        html[data-finus-theme="dark"] { color-scheme:dark; }
+
+        .finus-theme-toggle {
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:42px;
+            min-width:42px;
+            height:42px;
+            padding:0;
+            border:1px solid rgba(255,255,255,.27);
+            border-radius:12px;
+            background:rgba(255,255,255,.93);
+            color:var(--g950);
+            cursor:pointer;
+            box-shadow:0 8px 18px rgba(0,48,17,.13);
+            transition:transform .2s ease,background .2s ease,box-shadow .2s ease;
+        }
+
+        .finus-theme-toggle:hover,
+        .finus-theme-toggle:focus-visible {
+            background:#fff;
+            outline:none;
+            transform:translateY(-1px);
+            box-shadow:0 12px 23px rgba(0,48,17,.18);
+        }
+
+        .finus-theme-icon {
+            width:19px;
+            height:19px;
+            fill:none;
+            stroke:currentColor;
+            stroke-width:2;
+            stroke-linecap:round;
+            stroke-linejoin:round;
+        }
+
+        .finus-theme-icon-moon { display:none; }
+        html[data-finus-theme="dark"] .finus-theme-icon-sun { display:none; }
+        html[data-finus-theme="dark"] .finus-theme-icon-moon { display:block; }
+
+        html[data-finus-theme="dark"] {
+            --g50:#0A120D;
+            --text:#EAF4ED;
+            --muted:#A7B7AC;
+            --shadow-sm:0 8px 24px rgba(0,0,0,.22);
+            --shadow-md:0 18px 46px rgba(0,0,0,.30);
+            --shadow-lg:0 30px 80px rgba(0,0,0,.42);
+        }
+
+        html[data-finus-theme="dark"] body {
+            background:#0A120D;
+            color:var(--text);
+        }
+
+        html[data-finus-theme="dark"] .finus-theme-toggle {
+            border-color:#35503B;
+            background:#132119;
+            color:#BCEFC7;
+            box-shadow:0 8px 18px rgba(0,0,0,.26);
+        }
+
+        html[data-finus-theme="dark"] .finus-theme-toggle:hover {
+            background:#192B1F;
+        }
+
+        html.finus-theme-changing *,
+        html.finus-theme-changing *::before,
+        html.finus-theme-changing *::after {
+            transition:
+                background-color .2s ease,
+                border-color .2s ease,
+                color .2s ease,
+                box-shadow .2s ease !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html.finus-theme-changing *,
+            html.finus-theme-changing *::before,
+            html.finus-theme-changing *::after {
+                transition:none !important;
+            }
+        }
+
+        html[data-finus-theme="dark"] .finus-hero {
+            background-image:
+                linear-gradient(90deg,rgba(8,21,13,.95),rgba(10,26,15,.87) 42%,rgba(8,27,14,.70) 70%,rgba(0,31,11,.52)),
+                url('{{ asset('assets/images/bg-welcome.png') }}');
+        }
+
+        html[data-finus-theme="dark"] .finus-hero-title {
+            color:#C8FFD1;
+            text-shadow:0 2px 0 rgba(0,0,0,.28);
+        }
+
+        html[data-finus-theme="dark"] .finus-hero-subtitle,
+        html[data-finus-theme="dark"] .finus-section-title,
+        html[data-finus-theme="dark"] .finus-feature-title,
+        html[data-finus-theme="dark"] .finus-flow-title {
+            color:#EAF4ED;
+        }
+
+        html[data-finus-theme="dark"] .finus-hero-description,
+        html[data-finus-theme="dark"] .finus-section-copy,
+        html[data-finus-theme="dark"] .finus-feature-copy,
+        html[data-finus-theme="dark"] .finus-flow-copy {
+            color:#A7B7AC;
+        }
+
+        html[data-finus-theme="dark"] .finus-eyebrow,
+        html[data-finus-theme="dark"] .finus-meta-item,
+        html[data-finus-theme="dark"] .finus-secondary-button,
+        html[data-finus-theme="dark"] .finus-feature-card,
+        html[data-finus-theme="dark"] .finus-flow-step,
+        html[data-finus-theme="dark"] .finus-faq-item {
+            border-color:#2C4132;
+            background:#111C15;
+            color:#DDECE1;
+            box-shadow:0 14px 36px rgba(0,0,0,.22);
+        }
+
+        html[data-finus-theme="dark"] .finus-section-soft,
+        html[data-finus-theme="dark"] .finus-faq-section {
+            background:#0E1811;
+        }
+
+        html[data-finus-theme="dark"] .finus-dropdown,
+        html[data-finus-theme="dark"] .finus-mobile-panel {
+            border-color:#2B4031;
+            background:#111C15;
+            color:#EAF4ED;
+            box-shadow:0 18px 46px rgba(0,0,0,.34);
+        }
+
+        html[data-finus-theme="dark"] .finus-dropdown::before {
+            border-color:#2B4031;
+            background:#111C15;
+        }
+
+        html[data-finus-theme="dark"] .finus-dropdown-label,
+        html[data-finus-theme="dark"] .finus-mobile-menu-title {
+            color:#95A69B;
+        }
+
+        html[data-finus-theme="dark"] .finus-dropdown-link,
+        html[data-finus-theme="dark"] .finus-mobile-menu-link {
+            border-color:#2C4132;
+            background:#142119;
+            color:#DDECE1;
+        }
+
+        html[data-finus-theme="dark"] .finus-dropdown-link:hover,
+        html[data-finus-theme="dark"] .finus-mobile-menu-link:hover {
+            background:#193522;
+            color:#A7F4B6;
+        }
+
+        html[data-finus-theme="dark"] .finus-dropdown-link-icon,
+        html[data-finus-theme="dark"] .finus-mobile-menu-link-icon,
+        html[data-finus-theme="dark"] .finus-feature-icon,
+        html[data-finus-theme="dark"] .finus-flow-number {
+            background:#17331F;
+            color:#79E790;
+        }
+
+        html[data-finus-theme="dark"] .finus-nav-button {
+            border-color:#35503B;
+            background:#132119;
+            color:#BCEFC7;
+        }
+
+        html[data-finus-theme="dark"] .finus-nav-button:hover,
+        html[data-finus-theme="dark"] .finus-nav-button[aria-expanded="true"] {
+            background:#192B1F;
+        }
+
+        html[data-finus-theme="dark"] .finus-nav-button-icon {
+            background:#17331F;
+            color:#79E790;
+        }
+
+        html[data-finus-theme="dark"] .finus-loader-card {
+            border-color:#304535;
+            background:#111C15;
+            color:#EAF4ED;
+        }
+
+    
+
+        /* =====================================================
+           DARK MODE POLISH — WELCOME
+           Override khusus agar mode gelap tetap punya hierarki,
+           kontras, dan warna aksen yang nyaman.
+        ===================================================== */
+        html[data-finus-theme="dark"] .finus-hero {
+            background-image:
+                linear-gradient(
+                    90deg,
+                    rgba(7, 18, 11, .88) 0%,
+                    rgba(8, 24, 13, .78) 42%,
+                    rgba(8, 28, 15, .54) 70%,
+                    rgba(2, 34, 14, .34) 100%
+                ),
+                url('{{ asset('assets/images/bg-welcome.png') }}');
+        }
+
+        html[data-finus-theme="dark"] .finus-hero::before {
+            background:
+                radial-gradient(circle at 14% 18%, rgba(49, 194, 82, .11), transparent 22rem),
+                radial-gradient(circle at 76% 72%, rgba(138, 230, 155, .07), transparent 25rem);
+        }
+
+        html[data-finus-theme="dark"] .finus-hero-title {
+            color:#D7FFDE;
+            text-shadow:0 3px 18px rgba(0,0,0,.34);
+        }
+
+        html[data-finus-theme="dark"] .finus-hero-subtitle {
+            color:#F0F7F2;
+        }
+
+        html[data-finus-theme="dark"] .finus-hero-description {
+            color:#C2D0C6;
+        }
+
+        html[data-finus-theme="dark"] .finus-hero-description strong,
+        html[data-finus-theme="dark"] .finus-hero-description a {
+            color:#63D77D;
+        }
+
+        html[data-finus-theme="dark"] .finus-eyebrow,
+        html[data-finus-theme="dark"] .finus-meta-item {
+            border-color:rgba(116, 206, 136, .20);
+            background:rgba(15, 39, 23, .78);
+            color:#CFE0D3;
+            box-shadow:0 9px 26px rgba(0,0,0,.18);
+        }
+
+        html[data-finus-theme="dark"] .finus-feature-card {
+            border-color:#294232;
+            background:
+                linear-gradient(145deg, #132219 0%, #101C15 100%);
+            color:#EAF4ED;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.025),
+                0 16px 38px rgba(0,0,0,.19);
+        }
+
+        html[data-finus-theme="dark"] .finus-feature-card:hover {
+            border-color:#3A5A43;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.03),
+                0 22px 45px rgba(0,0,0,.27);
+        }
+
+        /*
+         * Lingkaran pastel versi light terlalu terang pada kartu gelap.
+         * Di mode gelap diganti menjadi aksen transparan.
+         */
+        html[data-finus-theme="dark"] .finus-feature-card {
+            --feature-dark-soft:rgba(34,186,81,.10);
+            --feature-dark-color:#6EE489;
+        }
+
+        html[data-finus-theme="dark"] .finus-feature-card.is-blue {
+            --feature-dark-soft:rgba(72,132,255,.12);
+            --feature-dark-color:#82B1FF;
+        }
+
+        html[data-finus-theme="dark"] .finus-feature-card.is-purple {
+            --feature-dark-soft:rgba(151,104,255,.13);
+            --feature-dark-color:#BBA0FF;
+        }
+
+        html[data-finus-theme="dark"] .finus-feature-card::after {
+            background:var(--feature-dark-soft);
+            opacity:1;
+        }
+
+        html[data-finus-theme="dark"] .finus-feature-icon {
+            border:1px solid rgba(255,255,255,.035);
+            background:var(--feature-dark-soft);
+            color:var(--feature-dark-color);
+        }
+
+        html[data-finus-theme="dark"] .finus-feature-title {
+            color:#F1F7F3;
+        }
+
+        html[data-finus-theme="dark"] .finus-feature-copy {
+            color:#AEBDB3;
+        }
+
+        html[data-finus-theme="dark"] .finus-feature-list li {
+            color:#A5B7AB;
+        }
+
+        html[data-finus-theme="dark"] .finus-feature-list li::before {
+            background:#183421;
+            color:#78E991;
+            box-shadow:inset 0 0 0 1px rgba(120,233,145,.08);
+        }
+
+        html[data-finus-theme="dark"] .finus-section:not(.finus-section-dark) {
+            background:#0B150F;
+        }
+
+        html[data-finus-theme="dark"] .finus-section-heading .finus-section-kicker:not(.finus-section-dark *) {
+            border-color:#294232;
+            background:#132119;
+            color:#8BE39E;
+        }
+
+        html[data-finus-theme="dark"] .finus-section-title {
+            color:#EEF6F0;
+        }
+
+        html[data-finus-theme="dark"] .finus-section-copy {
+            color:#A9B9AE;
+        }
+
+        html[data-finus-theme="dark"] .finus-section-dark {
+            background:
+                radial-gradient(circle at 12% 15%, rgba(34,186,81,.07), transparent 23rem),
+                linear-gradient(145deg,#07140C,#0B1D11 55%,#0D2615);
+        }
+
+        html[data-finus-theme="dark"] .finus-flow-step {
+            border-color:rgba(151, 211, 165, .13);
+            background:rgba(255,255,255,.045);
+            box-shadow:none;
+        }
+
+        html[data-finus-theme="dark"] .finus-flow-copy {
+            color:#AFC0B4;
+        }
+
+        html[data-finus-theme="dark"] .finus-faq-item {
+            border-color:#294232;
+            background:#111E16;
+        }
+
+    
+
+        /* Hilangkan kotak dekoratif di belakang tulisan "Selamat Datang". */
+        .finus-hero-content::before {
+            content: none !important;
+            display: none !important;
+        }
+
+    
+
+        /* =====================================================
+           HERO META LABEL — KONSISTEN WELCOME & PENGELOLA
+           Gaya gelap dipilih agar menyatu dengan hero dark mode.
+        ===================================================== */
+        html[data-finus-theme="dark"] .finus-meta-item {
+            border:1px solid rgba(104, 203, 127, .24) !important;
+            background:rgba(12, 34, 20, .88) !important;
+            color:#DDEBE1 !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.025),
+                0 9px 22px rgba(0,0,0,.16) !important;
+            backdrop-filter:blur(8px);
+        }
+
+        html[data-finus-theme="dark"] .finus-meta-item:hover {
+            border-color:rgba(121, 226, 145, .34) !important;
+            background:rgba(18, 50, 29, .94) !important;
+            color:#F0F8F2 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-meta-icon {
+            border:1px solid rgba(121, 234, 145, .08) !important;
+            background:#16351F !important;
+            color:#79EA91 !important;
+            box-shadow:none !important;
+        }
+
+        /* =====================================================
+           FAQ — KONTRAS TEKS PADA MODE GELAP
+        ===================================================== */
+        html[data-finus-theme="dark"] .finus-faq-item {
+            border-color:#2A4433 !important;
+            background:#111F17 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-faq-item summary {
+            color:#EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-faq-item summary:hover,
+        html[data-finus-theme="dark"] .finus-faq-item summary:focus-visible {
+            color:#BDF3C8 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-faq-item summary::after {
+            border:1px solid rgba(121, 234, 145, .10);
+            background:#173820 !important;
+            color:#7BEA92 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-faq-item[open] summary {
+            color:#CFF6D7 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-faq-item p {
+            color:#AFC0B4 !important;
+        }
+
     </style>
 </head>
 <body>
@@ -2275,6 +2732,23 @@
                 </span>
             </div>
             <nav class="finus-nav" aria-label="Navigasi utama">
+                <button
+                    type="button"
+                    class="finus-theme-toggle"
+                    data-finus-theme-toggle
+                    aria-label="Ubah mode tampilan FINUS"
+                    aria-pressed="false"
+                    title="Mode gelap"
+                >
+                    <svg class="finus-theme-icon finus-theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path>
+                    </svg>
+                    <svg class="finus-theme-icon finus-theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M20.5 14.5A8 8 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"></path>
+                    </svg>
+                </button>
+
                 <div class="finus-nav-group finus-login-group">
                     <a href="{{ route('login.jamaah') }}" class="finus-nav-button" data-page-loading="Membuka login jamaah...">
                         <span class="finus-nav-button-icon" aria-hidden="true">↪</span>
@@ -2734,5 +3208,140 @@
         });
     })();
     </script>
+
+    <script>
+        (() => {
+            const storageKey = 'finus:appearance';
+            const root = document.documentElement;
+
+            const readTheme = () => {
+                try {
+                    return localStorage.getItem(storageKey) === 'dark'
+                        ? 'dark'
+                        : 'light';
+                } catch (_) {
+                    return root.dataset.finusTheme === 'dark'
+                        ? 'dark'
+                        : 'light';
+                }
+            };
+
+            const updateThemeButtons = theme => {
+                const dark = theme === 'dark';
+
+                document
+                    .querySelectorAll('[data-finus-theme-toggle]')
+                    .forEach(button => {
+                        button.setAttribute(
+                            'aria-pressed',
+                            dark ? 'true' : 'false'
+                        );
+
+                        button.setAttribute(
+                            'aria-label',
+                            dark
+                                ? 'Ubah FINUS ke mode terang'
+                                : 'Ubah FINUS ke mode gelap'
+                        );
+
+                        button.setAttribute(
+                            'title',
+                            dark
+                                ? 'Mode terang'
+                                : 'Mode gelap'
+                        );
+                    });
+            };
+
+            const applyTheme = theme => {
+                const normalized = theme === 'dark' ? 'dark' : 'light';
+
+                root.classList.add('finus-theme-changing');
+                root.dataset.finusTheme = normalized;
+                root.style.colorScheme = normalized;
+
+                const colorSchemeMeta = document.querySelector(
+                    'meta[name="color-scheme"]'
+                );
+
+                if (colorSchemeMeta) {
+                    colorSchemeMeta.setAttribute(
+                        'content',
+                        normalized
+                    );
+                }
+
+                const themeColorMeta = document.querySelector(
+                    'meta[name="theme-color"]'
+                );
+
+                if (themeColorMeta) {
+                    themeColorMeta.setAttribute(
+                        'content',
+                        normalized === 'dark'
+                            ? '#08150D'
+                            : '#0FB442'
+                    );
+                }
+
+                try {
+                    localStorage.setItem(storageKey, normalized);
+                } catch (_) {}
+
+                updateThemeButtons(normalized);
+
+                window.setTimeout(() => {
+                    root.classList.remove('finus-theme-changing');
+                }, 220);
+            };
+
+            updateThemeButtons(readTheme());
+
+            document.addEventListener('click', event => {
+                const button = event.target.closest(
+                    '[data-finus-theme-toggle]'
+                );
+
+                if (!button) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                applyTheme(
+                    readTheme() === 'dark'
+                        ? 'light'
+                        : 'dark'
+                );
+            });
+
+            window.addEventListener('storage', event => {
+                if (event.key !== storageKey) {
+                    return;
+                }
+
+                const theme = event.newValue === 'dark'
+                    ? 'dark'
+                    : 'light';
+
+                root.dataset.finusTheme = theme;
+                root.style.colorScheme = theme;
+                updateThemeButtons(theme);
+
+                const themeColorMeta = document.querySelector(
+                    'meta[name="theme-color"]'
+                );
+
+                if (themeColorMeta) {
+                    themeColorMeta.setAttribute(
+                        'content',
+                        theme === 'dark' ? '#08150D' : '#0FB442'
+                    );
+                }
+            });
+        })();
+    </script>
+
 </body>
 </html>

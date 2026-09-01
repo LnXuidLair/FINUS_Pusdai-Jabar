@@ -7,6 +7,46 @@
     <meta name="theme-color" content="#0FB442">
     <meta name="color-scheme" content="light">
 
+    {{-- FINUS tidak mengikuti dark mode perangkat. Tema hanya mengikuti pilihan pengguna di FINUS. --}}
+    <script>
+        (() => {
+            const storageKey = 'finus:appearance';
+            let theme = 'light';
+
+            try {
+                theme = localStorage.getItem(storageKey) === 'dark'
+                    ? 'dark'
+                    : 'light';
+            } catch (_) {
+                theme = 'light';
+            }
+
+            const root = document.documentElement;
+            root.dataset.finusTheme = theme;
+            root.style.colorScheme = theme;
+
+            const colorSchemeMeta = document.querySelector(
+                'meta[name="color-scheme"]'
+            );
+
+            if (colorSchemeMeta) {
+                colorSchemeMeta.setAttribute('content', theme);
+            }
+
+            const themeColorMeta = document.querySelector(
+                'meta[name="theme-color"]'
+            );
+
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute(
+                    'content',
+                    theme === 'dark' ? '#08150D' : '#0FB442'
+                );
+            }
+        })();
+    </script>
+
+
     <title>Portal Pengelola | FINUS PUSDAI Jawa Barat</title>
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=21">
@@ -2324,6 +2364,363 @@
         .finus-management-footer .finus-footer-bottom{padding-top:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.10);color:rgba(255,255,255,.52)}
         .finus-management-footer .finus-footer-bottom::before{content:"";position:absolute;top:-1px;left:0;width:96px;height:1px;background:#7EFF87}
         @media(max-width:720px){.finus-management-footer .finus-footer-inner{grid-template-columns:1fr;gap:20px;padding-top:30px}.finus-management-footer-note{justify-self:start;max-width:none}.finus-management-footer .finus-footer-bottom{align-items:flex-start;flex-direction:column;gap:5px}}
+    
+
+        /* =====================================================
+           MODE TAMPILAN FINUS
+           Default selalu terang dan tidak mengikuti mode perangkat.
+        ===================================================== */
+        html[data-finus-theme="light"] { color-scheme:light; }
+        html[data-finus-theme="dark"] { color-scheme:dark; }
+
+        .finus-theme-toggle {
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:42px;
+            min-width:42px;
+            height:42px;
+            padding:0;
+            border:1px solid rgba(255,255,255,.27);
+            border-radius:12px;
+            background:rgba(255,255,255,.93);
+            color:var(--g950);
+            cursor:pointer;
+            box-shadow:0 8px 18px rgba(0,48,17,.13);
+            transition:transform .2s ease,background .2s ease,box-shadow .2s ease;
+        }
+
+        .finus-theme-toggle:hover,
+        .finus-theme-toggle:focus-visible {
+            background:#fff;
+            outline:none;
+            transform:translateY(-1px);
+            box-shadow:0 12px 23px rgba(0,48,17,.18);
+        }
+
+        .finus-theme-icon {
+            width:19px;
+            height:19px;
+            fill:none;
+            stroke:currentColor;
+            stroke-width:2;
+            stroke-linecap:round;
+            stroke-linejoin:round;
+        }
+
+        .finus-theme-icon-moon { display:none; }
+        html[data-finus-theme="dark"] .finus-theme-icon-sun { display:none; }
+        html[data-finus-theme="dark"] .finus-theme-icon-moon { display:block; }
+
+        html[data-finus-theme="dark"] {
+            --g50:#0A120D;
+            --text:#EAF4ED;
+            --muted:#A7B7AC;
+            --shadow-sm:0 8px 24px rgba(0,0,0,.22);
+            --shadow-md:0 18px 46px rgba(0,0,0,.30);
+            --shadow-lg:0 30px 80px rgba(0,0,0,.42);
+        }
+
+        html[data-finus-theme="dark"] body {
+            background:#0A120D;
+            color:var(--text);
+        }
+
+        html[data-finus-theme="dark"] .finus-theme-toggle {
+            border-color:#35503B;
+            background:#132119;
+            color:#BCEFC7;
+            box-shadow:0 8px 18px rgba(0,0,0,.26);
+        }
+
+        html[data-finus-theme="dark"] .finus-theme-toggle:hover {
+            background:#192B1F;
+        }
+
+        html.finus-theme-changing *,
+        html.finus-theme-changing *::before,
+        html.finus-theme-changing *::after {
+            transition:
+                background-color .2s ease,
+                border-color .2s ease,
+                color .2s ease,
+                box-shadow .2s ease !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html.finus-theme-changing *,
+            html.finus-theme-changing *::before,
+            html.finus-theme-changing *::after {
+                transition:none !important;
+            }
+        }
+
+        html[data-finus-theme="dark"] .finus-management-hero {
+            background-image:
+                linear-gradient(90deg,rgba(8,21,13,.95),rgba(10,26,15,.86) 46%,rgba(8,27,14,.69)),
+                url('{{ asset('assets/images/bg-welcome.png') }}');
+        }
+
+        html[data-finus-theme="dark"] .finus-hero-title,
+        html[data-finus-theme="dark"] .finus-hero-subtitle,
+        html[data-finus-theme="dark"] .finus-role-title {
+            color:#EAF4ED;
+            text-shadow:none;
+        }
+
+        html[data-finus-theme="dark"] .finus-hero-description,
+        html[data-finus-theme="dark"] .finus-role-copy,
+        html[data-finus-theme="dark"] .finus-role-description {
+            color:#A7B7AC;
+        }
+
+        html[data-finus-theme="dark"] .finus-eyebrow,
+        html[data-finus-theme="dark"] .finus-meta-item,
+        html[data-finus-theme="dark"] .finus-role-card,
+        html[data-finus-theme="dark"] .finus-role-link,
+        html[data-finus-theme="dark"] .finus-role-security {
+            border-color:#2C4132;
+            background:#111C15;
+            color:#DDECE1;
+            box-shadow:0 16px 42px rgba(0,0,0,.24);
+        }
+
+        html[data-finus-theme="dark"] .finus-role-link:hover,
+        html[data-finus-theme="dark"] .finus-role-link:focus-visible {
+            background:#182D1E;
+        }
+
+        html[data-finus-theme="dark"] .finus-role-name {
+            color:#EAF4ED;
+        }
+
+        html[data-finus-theme="dark"] .finus-role-icon,
+        html[data-finus-theme="dark"] .finus-meta-icon {
+            background:#17331F;
+            color:#79E790;
+        }
+
+        html[data-finus-theme="dark"] .finus-management-label {
+            border-color:#35503B;
+            background:#132119;
+            color:#BCEFC7;
+        }
+
+        html[data-finus-theme="dark"] .finus-loader-card {
+            border-color:#304535;
+            background:#111C15;
+            color:#EAF4ED;
+        }
+
+        /*
+         * Modal kode akses tetap bernuansa hijau gelap karena sudah dirancang
+         * sebagai permukaan keamanan berkontras tinggi.
+         */
+
+    
+
+        .finus-management-header-actions {
+            display:flex;
+            align-items:center;
+            justify-content:flex-end;
+            gap:9px;
+        }
+
+        @media (max-width:520px) {
+            .finus-management-header-actions {
+                gap:7px;
+            }
+
+            .finus-management-label {
+                max-width:145px;
+                overflow:hidden;
+                text-overflow:ellipsis;
+                white-space:nowrap;
+            }
+        }
+
+    
+
+        /* =====================================================
+           DARK MODE POLISH — PORTAL PENGELOLA
+        ===================================================== */
+        html[data-finus-theme="dark"] .finus-management-hero {
+            background-image:
+                linear-gradient(
+                    90deg,
+                    rgba(7,18,11,.88) 0%,
+                    rgba(8,24,13,.78) 46%,
+                    rgba(8,28,15,.52) 100%
+                ),
+                url('{{ asset('assets/images/bg-welcome.png') }}');
+        }
+
+        html[data-finus-theme="dark"] .finus-role-card {
+            border-color:#294232;
+            background:
+                linear-gradient(145deg,#132219,#101C15);
+            box-shadow:0 18px 45px rgba(0,0,0,.22);
+        }
+
+        html[data-finus-theme="dark"] .finus-role-link,
+        html[data-finus-theme="dark"] .finus-role-security {
+            border-color:#2B4534;
+            background:#16251B;
+            color:#DDE9E0;
+            box-shadow:none;
+        }
+
+        /*
+         * Popup akses tidak boleh memakai gradient hijau terang yang sama
+         * seperti versi light. Surface dibuat netral-gelap dengan aksen hijau.
+         */
+        html[data-finus-theme="dark"] .finus-modal {
+            background:rgba(1, 9, 5, .76);
+            backdrop-filter:blur(9px);
+        }
+
+        html[data-finus-theme="dark"] .finus-modal-dialog {
+            border-color:#31543A;
+            background:
+                radial-gradient(circle at 100% 0%, rgba(52, 196, 84, .10), transparent 15rem),
+                linear-gradient(145deg, #132219 0%, #101B14 52%, #12251A 100%);
+            color:#EDF7EF;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.025),
+                0 28px 78px rgba(0,0,0,.48);
+        }
+
+        html[data-finus-theme="dark"] .finus-modal-dialog::after {
+            border-color:rgba(98, 220, 123, .055);
+        }
+
+        html[data-finus-theme="dark"] .finus-modal-icon {
+            border-color:#31533A;
+            background:#17331F;
+            color:#85EC9A;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+        }
+
+        html[data-finus-theme="dark"] .finus-modal-title {
+            color:#F2F8F4;
+        }
+
+        html[data-finus-theme="dark"] .finus-modal-copy {
+            color:#AFC0B4;
+        }
+
+        html[data-finus-theme="dark"] .finus-field-label {
+            color:#DCE9DF;
+        }
+
+        html[data-finus-theme="dark"] .finus-code-field {
+            border-color:#36563E;
+            background:#0C1610;
+            color:#F2F8F4;
+            caret-color:#78E991;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.015);
+        }
+
+        html[data-finus-theme="dark"] .finus-code-field::placeholder {
+            color:#798C7F;
+        }
+
+        html[data-finus-theme="dark"] .finus-code-field:focus {
+            border-color:#4FC56A;
+            background:#0E1A12;
+            box-shadow:0 0 0 4px rgba(79,197,106,.13);
+        }
+
+        html[data-finus-theme="dark"] .finus-toggle-password:hover,
+        html[data-finus-theme="dark"] .finus-toggle-password:focus-visible {
+            background:#183421;
+        }
+
+        /*
+         * Icon mata berupa PNG hitam pada versi terang,
+         * sehingga perlu dibalik warnanya di field gelap.
+         */
+        html[data-finus-theme="dark"] .finus-toggle-password img {
+            filter:brightness(0) invert(1);
+            opacity:.84 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-form-message {
+            color:#9FAFA5;
+        }
+
+        html[data-finus-theme="dark"] .finus-form-message.is-error {
+            color:#FFAAA9;
+        }
+
+        html[data-finus-theme="dark"] .finus-form-message.is-success {
+            color:#8DE9A1;
+        }
+
+        html[data-finus-theme="dark"] .finus-verify-button {
+            border-color:#5ADB73;
+            background:
+                linear-gradient(100deg,#39C85A,#26AD48 58%,#178E38);
+            color:#07180C;
+            box-shadow:0 10px 24px rgba(26,159,61,.20);
+        }
+
+        html[data-finus-theme="dark"] .finus-verify-button:hover,
+        html[data-finus-theme="dark"] .finus-verify-button:focus-visible {
+            background:
+                linear-gradient(100deg,#4DDA6A,#2FB952 58%,#1B9A3E);
+        }
+
+        html[data-finus-theme="dark"] .finus-cancel-button {
+            border-color:#34513B;
+            background:#17251B;
+            color:#D8E6DC;
+        }
+
+        html[data-finus-theme="dark"] .finus-cancel-button:hover,
+        html[data-finus-theme="dark"] .finus-cancel-button:focus-visible {
+            border-color:#46664E;
+            background:#1D2E22;
+            color:#FFFFFF;
+        }
+
+    
+
+        /* Hilangkan kotak dekoratif di belakang tulisan "Selamat Datang". */
+        .finus-hero-content::before {
+            content: none !important;
+            display: none !important;
+        }
+
+    
+
+        /* =====================================================
+           HERO META LABEL — KONSISTEN WELCOME & PENGELOLA
+           Gaya gelap dipilih agar menyatu dengan hero dark mode.
+        ===================================================== */
+        html[data-finus-theme="dark"] .finus-meta-item {
+            border:1px solid rgba(104, 203, 127, .24) !important;
+            background:rgba(12, 34, 20, .88) !important;
+            color:#DDEBE1 !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.025),
+                0 9px 22px rgba(0,0,0,.16) !important;
+            backdrop-filter:blur(8px);
+        }
+
+        html[data-finus-theme="dark"] .finus-meta-item:hover {
+            border-color:rgba(121, 226, 145, .34) !important;
+            background:rgba(18, 50, 29, .94) !important;
+            color:#F0F8F2 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-meta-icon {
+            border:1px solid rgba(121, 234, 145, .08) !important;
+            background:#16351F !important;
+            color:#79EA91 !important;
+            box-shadow:none !important;
+        }
+
     </style>
 </head>
 <body>
@@ -2343,7 +2740,25 @@
                     <span class="finus-brand-subtitle">Sistem Informasi Keuangan Masjid</span>
                 </span>
             </div>
-            <span class="finus-management-label">Portal Pengelola</span>
+            <div class="finus-management-header-actions">
+                <button
+                    type="button"
+                    class="finus-theme-toggle"
+                    data-finus-theme-toggle
+                    aria-label="Ubah mode tampilan FINUS"
+                    aria-pressed="false"
+                    title="Mode gelap"
+                >
+                    <svg class="finus-theme-icon finus-theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path>
+                    </svg>
+                    <svg class="finus-theme-icon finus-theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M20.5 14.5A8 8 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"></path>
+                    </svg>
+                </button>
+                <span class="finus-management-label">Portal Pengelola</span>
+            </div>
         </div>
     </header>
     <main class="finus-main">
@@ -2649,5 +3064,140 @@
         });
     })();
     </script>
+
+    <script>
+        (() => {
+            const storageKey = 'finus:appearance';
+            const root = document.documentElement;
+
+            const readTheme = () => {
+                try {
+                    return localStorage.getItem(storageKey) === 'dark'
+                        ? 'dark'
+                        : 'light';
+                } catch (_) {
+                    return root.dataset.finusTheme === 'dark'
+                        ? 'dark'
+                        : 'light';
+                }
+            };
+
+            const updateThemeButtons = theme => {
+                const dark = theme === 'dark';
+
+                document
+                    .querySelectorAll('[data-finus-theme-toggle]')
+                    .forEach(button => {
+                        button.setAttribute(
+                            'aria-pressed',
+                            dark ? 'true' : 'false'
+                        );
+
+                        button.setAttribute(
+                            'aria-label',
+                            dark
+                                ? 'Ubah FINUS ke mode terang'
+                                : 'Ubah FINUS ke mode gelap'
+                        );
+
+                        button.setAttribute(
+                            'title',
+                            dark
+                                ? 'Mode terang'
+                                : 'Mode gelap'
+                        );
+                    });
+            };
+
+            const applyTheme = theme => {
+                const normalized = theme === 'dark' ? 'dark' : 'light';
+
+                root.classList.add('finus-theme-changing');
+                root.dataset.finusTheme = normalized;
+                root.style.colorScheme = normalized;
+
+                const colorSchemeMeta = document.querySelector(
+                    'meta[name="color-scheme"]'
+                );
+
+                if (colorSchemeMeta) {
+                    colorSchemeMeta.setAttribute(
+                        'content',
+                        normalized
+                    );
+                }
+
+                const themeColorMeta = document.querySelector(
+                    'meta[name="theme-color"]'
+                );
+
+                if (themeColorMeta) {
+                    themeColorMeta.setAttribute(
+                        'content',
+                        normalized === 'dark'
+                            ? '#08150D'
+                            : '#0FB442'
+                    );
+                }
+
+                try {
+                    localStorage.setItem(storageKey, normalized);
+                } catch (_) {}
+
+                updateThemeButtons(normalized);
+
+                window.setTimeout(() => {
+                    root.classList.remove('finus-theme-changing');
+                }, 220);
+            };
+
+            updateThemeButtons(readTheme());
+
+            document.addEventListener('click', event => {
+                const button = event.target.closest(
+                    '[data-finus-theme-toggle]'
+                );
+
+                if (!button) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                applyTheme(
+                    readTheme() === 'dark'
+                        ? 'light'
+                        : 'dark'
+                );
+            });
+
+            window.addEventListener('storage', event => {
+                if (event.key !== storageKey) {
+                    return;
+                }
+
+                const theme = event.newValue === 'dark'
+                    ? 'dark'
+                    : 'light';
+
+                root.dataset.finusTheme = theme;
+                root.style.colorScheme = theme;
+                updateThemeButtons(theme);
+
+                const themeColorMeta = document.querySelector(
+                    'meta[name="theme-color"]'
+                );
+
+                if (themeColorMeta) {
+                    themeColorMeta.setAttribute(
+                        'content',
+                        theme === 'dark' ? '#08150D' : '#0FB442'
+                    );
+                }
+            });
+        })();
+    </script>
+
 </body>
 </html>

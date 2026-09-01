@@ -8,12 +8,6 @@
         ? html_entity_decode($rawPageContext, ENT_QUOTES | ENT_HTML5, 'UTF-8')
         : 'FINUS';
     $initial = mb_strtoupper(mb_substr(trim($navUser?->name ?? 'F'), 0, 1));
-    $navEmail = in_array($navUser?->role, [
-        \App\Models\User::ROLE_ADMIN,
-        \App\Models\User::ROLE_PEGAWAI,
-    ], true)
-        ? strtolower((string) $navUser?->email)
-        : $navUser?->email;
 
     $profileRoute = match (true) {
         $navUser?->isAdmin() => 'admin.profile',
@@ -306,6 +300,158 @@
         .finus-topbar-user { padding-right: 7px; }
         .finus-user-chevron { display: none; }
     }
+
+    .finus-theme-menu-button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        min-height: 48px;
+        padding: 7px 10px;
+        border: 0;
+        border-radius: 11px;
+        background: transparent;
+        color: #294334;
+        text-align: left;
+        cursor: pointer;
+        transition: background .18s ease, color .18s ease;
+    }
+
+    .finus-theme-menu-button:hover,
+    .finus-theme-menu-button:focus-visible {
+        background: #F1F8F3;
+        color: #0E6E2C;
+        outline: none;
+    }
+
+    .finus-theme-menu-copy {
+        display: grid;
+        min-width: 0;
+        flex: 1;
+        line-height: 1.2;
+    }
+
+    .finus-theme-menu-copy strong {
+        color: inherit;
+        font-size: 11.5px;
+        font-weight: 850;
+    }
+
+    .finus-theme-menu-copy small {
+        margin-top: 3px;
+        color: #78877E;
+        font-size: 9.5px;
+        font-weight: 650;
+    }
+
+    .finus-theme-switch {
+        position: relative;
+        width: 36px;
+        min-width: 36px;
+        height: 20px;
+        border-radius: 999px;
+        background: #D9E5DC;
+        box-shadow: inset 0 0 0 1px rgba(14, 84, 35, .08);
+        transition: background .2s ease;
+    }
+
+    .finus-theme-switch::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #FFFFFF;
+        box-shadow: 0 2px 5px rgba(15, 23, 42, .18);
+        transition: transform .2s ease;
+    }
+
+    html[data-finus-theme="dark"] .finus-theme-switch {
+        background: #179B40;
+    }
+
+    html[data-finus-theme="dark"] .finus-theme-switch::after {
+        transform: translateX(16px);
+    }
+
+    html[data-finus-theme="dark"] .finus-topbar-user {
+        border-color: #304838;
+        background: #142119;
+        color: #EAF4ED;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, .28);
+    }
+
+    html[data-finus-theme="dark"] .finus-topbar-user:hover,
+    html[data-finus-theme="dark"] .finus-topbar-user[aria-expanded="true"] {
+        background: #17261C;
+    }
+
+    html[data-finus-theme="dark"] .finus-user-avatar {
+        background: linear-gradient(135deg, #163B23, #1B4A2A);
+        color: #A8FFB9;
+    }
+
+    html[data-finus-theme="dark"] .finus-user-copy strong,
+    html[data-finus-theme="dark"] .finus-user-menu-head strong {
+        color: #ECF6EF;
+    }
+
+    html[data-finus-theme="dark"] .finus-user-copy small,
+    html[data-finus-theme="dark"] .finus-user-menu-head small,
+    html[data-finus-theme="dark"] .finus-account-link-copy small,
+    html[data-finus-theme="dark"] .finus-theme-menu-copy small {
+        color: #A3B2A8;
+    }
+
+    html[data-finus-theme="dark"] .finus-user-chevron,
+    html[data-finus-theme="dark"] .finus-account-link-chevron {
+        color: #8EA097;
+    }
+
+    html[data-finus-theme="dark"] .finus-user-menu {
+        border-color: #2A3E2F;
+        background: #111C15;
+        color: #EAF4ED;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, .38);
+    }
+
+    html[data-finus-theme="dark"] .finus-user-menu-head {
+        background: #17251B;
+    }
+
+    html[data-finus-theme="dark"] .finus-account-link,
+    html[data-finus-theme="dark"] .finus-theme-menu-button {
+        color: #D9E7DD;
+    }
+
+    html[data-finus-theme="dark"] .finus-account-link:hover,
+    html[data-finus-theme="dark"] .finus-account-link:focus-visible,
+    html[data-finus-theme="dark"] .finus-theme-menu-button:hover,
+    html[data-finus-theme="dark"] .finus-theme-menu-button:focus-visible {
+        background: #182A1E;
+        color: #9CF0AD;
+    }
+
+    html[data-finus-theme="dark"] .finus-account-link.is-active {
+        background: #193522;
+        color: #A7F4B6;
+    }
+
+    html[data-finus-theme="dark"] .finus-account-link-icon {
+        background: #183321;
+        color: #7BEA92;
+    }
+
+    html[data-finus-theme="dark"] .dropdown-divider {
+        border-color: #2A3C2E;
+    }
+
+    html[data-finus-theme="dark"] .finus-logout-button:hover {
+        background: #321A1D;
+    }
+
 </style>
 <header class="header finus-topbar" aria-label="Header aplikasi">
     <div class="finus-topbar-inner">
@@ -336,7 +482,7 @@
                     <span class="finus-user-avatar" aria-hidden="true">{{ $initial }}</span>
                     <span>
                         <strong>{{ $navUser->name }}</strong>
-                        <small>{{ $navEmail }}</small>
+                        <small>{{ $navUser->email }}</small>
                     </span>
                 </div>
                 <div class="dropdown-divider"></div>
@@ -371,6 +517,23 @@
                         </span>
                         <i class="fa-solid fa-chevron-right finus-account-link-chevron" aria-hidden="true"></i>
                     </a>
+
+                    <button
+                        type="button"
+                        class="finus-theme-menu-button"
+                        data-finus-theme-toggle
+                        aria-pressed="false"
+                        title="Ubah mode tampilan"
+                    >
+                        <span class="finus-account-link-icon" aria-hidden="true">
+                            <i class="fa-solid fa-sun" data-finus-theme-icon></i>
+                        </span>
+                        <span class="finus-theme-menu-copy">
+                            <strong>Mode Tampilan</strong>
+                            <small data-finus-theme-label>Mode Terang</small>
+                        </span>
+                        <span class="finus-theme-switch" aria-hidden="true"></span>
+                    </button>
                 </div>
 
                 <div class="dropdown-divider"></div>
