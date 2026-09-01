@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0FB442">
-    <meta name="color-scheme" content="light">
+    <meta name="color-scheme" content="light dark">
     <script>
         (() => {
             const storageKey = 'finus:appearance';
@@ -52,7 +52,7 @@ const themeColorMeta = document.querySelector(
 
     <style>
         :root{
-            color-scheme: only light;
+            color-scheme: light dark;
             --g950:#033D18;--g900:#075923;--g800:#0E6E2C;--g700:#118A37;
             --g600:#16A344;--g500:#22BA51;--g300:#7EFF87;--g100:#E7F9EB;
             --g50:#F4FCF6;--text:#122018;--muted:#637168;--white:#fff;
@@ -2732,6 +2732,96 @@ const themeColorMeta = document.querySelector(
         @media (prefers-color-scheme: dark) {
             html[data-finus-theme="light"] {
                 color-scheme: only light !important;
+            }
+        }
+
+    
+
+        /* =====================================================
+           FINUS THEME + FORCE DARK COEXISTENCE
+           -----------------------------------------------------
+           - FINUS tetap memakai pilihan tema manual sendiri.
+           - Meta/root menyatakan bahwa halaman memang menyediakan
+             LIGHT dan DARK agar browser seperti Samsung Internet
+             dapat memilih "Prefer Media Query Over Force Dark".
+           - Jika FINUS sedang LIGHT, "only light" tetap digunakan
+             sebagai pengaman tambahan untuk browser yang mendukungnya.
+           ===================================================== */
+
+        :root {
+            color-scheme: light dark;
+        }
+
+        html[data-finus-theme="light"] {
+            color-scheme: only light !important;
+        }
+
+        html[data-finus-theme="dark"] {
+            color-scheme: dark !important;
+        }
+
+        html[data-finus-theme="light"] :where(
+            input,
+            textarea,
+            select,
+            button
+        ) {
+            color-scheme: only light !important;
+        }
+
+        html[data-finus-theme="dark"] :where(
+            input,
+            textarea,
+            select,
+            button
+        ) {
+            color-scheme: dark !important;
+        }
+
+        /*
+         * Media query ini sengaja ADA walaupun FINUS tidak mengikuti
+         * tema perangkat. Tujuannya memberi tahu browser bahwa situs
+         * menyediakan penanganan dark-context sendiri.
+         *
+         * data-finus-theme tetap menjadi keputusan akhir:
+         * - device dark + FINUS light  => tetap light
+         * - device light + FINUS dark  => tetap dark
+         */
+        @media (prefers-color-scheme: dark) {
+            html[data-finus-theme="light"] {
+                color-scheme: only light !important;
+            }
+
+            html[data-finus-theme="dark"] {
+                color-scheme: dark !important;
+            }
+
+            html[data-finus-theme="light"] :where(
+                input,
+                textarea,
+                select,
+                button
+            ) {
+                color-scheme: only light !important;
+            }
+
+            html[data-finus-theme="dark"] :where(
+                input,
+                textarea,
+                select,
+                button
+            ) {
+                color-scheme: dark !important;
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            html[data-finus-theme="light"] {
+                color-scheme: only light !important;
+            }
+
+            html[data-finus-theme="dark"] {
+                color-scheme: dark !important;
             }
         }
 
