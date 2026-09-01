@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0FB442">
-    <meta name="color-scheme" content="light dark">
-    <meta name="supported-color-schemes" content="light dark">
+    <meta name="color-scheme" content="only light">
     <script>
         (() => {
             const storageKey = 'finus:appearance';
@@ -22,14 +21,21 @@
 
             const root = document.documentElement;
             root.dataset.finusTheme = theme;
-            root.style.colorScheme = theme;
+            root.style.setProperty(
+                'color-scheme',
+                theme === 'dark' ? 'dark' : 'only light',
+                'important'
+            );
 
             const colorSchemeMeta = document.querySelector(
                 'meta[name="color-scheme"]'
             );
 
             if (colorSchemeMeta) {
-                colorSchemeMeta.setAttribute('content', theme);
+                colorSchemeMeta.setAttribute(
+                    'content',
+                    theme === 'dark' ? 'dark' : 'only light'
+                );
             }
 
             const themeColorMeta = document.querySelector(
@@ -57,7 +63,7 @@
 
     <style>
         :root{
-            color-scheme:light only;
+            color-scheme: only light;
             --g950:#033D18;--g900:#075923;--g800:#0E6E2C;--g700:#118A37;
             --g600:#16A344;--g500:#22BA51;--g300:#7EFF87;--g100:#E7F9EB;
             --g50:#F4FCF6;--text:#122018;--muted:#637168;--white:#fff;
@@ -2300,7 +2306,7 @@
            MODE TAMPILAN FINUS
            Default selalu terang dan tidak mengikuti mode perangkat.
         ===================================================== */
-        html[data-finus-theme="light"] { color-scheme:light; }
+        html[data-finus-theme="light"] { color-scheme: only light !important; }
         html[data-finus-theme="dark"] { color-scheme:dark; }
 
         .finus-theme-toggle {
@@ -2709,6 +2715,26 @@
 
         html[data-finus-theme="dark"] .finus-faq-item p {
             color:#AFC0B4 !important;
+        }
+
+    
+
+        /* =====================================================
+           FINUS MANUAL THEME — FINAL FORCE-LIGHT GUARD
+           Mode device/OS tidak menentukan tampilan FINUS.
+        ===================================================== */
+        html[data-finus-theme="light"] {
+            color-scheme: only light !important;
+        }
+
+        html[data-finus-theme="dark"] {
+            color-scheme: dark !important;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            html[data-finus-theme="light"] {
+                color-scheme: only light !important;
+            }
         }
 
     </style>
@@ -3257,7 +3283,11 @@
 
                 root.classList.add('finus-theme-changing');
                 root.dataset.finusTheme = normalized;
-                root.style.colorScheme = normalized;
+                root.style.setProperty(
+                'color-scheme',
+                normalized === 'dark' ? 'dark' : 'only light',
+                'important'
+            );
 
                 const colorSchemeMeta = document.querySelector(
                     'meta[name="color-scheme"]'
@@ -3265,9 +3295,9 @@
 
                 if (colorSchemeMeta) {
                     colorSchemeMeta.setAttribute(
-                        'content',
-                        normalized
-                    );
+                    'content',
+                    normalized === 'dark' ? 'dark' : 'only light'
+                );
                 }
 
                 const themeColorMeta = document.querySelector(
@@ -3325,7 +3355,11 @@
                     : 'light';
 
                 root.dataset.finusTheme = theme;
-                root.style.colorScheme = theme;
+                root.style.setProperty(
+                'color-scheme',
+                theme === 'dark' ? 'dark' : 'only light',
+                'important'
+            );
                 updateThemeButtons(theme);
 
                 const themeColorMeta = document.querySelector(
@@ -3341,6 +3375,5 @@
             });
         })();
     </script>
-
 </body>
 </html>
