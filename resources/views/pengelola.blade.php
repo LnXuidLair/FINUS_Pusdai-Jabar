@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0FB442">
-    <meta name="color-scheme" content="light">
-
-    {{-- FINUS tidak mengikuti dark mode perangkat. Tema hanya mengikuti pilihan pengguna di FINUS. --}}
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <script>
         (() => {
             const storageKey = 'finus:appearance';
@@ -3198,6 +3197,5 @@
             });
         })();
     </script>
-
 </body>
 </html>

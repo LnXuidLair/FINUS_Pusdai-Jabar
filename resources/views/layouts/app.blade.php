@@ -6,9 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0E5423">
-    <meta name="color-scheme" content="light">
-
-    {-- FINUS mengabaikan mode terang/gelap perangkat. Tema hanya mengikuti pilihan di FINUS. --}
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <script>
         (() => {
             const storageKey = 'finus:appearance';
@@ -76,6 +75,8 @@
     <link href="{{ asset('assets/css/lib/helper.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/custom-style.css') }}" rel="stylesheet">
+    {{-- CSS khusus dari halaman anak --}}
+    @stack('styles')
     <style>
         :root {
             --finus-sidebar-width: 270px;
@@ -345,40 +346,6 @@
             width: 100%;
             max-width: 1800px;
             margin: 0 auto;
-        }
-        @media print {
-            .sidebar,
-            .header,
-            .finus-topbar,
-            .finus-sidebar-backdrop,
-            .finus-skip-link,
-            .finus-mobile-bottom-nav,
-            .finus-page-heading {
-                display: none !important;
-                visibility: hidden !important;
-                height: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .content-wrap,
-            body.finus-layout .content-wrap,
-            body.sidebar-collapsed .content-wrap {
-                margin: 0 !important;
-                margin-left: 0 !important;
-                padding: 0 !important;
-                padding-top: 0 !important;
-                min-height: auto !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                left: 0 !important;
-            }
-            .content-wrap .main,
-            .finus-content-container {
-                padding: 0 !important;
-                margin: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-            }
         }
         /* =====================================================
            PAGE HEADING
@@ -911,9 +878,26 @@
             }
         }
 
+    
+
+        /* FINUS memilih tema sendiri dan tidak mengikuti tema device. */
+        html[data-finus-theme="light"] {
+            color-scheme: light !important;
+            color-scheme: only light !important;
+        }
+
+        html[data-finus-theme="dark"] {
+            color-scheme: dark !important;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            html[data-finus-theme="light"] {
+                color-scheme: light !important;
+                color-scheme: only light !important;
+            }
+        }
+
     </style>
-    {{-- CSS khusus dari halaman anak --}}
-    @stack('styles')
 </head>
 @php
     $routeMiddleware = collect(request()->route()?->gatherMiddleware() ?? []);
@@ -1630,6 +1614,7 @@
             });
         })();
     </script>
+
     @stack('scripts')
 </body>
 </html>
