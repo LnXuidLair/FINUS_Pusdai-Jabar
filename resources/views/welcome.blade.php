@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0FB442">
-    <meta name="color-scheme" content="only light">
+    <meta name="color-scheme" content="light">
     <script>
         (() => {
             const storageKey = 'finus:appearance';
@@ -27,18 +27,7 @@
                 'important'
             );
 
-            const colorSchemeMeta = document.querySelector(
-                'meta[name="color-scheme"]'
-            );
-
-            if (colorSchemeMeta) {
-                colorSchemeMeta.setAttribute(
-                    'content',
-                    theme === 'dark' ? 'dark' : 'only light'
-                );
-            }
-
-            const themeColorMeta = document.querySelector(
+const themeColorMeta = document.querySelector(
                 'meta[name="theme-color"]'
             );
 
@@ -3289,18 +3278,7 @@
                 'important'
             );
 
-                const colorSchemeMeta = document.querySelector(
-                    'meta[name="color-scheme"]'
-                );
-
-                if (colorSchemeMeta) {
-                    colorSchemeMeta.setAttribute(
-                    'content',
-                    normalized === 'dark' ? 'dark' : 'only light'
-                );
-                }
-
-                const themeColorMeta = document.querySelector(
+const themeColorMeta = document.querySelector(
                     'meta[name="theme-color"]'
                 );
 
