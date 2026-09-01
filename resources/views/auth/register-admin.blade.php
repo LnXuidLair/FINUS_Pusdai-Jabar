@@ -100,8 +100,11 @@
                 aria-label="Generate Recovery Code"
                 title="Generate Recovery Code"
             >
-                <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
-                <span>Generate Code</span>
+                <span class="admin-recovery-generate-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M15.5 3.5 20.5 8.5M14 5l5 5M4 20l10.8-10.8M5.7 15.3l3 3M4.5 4.5v3M3 6h3M18 15v4M16 17h4" />
+                    </svg>
+                </span>
             </button>
         </div>
 
@@ -120,7 +123,7 @@
 <style>
     .admin-recovery-row {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 154px;
+        grid-template-columns: minmax(0, 1fr) 52px;
         align-items: center;
         gap: 10px;
         width: 100%;
@@ -135,72 +138,130 @@
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 7px;
-        width: 154px !important;
-        min-width: 154px !important;
-        min-height: 52px;
+        width: 52px !important;
+        min-width: 52px !important;
+        max-width: 52px !important;
+        height: 52px !important;
+        min-height: 52px !important;
         margin: 0 !important;
-        padding: 0 15px !important;
-        align-self: center;
-        white-space: nowrap;
-        line-height: 1.2;
+        padding: 0 !important;
+        border-radius: 14px !important;
+        line-height: 1 !important;
+        flex: 0 0 52px;
     }
 
-    .admin-recovery-generate i {
-        flex: 0 0 auto;
-        margin: 0 !important;
-        font-size: 15px;
-        line-height: 1;
+    .admin-recovery-generate-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 21px;
+        height: 21px;
+        flex: 0 0 21px;
     }
 
-    .admin-recovery-generate span {
-        display: inline-block;
-        min-width: 0;
+    .admin-recovery-generate-icon svg {
+        display: block;
+        width: 21px;
+        height: 21px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .admin-recovery-generate:hover,
+    .admin-recovery-generate:focus-visible {
+        transform: translateY(-1px);
+    }
+
+    .admin-recovery-generate:focus-visible {
+        outline: 3px solid rgba(23, 155, 64, .22);
+        outline-offset: 2px;
     }
 
     .admin-recovery-generate:disabled {
         cursor: wait;
         opacity: .78;
+        transform: none;
+    }
+
+    .admin-recovery-generate.is-loading .admin-recovery-generate-icon {
+        width: 21px;
+        height: 21px;
+        border: 2px solid rgba(255, 255, 255, .45);
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: adminRecoverySpin .7s linear infinite;
+    }
+
+    .admin-recovery-generate.is-loading .admin-recovery-generate-icon svg {
+        display: none;
+    }
+
+    @keyframes adminRecoverySpin {
+        to { transform: rotate(360deg); }
     }
 
     @media (max-width: 575.98px) {
         .admin-recovery-row {
-            grid-template-columns: minmax(0, 1fr) 52px;
+            grid-template-columns: minmax(0, 1fr) 50px;
             gap: 8px;
         }
 
         .admin-recovery-generate {
-            width: 52px !important;
-            min-width: 52px !important;
-            max-width: 52px !important;
-            height: 52px;
-            min-height: 52px;
-            padding: 0 !important;
-            border-radius: 14px !important;
+            width: 50px !important;
+            min-width: 50px !important;
+            max-width: 50px !important;
+            height: 50px !important;
+            min-height: 50px !important;
+            border-radius: 13px !important;
         }
 
-        .admin-recovery-generate span {
-            display: none;
+        .admin-recovery-generate-icon,
+        .admin-recovery-generate-icon svg {
+            width: 20px;
+            height: 20px;
         }
 
-        .admin-recovery-generate i {
-            font-size: 17px;
+        .admin-recovery-generate-icon {
+            flex-basis: 20px;
         }
     }
 
     @media (max-width: 359.98px) {
         .admin-recovery-row {
-            grid-template-columns: minmax(0, 1fr) 48px;
+            grid-template-columns: minmax(0, 1fr) 46px;
             gap: 7px;
         }
 
         .admin-recovery-generate {
-            width: 48px !important;
-            min-width: 48px !important;
-            max-width: 48px !important;
-            height: 48px;
-            min-height: 48px;
-            border-radius: 13px !important;
+            width: 46px !important;
+            min-width: 46px !important;
+            max-width: 46px !important;
+            height: 46px !important;
+            min-height: 46px !important;
+            border-radius: 12px !important;
+        }
+
+        .admin-recovery-generate-icon,
+        .admin-recovery-generate-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .admin-recovery-generate-icon {
+            flex-basis: 18px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .admin-recovery-generate {
+            transition: none !important;
+        }
+
+        .admin-recovery-generate.is-loading .admin-recovery-generate-icon {
+            animation-duration: 1.4s;
         }
     }
 </style>
@@ -219,21 +280,9 @@
     button.addEventListener('click', async () => {
         if (button.disabled) return;
 
-        const label = button.querySelector('span');
-        const icon = button.querySelector('i');
-        const originalLabel = label?.textContent || 'Generate Code';
-        const originalIconClass = icon?.className || '';
-
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
-
-        if (label) {
-            label.textContent = 'Membuat...';
-        }
-
-        if (icon) {
-            icon.className = 'fa-solid fa-spinner fa-spin';
-        }
+        button.classList.add('is-loading');
 
         if (status) status.textContent = '';
 
@@ -274,14 +323,7 @@
         } finally {
             button.disabled = false;
             button.removeAttribute('aria-busy');
-
-            if (label) {
-                label.textContent = originalLabel;
-            }
-
-            if (icon) {
-                icon.className = originalIconClass;
-            }
+            button.classList.remove('is-loading');
         }
     });
 })();
