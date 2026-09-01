@@ -6,8 +6,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#075d2a">
     <meta name="color-scheme" content="light">
-
-    {-- FINUS mengabaikan mode terang/gelap perangkat. Tema hanya mengikuti pilihan di FINUS. --}
     <script>
         (() => {
             const storageKey = 'finus:appearance';
@@ -1343,6 +1341,145 @@
             }
         }
 
+    
+
+        /* =====================================================
+           DARK MODE — HERO HALAMAN AUTH
+           Login, registrasi, lupa password, OTP, dan auth lain
+           sekarang benar-benar mengikuti tema FINUS.
+        ===================================================== */
+        html[data-finus-theme="dark"] .auth-hero {
+            background-color:#07120B;
+        }
+
+        html[data-finus-theme="dark"] .auth-hero::before {
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(6,18,10,.91) 0%,
+                    rgba(8,25,14,.78) 46%,
+                    rgba(7,31,15,.51) 100%
+                ),
+                linear-gradient(
+                    180deg,
+                    rgba(0,0,0,.05),
+                    rgba(0,27,10,.20)
+                );
+        }
+
+        html[data-finus-theme="dark"] .auth-hero::after {
+            background:
+                radial-gradient(
+                    circle at 32% 42%,
+                    rgba(53,190,82,.08),
+                    transparent 21rem
+                ),
+                radial-gradient(
+                    circle at 80% 85%,
+                    rgba(34,147,66,.08),
+                    transparent 18rem
+                );
+        }
+
+        html[data-finus-theme="dark"] .auth-batik {
+            opacity:.13;
+            mix-blend-mode:screen;
+            filter:brightness(.82) saturate(.72);
+        }
+
+        html[data-finus-theme="dark"] .auth-hero-orb {
+            border-color:rgba(133,226,151,.18);
+            background:rgba(43,122,62,.055);
+            box-shadow:
+                inset 0 0 0 44px rgba(107,205,127,.035);
+        }
+
+        html[data-finus-theme="dark"] .auth-hero-copy {
+            color:#EEF7F0;
+        }
+
+        html[data-finus-theme="dark"] .auth-hero-badge {
+            border-color:rgba(104,203,127,.24);
+            background:rgba(12,34,20,.88);
+            color:#AEE9BA;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.025),
+                0 9px 22px rgba(0,0,0,.16);
+        }
+
+        html[data-finus-theme="dark"] .auth-hero-badge::before {
+            background:#42CE64;
+            box-shadow:0 0 0 5px rgba(66,206,100,.11);
+        }
+
+        html[data-finus-theme="dark"] .auth-hero-title {
+            color:#F0F7F2;
+            text-shadow:0 3px 18px rgba(0,0,0,.34);
+        }
+
+        html[data-finus-theme="dark"] .auth-hero-copytext {
+            color:#BBD0C0;
+        }
+
+        /*
+         * Label Aman / Transparan / Terintegrasi dibuat sama
+         * dengan gaya label dark mode pada Welcome/Pengelola.
+         */
+        html[data-finus-theme="dark"] .auth-feature {
+            border-color:rgba(104,203,127,.24);
+            background:rgba(12,34,20,.88);
+            color:#DDEBE1;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.025),
+                0 9px 22px rgba(0,0,0,.16);
+        }
+
+        html[data-finus-theme="dark"] .auth-feature:hover {
+            border-color:rgba(121,226,145,.34);
+            background:rgba(18,50,29,.94);
+            color:#F0F8F2;
+        }
+
+        html[data-finus-theme="dark"] .auth-feature span {
+            border:1px solid rgba(121,234,145,.08);
+            background:#16351F;
+            color:#79EA91;
+            box-shadow:none;
+        }
+
+        html[data-finus-theme="dark"] .auth-hero-note {
+            color:#98B2A0;
+        }
+
+        html[data-finus-theme="dark"] .auth-hero-note::before {
+            background:#3D6247;
+        }
+
+        /*
+         * Panel form sudah hijau pada desain asli. Pada dark mode
+         * dibuat sedikit lebih dalam agar transisi hero -> form selaras.
+         */
+        html[data-finus-theme="dark"] .auth-panel {
+            background:
+                radial-gradient(
+                    circle at 92% 4%,
+                    rgba(65,176,91,.07),
+                    transparent 16rem
+                ),
+                radial-gradient(
+                    circle at 0% 100%,
+                    rgba(72,183,97,.06),
+                    transparent 18rem
+                ),
+                linear-gradient(
+                    150deg,
+                    #07180D 0%,
+                    #0A2A14 38%,
+                    #0C4420 74%,
+                    #092F18 100%
+                );
+        }
+
     </style>
 </head>
 
@@ -1772,6 +1909,40 @@
                     ? 'light'
                     : 'dark'
             );
+        });
+
+        window.addEventListener('storage', event => {
+            if (event.key !== storageKey) {
+                return;
+            }
+
+            const theme = event.newValue === 'dark'
+                ? 'dark'
+                : 'light';
+
+            root.dataset.finusTheme = theme;
+            root.style.colorScheme = theme;
+            updateControls(theme);
+
+            const colorSchemeMeta = document.querySelector(
+                'meta[name="color-scheme"]'
+            );
+
+            if (colorSchemeMeta) {
+                colorSchemeMeta.setAttribute('content', theme);
+            }
+
+            const themeColorMeta = document.querySelector(
+                'meta[name="theme-color"]'
+            );
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute(
+                    'content',
+                    theme === 'dark'
+                        ? '#08150D'
+                        : '#075D2A'
+                );
+            }
         });
     })();
     </script>
