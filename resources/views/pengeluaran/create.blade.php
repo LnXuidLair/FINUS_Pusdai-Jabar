@@ -18,7 +18,43 @@
         <div class="fmu-card-head"><div class="fmu-card-head-main"><span class="fmu-card-icon"><i class="fa-solid fa-pen-to-square"></i></span><div><h2>Data Pengeluaran</h2><p>Isi kategori, deskripsi, nominal, dan tanggal transaksi.</p></div></div></div>
         <div class="fmu-card-body">
             <div class="fmu-form-grid">
-                <div class="fmu-field"><label class="fmu-label" for="kategori">Kategori <span class="fmu-required">*</span></label><div class="fmu-input-icon-wrap"><i class="fa-solid fa-tags"></i><input id="kategori" name="kategori" value="{{ old('kategori') }}" class="fmu-control @error('kategori') is-invalid @enderror" placeholder="Contoh: Biaya operasional" required></div>@error('kategori')<span class="fmu-error">{{ $message }}</span>@enderror</div>
+                <div class="fmu-field">
+                    <label class="fmu-label" for="kategori">Kategori (Akun COA) <span class="fmu-required">*</span></label>
+                    <div class="fmu-input-icon-wrap">
+                        <i class="fa-solid fa-tags"></i>
+                        <select id="kategori" name="kategori" class="fmu-control @error('kategori') is-invalid @enderror" required>
+                            <option value="">-- Pilih Kategori Beban --</option>
+                            @php
+                                $penjelas = [
+                                    '5101' => 'Administrasi, ATK, Kesekretariatan',
+                                    '5102' => 'Honor Khatib, Imam, Muadzin, Dakwah',
+                                    '5103' => 'Pemeliharaan Fisik, Sarana & Bangunan',
+                                    '5105' => 'Rapat, Jamuan, Acara',
+                                    '5106' => 'Biaya Rekening Bank, Pajak',
+                                    '5107' => 'Listrik, Air, AC, Sound System',
+                                    '5108' => 'Peralatan & Bahan Kebersihan',
+                                    '5109' => 'PHBI, Seminar, Honor Narasumber',
+                                    '5110' => 'Inventaris & Peralatan Baru',
+                                    '5111' => 'Penyaluran Mustahik & Program',
+                                ];
+                            @endphp
+                            @foreach($coaBeban ?? [] as $coa)
+                                @php
+                                    $val = $coa->nama_akun;
+                                    $info = $penjelas[$coa->kode_akun] ?? null;
+                                @endphp
+                                <option value="{{ $val }}" {{ old('kategori') === $val ? 'selected' : '' }}>
+                                    {{ $coa->kode_akun }} - {{ $coa->nama_akun }} {{ $info ? '('.$info.')' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @error('kategori')<span class="fmu-error">{{ $message }}</span>@enderror
+                    <span class="fmu-help" style="font-size: 11.5px; color: #64748b; margin-top: 5px; display: block;">
+                        <i class="fa-solid fa-circle-info" style="color: #179b40; margin-right: 4px;"></i>
+                        Biaya Honorarium / Gaji Pegawai dicatat otomatis melalui menu <strong>Penggajian</strong>.
+                    </span>
+                </div>
                 <div class="fmu-field"><label class="fmu-label" for="tanggal">Tanggal <span class="fmu-required">*</span></label><div class="fmu-input-icon-wrap"><i class="fa-solid fa-calendar-day"></i><input type="date" id="tanggal" name="tanggal" value="{{ old('tanggal', now()->format('Y-m-d')) }}" class="fmu-control @error('tanggal') is-invalid @enderror" required></div>@error('tanggal')<span class="fmu-error">{{ $message }}</span>@enderror</div>
                 <div class="fmu-field fmu-field-full"><label class="fmu-label" for="deskripsi">Deskripsi <span class="fmu-required">*</span></label><textarea id="deskripsi" name="deskripsi" class="fmu-textarea @error('deskripsi') is-invalid @enderror" placeholder="Jelaskan keperluan pengeluaran secara singkat dan jelas" required>{{ old('deskripsi') }}</textarea>@error('deskripsi')<span class="fmu-error">{{ $message }}</span>@enderror</div>
                 <div class="fmu-field"><label class="fmu-label" for="jumlah">Jumlah <span class="fmu-required">*</span></label><div class="fmu-input-icon-wrap"><i class="fa-solid fa-rupiah-sign"></i><input type="number" min="1" step="1" id="jumlah" name="jumlah" value="{{ old('jumlah') }}" class="fmu-control @error('jumlah') is-invalid @enderror" placeholder="0" required></div><span class="fmu-help" id="expenseAmountPreview">Rp 0</span>@error('jumlah')<span class="fmu-error">{{ $message }}</span>@enderror</div>

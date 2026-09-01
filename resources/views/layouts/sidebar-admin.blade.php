@@ -1133,6 +1133,15 @@
                         <span>Pengeluaran</span>
                     </a>
                 </li>
+                <li>
+                    <a
+                        href="{{ route('admin.pemasukan.index') }}"
+                        class="{{ request()->routeIs('admin.pemasukan.*') ? 'active' : '' }}"
+                    >
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                        <span>Pemasukan</span>
+                    </a>
+                </li>
 
                 <li class="label">Laporan</li>
 

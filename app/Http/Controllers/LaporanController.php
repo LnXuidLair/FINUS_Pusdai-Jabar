@@ -159,50 +159,168 @@ class LaporanController extends Controller
         return view('admin.laporan.jurnal-umum', compact('jurnals'));
     }
 
-    public function arusKas()
+    public function arusKas(\Illuminate\Http\Request $request)
     {
-        $pemasukanBulanan = $this->queryPenerimaanLaporan()
-            ->selectRaw('MONTH(tanggal) AS bulan, YEAR(tanggal) AS tahun, SUM(nominal) AS total')
-            ->groupByRaw('YEAR(tanggal), MONTH(tanggal)')
-            ->orderByDesc('tahun')
-            ->orderByDesc('bulan')
-            ->get();
+        $periode = $request->input('periode', 'bulanan'); // 'bulanan', 'tahunan', 'semua'
+        $tahun = (int) $request->input('tahun', now()->year);
+        $bulan = (int) $request->input('bulan', now()->month);
 
-        $pengeluaranBulanan = $this->queryPengeluaranOperasional()
-            ->selectRaw(
-                'MONTH(tanggal) AS bulan, YEAR(tanggal) AS tahun, '
-                . 'SUM(COALESCE(NULLIF(nominal, 0), jumlah, 0)) AS total'
-            )
-            ->groupByRaw('YEAR(tanggal), MONTH(tanggal)')
-            ->orderByDesc('tahun')
-            ->orderByDesc('bulan')
-            ->get();
+        // Helper filter tanggal
+        $applyDateFilter = function ($query, $column = 'tanggal') use ($periode, $tahun, $bulan) {
+            if ($periode === 'bulanan') {
+                $query->whereYear($column, $tahun)->whereMonth($column, $bulan);
+            } elseif ($periode === 'tahunan') {
+                $query->whereYear($column, $tahun);
+            }
+            return $query;
+        };
 
-        $penggajianBulanan = Penggajian::query()
-            ->selectRaw('MONTH(tanggal) AS bulan, YEAR(tanggal) AS tahun, SUM(total_gaji) AS total')
+        // Query penerimaan terfilter
+        $queryPenerimaan = $this->queryPenerimaanLaporan();
+        $applyDateFilter($queryPenerimaan, 'tanggal');
+
+        // Query pengeluaran operasional terfilter
+        $queryPengeluaran = $this->queryPengeluaranOperasional();
+        $applyDateFilter($queryPengeluaran, 'tanggal');
+
+        // Query penggajian terfilter
+        $queryPenggajian = Penggajian::query()
             ->where('status_penggajian', 'sudah_dibayar')
-            ->whereNotNull('tanggal')
-            ->groupByRaw('YEAR(tanggal), MONTH(tanggal)')
-            ->orderByDesc('tahun')
-            ->orderByDesc('bulan')
+            ->whereNotNull('tanggal');
+        $applyDateFilter($queryPenggajian, 'tanggal');
+
+        // 1. RINCIAN PENERIMAAN PER KELOMPOK / GOLONGAN ZISWAF
+        $golonganZiswaf = [
+            'zakat_maal'        => 'Zakat Maal',
+            'zakat_penghasilan' => 'Zakat Penghasilan',
+            'infaq'             => 'Infak',
+            'shadaqah'          => 'Sedekah',
+            'wakaf'             => 'Wakaf',
+            'fidyah'            => 'Fidyah',
+            'lainnya'           => 'Lainnya',
+        ];
+
+        $detailPemasukan = [];
+        $totalPemasukan = 0;
+
+        foreach ($golonganZiswaf as $key => $label) {
+            $q = (clone $queryPenerimaan)->where('jenis_ziswaf', $key);
+            $count = (clone $q)->count();
+            $nominal = (int) (clone $q)->sum('nominal');
+            $items = (clone $q)->with('muzakki')->orderByDesc('tanggal')->get();
+
+            $detailPemasukan[] = (object) [
+                'kode'       => $key,
+                'label'      => $label,
+                'transaksi'  => $count,
+                'nominal'    => $nominal,
+                'items'      => $items,
+            ];
+
+            $totalPemasukan += $nominal;
+        }
+
+        // Cek jika ada jenis_ziswaf lain di luar list standar
+        $otherPenerimaan = (clone $queryPenerimaan)
+            ->whereNotIn('jenis_ziswaf', array_keys($golonganZiswaf))
+            ->with('muzakki')
+            ->orderByDesc('tanggal')
             ->get();
+        if ($otherPenerimaan->isNotEmpty()) {
+            $otherNominal = (int) $otherPenerimaan->sum('nominal');
+            $detailPemasukan[] = (object) [
+                'kode'       => 'lainnya_khusus',
+                'label'      => 'Penerimaan Lainnya',
+                'transaksi'  => $otherPenerimaan->count(),
+                'nominal'    => $otherNominal,
+                'items'      => $otherPenerimaan,
+            ];
+            $totalPemasukan += $otherNominal;
+        }
 
-        $totalPemasukan = (int) $this->queryPenerimaanLaporan()->sum('nominal');
+        // 2. RINCIAN PENGELUARAN PER KELOMPOK BEBAN
+        $coaBebanMaster = Coa::where('header_akun', 5)->orderBy('kode_akun')->get();
+        if ($coaBebanMaster->isEmpty()) {
+            $coaFallback = [
+                ['kode_akun' => '5101', 'nama_akun' => 'Biaya Bidang Idaroh'],
+                ['kode_akun' => '5102', 'nama_akun' => 'Biaya Bidang Imaroh'],
+                ['kode_akun' => '5103', 'nama_akun' => 'Biaya Bidang Riayah'],
+                ['kode_akun' => '5104', 'nama_akun' => 'Biaya Honorarium'],
+                ['kode_akun' => '5105', 'nama_akun' => 'Biaya Konsumsi'],
+                ['kode_akun' => '5106', 'nama_akun' => 'Biaya Administrasi Bank'],
+                ['kode_akun' => '5107', 'nama_akun' => 'Biaya Pemeliharaan'],
+                ['kode_akun' => '5108', 'nama_akun' => 'Biaya Kebersihan'],
+                ['kode_akun' => '5109', 'nama_akun' => 'Biaya Kegiatan'],
+                ['kode_akun' => '5110', 'nama_akun' => 'Biaya Pengadaan'],
+                ['kode_akun' => '5111', 'nama_akun' => 'Penyaluran ZISWAF'],
+            ];
+            $coaBebanMaster = collect($coaFallback)->map(fn($item) => (object)$item);
+        }
 
-        $totalPengeluaranOperasional = (int) $this->queryPengeluaranOperasional()
-            ->selectRaw('COALESCE(SUM(COALESCE(NULLIF(nominal, 0), jumlah, 0)), 0) AS total')
-            ->value('total');
+        // Ambil data pengeluaran operasional per kategori
+        $pengeluaranGrouped = (clone $queryPengeluaran)
+            ->with(['coaDebit', 'coaKredit'])
+            ->orderByDesc('tanggal')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->kategori ?: 'Biaya Operasional Lain';
+            });
 
-        $totalPenggajian = (int) Penggajian::where('status_penggajian', 'sudah_dibayar')
-            ->sum('total_gaji');
+        $gajiItems = (clone $queryPenggajian)->with('pegawai')->orderByDesc('tanggal')->get();
+        $totalGaji = (int) $gajiItems->sum('total_gaji');
+        $totalPengeluaran = $totalGaji;
+        $detailPengeluaran = [];
 
-        $totalPengeluaran = $totalPengeluaranOperasional + $totalPenggajian;
+        foreach ($coaBebanMaster as $coa) {
+            $namaAkun = $coa->nama_akun;
+            $kodeAkun = $coa->kode_akun;
+
+            if ($kodeAkun === '5104' || str_contains(strtolower($namaAkun), 'honorarium')) {
+                // Biaya Honorarium bersumber dari Penggajian
+                $count = $gajiItems->count();
+                $nominal = $totalGaji;
+                $items = $gajiItems;
+            } else {
+                $items = $pengeluaranGrouped->get($namaAkun, collect());
+                $count = $items->count();
+                $nominal = (int) $items->sum(function ($item) {
+                    return (int) ($item->nominal ?: $item->jumlah);
+                });
+                $totalPengeluaran += $nominal;
+            }
+
+            $detailPengeluaran[] = (object) [
+                'kode_akun'  => $kodeAkun,
+                'nama_akun'  => $namaAkun,
+                'transaksi'  => $count,
+                'nominal'    => $nominal,
+                'items'      => $items,
+            ];
+        }
+
+        // Hitung saldo
         $saldo = $totalPemasukan - $totalPengeluaran;
 
+        // Pilihan daftar tahun untuk filter
+        $tahunSekarang = now()->year;
+        $tahunAwal = ZiswafPenerimaan::min(\Illuminate\Support\Facades\DB::raw('YEAR(tanggal)')) ?: ($tahunSekarang - 2);
+        $daftarTahun = range(max($tahunAwal, $tahunSekarang - 5), $tahunSekarang);
+        rsort($daftarTahun);
+
+        $daftarBulan = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
         return view('admin.laporan.arus-kas', compact(
-            'pemasukanBulanan',
-            'pengeluaranBulanan',
-            'penggajianBulanan',
+            'periode',
+            'tahun',
+            'bulan',
+            'daftarTahun',
+            'daftarBulan',
+            'detailPemasukan',
+            'detailPengeluaran',
             'totalPemasukan',
             'totalPengeluaran',
             'saldo'

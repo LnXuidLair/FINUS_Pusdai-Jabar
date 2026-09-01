@@ -76,8 +76,6 @@
     <link href="{{ asset('assets/css/lib/helper.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/custom-style.css') }}" rel="stylesheet">
-    {{-- CSS khusus dari halaman anak --}}
-    @stack('styles')
     <style>
         :root {
             --finus-sidebar-width: 270px;
@@ -347,6 +345,40 @@
             width: 100%;
             max-width: 1800px;
             margin: 0 auto;
+        }
+        @media print {
+            .sidebar,
+            .header,
+            .finus-topbar,
+            .finus-sidebar-backdrop,
+            .finus-skip-link,
+            .finus-mobile-bottom-nav,
+            .finus-page-heading {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .content-wrap,
+            body.finus-layout .content-wrap,
+            body.sidebar-collapsed .content-wrap {
+                margin: 0 !important;
+                margin-left: 0 !important;
+                padding: 0 !important;
+                padding-top: 0 !important;
+                min-height: auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                left: 0 !important;
+            }
+            .content-wrap .main,
+            .finus-content-container {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
         }
         /* =====================================================
            PAGE HEADING
@@ -880,6 +912,8 @@
         }
 
     </style>
+    {{-- CSS khusus dari halaman anak --}}
+    @stack('styles')
 </head>
 @php
     $routeMiddleware = collect(request()->route()?->gatherMiddleware() ?? []);

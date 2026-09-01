@@ -16,6 +16,7 @@ use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PegawaiDashboardController;
 use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\PenggajianController;
+use App\Http\Controllers\PemasukanController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\ZiswafTransactionController;
 use App\Http\Middleware\EnsureManagementAccess;
@@ -153,13 +154,19 @@ Route::middleware(['auth:admin', 'role:admin'])
                             ->name('jurnal-umum');
                         Route::get('/arus-kas', [LaporanController::class, 'arusKas'])
                             ->name('arus-kas');
-                        Route::get('/arus-kas-psak', [LaporanController::class, 'arusKasDariJurnal'])   
-                            ->name('arus-kas-psak');
                     });
                 Route::resource('agenda-kegiatan', AgendaKegiatanController::class)
                     ->except(['show']);
                 Route::patch('agenda-kegiatan/{agendaKegiatan}/toggle', [AgendaKegiatanController::class, 'toggleAktif'])
                     ->name('agenda-kegiatan.toggle');
+                Route::get('pemasukan', [PemasukanController::class, 'index'])
+                    ->name('pemasukan.index');
+                Route::post('pemasukan', [PemasukanController::class, 'store'])
+                    ->name('pemasukan.store');
+                Route::patch('pemasukan/{pemasukan}/verifikasi', [PemasukanController::class, 'verifikasi'])
+                    ->name('pemasukan.verifikasi');
+                Route::delete('pemasukan/{pemasukan}', [PemasukanController::class, 'destroy'])
+                    ->name('pemasukan.destroy');
             });
     });
 Route::middleware(['auth:pegawai', 'role:pegawai',])
@@ -201,13 +208,20 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
                     ->name('jurnal-umum');
                 Route::get('/arus-kas', [LaporanController::class, 'arusKas'])
                     ->name('arus-kas');
-                Route::get('/arus-kas-psak', [LaporanController::class, 'arusKasDariJurnal'])
-                    ->name('arus-kas-psak');
             });
         Route::middleware('pegawai.access:keuangan')
             ->prefix('keuangan')
             ->name('keuangan.')
             ->group(function () {
+                Route::get('pemasukan', [PemasukanController::class, 'index'])
+                    ->name('pemasukan.index');
+                Route::post('pemasukan', [PemasukanController::class, 'store'])
+                    ->name('pemasukan.store');
+                Route::patch('pemasukan/{pemasukan}/verifikasi', [PemasukanController::class, 'verifikasi'])
+                    ->name('pemasukan.verifikasi');
+                Route::delete('pemasukan/{pemasukan}', [PemasukanController::class, 'destroy'])
+                    ->name('pemasukan.destroy');
+
                 Route::resource('pengeluaran', PengeluaranController::class)
                     ->only(['index', 'create', 'store', 'destroy']);
                 Route::get('penggajian', [PenggajianController::class, 'index'])

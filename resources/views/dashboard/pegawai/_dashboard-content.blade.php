@@ -499,10 +499,7 @@
                         Jurnal Umum
                     </a>
                     <a href="{{ route('pegawai.laporan-keuangan.arus-kas') }}" class="btn btn-outline-secondary btn-block mb-2">
-                        Arus Kas
-                    </a>
-                    <a href="{{ route('pegawai.laporan-keuangan.arus-kas-psak') }}" class="btn btn-outline-secondary btn-block mb-2">
-                        Arus Kas PSAK
+                        Laporan Keuangan
                     </a>
                     <a href="{{ route('pegawai.laporan-gaji.index') }}" class="btn btn-primary btn-block">
                         Laporan Gaji Pribadi
