@@ -2992,6 +2992,9 @@ const themeColorMeta = document.querySelector(
         const verifyText = document.getElementById('verifyText');
         const verifySpinner = document.getElementById('verifySpinner');
         const togglePassword = document.getElementById('togglePassword');
+        const togglePasswordIcon = togglePassword?.querySelector('img');
+        const showPasswordIcon = "{{ asset('assets/images/ShowPassword.png') }}";
+        const hidePasswordIcon = "{{ asset('assets/images/HidePassword.png') }}";
         const cancelModalButton = document.getElementById('cancelAccessModal');
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "{{ csrf_token() }}";
         const pageHeader = document.querySelector('.finus-header');
@@ -3018,6 +3021,11 @@ const themeColorMeta = document.querySelector(
             }
             input.value = '';
             input.type = 'password';
+            if(togglePasswordIcon){
+                togglePasswordIcon.src = showPasswordIcon;
+                togglePasswordIcon.alt = 'Tampilkan kode akses';
+            }
+            togglePassword?.setAttribute('aria-label', 'Tampilkan kode akses');
             input.disabled = false;
             verifyButton.disabled = false;
             verifySpinner.hidden = true;
@@ -3161,10 +3169,15 @@ const themeColorMeta = document.querySelector(
         togglePassword.addEventListener('click', () => {
             const showing = input.type === 'text';
             input.type = showing ? 'password' : 'text';
-            togglePassword.setAttribute(
-                'aria-label',
-                showing ? 'Tampilkan kode akses' : 'Sembunyikan kode akses'
-            );
+
+            const label = showing ? 'Tampilkan kode akses' : 'Sembunyikan kode akses';
+            const icon = showing ? showPasswordIcon : hidePasswordIcon;
+
+            togglePassword.setAttribute('aria-label', label);
+            if(togglePasswordIcon){
+                togglePasswordIcon.src = icon;
+                togglePasswordIcon.alt = label;
+            }
         });
     })();
     </script>
