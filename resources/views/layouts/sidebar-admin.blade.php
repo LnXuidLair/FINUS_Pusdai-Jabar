@@ -522,6 +522,26 @@
         .sidebar .logo { min-height: 148px !important; }
     }
 
+
+
+    /* FINUS DARK MODE LOCAL: layouts/sidebar-admin.blade.php */
+html[data-finus-theme="dark"] {
+        --sidebar-dark:#07170D;
+        --sidebar-green-1:#0B3D1B;
+        --sidebar-green-2:#0F642A;
+        --sidebar-green-3:#148B38;
+        --sidebar-green-4:#18A544;
+        --menu-bg:rgba(4,40,16,.40);
+        --menu-border:rgba(255,255,255,.07);
+        --menu-hover-bg:rgba(126,255,135,.10);
+        --menu-hover-border:rgba(126,255,135,.16);
+        --menu-active-start:rgba(126,255,135,.20);
+        --menu-active-end:rgba(35,163,73,.22);
+        --menu-active-border:rgba(145,255,155,.30);
+    }
+    html[data-finus-theme="dark"] .sidebar.sidebar-hide-to-small {
+        box-shadow:12px 0 35px rgba(0,0,0,.18) !important;
+    }
 </style>
 
 

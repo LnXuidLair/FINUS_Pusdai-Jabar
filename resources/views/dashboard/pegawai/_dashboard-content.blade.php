@@ -823,3 +823,18 @@
         </script>
     @endpush
 @endif
+
+{{-- FINUS DARK MODE LOCAL: dashboard/pegawai/_dashboard-content.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="dashboard/pegawai/_dashboard-content.blade.php">
+html[data-finus-theme="dark"] body .metric-card { border-color:#293D31 !important; background:#111A15 !important; box-shadow:0 12px 28px rgba(0,0,0,.18) !important; }
+html[data-finus-theme="dark"] body .metric-card .card-body { background:#111A15 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body :where(.finance-chart-card,.finance-list-item,.focus-item,.personal-strip-item) { border-color:#293D31 !important; background:#111B15 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body :where(.finance-list-title,.finance-list-value) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body :where(.finance-list-meta,.text-muted) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .trend-badge { border-color:#2D6140 !important; background:#15331E !important; color:#A9F0B9 !important; }
+html[data-finus-theme="dark"] body .trend-badge.is-down { border-color:#704044 !important; background:#371E22 !important; color:#F5B1B5 !important; }
+html[data-finus-theme="dark"] body .trend-badge.is-flat { border-color:#4B554E !important; background:#1B241E !important; color:#B8C4BB !important; }
+</style>
+@endpush
+

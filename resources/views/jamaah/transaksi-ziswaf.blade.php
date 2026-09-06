@@ -1198,3 +1198,23 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+
+{{-- FINUS DARK MODE LOCAL: jamaah/transaksi-ziswaf.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="jamaah/transaksi-ziswaf.blade.php">
+html[data-finus-theme="dark"] body .finus-card { border-color:#293D31 !important; background:#111A15 !important; color:#F1F6F3 !important; box-shadow:0 16px 38px rgba(0,0,0,.22) !important; }
+html[data-finus-theme="dark"] body .finus-card .card-header { border-color:#293D31 !important; background:linear-gradient(180deg,#17251D,#121D17) !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .finus-card :where(.text-dark,.option-title) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .finus-card :where(.text-muted,.small-muted) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .finus-card :where(.form-control,.currency-input) { border-color:#31493A !important; background:#0C1610 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .finus-card .option-card { border-color:#293D31 !important; background:#101B14 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .finus-card .option-card:hover { border-color:#3D5D48 !important; background:#16271D !important; }
+html[data-finus-theme="dark"] body .finus-card .option-card.active { border-color:#64DD81 !important; background:#173620 !important; box-shadow:0 0 0 3px rgba(100,221,129,.10) !important; }
+html[data-finus-theme="dark"] body .finus-card .option-card .option-icon { background:#17261D !important; }
+html[data-finus-theme="dark"] body .finus-card :where(.info-box,.formula-box,.custom-dropzone) { border-color:#293D31 !important; background:#101B14 !important; color:#C8D6CC !important; }
+html[data-finus-theme="dark"] body .finus-card .custom-dropzone:hover { border-color:#64DD81 !important; background:#14261A !important; }
+html[data-finus-theme="dark"] body .finus-card .file-name-badge { border-color:#31503C !important; background:#173620 !important; color:#BFF4CA !important; }
+html[data-finus-theme="dark"] body .finus-card .btn-light { border-color:#334B3B !important; background:#14211A !important; color:#D0DDD4 !important; }
+</style>
+@endpush
+

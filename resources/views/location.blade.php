@@ -696,6 +696,16 @@ const themeColorMeta = document.querySelector(
         }
 
     </style>
+
+<style data-finus-dark-local="location.blade.php">
+/* FINUS DARK MODE LOCAL: location.blade.php */
+html[data-finus-theme="dark"] body { background:#0A110D !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] :where(.map-card,.mini-card,.gps-card,.travel-card,.gps-position-item,.location-correction,.device-feature) { border-color:#293D31 !important; background:linear-gradient(155deg,#15211A,#111A15) !important; color:#F1F6F3 !important; box-shadow:0 14px 34px rgba(0,0,0,.18) !important; }
+html[data-finus-theme="dark"] :where(.hero-title,.mini-card h2,.gps-card h2,.travel-distance,.gps-position-value) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] :where(.hero-copy,.mini-card p,.gps-status,.travel-time,.travel-note,.gps-position-label) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] .location-correction-input { border-color:#31493A !important; background:#0C1610 !important; color:#F1F6F3 !important; }
+</style>
+
 </head>
 <body>
     <header class="page-header">

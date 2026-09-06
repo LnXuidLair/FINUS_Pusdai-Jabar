@@ -638,6 +638,16 @@ const themeColorMeta = document.querySelector(
         }
 
     </style>
+
+<style data-finus-dark-local="visi-misi.blade.php">
+/* FINUS DARK MODE LOCAL: visi-misi.blade.php */
+html[data-finus-theme="dark"] body { background:#0A110D !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] :where(.mission-panel,.mission-item,.value-card) { border-color:#293D31 !important; background:linear-gradient(155deg,#15211A,#111A15) !important; color:#F1F6F3 !important; box-shadow:0 14px 34px rgba(0,0,0,.18) !important; }
+html[data-finus-theme="dark"] :where(.hero-title,.section-title,.mission-item h3,.value-card h3) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] :where(.hero-copy,.section-copy,.mission-item p,.value-card p) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] .values-section { background:#0D1711 !important; }
+</style>
+
 </head>
 <body>
     <header class="page-header">

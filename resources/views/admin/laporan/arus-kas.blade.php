@@ -18,6 +18,47 @@
     } else {
         $teksPeriode = 'Semua Periode';
     }
+
+    // Pastikan Parkir selalu tampil sebagai kelompok penerimaan sendiri
+    // dan ditempatkan tepat sebelum Lainnya. Jika backend sudah mengirim
+    // Parkir/Hasil Parkir, nilai serta rincian transaksinya tetap dipakai.
+    $detailPemasukanTampil = collect($detailPemasukan ?? []);
+    $isParkir = static fn ($label) => in_array(
+        mb_strtolower(trim((string) $label)),
+        ['parkir', 'hasil parkir'],
+        true
+    );
+
+    $parkirExisting = $detailPemasukanTampil->first(
+        fn ($row) => $isParkir(data_get($row, 'label'))
+    );
+
+    $parkirRow = (object) [
+        'label' => 'Parkir',
+        'transaksi' => (int) data_get($parkirExisting, 'transaksi', 0),
+        'nominal' => (float) data_get($parkirExisting, 'nominal', 0),
+        'items' => collect(data_get($parkirExisting, 'items', [])),
+    ];
+
+    $detailPemasukanTanpaParkir = $detailPemasukanTampil
+        ->reject(fn ($row) => $isParkir(data_get($row, 'label')))
+        ->values();
+
+    $detailPemasukanTampil = collect();
+    $parkirInserted = false;
+
+    foreach ($detailPemasukanTanpaParkir as $row) {
+        if (! $parkirInserted && strcasecmp(trim((string) data_get($row, 'label')), 'Lainnya') === 0) {
+            $detailPemasukanTampil->push($parkirRow);
+            $parkirInserted = true;
+        }
+
+        $detailPemasukanTampil->push($row);
+    }
+
+    if (! $parkirInserted) {
+        $detailPemasukanTampil->push($parkirRow);
+    }
 @endphp
 
 @section('title', 'Laporan Keuangan — ' . $teksPeriode)
@@ -703,7 +744,7 @@
     <div class="lk-hero">
         <div>
             <h1><i class="fa-solid fa-file-invoice-dollar" style="margin-right:10px;opacity:.9;"></i>Laporan Keuangan</h1>
-            <p>Rekapitulasi penerimaan ZISWAF dan rincian pengeluaran operasional Pusdai Jabar.</p>
+            <p>Rekapitulasi penerimaan masjid dan rincian pengeluaran operasional Pusdai Jabar.</p>
         </div>
         <div class="lk-hero-actions">
             {{-- Tombol Toggle Mode Audit --}}
@@ -790,7 +831,7 @@
         <div class="lk-card-title-row">
             <h2 class="lk-card-title">
                 <i class="fa-solid fa-hand-holding-dollar" style="color:#16a34a;"></i>
-                I. Rincian Penerimaan Kas (ZISWAF)
+                I. Rincian Penerimaan Kas
             </h2>
             <span style="font-size:12px;color:#64748b;font-weight:600;">
                 Periode: <strong>{{ $teksPeriode }}</strong>
@@ -811,7 +852,7 @@
                 </thead>
                 <tbody>
                     @php $noIn = 1; @endphp
-                    @forelse($detailPemasukan as $idx => $row)
+                    @forelse($detailPemasukanTampil as $idx => $row)
                         @php
                             $persenIn = $pemasukan > 0 ? ($row->nominal / $pemasukan) * 100 : 0;
                             $rowId = 'sub_in_' . $idx;
@@ -1187,3 +1228,35 @@
 @endpush
 
 @endsection
+
+{{-- FINUS DARK MODE LOCAL: admin/laporan/arus-kas.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="admin/laporan/arus-kas.blade.php">
+@media screen {
+html[data-finus-theme="dark"] body .lk-page { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .lk-page :where(.lk-filter-card,.lk-stat,.lk-card,.lk-card-rekap,.lk-table-wrap,.lk-subtable) { border-color:#293D31 !important; background:linear-gradient(155deg,#15211A,#111A15) !important; color:#F1F6F3 !important; box-shadow:0 14px 34px rgba(0,0,0,.20) !important; }
+html[data-finus-theme="dark"] body .lk-page :where(.lk-card-title,.lk-stat-value,.lk-kop-judul-doc,.lk-kop-instansi,.lk-sig-name) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .lk-page :where(.lk-stat-label,.lk-stat-sub,.lk-kop-alamat,.lk-kop-subinstansi,.lk-kop-periode) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-fs { border-color:#31493A !important; background:#0C1610 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-fs:focus { border-color:#64DD81 !important; background:#0F1A13 !important; box-shadow:0 0 0 4px rgba(100,221,129,.12) !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-table th { border-color:#293D31 !important; background:#17261D !important; color:#D2E1D6 !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-table td { border-color:#24372B !important; background:#111A15 !important; color:#DCE7E0 !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-table tr.lk-row-header td { background:#15251B !important; color:#D7E5DB !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-table tr.lk-row-header:hover td { background:#193021 !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-table tfoot td { border-color:#293D31 !important; background:#17261D !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-subtable th { border-color:#293D31 !important; background:#14231A !important; color:#D2E1D6 !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-subtable-cell { border-color:#24372B !important; background:#101A14 !important; color:#D2DFD6 !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-badge-kode { border-color:#31503C !important; background:#173620 !important; color:#BFF4CA !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-btn-print { border-color:#304A39 !important; background:#14211A !important; color:#DCE9E0 !important; }
+html[data-finus-theme="dark"] body .lk-page .lk-btn-audit { border-color:#35557A !important; background:#182B43 !important; color:#B9D0FF !important; }
+html[data-finus-theme="dark"] body .lk-page :where(.lk-kop-divider,.lk-kop-line-thick,.lk-kop-line-thin) { border-color:#395144 !important; background:#395144 !important; }
+}
+@media print {
+ html[data-finus-theme="dark"] body .lk-page, html[data-finus-theme="dark"] body .lk-page * { color:#111827 !important; }
+ html[data-finus-theme="dark"] body .lk-page :where(.lk-card,.lk-card-rekap,.lk-table-wrap,.lk-subtable) { background:#fff !important; border-color:#d1d5db !important; box-shadow:none !important; }
+ html[data-finus-theme="dark"] body .lk-page .lk-table th, html[data-finus-theme="dark"] body .lk-page .lk-subtable th { background:#f3f8f4 !important; color:#1f2937 !important; }
+ html[data-finus-theme="dark"] body .lk-page .lk-table td, html[data-finus-theme="dark"] body .lk-page .lk-subtable-cell { background:#fff !important; color:#1f2937 !important; border-color:#d1d5db !important; }
+}
+</style>
+@endpush
+

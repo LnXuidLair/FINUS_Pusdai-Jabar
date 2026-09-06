@@ -85,3 +85,15 @@
     </div>
 </div>
 @endsection
+
+{{-- FINUS DARK MODE LOCAL: jamaah/qris.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="jamaah/qris.blade.php">
+html[data-finus-theme="dark"] body .finus-card { border-color:#293D31 !important; background:#111A15 !important; color:#F1F6F3 !important; box-shadow:0 16px 38px rgba(0,0,0,.22) !important; }
+html[data-finus-theme="dark"] body .finus-card .card-header { border-color:#293D31 !important; background:linear-gradient(180deg,#17251D,#121D17) !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .qris-box { border-color:#293D31 !important; background:#101B14 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .qris-box .text-muted { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .finus-card .btn-light { border-color:#334B3B !important; background:#14211A !important; color:#D0DDD4 !important; }
+</style>
+@endpush
+

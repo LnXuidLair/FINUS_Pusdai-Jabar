@@ -642,3 +642,15 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+
+{{-- FINUS DARK MODE LOCAL: jamaah/riwayat-transaksi.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="jamaah/riwayat-transaksi.blade.php">
+html[data-finus-theme="dark"] body .jt-page :where(.rw-banner,.rw-sub) { border-color:#293D31 !important; background:linear-gradient(155deg,#15211A,#111A15) !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .jt-page .rw-banner-success { border-color:#2D6140 !important; background:#15331E !important; color:#A9F0B9 !important; }
+html[data-finus-theme="dark"] body .jt-page .rw-banner-danger { border-color:#704044 !important; background:#371E22 !important; color:#F5B1B5 !important; }
+html[data-finus-theme="dark"] body .jt-page .status-pill-pending { border-color:#6A552D !important; background:#342817 !important; color:#F4D38B !important; }
+html[data-finus-theme="dark"] body .jt-page :where(.status-pill-ditolak,.status-pill-dibatalkan) { border-color:#704044 !important; background:#371E22 !important; color:#F5B1B5 !important; }
+</style>
+@endpush
+

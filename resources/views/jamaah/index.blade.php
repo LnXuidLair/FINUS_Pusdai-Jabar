@@ -1135,3 +1135,58 @@
 })();
 </script>
 @endpush
+
+{{-- FINUS DARK MODE LOCAL: jamaah/index.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="jamaah/index.blade.php">
+html[data-finus-theme="dark"] body .jm-page {
+    --jm-dark:#B9F4C7; --jm-green:#64DD81; --jm-light:#7BE795; --jm-soft:#173620; --jm-soft-2:#101D16; --jm-text:#F1F6F3; --jm-muted:#9EAEA4; --jm-border:#293D31;
+    --jm-blue:#82AEFF; --jm-blue-soft:#192C47; --jm-amber:#F4B65A; --jm-amber-soft:#382A18; --jm-purple:#B295FF; --jm-purple-soft:#302442;
+}
+html[data-finus-theme="dark"] body .jm-page::before { background:rgba(38,184,79,.035) !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-hero { border:1px solid rgba(126,255,135,.10) !important; background:radial-gradient(circle at 91% 7%,rgba(255,255,255,.10),transparent 30%),linear-gradient(135deg,#0B5A27,#14863A 50%,#1DB04B) !important; box-shadow:0 18px 38px rgba(0,0,0,.24) !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-hero-badge { border-color:rgba(255,255,255,.20) !important; background:rgba(5,31,14,.42) !important; color:#F4FFF6 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-stat { border-color:#293D31 !important; background:linear-gradient(150deg,#14211A,#101813) !important; box-shadow:0 12px 28px rgba(0,0,0,.18) !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-stat::after { opacity:.28 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-stat small { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-stat strong { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-card { border-color:#293D31 !important; background:#111A15 !important; box-shadow:0 18px 42px rgba(0,0,0,.22) !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-card-head { border-color:#293D31 !important; background:linear-gradient(180deg,#17251D,#121D17) !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-card-title h2 { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-card-title p { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-visible { border-color:#31503C !important; background:#173620 !important; color:#BFF4CA !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-toolbar { border-color:#293D31 !important; background:#111A15 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-search { border-color:#31493A !important; background:#0C1610 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-search:focus { border-color:#64DD81 !important; background:#0F1A13 !important; box-shadow:0 0 0 4px rgba(100,221,129,.12) !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-search::placeholder { color:#71847A !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-clear { background:#18271E !important; color:#A1B2A7 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-search-help { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-filters { border-color:#31493A !important; background:#0D1711 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-filter { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-filter:hover { background:#16271D !important; color:#D8EEE0 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-filter.active { background:#1B3C25 !important; color:#CFF7D8 !important; box-shadow:inset 0 0 0 1px rgba(100,221,129,.20) !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-table-area { background:linear-gradient(180deg,#0F1913,#0D1611) !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-table-wrap { border-color:#293D31 !important; background:#111A15 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-table thead th { border-color:#293D31 !important; background:#17261D !important; color:#D2E1D6 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-table tbody td { border-color:#24372B !important; background:#111A15 !important; color:#DCE7E0 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-table tbody tr[data-search-row]:hover td { background:#17251D !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-number { border-color:#30493A !important; background:#14241B !important; color:#CFE3D4 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-avatar { border-color:#31523D !important; background:linear-gradient(135deg,#173620,#1A4227) !important; color:#BDF4C9 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-name { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-email { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-status.verified { border-color:#2D6140 !important; background:#15331E !important; color:#A9F0B9 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-status.unverified { border-color:#6A552D !important; background:#342817 !important; color:#F4D38B !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-chip { border-color:#35557A !important; background:#182B43 !important; color:#B9D0FF !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-money { border-color:#2F5C3C !important; background:#15331E !important; color:#A9F0B9 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-date { color:#B2C2B8 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-empty { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-empty strong { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .jm-page .jm-empty span { color:#9EAEA4 !important; }
+@media (max-width:767.98px) {
+ html[data-finus-theme="dark"] body .jm-page .jm-table tbody tr[data-search-row] { border-color:#293D31 !important; background:#111A15 !important; box-shadow:0 8px 20px rgba(0,0,0,.16) !important; }
+ html[data-finus-theme="dark"] body .jm-page .jm-table tbody tr[data-search-row] td::before { color:#8FA198 !important; }
+ html[data-finus-theme="dark"] body .jm-page .jm-empty { border-color:#293D31 !important; background:#111A15 !important; }
+}
+</style>
+@endpush
+

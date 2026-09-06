@@ -361,6 +361,23 @@
         .sidebar .logo { min-height: 148px !important; }
     }
 
+
+
+    /* FINUS DARK MODE LOCAL: layouts/sidebar-jamaah.blade.php */
+html[data-finus-theme="dark"] {
+        --jamaah-sidebar-dark:#07170D;
+        --jamaah-sidebar-green-1:#0B3D1B;
+        --jamaah-sidebar-green-2:#0F642A;
+        --jamaah-sidebar-green-3:#148B38;
+        --jamaah-menu-bg:rgba(4,40,16,.40);
+        --jamaah-menu-border:rgba(255,255,255,.07);
+        --jamaah-menu-hover-bg:rgba(126,255,135,.10);
+        --jamaah-menu-hover-border:rgba(126,255,135,.16);
+        --jamaah-menu-active-start:rgba(126,255,135,.20);
+        --jamaah-menu-active-end:rgba(35,163,73,.22);
+        --jamaah-menu-active-border:rgba(145,255,155,.30);
+    }
+    html[data-finus-theme="dark"] .sidebar.jamaah-sidebar { box-shadow:12px 0 35px rgba(0,0,0,.18) !important; }
 </style>
 
 

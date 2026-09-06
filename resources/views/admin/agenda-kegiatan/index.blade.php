@@ -244,3 +244,21 @@
 
 </div>
 @endsection
+
+{{-- FINUS DARK MODE LOCAL: admin/agenda-kegiatan/index.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="admin/agenda-kegiatan/index.blade.php">
+html[data-finus-theme="dark"] body .ag-page { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .ag-page .ag-heading-title { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .ag-page .ag-card { border-color:#293D31 !important; background:#111A15 !important; color:#F1F6F3 !important; box-shadow:0 16px 38px rgba(0,0,0,.22) !important; }
+html[data-finus-theme="dark"] body .ag-page .ag-table thead th { border-color:#293D31 !important; background:#17261D !important; color:#D2E1D6 !important; }
+html[data-finus-theme="dark"] body .ag-page .ag-table tbody td { border-color:#24372B !important; background:#111A15 !important; color:#DCE7E0 !important; }
+html[data-finus-theme="dark"] body .ag-page .ag-table tbody tr:hover td { background:#17251D !important; }
+html[data-finus-theme="dark"] body .ag-page .ag-btn-edit { border-color:#66542B !important; background:#332817 !important; color:#F2CE7E !important; }
+html[data-finus-theme="dark"] body .ag-page .ag-btn-delete { border-color:#693B40 !important; background:#341C20 !important; color:#F39DA3 !important; }
+html[data-finus-theme="dark"] body .ag-page .ag-status-on { border-color:#2D6140 !important; background:#15331E !important; color:#A9F0B9 !important; }
+html[data-finus-theme="dark"] body .ag-page .ag-status-off { border-color:#4B554E !important; background:#1B241E !important; color:#B8C4BB !important; }
+html[data-finus-theme="dark"] body .ag-page .ag-empty { color:#9EAEA4 !important; }
+</style>
+@endpush
+

@@ -430,9 +430,10 @@
         background: #fff;
         border-radius: 24px;
         width: 100%;
-        max-width: 520px;
+        max-width: 610px;
         max-height: 90vh;
         overflow-y: auto;
+        border: 1px solid rgba(14,84,35,.10);
         box-shadow: 0 28px 60px rgba(0,0,0,.22);
         animation: pm-in .22s cubic-bezier(.22,.61,.36,1);
     }
@@ -450,7 +451,14 @@
         border-bottom: 1px solid #f1f5f9;
     }
 
+    .pm-modal-title { display:flex; align-items:center; gap:12px; min-width:0; }
+    .pm-modal-title-icon {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:38px; min-width:38px; height:38px; border-radius:11px;
+        background:#e9f8ee; color:#179b40; font-size:15px;
+    }
     .pm-modal-head h2 { font-size: 17px; font-weight: 800; color: #111827; margin: 0; }
+    .pm-modal-head p { font-size:11.5px; color:#7b8b83; margin:3px 0 0; line-height:1.45; }
 
     .pm-modal-x {
         width: 34px; height: 34px;
@@ -462,7 +470,7 @@
 
     .pm-modal-x:hover { background: #e2e8f0; color: #374151; }
 
-    .pm-modal-body { padding: 22px 24px; }
+    .pm-modal-body { padding: 22px 24px 8px; }
 
     .pm-fgroup { margin-bottom: 16px; }
 
@@ -650,15 +658,57 @@
         </div>
     </div>
 
-    {{-- ====== GOLONGAN CARDS (8 item) ====== --}}
+    {{-- ====== GOLONGAN CARDS ====== --}}
+    @php
+        // Tampilkan Parkir tepat sebelum Lainnya. Tetap kompatibel dengan backend lama
+        // yang mungkin masih memakai label/key Hasil Parkir.
+        $displayGolonganLabels = [];
+        $hasilParkirKey = 'hasil_parkir';
+        $hasilParkirLabel = 'Parkir';
+
+        foreach ($golonganLabels as $key => $label) {
+            if (in_array(mb_strtolower(trim((string) $label)), ['hasil parkir', 'parkir'], true)) {
+                $hasilParkirKey = $key;
+                continue;
+            }
+        }
+
+        $parkirInserted = false;
+        foreach ($golonganLabels as $key => $label) {
+            if (in_array(mb_strtolower(trim((string) $label)), ['hasil parkir', 'parkir'], true)) {
+                continue;
+            }
+
+            if (! $parkirInserted && strcasecmp(trim((string) $label), 'Lainnya') === 0) {
+                $displayGolonganLabels[$hasilParkirKey] = $hasilParkirLabel;
+                $parkirInserted = true;
+            }
+
+            $displayGolonganLabels[$key] = $label;
+        }
+
+        if (! $parkirInserted) {
+            $displayGolonganLabels[$hasilParkirKey] = $hasilParkirLabel;
+        }
+    @endphp
+
     <div class="pm-gol-grid">
-        @foreach($golonganLabels as $key => $label)
-            @php $colors = $golonganColors[$key] ?? ['bg'=>'#f8fafc','text'=>'#475569','border'=>'#e2e8f0','dot'=>'#64748b']; @endphp
+        @foreach($displayGolonganLabels as $key => $label)
+            @php
+                $isParkir = in_array(mb_strtolower(trim((string) $label)), ['hasil parkir', 'parkir'], true);
+                $colors = $isParkir
+                    ? ['bg'=>'#ecfdf5','text'=>'#047857','border'=>'#a7f3d0','dot'=>'#10b981']
+                    : ($golonganColors[$key] ?? ['bg'=>'#f8fafc','text'=>'#475569','border'=>'#e2e8f0','dot'=>'#64748b']);
+
+                $amount = $isParkir
+                    ? ($summaryPerGolongan[$key] ?? $summaryPerGolongan['hasil_parkir'] ?? $summaryPerGolongan['parkir'] ?? 0)
+                    : ($summaryPerGolongan[$key] ?? 0);
+            @endphp
             <div class="pm-gol-card" style="border-color:{{ $colors['border'] }};">
                 <span class="pm-gol-dot" style="background:{{ $colors['dot'] }};"></span>
                 <div style="min-width:0;">
                     <div class="pm-gol-name">{{ $label }}</div>
-                    <div class="pm-gol-amount">Rp {{ number_format($summaryPerGolongan[$key] ?? 0, 0, ',', '.') }}</div>
+                    <div class="pm-gol-amount">Rp {{ number_format($amount, 0, ',', '.') }}</div>
                 </div>
             </div>
         @endforeach
@@ -878,7 +928,13 @@
 <div class="pm-overlay" id="pmTambahOverlay">
     <div class="pm-modal" role="dialog" aria-modal="true">
         <div class="pm-modal-head">
-            <h2><i class="fa-solid fa-plus-circle" style="color:#179b40;margin-right:8px;"></i>Tambah Pemasukan Manual</h2>
+            <div class="pm-modal-title">
+                <span class="pm-modal-title-icon"><i class="fa-solid fa-plus"></i></span>
+                <div>
+                    <h2>Tambah Pemasukan Manual</h2>
+                    <p>Catat penerimaan dengan data transaksi yang lengkap.</p>
+                </div>
+            </div>
             <button type="button" class="pm-modal-x" onclick="pmCloseTambah()" aria-label="Tutup">&times;</button>
         </div>
 
@@ -902,7 +958,7 @@
                     <div class="pm-fgroup">
                         <label class="pm-flabel" for="pm_nominal">Nominal (Rp) <span>*</span></label>
                         <input type="number" name="nominal" id="pm_nominal" class="pm-finput"
-                            min="1000" step="1000" placeholder="Contoh: 500000"
+                            min="1000" step="1" placeholder="Contoh: 1250 atau 500000"
                             value="{{ old('nominal') }}" required>
                     </div>
                     {{-- Tanggal --}}
@@ -1041,3 +1097,97 @@
     }
 </script>
 @endsection
+
+{{-- FINUS DARK MODE LOCAL: admin/pemasukan/index.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="admin/pemasukan/index.blade.php">
+html[data-finus-theme="dark"] body .pm-page { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-hero { border:1px solid rgba(126,255,135,.10) !important; box-shadow:0 18px 38px rgba(0,0,0,.24) !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-btn-add { border-color:rgba(255,255,255,.24) !important; background:rgba(5,31,14,.48) !important; color:#F7FFF9 !important; }
+html[data-finus-theme="dark"] body .pm-page :where(.pm-stat,.pm-gol-card,.pm-filter,.pm-card,.pm-modal,.pm-tolak-box) { border-color:#293D31 !important; background:linear-gradient(155deg,#15211A,#111A15) !important; color:#F1F6F3 !important; box-shadow:0 14px 34px rgba(0,0,0,.20) !important; }
+html[data-finus-theme="dark"] body .pm-page :where(.pm-card-head,.pm-modal-head,.pm-modal-foot) { border-color:#293D31 !important; background:linear-gradient(180deg,#17251D,#121D17) !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .pm-page :where(.pm-card-title,.pm-stat-value,.pm-gol-amount,.pm-gol-name,.pm-empty-h,.pm-flabel) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .pm-page :where(.pm-stat-label,.pm-stat-sub,.pm-fhint,.pm-empty-sub) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .pm-page :where(.pm-fi,.pm-fs,.pm-finput,.pm-fselect,.pm-ftarea) { border-color:#31493A !important; background:#0C1610 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .pm-page :where(.pm-fi,.pm-fs,.pm-finput,.pm-fselect,.pm-ftarea):focus { border-color:#64DD81 !important; background:#0F1A13 !important; box-shadow:0 0 0 4px rgba(100,221,129,.12) !important; }
+html[data-finus-theme="dark"] body .pm-page :where(.pm-fi,.pm-finput,.pm-ftarea)::placeholder { color:#71847A !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-table-wrap { border-color:#293D31 !important; background:#111A15 !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-table thead th { border-color:#293D31 !important; background:#17261D !important; color:#D2E1D6 !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-table tbody td { border-color:#24372B !important; background:#111A15 !important; color:#DCE7E0 !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-table tbody tr:hover td { background:#17251D !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-s-diterima { border-color:#2D6140 !important; background:#15331E !important; color:#A9F0B9 !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-s-pending { border-color:#6A552D !important; background:#342817 !important; color:#F4D38B !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-s-ditolak { border-color:#704044 !important; background:#371E22 !important; color:#F5B1B5 !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-src-jamaah { border-color:#35557A !important; background:#182B43 !important; color:#B9D0FF !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-src-admin { border-color:#5A4779 !important; background:#2B2240 !important; color:#CEBDFF !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-fbtn-reset { border-color:#334B3B !important; background:#14211A !important; color:#C9D8CE !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-abtn-terima { border-color:#2D6140 !important; background:#15331E !important; color:#A9F0B9 !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-abtn-tolak { border-color:#6A552D !important; background:#342817 !important; color:#F4D38B !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-abtn-bukti { border-color:#35557A !important; background:#182B43 !important; color:#B9D0FF !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-abtn-hapus { border-color:#704044 !important; background:#371E22 !important; color:#F5B1B5 !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-modal-x,
+html[data-finus-theme="dark"] body .pm-page .pm-cancel { border-color:#334B3B !important; background:#14211A !important; color:#C9D8CE !important; }
+html[data-finus-theme="dark"] body .pm-page .pm-overlay,
+html[data-finus-theme="dark"] body .pm-page .pm-tolak-overlay { background:rgba(2,10,5,.72) !important; backdrop-filter:blur(8px); }
+html[data-finus-theme="dark"] body .pm-page .pm-pagination a,
+html[data-finus-theme="dark"] body .pm-page .pm-pagination span { border-color:#293D31 !important; background:#121D17 !important; color:#CBD9D0 !important; }
+
+/* Modal berada di luar .pm-page, sehingga harus ditargetkan langsung. */
+html[data-finus-theme="dark"] body .pm-overlay,
+html[data-finus-theme="dark"] body .pm-tolak-overlay {
+    background:rgba(2,10,5,.80) !important;
+    backdrop-filter:blur(10px) !important;
+}
+html[data-finus-theme="dark"] body .pm-overlay .pm-modal {
+    border-color:#2D4938 !important;
+    background:linear-gradient(160deg,#16231B,#0F1813) !important;
+    color:#F3F8F4 !important;
+    box-shadow:0 30px 75px rgba(0,0,0,.48) !important;
+}
+html[data-finus-theme="dark"] body .pm-overlay .pm-modal-head {
+    border-color:#2A4032 !important;
+    background:linear-gradient(135deg,#173A24,#13251B) !important;
+}
+html[data-finus-theme="dark"] body .pm-overlay .pm-modal-title-icon {
+    background:#20502F !important; color:#80EE9A !important;
+}
+html[data-finus-theme="dark"] body .pm-overlay .pm-modal-head h2 { color:#F7FBF8 !important; }
+html[data-finus-theme="dark"] body .pm-overlay .pm-modal-head p { color:#9FB2A6 !important; }
+html[data-finus-theme="dark"] body .pm-overlay .pm-modal-body { background:#111B15 !important; }
+html[data-finus-theme="dark"] body .pm-overlay .pm-modal-foot {
+    border-color:#2A4032 !important; background:#101912 !important;
+}
+html[data-finus-theme="dark"] body .pm-overlay .pm-flabel,
+html[data-finus-theme="dark"] body .pm-tolak-overlay .pm-flabel { color:#C8D8CE !important; }
+html[data-finus-theme="dark"] body .pm-overlay .pm-fhint { color:#8FA298 !important; }
+html[data-finus-theme="dark"] body .pm-overlay :where(.pm-finput,.pm-fselect,.pm-ftarea),
+html[data-finus-theme="dark"] body .pm-tolak-overlay :where(.pm-finput,.pm-fselect,.pm-ftarea) {
+    border-color:#334E3D !important; background:#0A140E !important; color:#F1F7F3 !important;
+}
+html[data-finus-theme="dark"] body .pm-overlay :where(.pm-finput,.pm-ftarea)::placeholder,
+html[data-finus-theme="dark"] body .pm-tolak-overlay :where(.pm-finput,.pm-ftarea)::placeholder { color:#70847A !important; }
+html[data-finus-theme="dark"] body .pm-overlay :where(.pm-finput,.pm-fselect,.pm-ftarea):focus,
+html[data-finus-theme="dark"] body .pm-tolak-overlay :where(.pm-finput,.pm-fselect,.pm-ftarea):focus {
+    border-color:#64DD81 !important; background:#0D1812 !important; box-shadow:0 0 0 4px rgba(100,221,129,.11) !important;
+}
+html[data-finus-theme="dark"] body .pm-overlay input[type="date"].pm-finput { color-scheme:dark; }
+html[data-finus-theme="dark"] body .pm-overlay input[type="file"].pm-finput::file-selector-button {
+    margin-right:10px; border:0; border-right:1px solid #35503F; background:#173A24; color:#DDF7E3; padding:8px 12px;
+}
+html[data-finus-theme="dark"] body .pm-overlay .pm-modal-x {
+    border:1px solid #35503F !important; background:#18271E !important; color:#C9D8CE !important;
+}
+html[data-finus-theme="dark"] body .pm-overlay .pm-modal-x:hover { background:#203328 !important; color:#fff !important; }
+html[data-finus-theme="dark"] body .pm-overlay .pm-cancel,
+html[data-finus-theme="dark"] body .pm-tolak-overlay .pm-cancel {
+    border-color:#385442 !important; background:#16231B !important; color:#D6E3DA !important;
+}
+html[data-finus-theme="dark"] body .pm-tolak-overlay .pm-tolak-box {
+    border:1px solid #4C3438 !important; background:linear-gradient(155deg,#211719,#171113) !important; color:#F5F0F1 !important;
+    box-shadow:0 28px 65px rgba(0,0,0,.46) !important;
+}
+html[data-finus-theme="dark"] body .pm-tolak-overlay .pm-tolak-box h2 { color:#FFF4F5 !important; }
+html[data-finus-theme="dark"] body .pm-tolak-overlay .pm-tolak-box > p { color:#B7A3A6 !important; }
+</style>
+@endpush
+

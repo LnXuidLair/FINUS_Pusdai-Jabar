@@ -2255,3 +2255,68 @@
         </style>
     @endpush
 @endonce
+
+{{-- FINUS DARK MODE SHARED COMPONENTS: layouts/partials/finus-ui.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="layouts/partials/finus-ui.blade.php">
+html[data-finus-theme="dark"] {
+    --fr-text:#F1F6F3; --fr-muted:#9EAEA4; --fr-border:#293D31;
+    --fr-soft:#173620; --fr-soft-2:#101C15;
+    --fr-blue:#82AEFF; --fr-blue-soft:#192C47;
+    --fr-amber:#F4B65A; --fr-amber-soft:#382A18;
+    --fr-red:#FF7D84; --fr-red-soft:#3C2024;
+    --fr-purple:#B295FF; --fr-purple-soft:#302442;
+    --fr-shadow-sm:0 10px 28px rgba(0,0,0,.18); --fr-shadow-md:0 18px 42px rgba(0,0,0,.25);
+
+    --fmu-text:#F1F6F3; --fmu-muted:#9EAEA4; --fmu-border:#293D31;
+    --fmu-soft:#173620; --fmu-soft-2:#101C15;
+    --fmu-green:#64DD81; --fmu-dark:#B9F4C7;
+
+    --jt-text:#F1F6F3; --jt-muted:#9EAEA4; --jt-border:#293D31;
+    --jt-bg:#0D1510; --jt-surface:#111A15; --jt-green:#64DD81;
+    --jt-green-dark:#B9F4C7; --jt-green-soft:#173620; --jt-shadow:0 16px 36px rgba(0,0,0,.23);
+}
+html[data-finus-theme="dark"] body :where(.fr-card,.fr-stat,.fr-status-panel,.fmu-card,.fmu-stat,.fmu-side-note,.jt-card,.jt-stat,.jt-filter-card,.jt-heading) {
+    border-color:#293D31 !important;
+    background:linear-gradient(155deg,#15211A 0%,#111A15 100%) !important;
+    color:#F1F6F3 !important;
+    box-shadow:0 14px 34px rgba(0,0,0,.20) !important;
+}
+html[data-finus-theme="dark"] body :where(.fr-card-head,.fmu-card-head,.jt-card-head,.fmu-actions) {
+    border-color:#293D31 !important;
+    background:linear-gradient(180deg,#17251D 0%,#121D17 100%) !important;
+    color:#F1F6F3 !important;
+}
+html[data-finus-theme="dark"] body :where(.fr-card-title,.fr-stat-value,.fr-status-title,.fmu-label,.fmu-card h1,.fmu-card h2,.fmu-card h3,.fmu-stat strong,.jt-heading,.jt-card h1,.jt-card h2,.jt-stat strong) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body :where(.fr-card-subtitle,.fr-stat-label,.fr-stat-note,.fr-status-copy,.fr-help,.fmu-help,.fmu-side-note p,.jt-note,.jt-card-head p,.jt-stat span,.jt-field label) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body :where(.fr-input,.fr-select,.fr-search,.fmu-control,.fmu-select,.fmu-textarea,.jt-control) {
+    border-color:#31493A !important; background:#0C1610 !important; color:#F1F6F3 !important; box-shadow:none !important;
+}
+html[data-finus-theme="dark"] body :where(.fr-input,.fr-select,.fr-search,.fmu-control,.fmu-select,.fmu-textarea,.jt-control):focus {
+    border-color:#64DD81 !important; background:#0F1A13 !important; box-shadow:0 0 0 4px rgba(100,221,129,.12) !important;
+}
+html[data-finus-theme="dark"] body :where(.fr-input,.fr-search,.fmu-control,.fmu-textarea,.jt-control)::placeholder { color:#71847A !important; }
+html[data-finus-theme="dark"] body :where(.fr-breakdown-item,.fr-tip-item,.fmu-upload,.fmu-choice,.jt-breakdown-item,.jt-pill) {
+    border-color:#293D31 !important; background:#101B14 !important; color:#F1F6F3 !important;
+}
+html[data-finus-theme="dark"] body :where(.fr-table-wrap,.fmu-table-wrap,.jt-table-wrap) { border-color:#293D31 !important; background:#111A15 !important; }
+html[data-finus-theme="dark"] body :where(.fr-table,.fmu-table,.jt-table) thead th {
+    border-color:#293D31 !important; background:#17261D !important; color:#D5E4D9 !important;
+}
+html[data-finus-theme="dark"] body :where(.fr-table,.fmu-table,.jt-table) tbody td {
+    border-color:#24372B !important; background:#111A15 !important; color:#DDE8E1 !important;
+}
+html[data-finus-theme="dark"] body :where(.fr-table,.fmu-table,.jt-table) tbody tr:hover td { background:#17251D !important; }
+html[data-finus-theme="dark"] body :where(.fr-btn,.fmu-btn,.jt-btn):not(.fr-btn-primary):not(.fmu-btn-primary):not(.jt-btn-primary) {
+    border-color:#304A39 !important; background:#121F18 !important; color:#DDE9E1 !important;
+}
+html[data-finus-theme="dark"] body :where(.fr-btn,.fmu-btn,.jt-btn):not(.fr-btn-primary):not(.fmu-btn-primary):not(.jt-btn-primary):hover {
+    border-color:#3D5D48 !important; background:#192A20 !important; color:#C9F5D3 !important;
+}
+html[data-finus-theme="dark"] body .fmu-upload:hover,
+html[data-finus-theme="dark"] body .fmu-upload:focus-within { border-color:#64DD81 !important; background:#14261A !important; }
+html[data-finus-theme="dark"] body .fmu-file-name { background:#0E1812 !important; color:#F1F6F3 !important; border-color:#293D31 !important; }
+html[data-finus-theme="dark"] body .fr-progress { background:#0C1510 !important; }
+</style>
+@endpush
+

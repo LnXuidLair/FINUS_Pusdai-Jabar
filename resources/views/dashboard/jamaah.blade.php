@@ -1051,3 +1051,19 @@ $(document).ready(function() {
 });
 </script>
 @endpush
+
+{{-- FINUS DARK MODE LOCAL: dashboard/jamaah.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="dashboard/jamaah.blade.php">
+html[data-finus-theme="dark"] body .jamaah-hero { border:1px solid rgba(126,255,135,.09) !important; box-shadow:0 18px 38px rgba(0,0,0,.22) !important; }
+html[data-finus-theme="dark"] body :where(.finus-stat-card,.agenda-card,.prayer-card,.agenda-card-item,.expense-card-item) { border-color:#293D31 !important; background:linear-gradient(155deg,#15211A,#111A15) !important; color:#F1F6F3 !important; box-shadow:0 13px 30px rgba(0,0,0,.19) !important; }
+html[data-finus-theme="dark"] body :where(.finus-stat-value,.prayer-name,.prayer-val,.agenda-card h1,.agenda-card h2,.agenda-card h3,.prayer-card h1,.prayer-card h2,.prayer-card h3) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body :where(.finus-stat-label,.finus-stat-desc,.agenda-card .text-muted,.prayer-card .text-muted,.agenda-card-item .text-muted) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .prayer-time-item { border-color:#293D31 !important; background:#101C15 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .btn-quick-action { border-color:#304A39 !important; background:#14211A !important; color:#DCE9E0 !important; }
+html[data-finus-theme="dark"] body .btn-quick-action:hover { border-color:#3D5D48 !important; background:#192A20 !important; color:#C9F5D3 !important; }
+html[data-finus-theme="dark"] body .agenda-grid.owl-carousel .owl-nav button.owl-prev,
+html[data-finus-theme="dark"] body .agenda-grid.owl-carousel .owl-nav button.owl-next { border-color:#293D31 !important; background:#14211A !important; color:#DCE9E0 !important; }
+</style>
+@endpush
+

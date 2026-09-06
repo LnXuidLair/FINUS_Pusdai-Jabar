@@ -452,6 +452,28 @@
         background: #321A1D;
     }
 
+
+
+    /* FINUS DARK MODE LOCAL: layouts/navigation.blade.php */
+html[data-finus-theme="dark"] .header.finus-topbar {
+        border-bottom-color:rgba(126,255,135,.10) !important;
+        box-shadow:0 8px 24px rgba(0,0,0,.16) !important;
+    }
+    html[data-finus-theme="dark"] .finus-topbar-user {
+        border-color:#294234 !important; background:#0E1812 !important; color:#F1F6F3 !important;
+    }
+    html[data-finus-theme="dark"] .finus-user-menu {
+        border-color:#293D31 !important; background:linear-gradient(160deg,#131F18,#0F1813) !important; box-shadow:0 24px 58px rgba(0,0,0,.36) !important;
+    }
+    html[data-finus-theme="dark"] .finus-user-menu-head { border-color:#293D31 !important; background:#15231B !important; }
+    html[data-finus-theme="dark"] :where(.finus-account-link,.finus-theme-menu-button) { color:#DDE8E1 !important; }
+    html[data-finus-theme="dark"] :where(.finus-account-link,.finus-theme-menu-button):hover { background:#192A20 !important; color:#F1F7F3 !important; }
+    html[data-finus-theme="dark"] .finus-account-link.is-active { background:#173620 !important; color:#C9F5D3 !important; }
+    html[data-finus-theme="dark"] .finus-account-link-icon { background:#173620 !important; color:#64DD81 !important; }
+    html[data-finus-theme="dark"] .finus-theme-switch { border-color:#3D6249 !important; background:#1A6A33 !important; }
+    html[data-finus-theme="dark"] .finus-theme-switch::after { background:#F4FFF6 !important; box-shadow:0 2px 7px rgba(0,0,0,.30) !important; }
+    html[data-finus-theme="dark"] .finus-logout-button { color:#F0B0B4 !important; }
+    html[data-finus-theme="dark"] .finus-logout-button:hover { background:#351E21 !important; color:#FFBDC1 !important; }
 </style>
 <header class="header finus-topbar" aria-label="Header aplikasi">
     <div class="finus-topbar-inner">

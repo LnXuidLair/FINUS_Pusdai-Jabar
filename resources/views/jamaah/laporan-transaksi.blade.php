@@ -1220,3 +1220,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 @endpush
+
+{{-- FINUS DARK MODE LOCAL: jamaah/laporan-transaksi.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="jamaah/laporan-transaksi.blade.php">
+@media screen {
+html[data-finus-theme="dark"] body .jt-page .jt-breakdown-item { border-color:#293D31 !important; background:#101B14 !important; }
+html[data-finus-theme="dark"] body .jt-page .jt-pagination a,
+html[data-finus-theme="dark"] body .jt-page .jt-pagination span { border-color:#293D31 !important; background:#121D17 !important; color:#CBD9D0 !important; }
+html[data-finus-theme="dark"] body .jt-page .jt-type { border-color:#35557A !important; background:#182B43 !important; color:#B9D0FF !important; }
+}
+@media print { html[data-finus-theme="dark"] body .jt-page, html[data-finus-theme="dark"] body .jt-page * { color:#111827 !important; } }
+</style>
+@endpush
+

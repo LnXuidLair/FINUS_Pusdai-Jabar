@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0E5423">
-    <meta name="color-scheme" content="light dark">
+    <meta name="color-scheme" content="light">
     <script>
         (() => {
             const storageKey = 'finus:appearance';
@@ -854,6 +854,473 @@ const themeColorMeta = document.querySelector(
             filter: brightness(.86) saturate(.9);
         }
 
+
+        /* =====================================================
+           FINUS GLOBAL DARK COMPATIBILITY — INTERNAL CHILD VIEWS
+           -----------------------------------------------------
+           Semua halaman internal yang menggunakan layouts.app mengikuti
+           switch Mode Tampilan di navigation. Bagian ini sengaja berada
+           DI LAYOUT agar puluhan child view tidak perlu memiliki dark CSS
+           sendiri-sendiri.
+        ===================================================== */
+
+        html[data-finus-theme="dark"] {
+            /* Shared FINUS module variables */
+            --fmu-soft: #17331F;
+            --fmu-soft-2: #101B14;
+            --fmu-text: #EAF4ED;
+            --fmu-muted: #A8B7AD;
+            --fmu-border: #2B3E30;
+            --fmu-shadow-sm: 0 10px 28px rgba(0,0,0,.22);
+            --fmu-shadow-md: 0 20px 50px rgba(0,0,0,.30);
+
+            --fd-soft: #17331F;
+            --fd-soft-2: #101B14;
+            --fd-text: #EAF4ED;
+            --fd-muted: #A8B7AD;
+            --fd-border: #2B3E30;
+            --fd-blue-soft: #15243A;
+            --fd-amber-soft: #332719;
+            --fd-red-soft: #341C20;
+            --fd-purple-soft: #261D38;
+
+            --jt-green-soft: #17331F;
+            --jt-text: #EAF4ED;
+            --jt-muted: #A8B7AD;
+            --jt-border: #2B3E30;
+            --jt-surface: #121D16;
+            --jt-bg: #0E1811;
+            --jt-shadow: 0 12px 30px rgba(0,0,0,.24);
+
+            --fr-soft: #17331F;
+            --fr-soft-2: #101B14;
+            --fr-text: #EAF4ED;
+            --fr-muted: #A8B7AD;
+            --fr-border: #2B3E30;
+            --fr-blue-soft: #15243A;
+            --fr-amber-soft: #332719;
+            --fr-red-soft: #341C20;
+            --fr-purple-soft: #261D38;
+            --fr-shadow-sm: 0 8px 22px rgba(0,0,0,.20);
+            --fr-shadow-md: 0 16px 38px rgba(0,0,0,.28);
+
+            /* Older dashboard variables still used by a few views */
+            --finus-text-dark: #EAF4ED;
+            --finus-text-muted: #A8B7AD;
+        }
+
+        /* ---------- Bootstrap / template surfaces ---------- */
+        html[data-finus-theme="dark"] .main :where(
+            .card,
+            .card-body,
+            .card-header,
+            .card-footer,
+            .modal-content,
+            .dropdown-menu,
+            .list-group,
+            .list-group-item,
+            .jumbotron
+        ) {
+            border-color: #2B3E30 !important;
+            background-color: #121D16 !important;
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] .main .card-header,
+        html[data-finus-theme="dark"] .main .card-footer {
+            background-image: none !important;
+        }
+
+        html[data-finus-theme="dark"] .main :where(
+            h1, h2, h3, h4, h5, h6,
+            label,
+            legend,
+            .card-title
+        ) {
+            color: #EAF4ED;
+        }
+
+        html[data-finus-theme="dark"] .main :where(
+            .small,
+            small,
+            .form-text,
+            .text-secondary
+        ) {
+            color: #A8B7AD !important;
+        }
+
+        html[data-finus-theme="dark"] .main :where(
+            .input-group-text,
+            .custom-file-label
+        ) {
+            border-color: #314736 !important;
+            background: #16231A !important;
+            color: #C7D7CB !important;
+        }
+
+        /* ---------- FINUS DATA pages
+           COA, Pegawai, Gaji Jabatan, Presensi, Pengeluaran,
+           Penggajian, pemasukan, dan list/master-data sejenis ---------- */
+        html[data-finus-theme="dark"] .finus-data-stat,
+        html[data-finus-theme="dark"] .finus-data-card,
+        html[data-finus-theme="dark"] .finus-table-card {
+            border-color: #2B3E30 !important;
+            background: #121D16 !important;
+            color: #EAF4ED !important;
+            box-shadow: 0 12px 30px rgba(0,0,0,.22) !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-data-card-head,
+        html[data-finus-theme="dark"] .finus-data-toolbar,
+        html[data-finus-theme="dark"] .finus-data-table-area,
+        html[data-finus-theme="dark"] .finus-data-table-wrap,
+        html[data-finus-theme="dark"] .finus-table-card .card-body,
+        html[data-finus-theme="dark"] .finus-table-card .card-footer {
+            border-color: #293B2E !important;
+            background: #121D16 !important;
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-data-card-title,
+        html[data-finus-theme="dark"] .finus-data-stat-value,
+        html[data-finus-theme="dark"] .finus-data-table td,
+        html[data-finus-theme="dark"] .finus-table td {
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-data-card-description,
+        html[data-finus-theme="dark"] .finus-data-stat-label,
+        html[data-finus-theme="dark"] .finus-data-visible,
+        html[data-finus-theme="dark"] .finus-data-search-help,
+        html[data-finus-theme="dark"] .finus-empty-state-text,
+        html[data-finus-theme="dark"] .finus-data-empty-text {
+            color: #A8B7AD !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-data-search,
+        html[data-finus-theme="dark"] .finus-search {
+            border-color: #314736 !important;
+            background: #0E1811 !important;
+            color: #EDF7EF !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-data-search::placeholder,
+        html[data-finus-theme="dark"] .finus-search::placeholder {
+            color: #718379 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-data-clear {
+            color: #91A298 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-data-table,
+        html[data-finus-theme="dark"] .finus-table {
+            background: transparent !important;
+            color: #E8F3EB !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-data-table thead th,
+        html[data-finus-theme="dark"] .finus-table thead th {
+            border-color: #304436 !important;
+            background: #16231A !important;
+            color: #CFE0D3 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-data-table tbody td,
+        html[data-finus-theme="dark"] .finus-table tbody td {
+            border-color: #26382C !important;
+            background: #121D16 !important;
+            color: #DDE9E0 !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-data-table tbody tr:hover td,
+        html[data-finus-theme="dark"] .finus-table tbody tr:hover td {
+            background: #16251B !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-table tbody tr[data-search-row],
+        html[data-finus-theme="dark"] .finus-empty-state {
+            border-color: #2B3E30 !important;
+            background: #121D16 !important;
+            color: #EAF4ED !important;
+            box-shadow: 0 8px 20px rgba(0,0,0,.18) !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-table tbody tr[data-search-row] td {
+            border-color: #293B2E !important;
+        }
+
+        html[data-finus-theme="dark"] .finus-table tbody tr[data-search-row] td::before {
+            color: #94A69A !important;
+        }
+
+        /* ---------- FMU create/edit/detail forms ---------- */
+        html[data-finus-theme="dark"] .fmu-card-head,
+        html[data-finus-theme="dark"] .fmu-actions {
+            border-color: #2B3E30 !important;
+            background: linear-gradient(180deg, #152119, #111C15) !important;
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] .fmu-label,
+        html[data-finus-theme="dark"] .fmu-side-note h1,
+        html[data-finus-theme="dark"] .fmu-side-note h2,
+        html[data-finus-theme="dark"] .fmu-side-note h3,
+        html[data-finus-theme="dark"] .fmu-side-note li {
+            color: #DDE9E0 !important;
+        }
+
+        html[data-finus-theme="dark"] .fmu-help,
+        html[data-finus-theme="dark"] .fmu-card-head p,
+        html[data-finus-theme="dark"] .fmu-side-note p {
+            color: #9FB0A5 !important;
+        }
+
+        html[data-finus-theme="dark"] .fmu-input-icon-wrap > i {
+            color: #78CE8C !important;
+        }
+
+        html[data-finus-theme="dark"] .fmu-btn:not(.fmu-btn-primary) {
+            border-color: #314736 !important;
+            background: #16231A !important;
+            color: #DCEAE0 !important;
+        }
+
+        html[data-finus-theme="dark"] .fmu-btn:not(.fmu-btn-primary):hover {
+            background: #1A2A1F !important;
+            color: #BDF3C8 !important;
+        }
+
+        /* ---------- Jamaah transaction / report pages (JT) ---------- */
+        html[data-finus-theme="dark"] .jt-heading,
+        html[data-finus-theme="dark"] .jt-card {
+            border-color: #2B3E30 !important;
+            background: #121D16 !important;
+            color: #EAF4ED !important;
+            box-shadow: 0 12px 30px rgba(0,0,0,.23) !important;
+        }
+
+        html[data-finus-theme="dark"] .jt-card-head {
+            border-color: #293B2E !important;
+            background: #121D16 !important;
+        }
+
+        html[data-finus-theme="dark"] .jt-heading h1,
+        html[data-finus-theme="dark"] .jt-card h2,
+        html[data-finus-theme="dark"] .jt-stat strong,
+        html[data-finus-theme="dark"] .jt-table td {
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] .jt-heading p,
+        html[data-finus-theme="dark"] .jt-card-head p,
+        html[data-finus-theme="dark"] .jt-field label,
+        html[data-finus-theme="dark"] .jt-stat span,
+        html[data-finus-theme="dark"] .jt-note {
+            color: #A8B7AD !important;
+        }
+
+        html[data-finus-theme="dark"] .jt-control,
+        html[data-finus-theme="dark"] .jt-btn:not(.jt-btn-primary) {
+            border-color: #314736 !important;
+            background: #0E1811 !important;
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] .jt-btn-soft {
+            border-color: #31533A !important;
+            background: #17331F !important;
+            color: #BDF3C8 !important;
+        }
+
+        html[data-finus-theme="dark"] .jt-table thead th {
+            border-color: #304436 !important;
+            background: #16231A !important;
+            color: #CFE0D3 !important;
+        }
+
+        html[data-finus-theme="dark"] .jt-table tbody td {
+            border-color: #26382C !important;
+            background: #121D16 !important;
+        }
+
+        html[data-finus-theme="dark"] .jt-table tbody tr:hover td {
+            background: #16251B !important;
+        }
+
+        /* ---------- Financial reports (FR)
+           Jurnal Umum, Arus Kas, PSAK, dan laporan sejenis ---------- */
+        html[data-finus-theme="dark"] .fr-stat,
+        html[data-finus-theme="dark"] .fr-card,
+        html[data-finus-theme="dark"] .fr-status-panel {
+            border-color: #2B3E30 !important;
+            background: #121D16 !important;
+            color: #EAF4ED !important;
+            box-shadow: 0 12px 30px rgba(0,0,0,.23) !important;
+        }
+
+        html[data-finus-theme="dark"] .fr-card-head {
+            border-color: #293B2E !important;
+            background: linear-gradient(180deg, #152119, #111C15) !important;
+        }
+
+        html[data-finus-theme="dark"] .fr-card-title,
+        html[data-finus-theme="dark"] .fr-stat-value,
+        html[data-finus-theme="dark"] .fr-status-title,
+        html[data-finus-theme="dark"] .fr-table td {
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] .fr-card-subtitle,
+        html[data-finus-theme="dark"] .fr-stat-label,
+        html[data-finus-theme="dark"] .fr-stat-note,
+        html[data-finus-theme="dark"] .fr-status-copy {
+            color: #A8B7AD !important;
+        }
+
+        html[data-finus-theme="dark"] .fr-btn:not(.fr-btn-primary),
+        html[data-finus-theme="dark"] .fr-control,
+        html[data-finus-theme="dark"] .fr-select {
+            border-color: #314736 !important;
+            background: #0E1811 !important;
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] .fr-table thead th {
+            border-color: #304436 !important;
+            background: #16231A !important;
+            color: #CFE0D3 !important;
+        }
+
+        html[data-finus-theme="dark"] .fr-table tbody td {
+            border-color: #26382C !important;
+            background: #121D16 !important;
+        }
+
+        /* ---------- Pegawai dashboard legacy/custom cards ---------- */
+        html[data-finus-theme="dark"] body.role-pegawai .finus-summary-card,
+        html[data-finus-theme="dark"] body.role-pegawai .pegawai-card,
+        html[data-finus-theme="dark"] body.role-pegawai .pegawai-card-header,
+        html[data-finus-theme="dark"] body.role-pegawai .quick-action-link {
+            border-color: #2B3E30 !important;
+            background: #121D16 !important;
+            color: #EAF4ED !important;
+            box-shadow: 0 10px 26px rgba(0,0,0,.20) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai .finus-summary-card h5,
+        html[data-finus-theme="dark"] body.role-pegawai .pegawai-card-subtitle,
+        html[data-finus-theme="dark"] body.role-pegawai .quick-action-text small {
+            color: #A8B7AD !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai .finus-summary-card p,
+        html[data-finus-theme="dark"] body.role-pegawai .pegawai-card-title,
+        html[data-finus-theme="dark"] body.role-pegawai .quick-action-text strong {
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai .focus-list li {
+            border-color: #179B40 !important;
+            background: #16231A !important;
+            color: #DCEAE0 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai .quick-action-link:hover {
+            border-color: #31533A !important;
+            background: #192A1F !important;
+            color: #BDF3C8 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai .quick-action-icon {
+            background: #17331F !important;
+            color: #79EA91 !important;
+        }
+
+        /* ---------- Older / mixed page designs ---------- */
+        html[data-finus-theme="dark"] .finus-table-card,
+        html[data-finus-theme="dark"] .admin-card,
+        html[data-finus-theme="dark"] .profile-card,
+        html[data-finus-theme="dark"] .settings-card,
+        html[data-finus-theme="dark"] .account-card,
+        html[data-finus-theme="dark"] .account-panel {
+            border-color: #2B3E30 !important;
+            background: #121D16 !important;
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] .admin-card .card-footer {
+            border-color: #2B3E30 !important;
+            background: #121D16 !important;
+        }
+
+        html[data-finus-theme="dark"] .form-group label,
+        html[data-finus-theme="dark"] .form-note {
+            color: #C8D7CC !important;
+        }
+
+        /* ---------- Common custom payment / service cards ---------- */
+        html[data-finus-theme="dark"] :where(
+            .option-card,
+            .payment-card,
+            .summary-card,
+            .calculator-card,
+            .ziswaf-card,
+            .transaction-card,
+            .filter-card,
+            .report-card,
+            .info-card,
+            .detail-card
+        ) {
+            border-color: #2B3E30 !important;
+            background: #121D16 !important;
+            color: #EAF4ED !important;
+        }
+
+        /* ---------- Alerts: jangan hanya di-filter agar teks tetap jelas ---------- */
+        html[data-finus-theme="dark"] .alert-info {
+            border-color: #274C61 !important;
+            background: #132733 !important;
+            color: #B9DAEC !important;
+        }
+
+        html[data-finus-theme="dark"] .alert-success {
+            border-color: #285D37 !important;
+            background: #15301D !important;
+            color: #AFE9BC !important;
+        }
+
+        html[data-finus-theme="dark"] .alert-warning {
+            border-color: #66512A !important;
+            background: #312716 !important;
+            color: #E9CF93 !important;
+        }
+
+        html[data-finus-theme="dark"] .alert-danger {
+            border-color: #70403E !important;
+            background: #301A1A !important;
+            color: #EFB6B1 !important;
+        }
+
+        /* ---------- Native controls / files / date fields ---------- */
+        html[data-finus-theme="dark"] input[type="file"]::file-selector-button {
+            border-color: #31533A !important;
+            background: #17331F !important;
+            color: #CFF1D7 !important;
+        }
+
+        /* Keep green hero/header actions intentional and readable. */
+        html[data-finus-theme="dark"] :where(
+            .finus-data-hero,
+            .fmu-hero,
+            .fr-hero,
+            .finus-dashboard-header,
+            .finus-header-gradient,
+            .header-gradient
+        ) {
+            color: #FFFFFF !important;
+        }
+
         html.finus-theme-changing *,
         html.finus-theme-changing *::before,
         html.finus-theme-changing *::after {
@@ -893,6 +1360,959 @@ const themeColorMeta = document.querySelector(
 
     
 
+
+        /* =====================================================
+           ADMIN DASHBOARD — DARK MODE POLISHED
+           -----------------------------------------------------
+           Jangan membuat semua kartu menjadi hitam/seragam.
+           Warna kategori tetap dipertahankan sebagai aksen lembut.
+        ===================================================== */
+        html[data-finus-theme="dark"] body.role-admin .finus-dashboard {
+            --finus-text: #EAF4ED;
+            --finus-muted: #9FB1A4;
+            --finus-border: #294234;
+            --finus-bg: #0E1811;
+
+            --finus-green-soft: #173720;
+            --finus-green-soft-2: #14271A;
+
+            --finus-red: #FF7379;
+            --finus-red-soft: #3B2024;
+
+            --finus-blue: #71A2FF;
+            --finus-blue-soft: #1B2B43;
+
+            --finus-orange: #F4A84B;
+            --finus-orange-soft: #3B2B18;
+
+            --finus-purple: #A984FF;
+            --finus-purple-soft: #2D2340;
+
+            --finus-cyan: #5ECBE1;
+            --finus-cyan-soft: #17343B;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .main {
+            background:
+                radial-gradient(circle at 91% 4%, rgba(34,186,81,.055), transparent 24rem),
+                linear-gradient(180deg, #0C1710 0%, #101B14 100%) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-dashboard-header {
+            border: 1px solid rgba(126,255,135,.09);
+            box-shadow:
+                0 18px 38px rgba(0,0,0,.22),
+                inset 0 1px 0 rgba(255,255,255,.10);
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-summary-card {
+            border-color: #294234 !important;
+            background:
+                linear-gradient(155deg, #15231A 0%, #111C15 100%) !important;
+            color: #EAF4ED !important;
+            box-shadow:
+                0 13px 30px rgba(0,0,0,.20),
+                inset 0 1px 0 rgba(255,255,255,.018) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-summary-card:hover {
+            border-color: #3B5A45 !important;
+            background:
+                linear-gradient(155deg, #18291E 0%, #132018 100%) !important;
+            box-shadow:
+                0 18px 36px rgba(0,0,0,.25),
+                0 0 0 1px rgba(58,163,86,.035) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-summary-card::after {
+            opacity: .30 !important;
+            filter: saturate(.85);
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-summary-icon {
+            border: 1px solid color-mix(in srgb, var(--card-color) 22%, transparent);
+            background: var(--card-soft) !important;
+            color: var(--card-color) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-summary-indicator {
+            border: 1px solid #2C4435;
+            background: #18251C !important;
+            color: #ADBCB1 !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.018);
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-summary-indicator::before {
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-soft) 72%, transparent) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-summary-label {
+            color: #B7C5BB !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-summary-value {
+            color: #F2F8F4 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-summary-note {
+            color: #8FA097 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-content-card {
+            border-color: #294234 !important;
+            background:
+                linear-gradient(155deg, #142119 0%, #111C15 100%) !important;
+            color: #EAF4ED !important;
+            box-shadow: 0 14px 32px rgba(0,0,0,.21) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-content-header {
+            border-bottom-color: #293D30 !important;
+            background:
+                linear-gradient(180deg, #17251C 0%, #132018 100%) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-content-title,
+        html[data-finus-theme="dark"] body.role-admin .finus-quick-title {
+            color: #EAF4ED !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-content-description,
+        html[data-finus-theme="dark"] body.role-admin .finus-chart-legend,
+        html[data-finus-theme="dark"] body.role-admin .finus-quick-description {
+            color: #9FB1A4 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-content-icon,
+        html[data-finus-theme="dark"] body.role-admin .finus-quick-icon {
+            border: 1px solid rgba(121,234,145,.08);
+            background: #173720 !important;
+            color: #79EA91 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-quick-link {
+            border-color: #294234 !important;
+            background: #142119 !important;
+            color: #EAF4ED !important;
+            box-shadow: none !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-quick-link:hover {
+            border-color: #3A5A43 !important;
+            background: #192B1F !important;
+            box-shadow: 0 8px 18px rgba(0,0,0,.16) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-quick-arrow {
+            color: #789083 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .finus-quick-link:hover .finus-quick-arrow {
+            color: #79EA91 !important;
+        }
+
+
+        /* =====================================================
+           FINUS DARK MODE — ALL INTERNAL VIEWS POLISHED
+           =====================================================
+           Layer ini berada PALING AKHIR supaya desain child view
+           tetap hidup dan tidak menjadi sekadar "semua hitam".
+        ===================================================== */
+
+        html[data-finus-theme="dark"] body.finus-layout {
+            --finus-polish-bg: #0D1710;
+            --finus-polish-bg-2: #101B14;
+            --finus-polish-surface: #132018;
+            --finus-polish-surface-2: #17251C;
+            --finus-polish-surface-3: #1A2A1F;
+            --finus-polish-border: #294234;
+            --finus-polish-border-strong: #365443;
+            --finus-polish-text: #EDF6F0;
+            --finus-polish-muted: #9FB0A5;
+            --finus-polish-muted-2: #7F9186;
+            --finus-polish-green: #79EA91;
+            --finus-polish-green-soft: #173720;
+            --finus-polish-blue: #7AA9FF;
+            --finus-polish-blue-soft: #1B2D47;
+            --finus-polish-red: #FF7B82;
+            --finus-polish-red-soft: #3A2024;
+            --finus-polish-amber: #F2B35D;
+            --finus-polish-amber-soft: #3A2C19;
+            --finus-polish-purple: #B092FF;
+            --finus-polish-purple-soft: #2D2540;
+            --finus-polish-cyan: #65D2E7;
+            --finus-polish-cyan-soft: #18343B;
+            --finus-polish-shadow: 0 14px 34px rgba(0,0,0,.22);
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .main {
+            background:
+                radial-gradient(circle at 88% 4%, rgba(40, 185, 79, .05), transparent 26rem),
+                linear-gradient(180deg, var(--finus-polish-bg), var(--finus-polish-bg-2)) !important;
+        }
+
+        /* =====================================================
+           COMMON CARDS / BOOTSTRAP
+        ===================================================== */
+        html[data-finus-theme="dark"] body.finus-layout .main :where(
+            .card,
+            .modal-content,
+            .list-group-item,
+            .dropdown-menu
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background: var(--finus-polish-surface) !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: var(--finus-polish-shadow);
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .main :where(
+            .card-header,
+            .card-footer
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background:
+                linear-gradient(180deg, var(--finus-polish-surface-2), var(--finus-polish-surface)) !important;
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .main :where(
+            .card h1, .card h2, .card h3, .card h4, .card h5, .card h6,
+            .modal-title
+        ) {
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .main .text-muted {
+            color: var(--finus-polish-muted) !important;
+        }
+
+        /* =====================================================
+           FORMS — COMMON + OLD VIEWS
+        ===================================================== */
+        html[data-finus-theme="dark"] body.finus-layout .main :where(
+            .form-control,
+            .custom-select,
+            select,
+            textarea,
+            input[type="text"],
+            input[type="email"],
+            input[type="number"],
+            input[type="date"],
+            input[type="month"],
+            input[type="password"],
+            input[type="search"],
+            input[type="tel"],
+            input[type="file"]
+        ) {
+            border-color: #324B3A !important;
+            background: #0F1A13 !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.012);
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .main :where(
+            .form-control,
+            .custom-select,
+            select,
+            textarea,
+            input
+        ):focus {
+            border-color: #3E8650 !important;
+            background: #111E16 !important;
+            color: #F3FAF5 !important;
+            box-shadow: 0 0 0 3px rgba(74, 178, 99, .12) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .main :where(
+            .form-control,
+            textarea,
+            input
+        )::placeholder {
+            color: #718278 !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .main :where(
+            .form-group label,
+            .control-label,
+            label
+        ) {
+            color: #CBD9CF;
+        }
+
+        /* =====================================================
+           FINUS DATA FAMILY
+           COA, PEGAWAI, PRESENSI ADMIN, PENGELUARAN,
+           PENGGAJIAN, PEMASUKAN, MASTER DATA
+        ===================================================== */
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .finus-data-stat,
+            .finus-data-card
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background:
+                linear-gradient(155deg, #15231A, #111C15) !important;
+            box-shadow:
+                0 12px 28px rgba(0,0,0,.20),
+                inset 0 1px 0 rgba(255,255,255,.015) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .finus-data-stat::after {
+            opacity: .27 !important;
+            filter: saturate(.82);
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .finus-data-stat-icon {
+            border: 1px solid rgba(255,255,255,.035);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .finus-data-card-head,
+            .finus-data-toolbar
+        ) {
+            border-color: #293D30 !important;
+            background:
+                linear-gradient(180deg, #17251C, #132018) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .finus-data-card-title,
+            .finus-data-stat-value
+        ) {
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .finus-data-card-description,
+            .finus-data-stat-label,
+            .finus-data-visible,
+            .finus-data-search-help
+        ) {
+            color: var(--finus-polish-muted) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .finus-data-search,
+            .finus-search
+        ) {
+            border-color: #324B3A !important;
+            background: #0F1A13 !important;
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .finus-data-table thead th,
+            .finus-table thead th
+        ) {
+            border-color: #304637 !important;
+            background: #18261D !important;
+            color: #C9D9CE !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .finus-data-table tbody td,
+            .finus-table tbody td
+        ) {
+            border-color: #263A2C !important;
+            background: #121F17 !important;
+            color: #DDE9E0 !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .finus-data-table tbody tr:hover td,
+            .finus-table tbody tr:hover td
+        ) {
+            background: #18281E !important;
+        }
+
+        /* =====================================================
+           FMU FAMILY — CREATE / EDIT / DETAIL
+        ===================================================== */
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .fmu-card,
+            .fmu-stat,
+            .fmu-side-note
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background:
+                linear-gradient(155deg, #15231A, #111C15) !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: 0 12px 30px rgba(0,0,0,.20) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .fmu-card-head {
+            border-color: #293D30 !important;
+            background:
+                linear-gradient(180deg, #17251C, #132018) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .fmu-card-head h2,
+            .fmu-card-head h3,
+            .fmu-stat strong,
+            .fmu-side-note h2,
+            .fmu-side-note h3
+        ) {
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .fmu-card-head p,
+            .fmu-stat small,
+            .fmu-side-note p,
+            .fmu-help
+        ) {
+            color: var(--finus-polish-muted) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .fmu-control,
+            .fmu-select,
+            .fmu-textarea
+        ) {
+            border-color: #324B3A !important;
+            background: #0F1A13 !important;
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .fmu-card-icon {
+            border: 1px solid rgba(121,234,145,.07);
+            background: var(--finus-polish-green-soft) !important;
+            color: var(--finus-polish-green) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .fmu-btn:not(.fmu-btn-primary) {
+            border-color: #34503D !important;
+            background: #18261D !important;
+            color: #DDEAE1 !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .fmu-btn:not(.fmu-btn-primary):hover {
+            border-color: #456A50 !important;
+            background: #1D3023 !important;
+            color: #BFF4CB !important;
+        }
+
+        /* =====================================================
+           GJ FAMILY — GAJI & JABATAN
+        ===================================================== */
+        html[data-finus-theme="dark"] body.finus-layout .gj-page {
+            --gj-text: var(--finus-polish-text);
+            --gj-muted: var(--finus-polish-muted);
+            --gj-border: var(--finus-polish-border);
+            --gj-soft: var(--finus-polish-green-soft);
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .gj-stat-card,
+            .gj-card
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background:
+                linear-gradient(155deg, #15231A, #111C15) !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,.20) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .gj-stat-card::after {
+            opacity: .28 !important;
+            filter: saturate(.8);
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .gj-card-header {
+            border-color: #293D30 !important;
+            background:
+                linear-gradient(180deg, #17251C, #132018) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .gj-stat-value,
+            .gj-card-title,
+            .gj-empty-title
+        ) {
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .gj-stat-label,
+            .gj-card-description,
+            .gj-search-help,
+            .gj-visible-count,
+            .gj-empty-description
+        ) {
+            color: var(--finus-polish-muted) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .gj-search,
+            .gj-table-wrapper
+        ) {
+            border-color: #324B3A !important;
+            background: #0F1A13 !important;
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .gj-table thead th {
+            border-color: #304637 !important;
+            background: #18261D !important;
+            color: #C9D9CE !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .gj-table tbody td {
+            border-color: #263A2C !important;
+            background: #121F17 !important;
+            color: #DDE9E0 !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .gj-table tbody tr[data-search-row],
+        html[data-finus-theme="dark"] body.finus-layout .gj-empty-state {
+            border-color: var(--finus-polish-border) !important;
+            background: #132018 !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: 0 8px 18px rgba(0,0,0,.16) !important;
+        }
+
+        /* =====================================================
+           JT FAMILY — JAMAAH RIWAYAT / LAPORAN
+        ===================================================== */
+        html[data-finus-theme="dark"] body.role-jamaah .jt-page {
+            --jt-text: var(--finus-polish-text);
+            --jt-muted: var(--finus-polish-muted);
+            --jt-border: var(--finus-polish-border);
+            --jt-surface: var(--finus-polish-surface);
+            --jt-bg: var(--finus-polish-bg-2);
+            --jt-green-soft: var(--finus-polish-green-soft);
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah :where(
+            .jt-heading,
+            .jt-card
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background:
+                linear-gradient(155deg, #15231A, #111C15) !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,.20) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .jt-card-head {
+            border-color: #293D30 !important;
+            background:
+                linear-gradient(180deg, #17251C, #132018) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .jt-stat::after {
+            opacity: .27 !important;
+            filter: saturate(.82);
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah :where(
+            .jt-heading h1,
+            .jt-card h2,
+            .jt-stat strong
+        ) {
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah :where(
+            .jt-heading p,
+            .jt-card-head p,
+            .jt-stat span
+        ) {
+            color: var(--finus-polish-muted) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah :where(
+            .jt-control,
+            .jt-btn:not(.jt-btn-primary)
+        ) {
+            border-color: #324B3A !important;
+            background: #121F17 !important;
+            color: #DDEAE1 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .jt-btn-soft {
+            border-color: #315B3C !important;
+            background: var(--finus-polish-green-soft) !important;
+            color: #BFF4CB !important;
+        }
+
+        /* =====================================================
+           FR FAMILY — LAPORAN KEUANGAN
+        ===================================================== */
+        html[data-finus-theme="dark"] body.finus-layout .fr-page {
+            --fr-text: var(--finus-polish-text);
+            --fr-muted: var(--finus-polish-muted);
+            --fr-border: var(--finus-polish-border);
+            --fr-soft: var(--finus-polish-green-soft);
+            --fr-soft-2: #14261A;
+            --fr-blue-soft: var(--finus-polish-blue-soft);
+            --fr-amber-soft: var(--finus-polish-amber-soft);
+            --fr-red-soft: var(--finus-polish-red-soft);
+            --fr-purple-soft: var(--finus-polish-purple-soft);
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .fr-stat,
+            .fr-card,
+            .fr-status-panel
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background:
+                linear-gradient(155deg, #15231A, #111C15) !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,.20) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .fr-card-head {
+            border-color: #293D30 !important;
+            background:
+                linear-gradient(180deg, #17251C, #132018) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .fr-card-title,
+            .fr-stat-value,
+            .fr-status-title
+        ) {
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .fr-card-subtitle,
+            .fr-stat-label,
+            .fr-stat-note,
+            .fr-status-copy
+        ) {
+            color: var(--finus-polish-muted) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .fr-stat::after {
+            opacity: .27 !important;
+            filter: saturate(.82);
+        }
+
+        /* =====================================================
+           DASHBOARD JAMAAH
+        ===================================================== */
+        html[data-finus-theme="dark"] body.role-jamaah .finus-stat-card {
+            border: 1px solid var(--finus-polish-border) !important;
+            background:
+                linear-gradient(155deg, #15231A, #111C15) !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,.20) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .finus-stat-card::after {
+            opacity: .24 !important;
+            filter: saturate(.8);
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .finus-stat-icon-red {
+            border: 1px solid rgba(255,123,130,.10);
+            background: var(--finus-polish-red-soft) !important;
+            color: var(--finus-polish-red) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .finus-stat-icon-green {
+            border: 1px solid rgba(121,234,145,.10);
+            background: var(--finus-polish-green-soft) !important;
+            color: var(--finus-polish-green) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .finus-stat-icon-blue {
+            border: 1px solid rgba(122,169,255,.10);
+            background: var(--finus-polish-blue-soft) !important;
+            color: var(--finus-polish-blue) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .finus-stat-icon-yellow {
+            border: 1px solid rgba(242,179,93,.10);
+            background: var(--finus-polish-amber-soft) !important;
+            color: var(--finus-polish-amber) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .finus-stat-badge {
+            border: 1px solid #2D4435;
+            background: #18251C !important;
+            color: #ADBCB1 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .finus-stat-label {
+            color: #B6C5BB !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .finus-stat-value {
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .finus-stat-desc {
+            color: #8FA097 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah :where(
+            .agenda-card,
+            .agenda-item
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background: #132018 !important;
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .agenda-note {
+            border: 1px solid #31533A;
+            background: var(--finus-polish-green-soft) !important;
+            color: #BFF4CB !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .agenda-badge {
+            border: 1px solid rgba(122,169,255,.12);
+            background: var(--finus-polish-blue-soft) !important;
+            color: #AFCBFF !important;
+        }
+
+        /* =====================================================
+           DASHBOARD / PRESENSI PEGAWAI
+        ===================================================== */
+        html[data-finus-theme="dark"] body.role-pegawai :where(
+            .finus-summary-card,
+            .pegawai-card,
+            .quick-action-link,
+            .presensi-stat-card,
+            .presensi-table-card
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background:
+                linear-gradient(155deg, #15231A, #111C15) !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,.20) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai :where(
+            .pegawai-card-header,
+            .presensi-table-card .card-header
+        ) {
+            border-color: #293D30 !important;
+            background:
+                linear-gradient(180deg, #17251C, #132018) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai :where(
+            .finus-summary-card p,
+            .pegawai-card-title,
+            .quick-action-text strong,
+            .presensi-stat-value
+        ) {
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai :where(
+            .finus-summary-card h5,
+            .pegawai-card-subtitle,
+            .quick-action-text small,
+            .presensi-stat-label
+        ) {
+            color: var(--finus-polish-muted) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai .focus-list li {
+            border-color: #31533A !important;
+            background: #17251C !important;
+            color: #DCE9DF !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai .quick-action-icon {
+            border: 1px solid rgba(121,234,145,.08);
+            background: var(--finus-polish-green-soft) !important;
+            color: var(--finus-polish-green) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-pegawai .quick-action-link:hover {
+            border-color: #42674D !important;
+            background: #1B2C21 !important;
+        }
+
+        /* =====================================================
+           ZISWAF / PAYMENT / QRIS
+        ===================================================== */
+        html[data-finus-theme="dark"] body.role-jamaah :where(
+            .finus-card,
+            .payment-card,
+            .payment-summary,
+            .info-box,
+            .formula-box,
+            .payment-box,
+            .upload-box,
+            .qris-box
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background: #132018 !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,.18);
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah :where(
+            .info-box,
+            .formula-box,
+            .payment-box,
+            .upload-box
+        ) {
+            background:
+                linear-gradient(155deg, #17251C, #132018) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah :where(
+            .small-muted,
+            .payment-row span:first-child
+        ) {
+            color: var(--finus-polish-muted) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .payment-row {
+            border-color: #294234 !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .payment-row span:last-child {
+            color: var(--finus-polish-text) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .upload-box label {
+            color: #BFF4CB !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .zakat-type-badge {
+            border: 1px solid #31533A;
+            background: var(--finus-polish-green-soft) !important;
+            color: #BFF4CB !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-jamaah .qris-box {
+            border-style: dashed !important;
+            border-color: #3A5944 !important;
+            background:
+                radial-gradient(circle at 50% 28%, rgba(121,234,145,.04), transparent 14rem),
+                #101B14 !important;
+        }
+
+        /* =====================================================
+           ACCOUNT / PROFILE / SETTINGS
+        ===================================================== */
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .profile-card,
+            .settings-card,
+            .account-card,
+            .account-panel,
+            .profile-panel,
+            .settings-panel
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background:
+                linear-gradient(155deg, #15231A, #111C15) !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,.20) !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout :where(
+            .profile-card h1, .profile-card h2, .profile-card h3,
+            .settings-card h1, .settings-card h2, .settings-card h3,
+            .account-card h1, .account-card h2, .account-card h3
+        ) {
+            color: var(--finus-polish-text) !important;
+        }
+
+        /* =====================================================
+           ADMIN AGENDA / OLD CUSTOM CARDS
+        ===================================================== */
+        html[data-finus-theme="dark"] body.role-admin :where(
+            .admin-card,
+            .agenda-card,
+            .agenda-item,
+            .info-card,
+            .detail-card,
+            .filter-card,
+            .report-card
+        ) {
+            border-color: var(--finus-polish-border) !important;
+            background:
+                linear-gradient(155deg, #15231A, #111C15) !important;
+            color: var(--finus-polish-text) !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,.18) !important;
+        }
+
+        html[data-finus-theme="dark"] body.role-admin .admin-card .card-footer {
+            border-color: #293D30 !important;
+            background: #132018 !important;
+        }
+
+        /* =====================================================
+           BUTTONS — SECONDARY / LIGHT
+        ===================================================== */
+        html[data-finus-theme="dark"] body.finus-layout .main :where(
+            .btn-light,
+            .btn-outline-secondary,
+            .btn-secondary
+        ) {
+            border-color: #385642 !important;
+            background: #18261D !important;
+            color: #DCE9DF !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .main :where(
+            .btn-light,
+            .btn-outline-secondary,
+            .btn-secondary
+        ):hover {
+            border-color: #486D53 !important;
+            background: #1D3023 !important;
+            color: #BFF4CB !important;
+        }
+
+        /* =====================================================
+           TABLES / PAGINATION — UNIVERSAL POLISH
+        ===================================================== */
+        html[data-finus-theme="dark"] body.finus-layout .main .table {
+            color: #DDE9E0 !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .main .table thead th {
+            border-color: #304637 !important;
+            background: #18261D !important;
+            color: #C9D9CE !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .main .table td {
+            border-color: #263A2C !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .pagination .page-link {
+            border-color: #304637 !important;
+            background: #132018 !important;
+            color: #B9C9BE !important;
+        }
+
+        html[data-finus-theme="dark"] body.finus-layout .pagination .page-item.active .page-link {
+            border-color: #179B40 !important;
+            background: #146C30 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* =====================================================
+           SMALL SCREEN: cards must not become muddy blocks
+        ===================================================== */
+        @media (max-width: 767.98px) {
+            html[data-finus-theme="dark"] body.finus-layout :where(
+                .finus-data-stat,
+                .gj-stat-card,
+                .jt-card,
+                .fr-stat,
+                .finus-stat-card,
+                .presensi-stat-card
+            ) {
+                box-shadow: 0 8px 22px rgba(0,0,0,.18) !important;
+            }
+        }
+
         /* =====================================================
            FINUS MANUAL THEME — FINAL FORCE-LIGHT GUARD
            Mode device/OS tidak menentukan tampilan FINUS.
@@ -911,97 +2331,31 @@ const themeColorMeta = document.querySelector(
             }
         }
 
-    
-
-        /* =====================================================
-           FINUS THEME + FORCE DARK COEXISTENCE
-           -----------------------------------------------------
-           - FINUS tetap memakai pilihan tema manual sendiri.
-           - Meta/root menyatakan bahwa halaman memang menyediakan
-             LIGHT dan DARK agar browser seperti Samsung Internet
-             dapat memilih "Prefer Media Query Over Force Dark".
-           - Jika FINUS sedang LIGHT, "only light" tetap digunakan
-             sebagai pengaman tambahan untuk browser yang mendukungnya.
-           ===================================================== */
-
-        :root {
-            color-scheme: light dark;
-        }
-
-        html[data-finus-theme="light"] {
-            color-scheme: only light !important;
-        }
-
-        html[data-finus-theme="dark"] {
-            color-scheme: dark !important;
-        }
-
-        html[data-finus-theme="light"] :where(
-            input,
-            textarea,
-            select,
-            button
-        ) {
-            color-scheme: only light !important;
-        }
-
-        html[data-finus-theme="dark"] :where(
-            input,
-            textarea,
-            select,
-            button
-        ) {
-            color-scheme: dark !important;
-        }
-
-        /*
-         * Media query ini sengaja ADA walaupun FINUS tidak mengikuti
-         * tema perangkat. Tujuannya memberi tahu browser bahwa situs
-         * menyediakan penanganan dark-context sendiri.
-         *
-         * data-finus-theme tetap menjadi keputusan akhir:
-         * - device dark + FINUS light  => tetap light
-         * - device light + FINUS dark  => tetap dark
-         */
-        @media (prefers-color-scheme: dark) {
-            html[data-finus-theme="light"] {
-                color-scheme: only light !important;
-            }
-
-            html[data-finus-theme="dark"] {
-                color-scheme: dark !important;
-            }
-
-            html[data-finus-theme="light"] :where(
-                input,
-                textarea,
-                select,
-                button
-            ) {
-                color-scheme: only light !important;
-            }
-
-            html[data-finus-theme="dark"] :where(
-                input,
-                textarea,
-                select,
-                button
-            ) {
-                color-scheme: dark !important;
-            }
-        }
-
-        @media (prefers-color-scheme: light) {
-            html[data-finus-theme="light"] {
-                color-scheme: only light !important;
-            }
-
-            html[data-finus-theme="dark"] {
-                color-scheme: dark !important;
-            }
-        }
-
     </style>
+    {{-- Page-specific dark mode overrides are rendered last. --}}
+    <style data-finus-dark-local="layouts/app.blade.php">
+    /* FINUS DARK MODE CORE: layouts/app.blade.php */
+html[data-finus-theme="dark"] body.finus-layout {
+    --finus-page-bg: #0A110D;
+    --finus-surface: #111A15;
+    --finus-text: #F1F6F3;
+    --finus-muted: #9EAEA4;
+    --finus-border: #293D31;
+    background:
+        radial-gradient(circle at 92% 4%, rgba(38,184,79,.055), transparent 27rem),
+        linear-gradient(180deg, #0A110D 0%, #0D1510 100%) !important;
+}
+html[data-finus-theme="dark"] body.finus-layout .main,
+html[data-finus-theme="dark"] body.finus-layout .content-wrap,
+html[data-finus-theme="dark"] body.finus-layout .finus-content-container {
+    background-color: transparent !important;
+}
+html[data-finus-theme="dark"] body.finus-layout ::selection {
+    background: rgba(100,221,129,.32);
+    color: #F7FFF9;
+}
+    </style>
+    @stack('dark-styles')
 </head>
 @php
     $routeMiddleware = collect(request()->route()?->gatherMiddleware() ?? []);
@@ -1054,8 +2408,11 @@ const themeColorMeta = document.querySelector(
             <div class="container-fluid finus-content-container">
                 @if($currentUser)
                     @php
+                        // Halaman admin sudah memiliki heading/konten utamanya masing-masing.
+                        // Sembunyikan header generik "Panel Admin" agar tidak muncul sebagai kotak tambahan.
                         $hidePageHeader =
-                            request()->routeIs(
+                            $currentUser->isAdmin()
+                            || request()->routeIs(
                                 'dashboard',
                                 'pegawai.dashboard',
                                 'jamaah.dashboard'
@@ -1711,6 +3068,10 @@ const themeColorMeta = document.querySelector(
             });
         })();
     </script>
+
     @stack('scripts')
 </body>
 </html>
+
+
+
