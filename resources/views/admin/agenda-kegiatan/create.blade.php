@@ -311,3 +311,20 @@ function toggleScheduleType() {
 document.addEventListener('DOMContentLoaded', toggleScheduleType);
 </script>
 @endsection
+
+{{-- FINUS DARK MODE LOCAL: admin/agenda-kegiatan/create.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="admin/agenda-kegiatan/create.blade.php">
+html[data-finus-theme="dark"] body .ag-form-page { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .ag-form-page .ag-form-card { border-color:#293D31 !important; background:#111A15 !important; color:#F1F6F3 !important; box-shadow:0 18px 42px rgba(0,0,0,.22) !important; }
+html[data-finus-theme="dark"] body .ag-form-page :where(.ag-form-header,.ag-form-footer) { border-color:#293D31 !important; background:linear-gradient(180deg,#17251D,#121D17) !important; }
+html[data-finus-theme="dark"] body .ag-form-page .ag-field label { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .ag-form-page .ag-field-hint { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .ag-form-page .ag-field :where(input,select,textarea) { border-color:#31493A !important; background:#0C1610 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .ag-form-page .ag-field :where(input,select,textarea):focus { border-color:#64DD81 !important; background:#0F1A13 !important; box-shadow:0 0 0 4px rgba(100,221,129,.12) !important; }
+html[data-finus-theme="dark"] body .ag-form-page .ag-btn-cancel,
+html[data-finus-theme="dark"] body .ag-form-page .ag-back { border-color:#334B3B !important; background:#14211A !important; color:#D0DDD4 !important; }
+html[data-finus-theme="dark"] body .ag-form-page .ag-toggle-wrap { border-color:#293D31 !important; background:#101A14 !important; }
+</style>
+@endpush
+

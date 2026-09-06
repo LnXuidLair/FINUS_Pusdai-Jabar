@@ -2817,6 +2817,17 @@ const themeColorMeta = document.querySelector(
         }
 
     </style>
+
+<style data-finus-dark-local="welcome.blade.php">
+/* FINUS DARK MODE LOCAL: welcome.blade.php */
+html[data-finus-theme="dark"] body { background:#0A110D !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] :where(.finus-feature-card,.finus-flow-step,.finus-faq-item,.finus-dropdown,.finus-mobile-panel) { border-color:#293D31 !important; background:linear-gradient(155deg,#15211A,#111A15) !important; color:#F1F6F3 !important; box-shadow:0 14px 34px rgba(0,0,0,.18) !important; }
+html[data-finus-theme="dark"] :where(.finus-feature-title,.finus-flow-title,.finus-section-title,.finus-faq-item summary) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] :where(.finus-feature-copy,.finus-flow-copy,.finus-section-copy,.finus-faq-item p) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] .finus-section-soft { background:#0D1711 !important; }
+html[data-finus-theme="dark"] :where(.finus-secondary-button,.finus-nav-button,.finus-mobile-menu-link) { border-color:#334B3B !important; background:#14211A !important; color:#DCE9E0 !important; }
+</style>
+
 </head>
 <body>
     <div id="pageLoader" class="finus-page-loader" role="status" aria-live="polite" aria-hidden="true">

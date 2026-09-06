@@ -191,15 +191,15 @@
                                 id="gaji_perhari"
                                 value="{{ old('gaji_perhari', $gajiJabatan->gaji_perhari) }}"
                                 class="form-control finus-input @error('gaji_perhari') is-invalid @enderror"
-                                placeholder="Contoh: 100000"
+                                placeholder="Contoh: 1500 atau 100000"
                                 min="0"
-                                step="1000"
+                                step="1"
                                 required
                             >
                         </div>
 
                         <div class="finus-help">
-                            Masukkan nominal tanpa titik atau koma. Contoh: 100000.
+                            Masukkan angka bulat tanpa titik atau koma. Contoh: 1250, 1500, atau 100000.
                         </div>
 
                         @error('gaji_perhari')
@@ -224,3 +224,31 @@
     </div>
 </div>
 @endsection
+
+{{-- FINUS DARK MODE LOCAL: gaji_jabatan/edit.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="gaji_jabatan/edit.blade.php">
+html[data-finus-theme="dark"] body .finus-form-card {
+    border:1px solid #294334 !important; background:#101A14 !important; color:#F4F8F5 !important;
+    box-shadow:0 24px 55px rgba(0,0,0,.30) !important;
+}
+html[data-finus-theme="dark"] body .finus-form-header {
+    background:linear-gradient(135deg,#0B4A20,#118338 50%,#1DB64A) !important; color:#fff !important;
+}
+html[data-finus-theme="dark"] body .finus-form-header h4 { color:#fff !important; }
+html[data-finus-theme="dark"] body .finus-form-header p { color:rgba(255,255,255,.82) !important; }
+html[data-finus-theme="dark"] body .finus-form-body { background:linear-gradient(180deg,#132119,#101A14) !important; }
+html[data-finus-theme="dark"] body .form-group {
+    padding:18px; border:1px solid #2C4636; border-radius:16px; background:linear-gradient(145deg,#17251C,#132018);
+}
+html[data-finus-theme="dark"] body .finus-label { color:#F2F7F3 !important; }
+html[data-finus-theme="dark"] body .finus-help { color:#A6B7AC !important; }
+html[data-finus-theme="dark"] body :where(.finus-input,.form-control) { border-color:#35503F !important; background:#0B1510 !important; color:#F3F8F4 !important; }
+html[data-finus-theme="dark"] body :where(.finus-input,.form-control)::placeholder { color:#758A7D !important; }
+html[data-finus-theme="dark"] body :where(.finus-input,.form-control):focus { border-color:#64DD81 !important; background:#0E1A13 !important; box-shadow:0 0 0 4px rgba(100,221,129,.11) !important; }
+html[data-finus-theme="dark"] body .finus-input-icon { color:#74DF8E !important; }
+html[data-finus-theme="dark"] body .finus-btn-secondary { border-color:#385442 !important; background:#16231B !important; color:#DCE8E0 !important; }
+html[data-finus-theme="dark"] body .finus-alert { border:1px solid #704044 !important; background:#321D21 !important; color:#FFC2C5 !important; }
+</style>
+@endpush
+

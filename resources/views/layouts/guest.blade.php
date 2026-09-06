@@ -1605,7 +1605,98 @@ const themeColorMeta = document.querySelector(
         }
 
     </style>
+    {{-- Page-specific dark mode overrides are rendered last. --}}
+    <style data-finus-dark-local="layouts/guest.blade.php">
+    /* FINUS DARK MODE CORE: layouts/guest.blade.php */
+html[data-finus-theme="dark"] body {
+    --auth-page: #0A110D;
+    --auth-surface: #111A15;
+    --auth-text: #F1F6F3;
+    --auth-muted: #9EAEA4;
+    --auth-border: #293D31;
+}
+html[data-finus-theme="dark"] body .auth-card,
+html[data-finus-theme="dark"] body .auth-dialog,
+html[data-finus-theme="dark"] body .auth-loading-card {
+    border-color: #293D31 !important;
+    background: linear-gradient(155deg,#15211A,#111A15) !important;
+    color: #F1F6F3 !important;
+    box-shadow: 0 22px 54px rgba(0,0,0,.30) !important;
+}
+    </style>
+    @stack('dark-styles')
 </head>
+
+
+@php
+    /*
+     * Tujuan "Beranda" pada halaman autentikasi harus mengikuti portal
+     * halaman yang sedang dibuka, BUKAN guard lain yang kebetulan masih
+     * login di browser.
+     *
+     * admin / staff  -> Portal Pengelola
+     * jamaah         -> Beranda publik
+     *
+     * Child view boleh menentukan @section('portal', ...). Jika section
+     * belum ada, route halaman saat ini dipakai sebagai fallback.
+     */
+    $finusPortal = strtolower(trim($__env->yieldContent('portal')));
+
+    /*
+     * Beberapa halaman recovery/change-password dapat menerima variabel
+     * $portal langsung dari controller.
+     */
+    if (
+        $finusPortal === ''
+        && isset($portal)
+        && is_string($portal)
+    ) {
+        $finusPortal = strtolower(trim($portal));
+    }
+
+    if ($finusPortal === 'pegawai') {
+        $finusPortal = 'staff';
+    }
+
+    if (! in_array($finusPortal, ['admin', 'staff', 'jamaah'], true)) {
+        $finusPortal = match (true) {
+            request()->routeIs(
+                'login.admin',
+                'register.admin',
+                'register.admin.*',
+                'admin.password.*'
+            ) => 'admin',
+
+            request()->routeIs(
+                'login.staff',
+                'register.staff',
+                'register.staff.*',
+                'verify.staff',
+                'pegawai.password.*'
+            ) => 'staff',
+
+            request()->routeIs(
+                'login.jamaah',
+                'register.jamaah',
+                'register.jamaah.*',
+                'verification.*',
+                'jamaah.password.*'
+            ) => 'jamaah',
+
+            default => 'jamaah',
+        };
+    }
+
+    $finusPortalHomeRoute = in_array(
+        $finusPortal,
+        ['admin', 'staff'],
+        true
+    )
+        ? 'management.access'
+        : 'home';
+
+    $finusPortalHomeUrl = route($finusPortalHomeRoute);
+@endphp
 
 <body>
     <a href="#auth-content" class="auth-skip-link">Lewati ke formulir</a>
@@ -1619,7 +1710,7 @@ const themeColorMeta = document.querySelector(
     </div>
 
     <header class="auth-header">
-        <a href="{{ route('home') }}" class="auth-brand" data-loading-title="Membuka beranda..." aria-label="FINUS PUSDAI - Beranda">
+        <a href="{{ $finusPortalHomeUrl }}" class="auth-brand" data-loading-title="Membuka beranda..." aria-label="FINUS PUSDAI - Beranda">
             <img src="{{ asset('assets/images/FINUS_login.png') }}" alt="FINUS PUSDAI"
                  onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='{{ asset('assets/images/pusdai_dashboard.png') }}';}else{this.hidden=true;document.getElementById('authBrandFallback').hidden=false;}">
             <span id="authBrandFallback" class="auth-brand-fallback" hidden>FINUS PUSDAI</span>
@@ -1647,7 +1738,7 @@ const themeColorMeta = document.querySelector(
                 <span class="sr-only" data-finus-theme-label>Mode Terang</span>
             </button>
 
-            <a href="{{ route('home') }}" class="auth-home-link" data-loading-title="Kembali ke beranda...">
+            <a href="{{ $finusPortalHomeUrl }}" class="auth-home-link" data-loading-title="Kembali ke beranda...">
                 <span class="auth-home-icon" aria-hidden="true"></span>
                 <span class="auth-home-link-text">Beranda</span>
             </a>
@@ -2063,3 +2154,6 @@ const themeColorMeta = document.querySelector(
     @stack('scripts')
 </body>
 </html>
+
+
+

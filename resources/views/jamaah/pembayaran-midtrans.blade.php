@@ -825,3 +825,21 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+
+{{-- FINUS DARK MODE LOCAL: jamaah/pembayaran-midtrans.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="jamaah/pembayaran-midtrans.blade.php">
+html[data-finus-theme="dark"] body .pay-page { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .pay-page .pay-card { border-color:#293D31 !important; background:linear-gradient(155deg,#15211A,#111A15) !important; color:#F1F6F3 !important; box-shadow:0 18px 42px rgba(0,0,0,.23) !important; }
+html[data-finus-theme="dark"] body .pay-page :where(.pay-details-title,.pay-cta-title,.pay-row-value,.pay-amount-value) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .pay-page :where(.pay-row-label,.pay-cta-sub,.pay-amount-label,.pay-guarantee-item) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .pay-page .pay-row { border-color:#25382C !important; }
+html[data-finus-theme="dark"] body .pay-page .pay-amount-block { border-color:#31503C !important; background:#142A1C !important; }
+html[data-finus-theme="dark"] body .pay-page .pay-notice { border-color:#6A552D !important; background:#342817 !important; color:#F4D38B !important; }
+html[data-finus-theme="dark"] body .pay-page .pay-status-pill { border-color:#2D6140 !important; background:#15331E !important; color:#A9F0B9 !important; }
+html[data-finus-theme="dark"] body .pay-page :where(.pay-back,.pay-btn-cancel,.pay-btn-secondary,.pay-btn-check) { border-color:#334B3B !important; background:#14211A !important; color:#D0DDD4 !important; }
+html[data-finus-theme="dark"] body .pay-page :where(.pay-back,.pay-btn-cancel,.pay-btn-secondary,.pay-btn-check):hover { border-color:#3D5D48 !important; background:#192A20 !important; color:#C9F5D3 !important; }
+html[data-finus-theme="dark"] body .pay-page .pay-sandbox-badge { border-color:#5B4A76 !important; background:#2A223B !important; color:#CEBDFF !important; }
+</style>
+@endpush
+

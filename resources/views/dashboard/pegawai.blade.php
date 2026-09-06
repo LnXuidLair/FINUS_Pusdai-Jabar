@@ -396,3 +396,19 @@
     </div>
 </div>
 @endsection
+
+{{-- FINUS DARK MODE LOCAL: dashboard/pegawai.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="dashboard/pegawai.blade.php">
+html[data-finus-theme="dark"] body .finus-summary-card,
+html[data-finus-theme="dark"] body .pegawai-card { border-color:#293D31 !important; background:linear-gradient(155deg,#15211A,#111A15) !important; color:#F1F6F3 !important; box-shadow:0 13px 30px rgba(0,0,0,.19) !important; }
+html[data-finus-theme="dark"] body .pegawai-card-header { border-color:#293D31 !important; background:linear-gradient(180deg,#17251D,#121D17) !important; }
+html[data-finus-theme="dark"] body :where(.pegawai-card-title,.quick-action-text strong,.finus-summary-card strong) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body :where(.pegawai-card-subtitle,.quick-action-text small,.finus-summary-card small) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .focus-list li { border-color:#31503C !important; background:#14241B !important; color:#CBDDD0 !important; }
+html[data-finus-theme="dark"] body .quick-action-link { border-color:#293D31 !important; background:#121F18 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .quick-action-link:hover { border-color:#365141 !important; background:#192A20 !important; }
+html[data-finus-theme="dark"] body .quick-action-icon { background:#173620 !important; color:#64DD81 !important; }
+</style>
+@endpush
+

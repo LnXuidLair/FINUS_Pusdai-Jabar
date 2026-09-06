@@ -202,6 +202,17 @@
         margin-top: 18px;
     }
 
+    .finus-fields-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.12fr) minmax(310px, .88fr);
+        gap: 18px;
+        align-items: stretch;
+    }
+
+    .finus-fields-grid .finus-field + .finus-field {
+        margin-top: 0;
+    }
+
     .finus-field:focus-within {
         border-color: rgba(23, 155, 64, .38);
         box-shadow: 0 10px 28px rgba(23, 155, 64, .08);
@@ -470,6 +481,10 @@
             flex-direction: column;
         }
 
+        .finus-fields-grid {
+            grid-template-columns: 1fr;
+        }
+
         .finus-field {
             padding: 16px;
         }
@@ -547,7 +562,8 @@
                     >
                         @csrf
 
-                        <div class="finus-field">
+                        <div class="finus-fields-grid">
+                            <div class="finus-field">
                             <label for="jabatan" class="finus-label">
                                 <span class="finus-label-icon">
                                     <i class="fa fa-briefcase"></i>
@@ -612,9 +628,9 @@
                                     id="gaji_perhari"
                                     value="{{ old('gaji_perhari') }}"
                                     class="form-control finus-input @error('gaji_perhari') is-invalid @enderror"
-                                    placeholder="Contoh: 100000"
+                                    placeholder="Contoh: 1500 atau 100000"
                                     min="0"
-                                    step="1000"
+                                    step="1"
                                     inputmode="numeric"
                                     required
                                 >
@@ -623,8 +639,8 @@
                             <div class="finus-help">
                                 <i class="fa fa-circle-info"></i>
                                 <span>
-                                    Masukkan nominal tanpa titik atau koma.
-                                    Contoh penulisan: 100000.
+                                    Masukkan nominal dalam angka bulat tanpa titik atau koma.
+                                    Contoh: 1250, 1500, atau 100000.
                                 </span>
                             </div>
 
@@ -634,6 +650,7 @@
                                     {{ $message }}
                                 </div>
                             @enderror
+                            </div>
                         </div>
 
                         <div class="finus-form-footer">
@@ -661,3 +678,85 @@
     </div>
 </div>
 @endsection
+
+{{-- FINUS DARK MODE LOCAL: gaji_jabatan/create.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="gaji_jabatan/create.blade.php">
+html[data-finus-theme="dark"] body .finus-form-card {
+    border:1px solid #294334 !important;
+    background:#101A14 !important;
+    color:#F4F8F5 !important;
+    box-shadow:0 26px 60px rgba(0,0,0,.32),0 0 0 1px rgba(73,180,104,.03) !important;
+}
+html[data-finus-theme="dark"] body .finus-form-header {
+    border-color:transparent !important;
+    background:linear-gradient(135deg,#0B4A20 0%,#118338 48%,#1DB64A 100%) !important;
+}
+html[data-finus-theme="dark"] body .finus-form-header::before { background:rgba(255,255,255,.075) !important; }
+html[data-finus-theme="dark"] body .finus-form-header::after { background:rgba(126,255,135,.11) !important; }
+html[data-finus-theme="dark"] body .finus-header-icon {
+    border-color:rgba(255,255,255,.22) !important;
+    background:rgba(5,32,14,.26) !important;
+}
+html[data-finus-theme="dark"] body .finus-form-header h4 { color:#FFFFFF !important; }
+html[data-finus-theme="dark"] body .finus-form-header p { color:rgba(255,255,255,.82) !important; }
+html[data-finus-theme="dark"] body .finus-form-body {
+    background:linear-gradient(180deg,#132119 0%,#101A14 100%) !important;
+}
+html[data-finus-theme="dark"] body .finus-section-title { border-color:#2B4033 !important; }
+html[data-finus-theme="dark"] body :where(.finus-section-heading,.finus-label) { color:#F2F7F3 !important; }
+html[data-finus-theme="dark"] body :where(.finus-section-description,.finus-help,.finus-required-info) { color:#A6B7AC !important; }
+html[data-finus-theme="dark"] body .finus-field {
+    border-color:#2C4636 !important;
+    background:linear-gradient(145deg,#17251C,#132018) !important;
+    box-shadow:0 10px 24px rgba(0,0,0,.12) !important;
+}
+html[data-finus-theme="dark"] body .finus-field:focus-within {
+    border-color:#438D57 !important;
+    box-shadow:0 0 0 3px rgba(89,210,119,.08),0 14px 30px rgba(0,0,0,.16) !important;
+}
+html[data-finus-theme="dark"] body .finus-label-icon {
+    background:#173A24 !important;
+    color:#69E489 !important;
+}
+html[data-finus-theme="dark"] body :where(.finus-input,.form-control) {
+    border-color:#35503F !important;
+    background:#0B1510 !important;
+    color:#F3F8F4 !important;
+}
+html[data-finus-theme="dark"] body :where(.finus-input,.form-control)::placeholder { color:#758A7D !important; }
+html[data-finus-theme="dark"] body :where(.finus-input,.form-control):hover {
+    border-color:#456451 !important;
+    background:#0D1812 !important;
+}
+html[data-finus-theme="dark"] body :where(.finus-input,.form-control):focus {
+    border-color:#64DD81 !important;
+    background:#0E1A13 !important;
+    box-shadow:0 0 0 4px rgba(100,221,129,.11) !important;
+}
+html[data-finus-theme="dark"] body .finus-input-prefix {
+    border-color:#35503F !important;
+    background:#173A24 !important;
+    color:#BDF3C9 !important;
+}
+html[data-finus-theme="dark"] body .finus-form-footer { border-color:#2B4033 !important; background:transparent !important; }
+html[data-finus-theme="dark"] body .finus-btn-secondary {
+    border-color:#385442 !important;
+    background:#16231B !important;
+    color:#DCE8E0 !important;
+}
+html[data-finus-theme="dark"] body .finus-btn-secondary:hover {
+    border-color:#4C745A !important;
+    background:#1A3022 !important;
+    color:#F1FAF3 !important;
+}
+html[data-finus-theme="dark"] body .finus-alert {
+    border-color:#704044 !important;
+    background:#321D21 !important;
+    color:#FFC2C5 !important;
+}
+html[data-finus-theme="dark"] body .finus-alert strong,
+html[data-finus-theme="dark"] body .finus-alert ul { color:#FFC2C5 !important; }
+</style>
+@endpush
+

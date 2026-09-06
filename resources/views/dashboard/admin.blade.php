@@ -1335,3 +1335,19 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+
+{{-- FINUS DARK MODE LOCAL: dashboard/admin.blade.php --}}
+@push('dark-styles')
+<style data-finus-dark-local="dashboard/admin.blade.php">
+html[data-finus-theme="dark"] body .finus-dashboard { --finus-text:#F1F6F3; --finus-muted:#9EAEA4; --finus-border:#293D31; }
+html[data-finus-theme="dark"] body .finus-dashboard .finus-summary-card { border-color:#293D31 !important; background:linear-gradient(155deg,#15231B,#101914) !important; color:#F1F6F3 !important; box-shadow:0 13px 30px rgba(0,0,0,.20) !important; }
+html[data-finus-theme="dark"] body .finus-dashboard .finus-summary-value { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .finus-dashboard :where(.finus-summary-label,.finus-summary-note,.finus-content-description,.finus-quick-description,.finus-operation-summary-note) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .finus-dashboard .finus-content-card { border-color:#293D31 !important; background:linear-gradient(155deg,#15231B,#101914) !important; box-shadow:0 14px 32px rgba(0,0,0,.21) !important; }
+html[data-finus-theme="dark"] body .finus-dashboard .finus-content-header { border-color:#293D31 !important; background:linear-gradient(180deg,#17251D,#121D17) !important; }
+html[data-finus-theme="dark"] body .finus-dashboard :where(.finus-content-title,.finus-quick-title,.finus-operation-summary-value) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .finus-dashboard .finus-quick-link { border-color:#293D31 !important; background:#121F18 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .finus-dashboard .finus-quick-link:hover { border-color:#365141 !important; background:#192A20 !important; }
+</style>
+@endpush
+

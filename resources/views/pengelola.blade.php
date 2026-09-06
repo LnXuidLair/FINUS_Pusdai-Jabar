@@ -2826,6 +2826,17 @@ const themeColorMeta = document.querySelector(
         }
 
     </style>
+
+<style data-finus-dark-local="pengelola.blade.php">
+/* FINUS DARK MODE LOCAL: pengelola.blade.php */
+html[data-finus-theme="dark"] body { background:#0A110D !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] :where(.finus-role-card,.finus-role-link,.finus-role-security,.finus-dropdown,.finus-mobile-panel) { border-color:#293D31 !important; background:linear-gradient(155deg,#15211A,#111A15) !important; color:#F1F6F3 !important; box-shadow:0 14px 34px rgba(0,0,0,.18) !important; }
+html[data-finus-theme="dark"] :where(.finus-role-title,.finus-hero-title) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] :where(.finus-role-copy,.finus-role-description,.finus-hero-description) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] .finus-code-field { border-color:#31493A !important; background:#0C1610 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] :where(.finus-secondary-button,.finus-nav-button,.finus-mobile-menu-link) { border-color:#334B3B !important; background:#14211A !important; color:#DCE9E0 !important; }
+</style>
+
 </head>
 <body>
     <div id="pageLoader" class="finus-page-loader" role="status" aria-live="polite" aria-hidden="true">
