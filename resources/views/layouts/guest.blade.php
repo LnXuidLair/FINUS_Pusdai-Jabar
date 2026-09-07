@@ -659,23 +659,38 @@ const themeColorMeta = document.querySelector(
         .auth-password-toggle {
             position: absolute;
             top: 50%;
-            right: 6px;
+            right: 8px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 42px;
-            height: 42px;
+            width: 38px;
+            height: 38px;
             padding: 0;
+            border: 0;
             border-radius: 10px;
             background: transparent;
             cursor: pointer;
             transform: translateY(-50%);
-            transition: background .2s ease, transform .2s ease;
+            transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
         }
-        .auth-password-toggle:hover { background: var(--auth-green-50); }
+        .auth-password-toggle:hover,
+        .auth-password-toggle:focus-visible {
+            background: rgba(23, 155, 64, .10);
+            outline: none;
+        }
         .auth-password-toggle:active { transform: translateY(-50%) scale(.96); }
-        .auth-password-toggle:focus-visible { outline: 3px solid rgba(34,168,83,.18); }
-        .auth-password-toggle img { width: 21px; height: 21px; object-fit: contain; }
+        .auth-password-toggle:focus-visible {
+            box-shadow: 0 0 0 3px rgba(34,168,83,.16);
+        }
+        .auth-password-toggle img {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+            opacity: .90 !important;
+            filter: none;
+            forced-color-adjust: none !important;
+            transition: opacity .2s ease, filter .2s ease;
+        }
 
         .auth-help {
             display: flex;
@@ -1195,8 +1210,19 @@ const themeColorMeta = document.querySelector(
             -webkit-text-fill-color: #EDF7EF;
         }
 
-        html[data-finus-theme="dark"] .auth-password-toggle:hover {
-            background: #17331F;
+        html[data-finus-theme="dark"] .auth-password-toggle:hover,
+        html[data-finus-theme="dark"] .auth-password-toggle:focus-visible {
+            background: #183421;
+        }
+
+        /*
+         * ShowPassword.png / HidePassword.png berwarna gelap pada tema terang.
+         * Balik warnanya saat dark mode agar ikon mata tetap kontras seperti
+         * tombol mata pada pengelola.blade.php.
+         */
+        html[data-finus-theme="dark"] .auth-password-toggle img {
+            filter: brightness(0) invert(1);
+            opacity: .84 !important;
         }
 
         html[data-finus-theme="dark"] .auth-info-card,
