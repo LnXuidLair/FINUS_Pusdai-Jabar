@@ -168,7 +168,7 @@
         <table class="ag-table">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th style="width: 55px;">No.</th>
                     <th>Judul Kegiatan</th>
                     <th>Kategori</th>
                     <th>Jadwal</th>

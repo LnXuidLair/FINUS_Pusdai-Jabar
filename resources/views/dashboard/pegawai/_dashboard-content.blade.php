@@ -502,7 +502,7 @@
                         Laporan Keuangan
                     </a>
                     <a href="{{ route('pegawai.laporan-gaji.index') }}" class="btn btn-primary btn-block">
-                        Laporan Gaji Pribadi
+                        Slip Gaji Saya
                     </a>
                 </div>
             </div>

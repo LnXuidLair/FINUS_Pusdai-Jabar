@@ -194,17 +194,21 @@ class LaporanController extends Controller
             'zakat_maal'        => 'Zakat Maal',
             'zakat_penghasilan' => 'Zakat Penghasilan',
             'infaq'             => 'Infak',
-            'shadaqah'          => 'Sedekah',
             'wakaf'             => 'Wakaf',
-            'fidyah'            => 'Fidyah',
-            'lainnya'           => 'Lainnya',
+            'parkir'            => 'Parkir',
         ];
 
         $detailPemasukan = [];
         $totalPemasukan = 0;
 
         foreach ($golonganZiswaf as $key => $label) {
-            $q = (clone $queryPenerimaan)->where('jenis_ziswaf', $key);
+            $q = (clone $queryPenerimaan)->where(function ($query) use ($key) {
+                if ($key === 'parkir') {
+                    $query->whereIn('jenis_ziswaf', ['parkir', 'hasil_parkir']);
+                } else {
+                    $query->where('jenis_ziswaf', $key);
+                }
+            });
             $count = (clone $q)->count();
             $nominal = (int) (clone $q)->sum('nominal');
             $items = (clone $q)->with('muzakki')->orderByDesc('tanggal')->get();
@@ -521,11 +525,12 @@ class LaporanController extends Controller
     {
         return match ($jenis) {
             'zakat_maal' => 'Zakat Maal',
+            'zakat_penghasilan' => 'Zakat Penghasilan',
             'zakat_fitrah' => 'Zakat Fitrah',
-            'infaq' => 'Infak',
-            'shadaqah' => 'Sedekah',
+            'infaq', 'shadaqah' => 'Infak',
             'wakaf' => 'Wakaf',
             'fidyah' => 'Fidyah',
+            'parkir', 'hasil_parkir' => 'Parkir',
             default => 'ZISWAF',
         };
     }

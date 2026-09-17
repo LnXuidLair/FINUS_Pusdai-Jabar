@@ -266,6 +266,10 @@ Route::middleware(['auth:jamaah', 'verified', 'role:jamaah',])
             ->name('pembayaran.poll-status');
         Route::get('/riwayat-transaksi', [JamaahController::class, 'riwayat'])
             ->name('riwayat.index');
+        Route::get('/riwayat-transaksi/{transaksi}/invoice', [JamaahController::class, 'invoice'])
+            ->name('riwayat.invoice');
+        Route::get('/riwayat-transaksi/{transaksi}/invoice/cetak', [JamaahController::class, 'invoicePrint'])
+            ->name('riwayat.invoice.cetak');
         Route::get('/laporan-transaksi', [JamaahController::class, 'laporan'])
             ->name('laporan.index');
         Route::get('/laporan-transaksi/export', [JamaahController::class, 'exportLaporan'])

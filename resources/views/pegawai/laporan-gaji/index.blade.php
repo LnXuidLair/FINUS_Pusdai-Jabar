@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Laporan Gaji')
+@section('title', 'Slip Gaji Saya')
 @section('hide-page-header', '1')
 @php
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
@@ -13,7 +13,7 @@
     <section class="fmu-hero">
         <div class="fmu-hero-main">
             <span class="fmu-hero-icon"><i class="fa-solid fa-file-invoice-dollar"></i></span>
-            <div><h1>Laporan Gaji Pegawai</h1><p>Informasi gaji {{ $pegawai->nama_pegawai ?? auth()->user()->name }} berdasarkan presensi yang telah disetujui admin.</p></div>
+            <div><h1>Slip & Riwayat Gaji Saya</h1><p>Informasi penerimaan gaji pribadi {{ $pegawai->nama_pegawai ?? auth()->user()->name }} berdasarkan presensi yang telah disetujui.</p></div>
         </div>
         <div class="fmu-hero-actions"><span class="fmu-hero-badge"><i class="fa-solid fa-briefcase"></i>{{ $pegawai->jabatan ?? 'Pegawai' }}</span></div>
     </section>

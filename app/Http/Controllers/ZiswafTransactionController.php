@@ -18,6 +18,11 @@ class ZiswafTransactionController extends Controller
         ]);
 
         $query = ZiswafPenerimaan::with('muzakki')
+            ->where('status_verifikasi', '!=', 'dibatalkan')
+            ->where(function (Builder $q) {
+                $q->whereNull('payment_status')
+                  ->orWhere('payment_status', '!=', 'cancel');
+            })
             ->latest('tanggal')
             ->latest('id');
 

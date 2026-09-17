@@ -136,6 +136,62 @@ class JamaahController extends Controller
             'metodeLabels' => $this->metodeLabels(),
         ]);
     }
+
+    /**
+     * Mengembalikan data invoice dalam format JSON untuk modal AJAX.
+     */
+    public function invoice(Request $request, ZiswafPenerimaan $transaksi)
+    {
+        $jamaah = $request->user();
+
+        abort_if(
+            $transaksi->muzakki_id !== $jamaah->id || $transaksi->status_verifikasi !== 'diterima',
+            403
+        );
+
+        $transaksi->load('muzakki');
+        $jenisLabels  = $this->jenisLabels();
+        $metodeLabels = $this->metodeLabels();
+
+        return response()->json([
+            'referensi'   => $transaksi->order_id ?: 'ZSF-' . $transaksi->id,
+            'jamaah_nama' => $jamaah->name,
+            'jamaah_email'=> $jamaah->email ?? '-',
+            'jenis'       => $jenisLabels[$transaksi->jenis_ziswaf] ?? $transaksi->jenis_ziswaf,
+            'nominal'     => $transaksi->nominal,
+            'nominal_fmt' => 'Rp ' . number_format($transaksi->nominal, 0, ',', '.'),
+            'metode'      => $metodeLabels[$transaksi->metode_pembayaran] ?? ($transaksi->metode_pembayaran ?? '-'),
+            'tanggal'     => $transaksi->tanggal?->format('d F Y'),
+            'verified_at' => $transaksi->verified_at?->format('d F Y, H:i') . ' WIB',
+            'keterangan'  => $transaksi->keterangan,
+            'catatan'     => $transaksi->catatan_verifikasi,
+            'url_cetak'   => route('jamaah.riwayat.invoice.cetak', $transaksi),
+        ]);
+    }
+
+    /**
+     * Menampilkan halaman invoice print-friendly (buka di tab baru).
+     */
+    public function invoicePrint(Request $request, ZiswafPenerimaan $transaksi)
+    {
+        $jamaah = $request->user();
+
+        abort_if(
+            $transaksi->muzakki_id !== $jamaah->id || $transaksi->status_verifikasi !== 'diterima',
+            403
+        );
+
+        $jenisLabels  = $this->jenisLabels();
+        $metodeLabels = $this->metodeLabels();
+
+        return view('jamaah.invoice-print', [
+            'jamaah'       => $jamaah,
+            'transaksi'    => $transaksi,
+            'jenisLabel'   => $jenisLabels[$transaksi->jenis_ziswaf]  ?? $transaksi->jenis_ziswaf,
+            'metodeLabel'  => $metodeLabels[$transaksi->metode_pembayaran] ?? ($transaksi->metode_pembayaran ?? '-'),
+            'referensi'    => $transaksi->order_id ?: 'ZSF-' . $transaksi->id,
+        ]);
+    }
     /**
      * Menampilkan laporan transaksi pribadi berdasarkan periode.
      */

@@ -137,7 +137,7 @@
         margin: 0 !important;
         color: #ffffff !important;
         font-size: 18px !important;
-        font-weight: 900 !important;
+        font-weight: 800 !important;
         line-height: 1.3;
         letter-spacing: 4px !important;
         text-transform: uppercase;
@@ -145,15 +145,15 @@
     .sidebar.staff-sidebar .logo-sub-title {
         position: relative;
         z-index: 2;
-        margin-top: 5px;
-        color: rgba(255, 255, 255, .80) !important;
+        margin-top: 4px;
+        color: rgba(255, 255, 255, .77) !important;
         font-size: 12px !important;
         font-weight: 500;
         letter-spacing: .4px;
     }
     .sidebar.staff-sidebar ul {
         margin: 0 !important;
-        padding: 18px 13px 35px !important;
+        padding: 17px 13px 35px !important;
         list-style: none !important;
     }
     .sidebar.staff-sidebar ul li {
@@ -161,41 +161,56 @@
         padding: 0 !important;
         background: transparent !important;
     }
+    .sidebar.staff-sidebar ul li.label,
+    .sidebar.staff-sidebar .label,
     .sidebar.staff-sidebar .menu-label {
         position: relative;
-        margin: 18px 10px 10px !important;
-        padding-left: 18px !important;
-        color: rgba(255, 255, 255, .78) !important;
-        font-size: 11px !important;
-        font-weight: 900 !important;
-        letter-spacing: .22em !important;
+        margin: 25px 13px 10px !important;
+        padding: 0 0 0 13px !important;
+        color: var(--sidebar-muted, rgba(235, 255, 240, .65)) !important;
+        background: transparent !important;
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        line-height: 1.4 !important;
+        letter-spacing: .19em !important;
         text-transform: uppercase !important;
     }
+    .sidebar.staff-sidebar ul li.label::before,
+    .sidebar.staff-sidebar .label::before,
     .sidebar.staff-sidebar .menu-label::before {
         content: "";
         position: absolute;
-        left: 0;
         top: 50%;
-        width: 8px;
-        height: 8px;
+        left: 0;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--accent-green, #91ff9b);
         transform: translateY(-50%);
-        border-radius: 999px;
-        background: #86efac;
-        box-shadow: 0 0 0 5px rgba(134, 239, 172, .13);
+        box-shadow: 0 0 0 4px rgba(145, 255, 155, .10);
     }
+    .sidebar.staff-sidebar ul li.label:first-child,
+    .sidebar.staff-sidebar .label:first-child,
+    .sidebar.staff-sidebar .menu-label:first-child {
+        margin-top: 11px !important;
+    }
+    .sidebar.staff-sidebar ul li a,
     .sidebar.staff-sidebar a {
         position: relative;
         display: flex !important;
         align-items: center !important;
         gap: 12px !important;
-        padding: 12px 34px 12px 14px !important;
-        margin: 6px 5px !important;
-        border-radius: 14px !important;
-        color: rgba(255, 255, 255, .90) !important;
+        width: 100% !important;
+        min-height: 51px !important;
+        margin: 7px 0 !important;
+        padding: 9px 13px !important;
+        overflow: hidden;
+        color: rgba(255, 255, 255, .86) !important;
         background: var(--menu-bg) !important;
         border: 1px solid var(--menu-border) !important;
+        border-radius: 14px !important;
         font-size: 14px !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
         line-height: 1.25 !important;
         text-decoration: none !important;
         box-shadow:
@@ -208,53 +223,82 @@
             box-shadow .22s ease,
             color .22s ease !important;
     }
-    .sidebar.staff-sidebar a i {
+    .sidebar.staff-sidebar a i,
+    .sidebar.staff-sidebar ul li a i {
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
         width: 34px !important;
         min-width: 34px !important;
         height: 34px;
-        border-radius: 11px;
+        border-radius: 10px;
         color: var(--accent-light) !important;
-        background: rgba(255, 255, 255, .10);
+        background: rgba(255, 255, 255, .09);
         font-size: 14px !important;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
         transition: color .22s ease, background .22s ease, transform .22s ease !important;
     }
     .sidebar.staff-sidebar a:hover,
-    .sidebar.staff-sidebar a.active {
-        background:
-            linear-gradient(
-                135deg,
-                var(--menu-active-start),
-                var(--menu-active-end)
-            ) !important;
+    .sidebar.staff-sidebar ul li a:hover {
         color: #ffffff !important;
-        border-color: var(--menu-active-border) !important;
+        background: var(--menu-hover-bg) !important;
+        border-color: var(--menu-hover-border) !important;
         box-shadow:
-            0 10px 22px rgba(0, 62, 24, .21),
-            inset 4px 0 0 var(--accent-green),
-            inset 0 1px 0 rgba(255, 255, 255, .12);
+            0 10px 20px rgba(0, 62, 24, .19),
+            inset 0 1px 0 rgba(255, 255, 255, .10);
         transform: translateX(3px) !important;
     }
     .sidebar.staff-sidebar a:hover i,
-    .sidebar.staff-sidebar a.active i {
-        color: #166534 !important;
-        background: #dcfce7 !important;
+    .sidebar.staff-sidebar ul li a:hover i {
+        color: #ffffff !important;
+        background: rgba(145, 255, 155, .18);
         transform: scale(1.05);
     }
-    .sidebar.staff-sidebar a.active::after {
+    .sidebar.staff-sidebar a.active,
+    .sidebar.staff-sidebar ul li a.active {
+        color: #ffffff !important;
+        background: linear-gradient(
+            90deg,
+            var(--menu-active-start) 0%,
+            var(--menu-active-end) 100%
+        ) !important;
+        border-color: var(--menu-active-border) !important;
+        font-weight: 800 !important;
+        box-shadow:
+            0 11px 22px rgba(0, 65, 24, .25),
+            inset 4px 0 0 var(--accent-green),
+            inset 0 1px 0 rgba(255, 255, 255, .15);
+        transform: none !important;
+    }
+    .sidebar.staff-sidebar a.active::before,
+    .sidebar.staff-sidebar ul li a.active::before {
         content: "";
         position: absolute;
-        right: 14px;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            115deg,
+            rgba(255, 255, 255, .08),
+            transparent 55%
+        );
+        pointer-events: none;
+    }
+    .sidebar.staff-sidebar a.active::after,
+    .sidebar.staff-sidebar ul li a.active::after {
+        content: "";
+        position: absolute;
         top: 50%;
-        width: 9px;
-        height: 9px;
-        transform: translateY(-50%);
-        border-radius: 999px;
+        right: 14px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
         background: var(--accent-green);
-        box-shadow: 0 0 0 5px rgba(145, 255, 155, .16);
+        box-shadow:
+            0 0 0 4px rgba(145, 255, 155, .14),
+            0 0 12px rgba(145, 255, 155, .60);
+        transform: translateY(-50%);
     }
     /* FINUS SIDEBAR COMPACT UPGRADE */
     .sidebar .logo {
@@ -736,7 +780,7 @@ html[data-finus-theme="dark"] {
                 <div class="finus-sidebar-role-chip">{{ $pegawaiSidebar?->akses_role_label ?? $profileSidebar['jabatan'] }}</div>
             </div>
             <ul>
-                <li class="menu-label">Dashboard</li>
+                <li class="label">Dashboard</li>
                 <li>
                     <a href="{{ route('pegawai.dashboard', ['jabatan' => $profileSidebar['slug']]) }}"
                         class="{{ request()->routeIs('pegawai.dashboard') ? 'active' : '' }}">
@@ -744,7 +788,7 @@ html[data-finus-theme="dark"] {
                         <span>Dashboard {{ $profileSidebar['jabatan'] }}</span>
                     </a>
                 </li>
-                <li class="menu-label">Aktivitas</li>
+                <li class="label">Aktivitas Pribadi</li>
                 <li>
                     <a href="{{ route('pegawai.presensi.index') }}"
                         class="{{ request()->routeIs('pegawai.presensi.index') ? 'active' : '' }}">
@@ -759,16 +803,15 @@ html[data-finus-theme="dark"] {
                         <span>Isi Presensi</span>
                     </a>
                 </li>
-                <li class="menu-label">Gaji Pribadi</li>
                 <li>
                     <a href="{{ route('pegawai.laporan-gaji.index') }}"
                         class="{{ request()->routeIs('pegawai.laporan-gaji.*') ? 'active' : '' }}">
-                        <i class="ti-file"></i>
-                        <span>Laporan Gaji</span>
+                        <i class="ti-receipt"></i>
+                        <span>Slip Gaji Saya</span>
                     </a>
                 </li>
                 @if($canManageFinance)
-                    <li class="menu-label">Keuangan</li>
+                    <li class="label">Transaksi</li>
                     <li>
                         <a href="{{ route('pegawai.keuangan.pemasukan.index') }}"
                             class="{{ request()->routeIs('pegawai.keuangan.pemasukan.*') ? 'active' : '' }}">
@@ -779,31 +822,31 @@ html[data-finus-theme="dark"] {
                     <li>
                         <a href="{{ route('pegawai.keuangan.pengeluaran.index') }}"
                             class="{{ request()->routeIs('pegawai.keuangan.pengeluaran.*') ? 'active' : '' }}">
-                            <i class="ti-receipt"></i>
+                            <i class="fa-solid fa-receipt"></i>
                             <span>Pengeluaran</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('pegawai.keuangan.penggajian.index') }}"
                             class="{{ request()->routeIs('pegawai.keuangan.penggajian.*') ? 'active' : '' }}">
-                            <i class="ti-wallet"></i>
+                            <i class="fa-solid fa-wallet"></i>
                             <span>Penggajian</span>
                         </a>
                     </li>
                 @endif
                 @if($canViewFinanceReports)
-                    <li class="menu-label">Laporan Keuangan</li>
+                    <li class="label">Laporan Keuangan</li>
                     <li>
                         <a href="{{ route('pegawai.laporan-keuangan.jurnal-umum') }}"
                             class="{{ request()->routeIs('pegawai.laporan-keuangan.jurnal-umum') ? 'active' : '' }}">
-                            <i class="ti-agenda"></i>
+                            <i class="fa-solid fa-book-open"></i>
                             <span>Jurnal Umum</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('pegawai.laporan-keuangan.arus-kas') }}"
                             class="{{ request()->routeIs('pegawai.laporan-keuangan.arus-kas') ? 'active' : '' }}">
-                            <i class="ti-bar-chart"></i>
+                            <i class="fa-solid fa-chart-line"></i>
                             <span>Laporan Keuangan</span>
                         </a>
                     </li>
