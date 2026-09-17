@@ -142,16 +142,17 @@
     .pm-stat-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; }
 
     /* ============================================================
-       GOLONGAN CARDS — 4 kolom
+       GOLONGAN CARDS — 5 kolom (Zakat Maal, Zakat Penghasilan, Infak, Wakaf, Parkir)
     ============================================================ */
     .pm-gol-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 10px;
         margin-bottom: 22px;
     }
 
-    @media (max-width: 991px) { .pm-gol-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 1199px) { .pm-gol-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 768px)  { .pm-gol-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 480px)  { .pm-gol-grid { grid-template-columns: 1fr; } }
 
     .pm-gol-card {
@@ -355,10 +356,18 @@
     .pm-src-jamaah { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-size: 10px; }
     .pm-src-admin  { background: #f0fdf4; color: #065f46; border-color: #a7f3d0; font-size: 10px; }
 
+    .pm-table thead th:last-child {
+        text-align: center !important;
+    }
+
+    .pm-table tbody td:last-child {
+        text-align: center !important;
+    }
+
     /* ============================================================
        ACTION BUTTONS
     ============================================================ */
-    .pm-actions { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
+    .pm-actions { display: inline-flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: nowrap; }
 
     .pm-abtn {
         display: inline-flex;
@@ -658,51 +667,12 @@
         </div>
     </div>
 
-    {{-- ====== GOLONGAN CARDS ====== --}}
-    @php
-        // Tampilkan Parkir tepat sebelum Lainnya. Tetap kompatibel dengan backend lama
-        // yang mungkin masih memakai label/key Hasil Parkir.
-        $displayGolonganLabels = [];
-        $hasilParkirKey = 'hasil_parkir';
-        $hasilParkirLabel = 'Parkir';
-
-        foreach ($golonganLabels as $key => $label) {
-            if (in_array(mb_strtolower(trim((string) $label)), ['hasil parkir', 'parkir'], true)) {
-                $hasilParkirKey = $key;
-                continue;
-            }
-        }
-
-        $parkirInserted = false;
-        foreach ($golonganLabels as $key => $label) {
-            if (in_array(mb_strtolower(trim((string) $label)), ['hasil parkir', 'parkir'], true)) {
-                continue;
-            }
-
-            if (! $parkirInserted && strcasecmp(trim((string) $label), 'Lainnya') === 0) {
-                $displayGolonganLabels[$hasilParkirKey] = $hasilParkirLabel;
-                $parkirInserted = true;
-            }
-
-            $displayGolonganLabels[$key] = $label;
-        }
-
-        if (! $parkirInserted) {
-            $displayGolonganLabels[$hasilParkirKey] = $hasilParkirLabel;
-        }
-    @endphp
-
+    {{-- ====== GOLONGAN CARDS (5 Kategori: Zakat Maal, Zakat Penghasilan, Infak, Wakaf, Parkir) ====== --}}
     <div class="pm-gol-grid">
-        @foreach($displayGolonganLabels as $key => $label)
+        @foreach($golonganLabels as $key => $label)
             @php
-                $isParkir = in_array(mb_strtolower(trim((string) $label)), ['hasil parkir', 'parkir'], true);
-                $colors = $isParkir
-                    ? ['bg'=>'#ecfdf5','text'=>'#047857','border'=>'#a7f3d0','dot'=>'#10b981']
-                    : ($golonganColors[$key] ?? ['bg'=>'#f8fafc','text'=>'#475569','border'=>'#e2e8f0','dot'=>'#64748b']);
-
-                $amount = $isParkir
-                    ? ($summaryPerGolongan[$key] ?? $summaryPerGolongan['hasil_parkir'] ?? $summaryPerGolongan['parkir'] ?? 0)
-                    : ($summaryPerGolongan[$key] ?? 0);
+                $colors = $golonganColors[$key] ?? ['bg'=>'#f8fafc','text'=>'#475569','border'=>'#e2e8f0','dot'=>'#64748b'];
+                $amount = $summaryPerGolongan[$key] ?? 0;
             @endphp
             <div class="pm-gol-card" style="border-color:{{ $colors['border'] }};">
                 <span class="pm-gol-dot" style="background:{{ $colors['dot'] }};"></span>
@@ -770,61 +740,62 @@
             <table class="pm-table">
                 <thead>
                     <tr>
-                        <th>#</th>
+                        <th style="width: 55px;">No.</th>
                         <th>Tanggal</th>
                         <th>Sumber / Muzakki</th>
                         <th>Golongan</th>
                         <th>Nominal</th>
                         <th>Metode</th>
                         <th>Status</th>
-                        <th>Aksi</th>
+                        <th style="text-align: center !important; width: 140px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($transaksi as $item)
                         @php
                             $isJamaah = $item->muzakki_id !== null;
-                            $colors   = $golonganColors[$item->jenis_ziswaf] ?? ['bg'=>'#f8fafc','text'=>'#475569','border'=>'#e2e8f0','dot'=>'#64748b'];
-                            $golLabel = $golonganLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf;
+                            $golLabel = $golonganLabels[$item->jenis_ziswaf] ?? ($item->jenis_ziswaf === 'hasil_parkir' ? 'Parkir' : $item->jenis_ziswaf);
+                            $colors   = ($item->jenis_ziswaf === 'hasil_parkir')
+                                ? ['bg'=>'#ecfdf5','text'=>'#047857','border'=>'#a7f3d0','dot'=>'#10b981']
+                                : ($golonganColors[$item->jenis_ziswaf] ?? ['bg'=>'#f8fafc','text'=>'#475569','border'=>'#e2e8f0','dot'=>'#64748b']);
                             $metLabel = $metodeLabels[$item->metode_pembayaran] ?? ($item->metode_pembayaran ?? '-');
 
                             // Nama donatur dari keterangan manual
-                            $donatur = null;
-                            if (!$isJamaah && $item->keterangan && str_contains($item->keterangan, '[Donatur:')) {
-                                preg_match('/\[Donatur:\s*([^\]]+)\]/', $item->keterangan, $m);
-                                $donatur = $m[1] ?? null;
+                            $namaSumber = $item->muzakki?->name;
+                            if (!$namaSumber && !empty($item->keterangan)) {
+                                $namaSumber = $item->keterangan;
                             }
+                            $namaSumber = $namaSumber ?? 'Hamba Allah';
+
+                            $hasAction = ($item->status_verifikasi === 'pending') || $item->bukti_pembayaran || (!$isJamaah);
                         @endphp
                         <tr>
-                            {{-- No --}}
-                            <td style="color:#94a3b8;font-size:12px;font-weight:600;">
-                                {{ $transaksi->firstItem() + $loop->index }}
-                            </td>
+                            {{-- Nomor urut --}}
+                            <td style="color:#94a3b8;font-size:12px;">{{ $loop->iteration + ($transaksi->currentPage() - 1) * $transaksi->perPage() }}</td>
 
                             {{-- Tanggal --}}
                             <td>
-                                <div style="font-weight:700;">{{ \Carbon\Carbon::parse($item->tanggal)->format('d M Y') }}</div>
+                                <div style="font-weight:700;color:#1e293b;">
+                                    {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') : '-' }}
+                                </div>
                                 <div style="font-size:11px;color:#94a3b8;margin-top:1px;">
-                                    {{ \Carbon\Carbon::parse($item->created_at)->format('H:i') }}
+                                    {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('H:i') : '' }}
                                 </div>
                             </td>
 
-                            {{-- Sumber --}}
+                            {{-- Sumber / Muzakki --}}
                             <td>
-                                @if($isJamaah)
-                                    <div style="font-weight:700;">{{ $item->muzakki?->name ?? 'Jamaah' }}</div>
-                                    <span class="pm-badge pm-src-jamaah" style="margin-top:3px;">
-                                        <i class="fa-solid fa-user" style="font-size:9px;"></i> Jamaah
-                                    </span>
-                                @else
-                                    <div style="font-weight:700;">{{ $donatur ?? 'Input Admin' }}</div>
-                                    <span class="pm-badge pm-src-admin" style="margin-top:3px;">
-                                        <i class="fa-solid fa-user-shield" style="font-size:9px;"></i> Admin
-                                    </span>
-                                @endif
+                                <div style="font-weight:700;color:#0f172a;">{{ $namaSumber }}</div>
+                                <div style="margin-top:2px;">
+                                    @if($isJamaah)
+                                        <span class="pm-badge pm-src-jamaah"><i class="fa-solid fa-user" style="font-size:9px;"></i> Jamaah</span>
+                                    @else
+                                        <span class="pm-badge pm-src-admin"><i class="fa-solid fa-user-gear" style="font-size:9px;"></i> Admin</span>
+                                    @endif
+                                </div>
                             </td>
 
-                            {{-- Golongan --}}
+                            {{-- Golongan / Kategori ZISWAF --}}
                             <td>
                                 <span class="pm-badge" style="background:{{ $colors['bg'] }};color:{{ $colors['text'] }};border-color:{{ $colors['border'] }};">
                                     <span class="pm-bdot" style="background:{{ $colors['dot'] }};"></span>
@@ -850,6 +821,10 @@
                                     <span class="pm-badge pm-s-ditolak">
                                         <span class="pm-bdot" style="background:#dc2626;"></span> Ditolak
                                     </span>
+                                @elseif($item->status_verifikasi === 'dibatalkan')
+                                    <span class="pm-badge" style="background:#fce7f3;color:#9d174d;border-color:#f9a8d4;">
+                                        <span class="pm-bdot" style="background:#db2777;"></span> Dibatalkan
+                                    </span>
                                 @else
                                     <span class="pm-badge pm-s-pending">
                                         <span class="pm-bdot" style="background:#f97316;"></span> Menunggu
@@ -858,40 +833,44 @@
                             </td>
 
                             {{-- Aksi --}}
-                            <td>
-                                <div class="pm-actions">
+                            <td style="text-align: center !important;">
+                                @if($hasAction)
+                                    <div class="pm-actions">
 
-                                    @if($item->status_verifikasi === 'pending')
-                                        {{-- Terima --}}
-                                        <form method="POST" action="{{ route($pemasukanVerifikasiRoute, $item) }}" style="margin:0;" onsubmit="return confirm('Terima pemasukan ini?')">
-                                            @csrf @method('PATCH')
-                                            <input type="hidden" name="action" value="terima">
-                                            <button type="submit" class="pm-abtn pm-abtn-terima">
-                                                <i class="fa-solid fa-check"></i> Terima
+                                        @if($item->status_verifikasi === 'pending')
+                                            {{-- Terima --}}
+                                            <form method="POST" action="{{ route($pemasukanVerifikasiRoute, $item) }}" style="margin:0;" onsubmit="return confirm('Terima pemasukan ini?')">
+                                                @csrf @method('PATCH')
+                                                <input type="hidden" name="action" value="terima">
+                                                <button type="submit" class="pm-abtn pm-abtn-terima">
+                                                    <i class="fa-solid fa-check"></i> Terima
+                                                </button>
+                                            </form>
+                                            {{-- Tolak --}}
+                                            <button type="button" class="pm-abtn pm-abtn-tolak" onclick="pmOpenTolak({{ $item->id }})">
+                                                <i class="fa-solid fa-xmark"></i> Tolak
                                             </button>
-                                        </form>
-                                        {{-- Tolak --}}
-                                        <button type="button" class="pm-abtn pm-abtn-tolak" onclick="pmOpenTolak({{ $item->id }})">
-                                            <i class="fa-solid fa-xmark"></i> Tolak
-                                        </button>
-                                    @endif
+                                        @endif
 
-                                    @if($item->bukti_pembayaran)
-                                        <a href="{{ Storage::url($item->bukti_pembayaran) }}" target="_blank" class="pm-abtn pm-abtn-bukti" title="Lihat bukti">
-                                            <i class="fa-solid fa-file-image"></i>
-                                        </a>
-                                    @endif
+                                        @if($item->bukti_pembayaran)
+                                            <a href="{{ Storage::url($item->bukti_pembayaran) }}" target="_blank" class="pm-abtn pm-abtn-bukti" title="Lihat bukti">
+                                                <i class="fa-solid fa-file-image"></i>
+                                            </a>
+                                        @endif
 
-                                    @if(!$isJamaah)
-                                        <form method="POST" action="{{ route($pemasukanDestroyRoute, $item) }}" style="margin:0;" onsubmit="return confirm('Hapus pemasukan ini?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="pm-abtn pm-abtn-hapus">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    @endif
+                                        @if(!$isJamaah)
+                                            <form method="POST" action="{{ route($pemasukanDestroyRoute, $item) }}" style="margin:0;" onsubmit="return confirm('Hapus pemasukan ini?')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="pm-abtn pm-abtn-hapus">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        @endif
 
-                                </div>
+                                    </div>
+                                @else
+                                    <span style="color:#94a3b8;font-size:13px;">&mdash;</span>
+                                @endif
                             </td>
                         </tr>
                     @empty

@@ -1137,11 +1137,11 @@ html[data-finus-theme="dark"] {
                 <li class="label">Transaksi</li>
                 <li>
                     <a
-                        href="{{ route('admin.penggajian.index') }}"
-                        class="{{ request()->routeIs('admin.penggajian.*') ? 'active' : '' }}"
+                        href="{{ route('admin.pemasukan.index') }}"
+                        class="{{ request()->routeIs('admin.pemasukan.*') ? 'active' : '' }}"
                     >
-                        <i class="fa-solid fa-wallet"></i>
-                        <span>Penggajian</span>
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                        <span>Pemasukan</span>
                     </a>
                 </li>
                 <li>
@@ -1155,11 +1155,11 @@ html[data-finus-theme="dark"] {
                 </li>
                 <li>
                     <a
-                        href="{{ route('admin.pemasukan.index') }}"
-                        class="{{ request()->routeIs('admin.pemasukan.*') ? 'active' : '' }}"
+                        href="{{ route('admin.penggajian.index') }}"
+                        class="{{ request()->routeIs('admin.penggajian.*') ? 'active' : '' }}"
                     >
-                        <i class="fa-solid fa-hand-holding-dollar"></i>
-                        <span>Pemasukan</span>
+                        <i class="fa-solid fa-wallet"></i>
+                        <span>Penggajian</span>
                     </a>
                 </li>
 

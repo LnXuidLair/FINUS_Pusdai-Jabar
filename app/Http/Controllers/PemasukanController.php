@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 class PemasukanController extends Controller
 {
     /**
-     * Semua golongan / jenis ZISWAF yang tersedia.
+     * Semua golongan / jenis ZISWAF dan penerimaan yang tersedia.
      */
     public static function golonganLabels(): array
     {
@@ -18,10 +18,8 @@ class PemasukanController extends Controller
             'zakat_maal'        => 'Zakat Maal',
             'zakat_penghasilan' => 'Zakat Penghasilan',
             'infaq'             => 'Infak',
-            'shadaqah'          => 'Sedekah',
             'wakaf'             => 'Wakaf',
-            'fidyah'            => 'Fidyah',
-            'lainnya'           => 'Lainnya',
+            'parkir'            => 'Parkir',
         ];
     }
 
@@ -34,10 +32,8 @@ class PemasukanController extends Controller
             'zakat_maal'        => ['bg' => '#ecfdf5', 'text' => '#065f46', 'border' => '#a7f3d0', 'dot' => '#059669'],
             'zakat_penghasilan' => ['bg' => '#f0fdfa', 'text' => '#134e4a', 'border' => '#99f6e4', 'dot' => '#0d9488'],
             'infaq'             => ['bg' => '#eff6ff', 'text' => '#1e40af', 'border' => '#bfdbfe', 'dot' => '#2563eb'],
-            'shadaqah'          => ['bg' => '#fdf4ff', 'text' => '#6b21a8', 'border' => '#e9d5ff', 'dot' => '#9333ea'],
             'wakaf'             => ['bg' => '#fff7ed', 'text' => '#9a3412', 'border' => '#fed7aa', 'dot' => '#ea580c'],
-            'fidyah'            => ['bg' => '#fefce8', 'text' => '#854d0e', 'border' => '#fde68a', 'dot' => '#ca8a04'],
-            'lainnya'           => ['bg' => '#f8fafc', 'text' => '#475569', 'border' => '#cbd5e1', 'dot' => '#64748b'],
+            'parkir'            => ['bg' => '#ecfdf5', 'text' => '#047857', 'border' => '#a7f3d0', 'dot' => '#10b981'],
         ];
     }
 
@@ -90,6 +86,11 @@ class PemasukanController extends Controller
         ]);
 
         $query = ZiswafPenerimaan::with(['muzakki', 'pegawai'])
+            ->where('status_verifikasi', '!=', 'dibatalkan')
+            ->where(function (Builder $q) {
+                $q->whereNull('payment_status')
+                  ->orWhere('payment_status', '!=', 'cancel');
+            })
             ->latest('tanggal')
             ->latest('id');
 
@@ -105,7 +106,11 @@ class PemasukanController extends Controller
         }
 
         if (!empty($filters['golongan'])) {
-            $query->where('jenis_ziswaf', $filters['golongan']);
+            if ($filters['golongan'] === 'parkir') {
+                $query->whereIn('jenis_ziswaf', ['parkir', 'hasil_parkir']);
+            } else {
+                $query->where('jenis_ziswaf', $filters['golongan']);
+            }
         }
 
         if (!empty($filters['status_verifikasi'])) {
@@ -127,7 +132,12 @@ class PemasukanController extends Controller
         /* ── Summary cards ── */
         $summaryTotal = [
             'total'     => (int) ZiswafPenerimaan::where('status_verifikasi', 'diterima')->sum('nominal'),
-            'pending'   => (int) ZiswafPenerimaan::where('status_verifikasi', 'pending')->count(),
+            'pending'   => (int) ZiswafPenerimaan::where('status_verifikasi', 'pending')
+                ->where(function ($q) {
+                    $q->whereNull('payment_status')
+                      ->orWhere('payment_status', '!=', 'cancel');
+                })
+                ->count(),
             'bulan_ini' => (int) ZiswafPenerimaan::where('status_verifikasi', 'diterima')
                 ->whereMonth('tanggal', now()->month)
                 ->whereYear('tanggal', now()->year)
@@ -138,7 +148,13 @@ class PemasukanController extends Controller
         $summaryPerGolongan = [];
         foreach (self::golonganLabels() as $key => $label) {
             $summaryPerGolongan[$key] = (int) ZiswafPenerimaan::where('status_verifikasi', 'diterima')
-                ->where('jenis_ziswaf', $key)
+                ->where(function ($q) use ($key) {
+                    if ($key === 'parkir') {
+                        $q->whereIn('jenis_ziswaf', ['parkir', 'hasil_parkir']);
+                    } else {
+                        $q->where('jenis_ziswaf', $key);
+                    }
+                })
                 ->sum('nominal');
         }
 

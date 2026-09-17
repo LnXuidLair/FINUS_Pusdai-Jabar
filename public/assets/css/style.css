@@ -2796,7 +2796,7 @@ thead tr th {
   font-weight: 500;
 }
 thead tr th:last-child {
-  text-align: right;
+  text-align: center;
 }
 tbody tr th {
   color: #373757;

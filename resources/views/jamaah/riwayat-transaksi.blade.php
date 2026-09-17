@@ -151,6 +151,30 @@
         font-size: 28px;
     }
 
+    /* ── Alignment Header & Kolom Aksi ── */
+    .jt-table thead tr th.jt-th-center,
+    .jt-table thead tr th:last-child {
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
+    .jt-table tbody tr td.jt-actions,
+    .jt-table tbody tr td:last-child {
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
+    .jt-action-group {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+    }
+    .jt-action-none {
+        display: inline-block;
+        color: #9ca3af;
+        font-size: 14px;
+        text-align: center;
+    }
+
     @media (max-width: 640px) {
         .rw-banner-grid { grid-template-columns: 1fr; }
     }
@@ -361,7 +385,7 @@
                         <th>Jenis</th>
                         <th>Nominal</th>
                         <th>Status</th>
-                        <th class="jt-th-center">Aksi</th>
+                        <th class="jt-th-center" style="text-align: center !important;">Aksi</th>
                     </tr>
                 </thead>
 
@@ -461,7 +485,6 @@
                                             <span>Bayar</span>
                                         </a>
 
-
                                         <form
                                             method="POST"
                                             action="{{ route('jamaah.pembayaran.batal', $item) }}"
@@ -479,6 +502,29 @@
                                                 <span>Batal</span>
                                             </button>
                                         </form>
+                                    </div>
+                                @elseif($isBerhasil)
+                                    <div class="jt-action-group">
+                                        <button
+                                            type="button"
+                                            class="jt-btn jt-btn-invoice"
+                                            title="Lihat Invoice"
+                                            data-invoice-url="{{ route('jamaah.riwayat.invoice', $item) }}"
+                                            onclick="bukaInvoice(this)"
+                                        >
+                                            <i class="fa-solid fa-file-invoice"></i>
+                                            <span>Invoice</span>
+                                        </button>
+
+                                        <a
+                                            href="{{ route('jamaah.riwayat.invoice.cetak', $item) }}"
+                                            target="_blank"
+                                            class="jt-btn jt-btn-print"
+                                            title="Cetak / Download PDF"
+                                        >
+                                            <i class="fa-solid fa-print"></i>
+                                            <span>Cetak</span>
+                                        </a>
                                     </div>
                                 @else
                                     <span class="jt-action-none">&mdash;</span>
@@ -510,6 +556,278 @@
         @endif
     </section>
 </div>
+
+{{-- ═══════════════════════════════════════════════
+     INVOICE MODAL
+═══════════════════════════════════════════════ --}}
+<style>
+    /* ── Invoice button styles ── */
+    .jt-btn-invoice {
+        background: linear-gradient(135deg, #065f46, #059669);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12.5px;
+        font-weight: 700;
+        transition: all .2s ease;
+        text-decoration: none;
+    }
+    .jt-btn-invoice:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(6,95,70,.3);
+        color: #fff;
+    }
+    .jt-btn-print {
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12.5px;
+        font-weight: 700;
+        transition: all .2s ease;
+        text-decoration: none;
+    }
+    .jt-btn-print:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(29,78,216,.3);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    /* ── Modal Overlay ── */
+    .inv-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15,23,42,.55);
+        backdrop-filter: blur(6px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+    .inv-overlay.active { display: flex; }
+
+    /* ── Modal Box ── */
+    .inv-modal {
+        background: #fff;
+        border-radius: 24px;
+        width: 100%;
+        max-width: 520px;
+        box-shadow: 0 24px 64px rgba(0,0,0,.25);
+        animation: invSlide .3s cubic-bezier(.16,1,.3,1) both;
+        overflow: hidden;
+        position: relative;
+    }
+    @keyframes invSlide {
+        from { opacity:0; transform:translateY(24px) scale(.97); }
+        to   { opacity:1; transform:translateY(0)   scale(1); }
+    }
+
+    /* ── Modal Header ── */
+    .inv-head {
+        background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+        padding: 28px 28px 20px;
+        color: #fff;
+        position: relative;
+    }
+    .inv-head-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    .inv-lembaga-name {
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: .01em;
+        margin: 0;
+    }
+    .inv-lembaga-sub {
+        font-size: 11px;
+        opacity: .8;
+        margin-top: 2px;
+    }
+    .inv-close-btn {
+        background: rgba(255,255,255,.18);
+        border: none;
+        color: #fff;
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: background .2s;
+        flex-shrink: 0;
+    }
+    .inv-close-btn:hover { background: rgba(255,255,255,.32); }
+    .inv-ref-row {
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .inv-ref-badge {
+        background: rgba(255,255,255,.15);
+        border: 1.5px solid rgba(255,255,255,.3);
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: .03em;
+        font-family: monospace;
+    }
+    .inv-status-badge {
+        background: #dcfce7;
+        color: #15803d;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+    }
+
+    /* ── Modal Body ── */
+    .inv-body {
+        padding: 24px 28px;
+    }
+    .inv-section-title {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 10px;
+        margin-top: 18px;
+    }
+    .inv-section-title:first-child { margin-top: 0; }
+    .inv-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f5f9;
+        gap: 12px;
+    }
+    .inv-row:last-child { border-bottom: 0; }
+    .inv-row-label {
+        font-size: 13px;
+        color: #64748b;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    .inv-row-value {
+        font-size: 13px;
+        color: #0f172a;
+        font-weight: 700;
+        text-align: right;
+    }
+    .inv-nominal-big {
+        font-size: 28px;
+        font-weight: 900;
+        color: #065f46;
+        display: block;
+        margin: 12px 0 4px;
+        letter-spacing: -.02em;
+    }
+    .inv-nominal-sub {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 600;
+    }
+    .inv-nominal-box {
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border: 1.5px solid #86efac;
+        border-radius: 16px;
+        padding: 16px 20px;
+        text-align: center;
+    }
+
+    /* ── Modal Footer ── */
+    .inv-footer {
+        padding: 16px 28px 24px;
+        display: flex;
+        gap: 10px;
+    }
+    .inv-btn-print {
+        flex: 1;
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: all .2s;
+        text-decoration: none;
+    }
+    .inv-btn-print:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(29,78,216,.3);
+        color: #fff;
+        text-decoration: none;
+    }
+    .inv-btn-close {
+        flex: 1;
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        border-radius: 12px;
+        padding: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background .2s;
+    }
+    .inv-btn-close:hover { background: #e2e8f0; }
+
+    /* ── Loading state ── */
+    .inv-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        gap: 16px;
+        color: #64748b;
+    }
+    .inv-loading i { font-size: 32px; color: #059669; }
+    .inv-keterangan-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 12.5px;
+        color: #475569;
+        margin-top: 4px;
+        font-style: italic;
+    }
+</style>
+
+{{-- Overlay --}}
+<div class="inv-overlay" id="invOverlay" onclick="tutupInvoice(event)">
+    <div class="inv-modal" id="invModal">
+        {{-- Konten akan diisi oleh JS --}}
+        <div class="inv-loading" id="invLoading">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <span>Memuat invoice...</span>
+        </div>
+        <div id="invContent" style="display:none;"></div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -636,10 +954,150 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Poll pertama 3 detik setelah halaman dimuat
-    setTimeout(pollAll, 3000);
-    var timer = setInterval(pollAll, POLL_INTERVAL_MS);
+    // Poll pertama 3 detik setelah halaman dimuat\r
+    setTimeout(pollAll, 3000);\r
+    var timer = setInterval(pollAll, POLL_INTERVAL_MS);\r
+});\r
+</script>
+
+{{-- ── Invoice Modal JS ── --}}
+<script>
+function bukaInvoice(btn) {
+    var url = btn.getAttribute('data-invoice-url');
+    var overlay = document.getElementById('invOverlay');
+    var loading  = document.getElementById('invLoading');
+    var content  = document.getElementById('invContent');
+
+    // Reset state
+    loading.style.display = 'flex';
+    content.style.display = 'none';
+    content.innerHTML = '';
+
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+        },
+        credentials: 'same-origin',
+    })
+    .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+    })
+    .then(function(d) {
+        var keteranganHtml = '';
+        if (d.keterangan) {
+            keteranganHtml = '<div class="inv-keterangan-box">' +
+                '<i class="fa-solid fa-comment-dots" style="margin-right:6px;color:#059669;"></i>' +
+                escHtml(d.keterangan) +
+            '</div>';
+        }
+        content.innerHTML =
+            '<div class="inv-head">' +
+                '<div class="inv-head-top">' +
+                    '<div>' +
+                        '<p class="inv-lembaga-name">&#x1F54C;&nbsp; Pusdai Jawa Barat</p>' +
+                        '<p class="inv-lembaga-sub">FINUS &mdash; Sistem Informasi Keuangan Masjid</p>' +
+                    '</div>' +
+                    '<button class="inv-close-btn" onclick="tutupInvoice()" title="Tutup">' +
+                        '<i class="fa-solid fa-xmark"></i>' +
+                    '</button>' +
+                '</div>' +
+                '<div class="inv-ref-row">' +
+                    '<span class="inv-ref-badge">' + escHtml(d.referensi) + '</span>' +
+                    '<span class="inv-status-badge"><i class="fa-solid fa-circle-check" style="margin-right:4px;"></i>Pembayaran Berhasil</span>' +
+                '</div>' +
+            '</div>' +
+
+            '<div class="inv-body">' +
+                '<div class="inv-nominal-box">' +
+                    '<div class="inv-nominal-sub">Total Pembayaran</div>' +
+                    '<span class="inv-nominal-big">' + escHtml(d.nominal_fmt) + '</span>' +
+                    '<div class="inv-nominal-sub">Jenis: <strong>' + escHtml(d.jenis) + '</strong></div>' +
+                '</div>' +
+
+                '<div class="inv-section-title">Informasi Muzakki</div>' +
+                '<div class="inv-row">' +
+                    '<span class="inv-row-label">Nama</span>' +
+                    '<span class="inv-row-value">' + escHtml(d.jamaah_nama) + '</span>' +
+                '</div>' +
+                '<div class="inv-row">' +
+                    '<span class="inv-row-label">Email</span>' +
+                    '<span class="inv-row-value">' + escHtml(d.jamaah_email) + '</span>' +
+                '</div>' +
+
+                '<div class="inv-section-title">Detail Transaksi</div>' +
+                '<div class="inv-row">' +
+                    '<span class="inv-row-label">No. Referensi</span>' +
+                    '<span class="inv-row-value" style="font-family:monospace;">' + escHtml(d.referensi) + '</span>' +
+                '</div>' +
+                '<div class="inv-row">' +
+                    '<span class="inv-row-label">Tanggal Transaksi</span>' +
+                    '<span class="inv-row-value">' + escHtml(d.tanggal) + '</span>' +
+                '</div>' +
+                '<div class="inv-row">' +
+                    '<span class="inv-row-label">Metode Pembayaran</span>' +
+                    '<span class="inv-row-value">' + escHtml(d.metode) + '</span>' +
+                '</div>' +
+                '<div class="inv-row">' +
+                    '<span class="inv-row-label">Diverifikasi Pada</span>' +
+                    '<span class="inv-row-value">' + escHtml(d.verified_at || '-') + '</span>' +
+                '</div>' +
+                (keteranganHtml ? '<div class="inv-section-title" style="margin-top:16px;">Keterangan</div>' + keteranganHtml : '') +
+            '</div>' +
+
+            '<div class="inv-footer">' +
+                '<a href="' + d.url_cetak + '" target="_blank" class="inv-btn-print">' +
+                    '<i class="fa-solid fa-print"></i> Cetak / Download PDF' +
+                '</a>' +
+                '<button class="inv-btn-close" onclick="tutupInvoice()">Tutup</button>' +
+            '</div>';
+
+        loading.style.display = 'none';
+        content.style.display = 'block';
+    })
+    .catch(function() {
+        content.innerHTML =
+            '<div class="inv-loading">' +
+                '<i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i>' +
+                '<span>Gagal memuat invoice. Silakan coba lagi.</span>' +
+                '<button class="inv-btn-close" onclick="tutupInvoice()" style="margin-top:8px;padding:8px 20px;border-radius:10px;">Tutup</button>' +
+            '</div>';
+        loading.style.display = 'none';
+        content.style.display = 'block';
+    });
+}
+
+function tutupInvoice(event) {
+    // Tutup hanya jika klik di overlay (bukan modal itu sendiri)
+    if (event && event.target !== document.getElementById('invOverlay')) return;
+    var overlay = document.getElementById('invOverlay');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Tutup dengan tombol Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        var overlay = document.getElementById('invOverlay');
+        if (overlay && overlay.classList.contains('active')) {
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
 });
+
+function escHtml(str) {
+    if (!str && str !== 0) return '-';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
 </script>
 @endpush
 

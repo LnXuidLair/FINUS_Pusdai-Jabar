@@ -2011,6 +2011,31 @@
                 border-bottom: 2px solid #e2e8f0;
             }
 
+            /* ── Universal Action Header & Cell Alignment across All Roles ── */
+            :where(.jt-table, .pm-table, .finus-data-table, .fmu-table, .employee-table, .gj-table, .ag-table) thead tr th:last-child,
+            :where(.jt-table, .pm-table, .finus-data-table, .fmu-table, .employee-table, .gj-table, .ag-table) thead tr th.text-center,
+            :where(.jt-table, .pm-table, .finus-data-table, .fmu-table, .employee-table, .gj-table, .ag-table) thead tr th.jt-th-center {
+                text-align: center !important;
+                vertical-align: middle !important;
+            }
+
+            :where(.jt-table, .pm-table, .finus-data-table, .fmu-table, .employee-table, .gj-table, .ag-table) tbody tr td:last-child,
+            :where(.jt-table, .pm-table, .finus-data-table, .fmu-table, .employee-table, .gj-table, .ag-table) tbody tr td.text-center,
+            :where(.jt-table, .pm-table, .finus-data-table, .fmu-table, .employee-table, .gj-table, .ag-table) tbody tr td.jt-actions {
+                text-align: center !important;
+                vertical-align: middle !important;
+            }
+
+            :where(.jt-action-group, .pm-actions, .finus-data-actions, .employee-actions, .gj-actions, .ag-actions) {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+
+            .text-right {
+                text-align: right !important;
+            }
+
             .jt-table tbody tr:hover td {
                 background-color: #f8fafc;
             }
