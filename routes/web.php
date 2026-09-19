@@ -17,6 +17,7 @@ use App\Http\Controllers\PegawaiDashboardController;
 use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\PenggajianController;
 use App\Http\Controllers\PemasukanController;
+use App\Http\Controllers\ParkirController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\ZiswafTransactionController;
 use App\Http\Middleware\EnsureManagementAccess;
@@ -152,6 +153,10 @@ Route::middleware(['auth:admin', 'role:admin'])
                     ->group(function (){
                         Route::get('/jurnal-umum', [LaporanController::class, 'jurnalUmum'])
                             ->name('jurnal-umum');
+                        Route::get('/jurnal-pemasukan', [LaporanController::class, 'jurnalPemasukan'])
+                            ->name('jurnal-pemasukan');
+                        Route::get('/jurnal-pengeluaran', [LaporanController::class, 'jurnalPengeluaran'])
+                            ->name('jurnal-pengeluaran');
                         Route::get('/arus-kas', [LaporanController::class, 'arusKas'])
                             ->name('arus-kas');
                     });
@@ -159,6 +164,15 @@ Route::middleware(['auth:admin', 'role:admin'])
                     ->except(['show']);
                 Route::patch('agenda-kegiatan/{agendaKegiatan}/toggle', [AgendaKegiatanController::class, 'toggleAktif'])
                     ->name('agenda-kegiatan.toggle');
+
+                // ── Parkir QRIS Otomatis ──
+                Route::prefix('parkir')->name('parkir.')->group(function () {
+                    Route::get('/', [ParkirController::class, 'index'])->name('index');
+                    Route::get('/loket', [ParkirController::class, 'create'])->name('loket');
+                    Route::post('/loket', [ParkirController::class, 'store'])->name('store');
+                    Route::patch('/{parkirSesi}/selesai', [ParkirController::class, 'selesai'])->name('selesai');
+                    Route::patch('/{parkirSesi}/batal', [ParkirController::class, 'batal'])->name('batal');
+                });
                 Route::get('pemasukan', [PemasukanController::class, 'index'])
                     ->name('pemasukan.index');
                 Route::post('pemasukan', [PemasukanController::class, 'store'])
@@ -206,6 +220,10 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
             ->group(function () {
                 Route::get('/jurnal-umum', [LaporanController::class, 'jurnalUmum'])
                     ->name('jurnal-umum');
+                Route::get('/jurnal-pemasukan', [LaporanController::class, 'jurnalPemasukan'])
+                    ->name('jurnal-pemasukan');
+                Route::get('/jurnal-pengeluaran', [LaporanController::class, 'jurnalPengeluaran'])
+                    ->name('jurnal-pengeluaran');
                 Route::get('/arus-kas', [LaporanController::class, 'arusKas'])
                     ->name('arus-kas');
             });

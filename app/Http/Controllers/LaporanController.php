@@ -3,161 +3,376 @@
 namespace App\Http\Controllers;
 
 use App\Models\Coa;
+use App\Models\JurnalDetail;
+use App\Models\JurnalUmum;
 use App\Models\Pengeluaran;
 use App\Models\Penggajian;
 use App\Models\ZiswafPenerimaan;
+use App\Services\Accounting\Psak109PostingService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 
 class LaporanController extends Controller
 {
-    public function jurnalUmum()
+    /**
+     * Jurnal Umum: Menampilkan seluruh mutasi debit dan kredit permanen PSAK 109.
+     */
+    public function jurnalUmum(Request $request)
     {
-        /*
-         * PembayaranSiswa sudah tidak digunakan.
-         * Pemasukan FINUS sekarang berasal dari tabel ziswaf_penerimaan.
-         * Hanya transaksi yang sudah diterima, serta data lama yang statusnya null,
-         * yang dimasukkan ke laporan keuangan.
-         */
-        $penerimaan = $this->queryPenerimaanLaporan()
-            ->with(['muzakki', 'coa'])
+        $jurnalUmumList = JurnalUmum::with(['detail.coa', 'createdBy'])
             ->orderByDesc('tanggal')
+            ->orderByDesc('id')
             ->get();
-
-        /*
-         * Pengeluaran gaji tidak diambil di sini karena sudah ditampilkan dari
-         * tabel penggajian. Ini mencegah pencatatan gaji menjadi dua kali.
-         */
-        $pengeluaran = $this->queryPengeluaranOperasional()
-            ->orderByDesc('tanggal')
-            ->get();
-
-        $penggajian = Penggajian::with('pegawai')
-            ->where('status_penggajian', 'sudah_dibayar')
-            ->whereNotNull('tanggal')
-            ->orderByDesc('tanggal')
-            ->get();
-
-        $coaIds = $pengeluaran
-            ->flatMap(fn (Pengeluaran $item): array => [
-                $item->coa_debit_id,
-                $item->coa_kredit_id,
-            ])
-            ->filter()
-            ->unique()
-            ->values();
-
-        $namaCoa = $coaIds->isEmpty()
-            ? collect()
-            : Coa::whereIn('id', $coaIds)->pluck('nama_akun', 'id');
 
         $jurnals = collect();
 
-        // Penerimaan ZISWAF: debit Kas/Bank, kredit akun penerimaan.
-        foreach ($penerimaan as $item) {
-            $jumlah = (int) $item->nominal;
+        if ($jurnalUmumList->isNotEmpty()) {
+            foreach ($jurnalUmumList as $ju) {
+                $tanggal = $ju->tanggal ? Carbon::parse($ju->tanggal)->format('Y-m-d') : '-';
+                $deskripsi = $ju->deskripsi ?: ($ju->keterangan ?: 'Transaksi ' . $ju->no_referensi);
 
-            if ($jumlah <= 0) {
-                continue;
+                foreach ($ju->detail as $detail) {
+                    $namaAkun = $detail->coa?->nama_akun ?? 'Akun ' . $detail->coa_id;
+                    $debit = (float) $detail->debit;
+                    $credit = (float) $detail->credit;
+
+                    if ($debit > 0) {
+                        $jurnals->push((object) [
+                            'tanggal'    => $tanggal,
+                            'tipe'       => 'debit',
+                            'jumlah'     => $debit,
+                            'akun'       => $namaAkun,
+                            'keterangan' => $deskripsi,
+                            'referensi'  => $ju->no_referensi,
+                            'jenis_dana' => $detail->jenis_dana,
+                        ]);
+                    }
+
+                    if ($credit > 0) {
+                        $jurnals->push((object) [
+                            'tanggal'    => $tanggal,
+                            'tipe'       => 'kredit',
+                            'jumlah'     => $credit,
+                            'akun'       => $namaAkun,
+                            'keterangan' => $deskripsi,
+                            'referensi'  => $ju->no_referensi,
+                            'jenis_dana' => $detail->jenis_dana,
+                        ]);
+                    }
+                }
+            }
+        } else {
+            // Fallback virtual jika belum ada jurnal permanen yang tersimpan
+            $penerimaan = $this->queryPenerimaanLaporan()
+                ->with(['muzakki', 'coa'])
+                ->orderByDesc('tanggal')
+                ->get();
+
+            $pengeluaran = $this->queryPengeluaranOperasional()
+                ->orderByDesc('tanggal')
+                ->get();
+
+            $penggajian = Penggajian::with('pegawai')
+                ->where('status_penggajian', 'sudah_dibayar')
+                ->whereNotNull('tanggal')
+                ->orderByDesc('tanggal')
+                ->get();
+
+            $coaIds = $pengeluaran
+                ->flatMap(fn (Pengeluaran $item): array => [
+                    $item->coa_debit_id,
+                    $item->coa_kredit_id,
+                ])
+                ->filter()
+                ->unique()
+                ->values();
+
+            $namaCoa = $coaIds->isEmpty()
+                ? collect()
+                : Coa::whereIn('id', $coaIds)->pluck('nama_akun', 'id');
+
+            foreach ($penerimaan as $item) {
+                $jumlah = (int) $item->nominal;
+                if ($jumlah <= 0) continue;
+
+                $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
+                $namaJamaah = $item->muzakki?->name ?? 'Jamaah';
+                $jenisZiswaf = $this->labelJenisZiswaf($item->jenis_ziswaf);
+                $akunKas = $this->akunKasBerdasarkanMetode($item->metode_pembayaran);
+                $akunPenerimaan = $item->coa?->nama_akun ?? 'Penerimaan ' . $jenisZiswaf;
+                $keterangan = 'Penerimaan ' . $jenisZiswaf . ' dari ' . $namaJamaah;
+
+                $jurnals->push((object) [
+                    'tanggal' => $tanggal,
+                    'tipe' => 'debit',
+                    'jumlah' => $jumlah,
+                    'akun' => $akunKas,
+                    'keterangan' => $keterangan,
+                    'referensi' => 'ZISWAF-' . $item->id,
+                ]);
+
+                $jurnals->push((object) [
+                    'tanggal' => $tanggal,
+                    'tipe' => 'kredit',
+                    'jumlah' => $jumlah,
+                    'akun' => $akunPenerimaan,
+                    'keterangan' => $keterangan,
+                    'referensi' => 'ZISWAF-' . $item->id,
+                ]);
             }
 
-            $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
-            $namaJamaah = $item->muzakki?->name ?? 'Jamaah';
-            $jenisZiswaf = $this->labelJenisZiswaf($item->jenis_ziswaf);
-            $akunKas = $this->akunKasBerdasarkanMetode($item->metode_pembayaran);
-            $akunPenerimaan = $item->coa?->nama_akun ?? 'Penerimaan ' . $jenisZiswaf;
-            $keterangan = 'Penerimaan ' . $jenisZiswaf . ' dari ' . $namaJamaah;
+            foreach ($pengeluaran as $item) {
+                $jumlah = $this->nilaiPengeluaran($item);
+                if ($jumlah <= 0) continue;
 
-            $jurnals->push((object) [
-                'tanggal' => $tanggal,
-                'tipe' => 'debit',
-                'jumlah' => $jumlah,
-                'akun' => $akunKas,
-                'keterangan' => $keterangan,
-                'referensi' => 'ZISWAF-' . $item->id,
-            ]);
+                $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
+                $keterangan = $this->keteranganPengeluaran($item);
+                $akunDebit = $namaCoa->get($item->coa_debit_id) ?? $item->kategori ?? 'Beban Operasional';
+                $akunKredit = $namaCoa->get($item->coa_kredit_id) ?? 'Kas';
 
-            $jurnals->push((object) [
-                'tanggal' => $tanggal,
-                'tipe' => 'kredit',
-                'jumlah' => $jumlah,
-                'akun' => $akunPenerimaan,
-                'keterangan' => $keterangan,
-                'referensi' => 'ZISWAF-' . $item->id,
-            ]);
-        }
+                $jurnals->push((object) [
+                    'tanggal' => $tanggal,
+                    'tipe' => 'debit',
+                    'jumlah' => $jumlah,
+                    'akun' => $akunDebit,
+                    'keterangan' => $keterangan,
+                    'referensi' => 'PGL-' . $item->id,
+                ]);
 
-        // Pengeluaran operasional: debit akun beban, kredit Kas/Bank.
-        foreach ($pengeluaran as $item) {
-            $jumlah = $this->nilaiPengeluaran($item);
-
-            if ($jumlah <= 0) {
-                continue;
+                $jurnals->push((object) [
+                    'tanggal' => $tanggal,
+                    'tipe' => 'kredit',
+                    'jumlah' => $jumlah,
+                    'akun' => $akunKredit,
+                    'keterangan' => $keterangan,
+                    'referensi' => 'PGL-' . $item->id,
+                ]);
             }
 
-            $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
-            $keterangan = $this->keteranganPengeluaran($item);
-            $akunDebit = $namaCoa->get($item->coa_debit_id)
-                ?? $item->kategori
-                ?? 'Beban Operasional';
-            $akunKredit = $namaCoa->get($item->coa_kredit_id) ?? 'Kas';
+            foreach ($penggajian as $item) {
+                $jumlah = (int) $item->total_gaji;
+                if ($jumlah <= 0 || empty($item->tanggal)) continue;
 
-            $jurnals->push((object) [
-                'tanggal' => $tanggal,
-                'tipe' => 'debit',
-                'jumlah' => $jumlah,
-                'akun' => $akunDebit,
-                'keterangan' => $keterangan,
-                'referensi' => 'PGL-' . $item->id,
-            ]);
+                $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
+                $namaPegawai = $item->pegawai?->nama_pegawai ?? 'Pegawai';
+                $keterangan = 'Pembayaran gaji ' . $namaPegawai . ' periode ' . $item->periode;
 
-            $jurnals->push((object) [
-                'tanggal' => $tanggal,
-                'tipe' => 'kredit',
-                'jumlah' => $jumlah,
-                'akun' => $akunKredit,
-                'keterangan' => $keterangan,
-                'referensi' => 'PGL-' . $item->id,
-            ]);
-        }
+                $jurnals->push((object) [
+                    'tanggal' => $tanggal,
+                    'tipe' => 'debit',
+                    'jumlah' => $jumlah,
+                    'akun' => 'Beban Gaji',
+                    'keterangan' => $keterangan,
+                    'referensi' => 'GAJI-' . $item->id,
+                ]);
 
-        // Penggajian yang sudah dibayar: debit Beban Gaji, kredit Kas.
-        foreach ($penggajian as $item) {
-            $jumlah = (int) $item->total_gaji;
-
-            if ($jumlah <= 0 || empty($item->tanggal)) {
-                continue;
+                $jurnals->push((object) [
+                    'tanggal' => $tanggal,
+                    'tipe' => 'kredit',
+                    'jumlah' => $jumlah,
+                    'akun' => 'Kas',
+                    'keterangan' => $keterangan,
+                    'referensi' => 'GAJI-' . $item->id,
+                ]);
             }
-
-            $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
-            $namaPegawai = $item->pegawai?->nama_pegawai ?? 'Pegawai';
-            $keterangan = 'Pembayaran gaji ' . $namaPegawai . ' periode ' . $item->periode;
-
-            $jurnals->push((object) [
-                'tanggal' => $tanggal,
-                'tipe' => 'debit',
-                'jumlah' => $jumlah,
-                'akun' => 'Beban Gaji',
-                'keterangan' => $keterangan,
-                'referensi' => 'GAJI-' . $item->id,
-            ]);
-
-            $jurnals->push((object) [
-                'tanggal' => $tanggal,
-                'tipe' => 'kredit',
-                'jumlah' => $jumlah,
-                'akun' => 'Kas',
-                'keterangan' => $keterangan,
-                'referensi' => 'GAJI-' . $item->id,
-            ]);
         }
-
-        $jurnals = $jurnals
-            ->sortByDesc('tanggal')
-            ->values();
 
         return view('admin.laporan.jurnal-umum', compact('jurnals'));
     }
+
+    /**
+     * Jurnal Pemasukan: Buku Jurnal Khusus Penerimaan Kas/Bank ZISWAF berbasis PSAK 109.
+     */
+    public function jurnalPemasukan(Request $request)
+    {
+        $danaFilter = $request->input('dana');
+        $tanggalDari = $request->input('tanggal_dari');
+        $tanggalSampai = $request->input('tanggal_sampai');
+        $search = trim($request->input('q') ?? '');
+
+        $query = JurnalUmum::pemasukan()
+            ->with(['detail.coa', 'createdBy'])
+            ->orderByDesc('tanggal')
+            ->orderByDesc('id');
+
+        if ($tanggalDari) {
+            $query->whereDate('tanggal', '>=', $tanggalDari);
+        }
+        if ($tanggalSampai) {
+            $query->whereDate('tanggal', '<=', $tanggalSampai);
+        }
+        if ($danaFilter && $danaFilter !== 'all') {
+            $query->whereHas('detail', function ($q) use ($danaFilter) {
+                $q->where('jenis_dana', $danaFilter);
+            });
+        }
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('no_referensi', 'like', '%' . $search . '%')
+                  ->orWhere('deskripsi', 'like', '%' . $search . '%')
+                  ->orWhere('keterangan', 'like', '%' . $search . '%');
+            });
+        }
+
+        $jurnals = $query->paginate(15)->withQueryString();
+
+        // Ringkasan real-time
+        $postingService = app(Psak109PostingService::class);
+        $saldoDana = $postingService->getSaldoDana();
+
+        // Rekapitulasi transaksi pemasukan
+        $allPemasukanJurnals = (clone $query)->get();
+        $totalPemasukanKas = 0;
+        $totalZakat = 0;
+        $totalInfak = 0;
+        $totalAlokasiAmil = 0;
+
+        foreach ($allPemasukanJurnals as $j) {
+            foreach ($j->detail as $d) {
+                $isKasBank = in_array($d->coa?->kode_akun, ['1101', '1102'])
+                    || str_contains($d->coa?->nama_akun ?? '', 'Kas')
+                    || str_contains($d->coa?->nama_akun ?? '', 'Bank');
+
+                if ($isKasBank && (float) $d->debit > 0) {
+                    $totalPemasukanKas += (float) $d->debit;
+
+                    if ($d->jenis_dana === 'zakat') {
+                        $totalZakat += (float) $d->debit;
+                    } elseif (in_array($d->jenis_dana, ['infak', 'infak_sedekah'])) {
+                        $totalInfak += (float) $d->debit;
+                    }
+                }
+
+                // Bagian Amil (Kredit akun 4301 / 4302)
+                if ($d->jenis_dana === 'amil' && (float) $d->credit > 0) {
+                    $totalAlokasiAmil += (float) $d->credit;
+                }
+            }
+        }
+
+        $summary = [
+            'total_pemasukan' => $totalPemasukanKas,
+            'total_zakat'     => $totalZakat,
+            'total_infak'     => $totalInfak,
+            'total_amil'      => $totalAlokasiAmil,
+            'saldo_dana'      => $saldoDana,
+        ];
+
+        return view('admin.laporan.jurnal-pemasukan', compact(
+            'jurnals',
+            'summary',
+            'danaFilter',
+            'tanggalDari',
+            'tanggalSampai',
+            'search'
+        ));
+    }
+
+    /**
+     * Jurnal Pengeluaran: Buku Jurnal Khusus Pengeluaran Kas/Bank (Penyaluran & Beban Amil) PSAK 109.
+     */
+    public function jurnalPengeluaran(Request $request)
+    {
+        $danaFilter = $request->input('dana');
+        $tipeFilter = $request->input('tipe'); // all, penyaluran, operasional
+        $tanggalDari = $request->input('tanggal_dari');
+        $tanggalSampai = $request->input('tanggal_sampai');
+        $search = trim($request->input('q') ?? '');
+
+        $query = JurnalUmum::pengeluaran()
+            ->with(['detail.coa', 'createdBy'])
+            ->orderByDesc('tanggal')
+            ->orderByDesc('id');
+
+        if ($tanggalDari) {
+            $query->whereDate('tanggal', '>=', $tanggalDari);
+        }
+        if ($tanggalSampai) {
+            $query->whereDate('tanggal', '<=', $tanggalSampai);
+        }
+        if ($danaFilter && $danaFilter !== 'all') {
+            $query->whereHas('detail', function ($q) use ($danaFilter) {
+                $q->where('jenis_dana', $danaFilter);
+            });
+        }
+        if ($tipeFilter && $tipeFilter !== 'all') {
+            if ($tipeFilter === 'penyaluran') {
+                $query->where(function ($q) {
+                    $q->where('sumber_tabel', 'ziswaf_penyaluran')
+                      ->orWhere('deskripsi', 'like', '%penyaluran%')
+                      ->orWhereHas('detail', function ($dq) {
+                          $dq->where('jenis_dana', '!=', 'amil');
+                      });
+                });
+            } elseif ($tipeFilter === 'operasional') {
+                $query->whereIn('sumber_tabel', ['pengeluaran', 'penggajian']);
+            }
+        }
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('no_referensi', 'like', '%' . $search . '%')
+                  ->orWhere('deskripsi', 'like', '%' . $search . '%')
+                  ->orWhere('keterangan', 'like', '%' . $search . '%');
+            });
+        }
+
+        $jurnals = $query->paginate(15)->withQueryString();
+
+        $postingService = app(Psak109PostingService::class);
+        $saldoDana = $postingService->getSaldoDana();
+
+        $allPengeluaranJurnals = (clone $query)->get();
+        $totalPengeluaranKas = 0;
+        $totalPenyaluranZakat = 0;
+        $totalPenyaluranInfak = 0;
+        $totalBebanAmil = 0;
+        $totalPenyaluranWakaf = 0;
+
+        foreach ($allPengeluaranJurnals as $j) {
+            foreach ($j->detail as $d) {
+                $isKasBank = in_array($d->coa?->kode_akun, ['1101', '1102'])
+                    || str_contains($d->coa?->nama_akun ?? '', 'Kas')
+                    || str_contains($d->coa?->nama_akun ?? '', 'Bank');
+
+                if ($isKasBank && (float) $d->credit > 0) {
+                    $totalPengeluaranKas += (float) $d->credit;
+                }
+
+                if (!$isKasBank && (float) $d->debit > 0) {
+                    if ($d->jenis_dana === 'zakat') {
+                        $totalPenyaluranZakat += (float) $d->debit;
+                    } elseif (in_array($d->jenis_dana, ['infak', 'infak_sedekah'])) {
+                        $totalPenyaluranInfak += (float) $d->debit;
+                    } elseif ($d->jenis_dana === 'amil') {
+                        $totalBebanAmil += (float) $d->debit;
+                    } elseif ($d->jenis_dana === 'wakaf') {
+                        $totalPenyaluranWakaf += (float) $d->debit;
+                    }
+                }
+            }
+        }
+
+        $summary = [
+            'total_pengeluaran'       => $totalPengeluaranKas,
+            'total_penyaluran_zakat'  => $totalPenyaluranZakat,
+            'total_penyaluran_infak'  => $totalPenyaluranInfak,
+            'total_beban_amil'        => $totalBebanAmil,
+            'total_penyaluran_wakaf'  => $totalPenyaluranWakaf,
+            'saldo_dana'              => $saldoDana,
+        ];
+
+        return view('admin.laporan.jurnal-pengeluaran', compact(
+            'jurnals',
+            'summary',
+            'danaFilter',
+            'tipeFilter',
+            'tanggalDari',
+            'tanggalSampai',
+            'search'
+        ));
+    }
+
 
     public function arusKas(\Illuminate\Http\Request $request)
     {
