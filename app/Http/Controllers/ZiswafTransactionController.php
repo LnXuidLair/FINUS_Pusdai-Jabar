@@ -98,7 +98,10 @@ class ZiswafTransactionController extends Controller
             'paid_at' => $transaksi->paid_at ?? now(),
         ]);
 
-        return back()->with('success', 'Transaksi berhasil diterima.');
+        // Posting otomatis ke jurnal PSAK 109
+        app(\App\Services\Accounting\Psak109PostingService::class)->postPenerimaan($transaksi);
+
+        return back()->with('success', 'Transaksi berhasil diterima dan dijurnal.');
     }
 
     public function tolak(Request $request, ZiswafPenerimaan $transaksi)
@@ -106,6 +109,12 @@ class ZiswafTransactionController extends Controller
         $validated = $request->validate([
             'catatan_verifikasi' => ['required', 'string', 'max:1000'],
         ]);
+
+        // Balikkan jurnal jika sebelumnya sudah terposting
+        if ($transaksi->jurnal_id) {
+            app(\App\Services\Accounting\Psak109PostingService::class)->reverseJurnal($transaksi->jurnal_id, 'Transaksi ditolak');
+            $transaksi->jurnal_id = null;
+        }
 
         $transaksi->update([
             'status_verifikasi' => 'ditolak',

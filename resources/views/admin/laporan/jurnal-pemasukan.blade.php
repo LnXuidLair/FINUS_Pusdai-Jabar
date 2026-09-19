@@ -1,0 +1,245 @@
+@extends('layouts.app')
+
+@section('title', 'Jurnal Pemasukan PSAK 109')
+@section('hide-page-header', '1')
+
+@php
+    $rupiah = fn ($value) => 'Rp ' . number_format((float) $value, 0, ',', '.');
+    $totalTransaksi = $jurnals->total();
+@endphp
+
+@include('layouts.partials.finus-ui')
+
+@section('content')
+<div class="fr-page">
+    <section class="fr-hero fr-reveal">
+        <div class="fr-hero-main">
+            <span class="fr-hero-icon" aria-hidden="true">
+                <i class="fa-solid fa-arrow-down-long"></i>
+            </span>
+            <div>
+                <h1 class="fr-hero-title">Jurnal Pemasukan (PSAK 109)</h1>
+                <p class="fr-hero-subtitle">
+                    Buku jurnal khusus penerimaan kas & bank ZISWAF dengan sistem 1 rekening operasional dan pencatatan multi-dana.
+                </p>
+            </div>
+        </div>
+
+        <div class="fr-hero-actions">
+            <span class="fr-hero-badge">
+                <i class="fa-solid fa-building-columns"></i>
+                1 Rekening Kas/Bank Terpadu
+            </span>
+            <span class="fr-hero-badge">
+                <i class="fa-solid fa-receipt"></i>
+                {{ number_format($totalTransaksi, 0, ',', '.') }} transaksi
+            </span>
+        </div>
+    </section>
+
+    <!-- Ringkasan Statistik Penerimaan PSAK 109 -->
+    <section class="fr-summary" style="--summary-columns:4">
+        <article class="fr-stat fr-stat-green fr-reveal">
+            <span class="fr-stat-icon"><i class="fa-solid fa-money-bill-wave"></i></span>
+            <span class="fr-stat-copy">
+                <span class="fr-stat-label">Total Kas Masuk</span>
+                <strong class="fr-stat-value">{{ $rupiah($summary['total_pemasukan']) }}</strong>
+                <span class="fr-stat-note">Penerimaan fisik kas/bank</span>
+            </span>
+        </article>
+
+        <article class="fr-stat fr-stat-emerald fr-reveal">
+            <span class="fr-stat-icon"><i class="fa-solid fa-hand-holding-heart"></i></span>
+            <span class="fr-stat-copy">
+                <span class="fr-stat-label">Dana Zakat</span>
+                <strong class="fr-stat-value">{{ $rupiah($summary['total_zakat']) }}</strong>
+                <span class="fr-stat-note">Hak mustahik asnaf</span>
+            </span>
+        </article>
+
+        <article class="fr-stat fr-stat-blue fr-reveal">
+            <span class="fr-stat-icon"><i class="fa-solid fa-box-open"></i></span>
+            <span class="fr-stat-copy">
+                <span class="fr-stat-label">Dana Infak / Sedekah</span>
+                <strong class="fr-stat-value">{{ $rupiah($summary['total_infak']) }}</strong>
+                <span class="fr-stat-note">Kotak tromol, QRIS, donasi</span>
+            </span>
+        </article>
+
+        <article class="fr-stat fr-stat-amber fr-reveal">
+            <span class="fr-stat-icon"><i class="fa-solid fa-users-gear"></i></span>
+            <span class="fr-stat-copy">
+                <span class="fr-stat-label">Alokasi Hak Amil</span>
+                <strong class="fr-stat-value">{{ $rupiah($summary['total_amil']) }}</strong>
+                <span class="fr-stat-note">Hak amil dari zakat/infak</span>
+            </span>
+        </article>
+    </section>
+
+    <!-- Filter Bar (1 Baris) -->
+    <section class="fr-card fr-reveal" style="margin-bottom: 24px; padding: 18px 22px;">
+        <form method="GET" action="{{ url()->current() }}" style="margin: 0;">
+            <div style="display: flex; flex-direction: row; align-items: flex-end; gap: 12px; width: 100%; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px;">
+                <div style="flex: 1.8; min-width: 170px;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap;">
+                        <i class="fa-solid fa-magnifying-glass" style="margin-right: 4px; color: #94a3b8;"></i> Pencarian
+                    </label>
+                    <input type="text" name="q" value="{{ $search }}" placeholder="Cari no. bukti, keterangan..." 
+                        style="width: 100%; height: 42px; padding: 0 14px; font-size: 13px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: #fff; color: #1e293b; outline: none; box-sizing: border-box;">
+                </div>
+
+                <div style="flex: 1.4; min-width: 160px;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap;">
+                        <i class="fa-solid fa-layer-group" style="margin-right: 4px; color: #94a3b8;"></i> Golongan Dana
+                    </label>
+                    <select name="dana" style="width: 100%; height: 42px; padding: 0 12px; font-size: 13px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: #fff; color: #1e293b; outline: none; cursor: pointer; box-sizing: border-box;">
+                        <option value="all" {{ $danaFilter === 'all' || !$danaFilter ? 'selected' : '' }}>Semua Golongan Dana</option>
+                        <option value="zakat" {{ $danaFilter === 'zakat' ? 'selected' : '' }}>Dana Zakat</option>
+                        <option value="infak_sedekah" {{ in_array($danaFilter, ['infak', 'infak_sedekah']) ? 'selected' : '' }}>Dana Infak / Sedekah</option>
+                        <option value="amil" {{ $danaFilter === 'amil' ? 'selected' : '' }}>Dana Amil</option>
+                        <option value="wakaf" {{ $danaFilter === 'wakaf' ? 'selected' : '' }}>Dana Wakaf</option>
+                    </select>
+                </div>
+
+                <div style="flex: 1; min-width: 130px;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap;">
+                        <i class="fa-solid fa-calendar-day" style="margin-right: 4px; color: #94a3b8;"></i> Dari Tanggal
+                    </label>
+                    <input type="date" name="tanggal_dari" value="{{ $tanggalDari }}" 
+                        style="width: 100%; height: 42px; padding: 0 10px; font-size: 13px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: #fff; color: #1e293b; outline: none; box-sizing: border-box;">
+                </div>
+
+                <div style="flex: 1; min-width: 130px;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap;">
+                        <i class="fa-solid fa-calendar-check" style="margin-right: 4px; color: #94a3b8;"></i> Sampai Tanggal
+                    </label>
+                    <input type="date" name="tanggal_sampai" value="{{ $tanggalSampai }}" 
+                        style="width: 100%; height: 42px; padding: 0 10px; font-size: 13px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: #fff; color: #1e293b; outline: none; box-sizing: border-box;">
+                </div>
+
+                <div style="flex: 0 0 auto; display: flex; gap: 8px; align-items: flex-end;">
+                    <button type="submit" 
+                        style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 700; background: #0E5423; color: white; border: none; border-radius: 10px; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 12px rgba(14, 84, 35, .2);">
+                        <i class="fa-solid fa-filter"></i> Filter
+                    </button>
+                    @if($search || $danaFilter || $tanggalDari || $tanggalSampai)
+                        <a href="{{ url()->current() }}" 
+                            style="height: 42px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 600; background: #f1f5f9; color: #475569; border: 1.5px solid #cbd5e1; border-radius: 10px; text-decoration: none; cursor: pointer; white-space: nowrap;">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <!-- Tabel Jurnal Pemasukan -->
+    <section class="fr-card fr-reveal">
+        <header class="fr-card-head">
+            <div class="fr-card-title-row">
+                <span class="fr-card-icon"><i class="fa-solid fa-book"></i></span>
+                <div>
+                    <h2 class="fr-card-title">Daftar Jurnal Penerimaan Kas</h2>
+                    <p class="fr-card-subtitle">
+                        Menampilkan {{ $jurnals->count() }} dari total {{ number_format($totalTransaksi, 0, ',', '.') }} transaksi jurnal masuk
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <div class="fr-table-wrap">
+            <table class="fr-table">
+                <thead>
+                    <tr>
+                        <th style="width:50px">No</th>
+                        <th style="width:140px">Tanggal & Bukti</th>
+                        <th>Keterangan / Transaksi</th>
+                        <th style="width:160px">Golongan Dana</th>
+                        <th style="width:200px">Akun Debit (Kas/Bank)</th>
+                        <th style="width:200px">Akun Kredit (Penerimaan)</th>
+                        <th style="width:130px; text-align:right;">Nominal Kas</th>
+                        <th style="width:130px; text-align:right;">Bagian Amil</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($jurnals as $index => $jurnal)
+                        @php
+                            $debitKas = $jurnal->detail->first(fn($d) => (float)$d->debit > 0 && (in_array($d->coa?->kode_akun, ['1101', '1102']) || str_contains($d->coa?->nama_akun ?? '', 'Kas') || str_contains($d->coa?->nama_akun ?? '', 'Bank')));
+                            $kreditPenerimaan = $jurnal->detail->first(fn($d) => (float)$d->credit > 0 && $d->coa?->header_akun == 4 && !str_contains(strtolower($d->coa?->nama_akun ?? ''), 'bagian amil'));
+                            $alokasiAmil = $jurnal->detail->first(fn($d) => (float)$d->credit > 0 && str_contains(strtolower($d->coa?->nama_akun ?? ''), 'bagian amil'));
+                            $danaItem = $debitKas?->jenis_dana ?? ($jurnal->detail->first()?->jenis_dana ?? 'amil');
+                        @endphp
+                        <tr>
+                            <td>{{ $jurnals->firstItem() + $index }}</td>
+                            <td>
+                                <strong>{{ $jurnal->tanggal ? $jurnal->tanggal->format('d/m/Y') : '-' }}</strong><br>
+                                <span style="font-size: 11px; color: #64748b; font-family: monospace;">{{ $jurnal->no_referensi }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ $jurnal->deskripsi }}</strong>
+                                @if($jurnal->keterangan && $jurnal->keterangan !== $jurnal->deskripsi)
+                                    <div style="font-size: 12px; color: #64748b;">{{ $jurnal->keterangan }}</div>
+                                @endif
+                            </td>
+                            <td>
+                                @if($danaItem === 'zakat')
+                                    <span class="fr-badge" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
+                                        <i class="fa-solid fa-moon"></i> Dana Zakat
+                                    </span>
+                                @elseif(in_array($danaItem, ['infak', 'infak_sedekah']))
+                                    <span class="fr-badge" style="background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
+                                        <i class="fa-solid fa-box-archive"></i> Dana Infak/Sedekah
+                                    </span>
+                                @elseif($danaItem === 'wakaf')
+                                    <span class="fr-badge" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
+                                        <i class="fa-solid fa-landmark"></i> Dana Wakaf (PSAK 112)
+                                    </span>
+                                @else
+                                    <span class="fr-badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
+                                        <i class="fa-solid fa-users"></i> Dana Amil
+                                    </span>
+                                @endif
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #0f172a;">
+                                    {{ $debitKas?->coa?->nama_akun ?? 'Kas / Bank' }}
+                                </span>
+                                <div style="font-size: 11px; color: #64748b;">Kode: {{ $debitKas?->coa?->kode_akun ?? '1102' }}</div>
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #0f172a;">
+                                    {{ $kreditPenerimaan?->coa?->nama_akun ?? 'Penerimaan ZISWAF' }}
+                                </span>
+                                <div style="font-size: 11px; color: #64748b;">Kode: {{ $kreditPenerimaan?->coa?->kode_akun ?? '410x' }}</div>
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: #047857;">
+                                {{ $rupiah($debitKas?->debit ?? 0) }}
+                            </td>
+                            <td style="text-align: right; font-weight: 600; color: #d97706;">
+                                @if($alokasiAmil)
+                                    {{ $rupiah($alokasiAmil->credit) }}
+                                @else
+                                    <span style="color: #94a3b8;">-</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 36px; color: #64748b;">
+                                <i class="fa-solid fa-folder-open" style="font-size: 32px; color: #cbd5e1; margin-bottom: 8px; display: block;"></i>
+                                Belum ada data jurnal pemasukan untuk kriteria yang dipilih.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if($jurnals->hasPages())
+            <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0;">
+                {{ $jurnals->links() }}
+            </div>
+        @endif
+    </section>
+</div>
+@endsection

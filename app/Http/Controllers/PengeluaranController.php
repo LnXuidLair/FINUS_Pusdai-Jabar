@@ -162,6 +162,9 @@ class PengeluaranController extends Controller
             $pengeluaran->status_verifikasi = 'diterima';
 
             $pengeluaran->save();
+
+            // Posting otomatis ke jurnal PSAK 109
+            app(\App\Services\Accounting\Psak109PostingService::class)->postPengeluaran($pengeluaran);
         } catch (\Throwable $exception) {
             if ($path) {
                 Storage::disk('public')->delete($path);
@@ -172,7 +175,7 @@ class PengeluaranController extends Controller
 
         return redirect()
             ->route($this->indexRoute($request))
-            ->with('success', 'Data pengeluaran berhasil ditambahkan.');
+            ->with('success', 'Data pengeluaran berhasil ditambahkan dan dijurnal.');
     }
 
     public function destroy($id)
@@ -191,6 +194,10 @@ class PengeluaranController extends Controller
 
         $pengeluaran = Pengeluaran::findOrFail($id);
         $buktiPembayaran = $pengeluaran->bukti_pembayaran;
+
+        if ($pengeluaran->jurnal_id) {
+            app(\App\Services\Accounting\Psak109PostingService::class)->reverseJurnal($pengeluaran->jurnal_id, 'Pengeluaran dihapus');
+        }
 
         $pengeluaran->delete();
 

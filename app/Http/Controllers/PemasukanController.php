@@ -201,7 +201,7 @@ class PemasukanController extends Controller
             $keterangan = $validated['keterangan'] ?? null;
         }
 
-        ZiswafPenerimaan::create([
+        $pemasukan = ZiswafPenerimaan::create([
             'jenis_ziswaf'      => $validated['jenis_ziswaf'],
             'nominal'           => (int) $validated['nominal'],
             'tanggal'           => $validated['tanggal'],
@@ -215,9 +215,12 @@ class PemasukanController extends Controller
             'payment_status'    => 'manual_paid',
         ]);
 
+        // Posting otomatis ke jurnal PSAK 109
+        app(\App\Services\Accounting\Psak109PostingService::class)->postPenerimaan($pemasukan);
+
         return redirect()
             ->route($this->indexRoute($request))
-            ->with('success', 'Pemasukan berhasil ditambahkan.');
+            ->with('success', 'Pemasukan berhasil ditambahkan dan dijurnal.');
     }
 
     /**
@@ -238,13 +241,21 @@ class PemasukanController extends Controller
                 'paid_at'            => $pemasukan->paid_at ?? now(),
             ]);
 
-            return back()->with('success', 'Pemasukan berhasil diterima.');
+            // Posting otomatis ke jurnal PSAK 109
+            app(\App\Services\Accounting\Psak109PostingService::class)->postPenerimaan($pemasukan);
+
+            return back()->with('success', 'Pemasukan berhasil diterima dan dijurnal.');
         }
 
         if ($action === 'tolak') {
             $request->validate([
                 'catatan_verifikasi' => ['required', 'string', 'max:1000'],
             ]);
+
+            if ($pemasukan->jurnal_id) {
+                app(\App\Services\Accounting\Psak109PostingService::class)->reverseJurnal($pemasukan->jurnal_id, 'Verifikasi ditolak');
+                $pemasukan->jurnal_id = null;
+            }
 
             $pemasukan->update([
                 'status_verifikasi'  => 'ditolak',
@@ -272,6 +283,10 @@ class PemasukanController extends Controller
 
         if ($pemasukan->bukti_pembayaran) {
             Storage::disk('public')->delete($pemasukan->bukti_pembayaran);
+        }
+
+        if ($pemasukan->jurnal_id) {
+            app(\App\Services\Accounting\Psak109PostingService::class)->reverseJurnal($pemasukan->jurnal_id, 'Pemasukan dihapus');
         }
 
         $pemasukan->delete();

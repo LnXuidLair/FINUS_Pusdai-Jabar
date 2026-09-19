@@ -1146,6 +1146,15 @@ html[data-finus-theme="dark"] {
                 </li>
                 <li>
                     <a
+                        href="{{ route('admin.parkir.index') }}"
+                        class="{{ request()->routeIs('admin.parkir.*') ? 'active' : '' }}"
+                    >
+                        <i class="fa-solid fa-square-parking"></i>
+                        <span>Parkir QRIS</span>
+                    </a>
+                </li>
+                <li>
+                    <a
                         href="{{ route('admin.pengeluaran.index') }}"
                         class="{{ request()->routeIs('admin.pengeluaran.*') ? 'active' : '' }}"
                     >
@@ -1180,6 +1189,22 @@ html[data-finus-theme="dark"] {
                         class="{{ request()->routeIs('admin.laporan.jurnal-umum') ? 'active' : '' }}">
                         <i class="fa-solid fa-book-open"></i>
                         <span>Jurnal Umum</span>
+                    </a>
+                </li>
+                <li>
+                    <a
+                        href="{{ route('admin.laporan.jurnal-pemasukan') }}"
+                        class="{{ request()->routeIs('admin.laporan.jurnal-pemasukan') ? 'active' : '' }}">
+                        <i class="fa-solid fa-arrow-down-long"></i>
+                        <span>Jurnal Pemasukan</span>
+                    </a>
+                </li>
+                <li>
+                    <a
+                        href="{{ route('admin.laporan.jurnal-pengeluaran') }}"
+                        class="{{ request()->routeIs('admin.laporan.jurnal-pengeluaran') ? 'active' : '' }}">
+                        <i class="fa-solid fa-arrow-up-long"></i>
+                        <span>Jurnal Pengeluaran</span>
                     </a>
                 </li>
                 <li>
