@@ -186,6 +186,7 @@
                             $kreditKas = $jurnal->detail->first(fn($d) => (float)$d->credit > 0 && (in_array($d->coa?->kode_akun, ['1101', '1102']) || str_contains($d->coa?->nama_akun ?? '', 'Kas') || str_contains($d->coa?->nama_akun ?? '', 'Bank')));
                             $debitBeban = $jurnal->detail->first(fn($d) => (float)$d->debit > 0 && ($d->coa?->header_akun == 5 || $d->coa?->header_akun == 6));
                             $danaItem = $debitBeban?->jenis_dana ?? ($jurnal->detail->first()?->jenis_dana ?? 'amil');
+                            $rincianAsnaf = $jurnal->detail->filter(fn($d) => (float)$d->debit > 0 && !empty($d->asnaf) && $d->asnaf !== 'amil');
                         @endphp
                         <tr>
                             <td>{{ $jurnals->firstItem() + $index }}</td>
@@ -197,6 +198,16 @@
                                 <strong>{{ $jurnal->deskripsi }}</strong>
                                 @if($jurnal->keterangan && $jurnal->keterangan !== $jurnal->deskripsi)
                                     <div style="font-size: 12px; color: #64748b;">{{ $jurnal->keterangan }}</div>
+                                @endif
+                                @if($rincianAsnaf->isNotEmpty())
+                                    <div style="display:grid;gap:3px;margin-top:6px;">
+                                        @foreach($rincianAsnaf as $rincian)
+                                            <span style="font-size:11px;color:#166534;">
+                                                <i class="fa-solid fa-user-group"></i>
+                                                {{ $rincian->deskripsi }} - {{ $rupiah($rincian->debit) }}
+                                            </span>
+                                        @endforeach
+                                    </div>
                                 @endif
                                 @if($danaItem === 'wakaf')
                                     @php

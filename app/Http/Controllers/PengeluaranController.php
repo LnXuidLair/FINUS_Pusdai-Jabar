@@ -3,10 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Coa;
+use App\Models\KebijakanMustahik;
 use App\Models\Pengeluaran;
 use App\Models\Penggajian;
+use App\Services\Accounting\Psak109PostingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PengeluaranController extends Controller
 {
@@ -18,6 +23,7 @@ class PengeluaranController extends Controller
          * dikecualikan agar tidak tampil dua kali dengan data penggajian.
          */
         $pengeluaranManual = Pengeluaran::query()
+            ->with('zakatPenyaluran')
             ->whereNull('id_penggajian')
             ->whereNull('referensi_penggajian_id')
             ->where(function ($query): void {
@@ -47,12 +53,12 @@ class PengeluaranController extends Controller
             ->get()
             ->map(function (Penggajian $gaji): object {
                 return (object) [
-                    'id' => 'gaji_' . $gaji->id,
-                    'kategori' => 'Biaya Honorarium',
+                    'id' => 'gaji_'.$gaji->id,
+                    'kategori' => 'Beban Gaji dan Honorarium',
                     'deskripsi' => 'Gaji '
-                        . ($gaji->pegawai?->nama_pegawai ?? 'Pegawai')
-                        . ' periode '
-                        . $gaji->periode,
+                        .($gaji->pegawai?->nama_pegawai ?? 'Pegawai')
+                        .' periode '
+                        .$gaji->periode,
                     'jumlah' => (int) $gaji->total_gaji,
                     'tanggal' => $gaji->tanggal,
                     'bukti_pembayaran' => $gaji->bukti_pembayaran,
@@ -69,7 +75,7 @@ class PengeluaranController extends Controller
                 $tanggal = (string) ($item->tanggal ?? '');
                 $createdAt = (string) ($item->created_at ?? '');
 
-                return $tanggal . ' ' . $createdAt;
+                return $tanggal.' '.$createdAt;
             })
             ->values();
 
@@ -78,37 +84,29 @@ class PengeluaranController extends Controller
 
     public function create()
     {
-        // Ambil akun beban COA, kecualikan 5104 (Biaya Honorarium) karena otomatis dari Penggajian
-        $coaBeban = Coa::where('header_akun', 5)
-            ->where('kode_akun', '!=', '5104')
-            ->where('nama_akun', '!=', 'Biaya Honorarium')
+        $coaBeban = Coa::pengeluaranManual()
             ->orderBy('kode_akun')
             ->get();
 
-        // Fallback jika data akun COA beban di database belum tersedia
-        if ($coaBeban->isEmpty()) {
-            $fallback = [
-                ['kode_akun' => '5101', 'nama_akun' => 'Biaya Bidang Idaroh'],
-                ['kode_akun' => '5102', 'nama_akun' => 'Biaya Bidang Imaroh'],
-                ['kode_akun' => '5103', 'nama_akun' => 'Biaya Bidang Riayah'],
-                ['kode_akun' => '5105', 'nama_akun' => 'Biaya Konsumsi'],
-                ['kode_akun' => '5106', 'nama_akun' => 'Biaya Administrasi Bank'],
-                ['kode_akun' => '5107', 'nama_akun' => 'Biaya Pemeliharaan'],
-                ['kode_akun' => '5108', 'nama_akun' => 'Biaya Kebersihan'],
-                ['kode_akun' => '5109', 'nama_akun' => 'Biaya Kegiatan'],
-                ['kode_akun' => '5110', 'nama_akun' => 'Biaya Pengadaan'],
-                ['kode_akun' => '5111', 'nama_akun' => 'Penyaluran ZISWAF'],
-            ];
-            $coaBeban = collect($fallback)->map(fn($item) => (object)$item);
-        }
+        $coaBebanGrouped = $coaBeban->groupBy('kelompok_pengeluaran');
+        $kelompokPengeluaran = config('coa.expense_groups', []);
+        $asnafLabels = collect(KebijakanMustahik::ASNAF)->except('amil')->all();
 
-        return view('pengeluaran.create', compact('coaBeban'));
+        return view('pengeluaran.create', compact('coaBebanGrouped', 'kelompokPengeluaran', 'asnafLabels'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'kategori' => ['required', 'string', 'max:255'],
+            'coa_debit_id' => [
+                'required',
+                'integer',
+                Rule::exists('coa', 'id')->where(function ($query): void {
+                    $query
+                        ->where('header_akun', 5)
+                        ->whereIn('kode_akun', $this->manualExpenseCodes());
+                }),
+            ],
             'deskripsi' => ['required', 'string', 'max:255'],
             'jumlah' => ['required', 'integer', 'min:1'],
             'tanggal' => ['required', 'date'],
@@ -118,7 +116,35 @@ class PengeluaranController extends Controller
                 'mimes:jpeg,jpg,png,pdf',
                 'max:2048',
             ],
+            'zakat_details' => ['nullable', 'array', 'max:7'],
+            'zakat_details.*.asnaf' => ['nullable', 'string'],
+            'zakat_details.*.jumlah_penerima' => ['nullable', 'integer'],
+            'zakat_details.*.nominal' => ['nullable', 'integer'],
         ]);
+
+        $coaDebit = Coa::pengeluaranManual()->findOrFail($validated['coa_debit_id']);
+        $zakatDetails = [];
+
+        if ($coaDebit->kode_akun === '5210') {
+            $zakatValidated = $request->validate([
+                'zakat_details' => ['required', 'array', 'min:1', 'max:7'],
+                'zakat_details.*.asnaf' => [
+                    'required',
+                    'string',
+                    'distinct',
+                    Rule::in(array_keys(collect(KebijakanMustahik::ASNAF)->except('amil')->all())),
+                ],
+                'zakat_details.*.jumlah_penerima' => ['required', 'integer', 'min:1'],
+                'zakat_details.*.nominal' => ['required', 'integer', 'min:1'],
+            ]);
+            $zakatDetails = $zakatValidated['zakat_details'];
+
+            if ((int) collect($zakatDetails)->sum('nominal') !== (int) $validated['jumlah']) {
+                throw ValidationException::withMessages([
+                    'zakat_details' => 'Total nominal per golongan harus sama dengan jumlah pengeluaran.',
+                ]);
+            }
+        }
 
         $path = null;
 
@@ -129,42 +155,43 @@ class PengeluaranController extends Controller
         }
 
         try {
-            $pengeluaran = new Pengeluaran();
-            $pengeluaran->kategori = $validated['kategori'];
-            $pengeluaran->deskripsi = $validated['deskripsi'];
-            $pengeluaran->jumlah = (int) $validated['jumlah'];
-            $pengeluaran->tanggal = $validated['tanggal'];
-            $pengeluaran->bukti_pembayaran = $path;
-
-            // Sambungkan otomatis ke akun COA debit jika ditemukan
-            $coaDebit = Coa::where('nama_akun', $validated['kategori'])
-                ->orWhere('kode_akun', explode(' - ', $validated['kategori'])[0])
-                ->first();
-            if ($coaDebit) {
+            DB::transaction(function () use ($coaDebit, $path, $validated, $zakatDetails): void {
+                $pengeluaran = new Pengeluaran;
+                $pengeluaran->kategori = $coaDebit->nama_akun;
+                $pengeluaran->deskripsi = $validated['deskripsi'];
+                $pengeluaran->jumlah = (int) $validated['jumlah'];
+                $pengeluaran->tanggal = $validated['tanggal'];
+                $pengeluaran->bukti_pembayaran = $path;
                 $pengeluaran->coa_debit_id = $coaDebit->id;
-            }
 
-            // Default coa_kredit_id ke Kas (1101) jika ada
-            $coaKas = Coa::where('kode_akun', '1101')->first();
-            if ($coaKas) {
-                $pengeluaran->coa_kredit_id = $coaKas->id;
-            }
+                $coaKas = Coa::where('kode_akun', '1101')->first();
+                if ($coaKas) {
+                    $pengeluaran->coa_kredit_id = $coaKas->id;
+                }
 
-            /*
-             * Pengeluaran yang dimasukkan langsung oleh admin adalah
-             * pengeluaran operasional yang sudah sah/diterima.
-             * Field lama dan field keuangan baru diisi bersamaan agar
-             * seluruh laporan membaca nominal yang sama.
-             */
-            $pengeluaran->jenis = 'operasional';
-            $pengeluaran->nominal = (int) $validated['jumlah'];
-            $pengeluaran->keterangan = $validated['deskripsi'];
-            $pengeluaran->status_verifikasi = 'diterima';
+                $pengeluaran->jenis = 'operasional';
+                $pengeluaran->nominal = (int) $validated['jumlah'];
+                $pengeluaran->keterangan = $validated['deskripsi'];
+                $pengeluaran->status_verifikasi = 'diterima';
+                $pengeluaran->save();
 
-            $pengeluaran->save();
+                foreach ($zakatDetails as $detail) {
+                    $label = KebijakanMustahik::ASNAF[$detail['asnaf']];
+                    $pengeluaran->zakatPenyaluran()->create([
+                        'tanggal' => $validated['tanggal'],
+                        'kategori_program' => 'Penyaluran Zakat - '.$label,
+                        'penerima_manfaat' => $detail['jumlah_penerima'].' orang',
+                        'jumlah_penerima' => $detail['jumlah_penerima'],
+                        'nominal' => $detail['nominal'],
+                        'jenis_ziswaf_asal' => 'zakat',
+                        'bukti_penyaluran' => $path,
+                        'keterangan' => $validated['deskripsi'],
+                        'asnaf' => $detail['asnaf'],
+                    ]);
+                }
 
-            // Posting otomatis ke jurnal PSAK 109
-            app(\App\Services\Accounting\Psak109PostingService::class)->postPengeluaran($pengeluaran);
+                app(Psak109PostingService::class)->postPengeluaran($pengeluaran);
+            });
         } catch (\Throwable $exception) {
             if ($path) {
                 Storage::disk('public')->delete($path);
@@ -196,9 +223,10 @@ class PengeluaranController extends Controller
         $buktiPembayaran = $pengeluaran->bukti_pembayaran;
 
         if ($pengeluaran->jurnal_id) {
-            app(\App\Services\Accounting\Psak109PostingService::class)->reverseJurnal($pengeluaran->jurnal_id, 'Pengeluaran dihapus');
+            app(Psak109PostingService::class)->reverseJurnal($pengeluaran->jurnal_id, 'Pengeluaran dihapus');
         }
 
+        $pengeluaran->zakatPenyaluran()->delete();
         $pengeluaran->delete();
 
         if ($buktiPembayaran) {
@@ -215,5 +243,13 @@ class PengeluaranController extends Controller
         return $request->routeIs('pegawai.keuangan.*')
             ? 'pegawai.keuangan.pengeluaran.index'
             : 'admin.pengeluaran.index';
+    }
+
+    private function manualExpenseCodes(): array
+    {
+        return collect(config('coa.manual_expense_accounts', []))
+            ->flatMap(fn (array $accounts) => array_keys($accounts))
+            ->values()
+            ->all();
     }
 }

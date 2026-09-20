@@ -208,7 +208,7 @@
                     <i class="fa-solid fa-circle-info" style="color:#3b82f6;font-size:16px;flex-shrink:0;"></i>
                     <div style="font-size:12px;color:#1e40af;line-height:1.5;">
                         <strong>Alur QRIS:</strong> Pembayar scan QR statis loket → bayar → petugas klik <strong>Lunas</strong> →
-                        dana <strong>otomatis masuk ke Pemasukan & Jurnal PSAK 109</strong> sebagai "Infaq Parkir & Kegiatan" (COA 4103).
+                        dana <strong>otomatis masuk ke Pemasukan dan Jurnal Umum</strong> sebagai "Penerimaan Parkir dan Kegiatan" (COA 4103).
                     </div>
                 </div>
             </div>

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Coa;
-use App\Models\JurnalDetail;
 use App\Models\JurnalUmum;
 use App\Models\Pengeluaran;
 use App\Models\Penggajian;
@@ -12,6 +11,7 @@ use App\Services\Accounting\Psak109PostingService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LaporanController extends Controller
 {
@@ -30,33 +30,33 @@ class LaporanController extends Controller
         if ($jurnalUmumList->isNotEmpty()) {
             foreach ($jurnalUmumList as $ju) {
                 $tanggal = $ju->tanggal ? Carbon::parse($ju->tanggal)->format('Y-m-d') : '-';
-                $deskripsi = $ju->deskripsi ?: ($ju->keterangan ?: 'Transaksi ' . $ju->no_referensi);
+                $deskripsi = $ju->deskripsi ?: ($ju->keterangan ?: 'Transaksi '.$ju->no_referensi);
 
                 foreach ($ju->detail as $detail) {
-                    $namaAkun = $detail->coa?->nama_akun ?? 'Akun ' . $detail->coa_id;
+                    $namaAkun = $detail->coa?->nama_akun ?? 'Akun '.$detail->coa_id;
                     $debit = (float) $detail->debit;
                     $credit = (float) $detail->credit;
 
                     if ($debit > 0) {
                         $jurnals->push((object) [
-                            'tanggal'    => $tanggal,
-                            'tipe'       => 'debit',
-                            'jumlah'     => $debit,
-                            'akun'       => $namaAkun,
+                            'tanggal' => $tanggal,
+                            'tipe' => 'debit',
+                            'jumlah' => $debit,
+                            'akun' => $namaAkun,
                             'keterangan' => $deskripsi,
-                            'referensi'  => $ju->no_referensi,
+                            'referensi' => $ju->no_referensi,
                             'jenis_dana' => $detail->jenis_dana,
                         ]);
                     }
 
                     if ($credit > 0) {
                         $jurnals->push((object) [
-                            'tanggal'    => $tanggal,
-                            'tipe'       => 'kredit',
-                            'jumlah'     => $credit,
-                            'akun'       => $namaAkun,
+                            'tanggal' => $tanggal,
+                            'tipe' => 'kredit',
+                            'jumlah' => $credit,
+                            'akun' => $namaAkun,
                             'keterangan' => $deskripsi,
-                            'referensi'  => $ju->no_referensi,
+                            'referensi' => $ju->no_referensi,
                             'jenis_dana' => $detail->jenis_dana,
                         ]);
                     }
@@ -94,14 +94,16 @@ class LaporanController extends Controller
 
             foreach ($penerimaan as $item) {
                 $jumlah = (int) $item->nominal;
-                if ($jumlah <= 0) continue;
+                if ($jumlah <= 0) {
+                    continue;
+                }
 
                 $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
                 $namaJamaah = $item->muzakki?->name ?? 'Jamaah';
                 $jenisZiswaf = $this->labelJenisZiswaf($item->jenis_ziswaf);
                 $akunKas = $this->akunKasBerdasarkanMetode($item->metode_pembayaran);
-                $akunPenerimaan = $item->coa?->nama_akun ?? 'Penerimaan ' . $jenisZiswaf;
-                $keterangan = 'Penerimaan ' . $jenisZiswaf . ' dari ' . $namaJamaah;
+                $akunPenerimaan = $item->coa?->nama_akun ?? 'Penerimaan '.$jenisZiswaf;
+                $keterangan = 'Penerimaan '.$jenisZiswaf.' dari '.$namaJamaah;
 
                 $jurnals->push((object) [
                     'tanggal' => $tanggal,
@@ -109,7 +111,7 @@ class LaporanController extends Controller
                     'jumlah' => $jumlah,
                     'akun' => $akunKas,
                     'keterangan' => $keterangan,
-                    'referensi' => 'ZISWAF-' . $item->id,
+                    'referensi' => 'ZISWAF-'.$item->id,
                 ]);
 
                 $jurnals->push((object) [
@@ -118,13 +120,15 @@ class LaporanController extends Controller
                     'jumlah' => $jumlah,
                     'akun' => $akunPenerimaan,
                     'keterangan' => $keterangan,
-                    'referensi' => 'ZISWAF-' . $item->id,
+                    'referensi' => 'ZISWAF-'.$item->id,
                 ]);
             }
 
             foreach ($pengeluaran as $item) {
                 $jumlah = $this->nilaiPengeluaran($item);
-                if ($jumlah <= 0) continue;
+                if ($jumlah <= 0) {
+                    continue;
+                }
 
                 $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
                 $keterangan = $this->keteranganPengeluaran($item);
@@ -137,7 +141,7 @@ class LaporanController extends Controller
                     'jumlah' => $jumlah,
                     'akun' => $akunDebit,
                     'keterangan' => $keterangan,
-                    'referensi' => 'PGL-' . $item->id,
+                    'referensi' => 'PGL-'.$item->id,
                 ]);
 
                 $jurnals->push((object) [
@@ -146,17 +150,19 @@ class LaporanController extends Controller
                     'jumlah' => $jumlah,
                     'akun' => $akunKredit,
                     'keterangan' => $keterangan,
-                    'referensi' => 'PGL-' . $item->id,
+                    'referensi' => 'PGL-'.$item->id,
                 ]);
             }
 
             foreach ($penggajian as $item) {
                 $jumlah = (int) $item->total_gaji;
-                if ($jumlah <= 0 || empty($item->tanggal)) continue;
+                if ($jumlah <= 0 || empty($item->tanggal)) {
+                    continue;
+                }
 
                 $tanggal = Carbon::parse($item->tanggal)->format('Y-m-d');
                 $namaPegawai = $item->pegawai?->nama_pegawai ?? 'Pegawai';
-                $keterangan = 'Pembayaran gaji ' . $namaPegawai . ' periode ' . $item->periode;
+                $keterangan = 'Pembayaran gaji '.$namaPegawai.' periode '.$item->periode;
 
                 $jurnals->push((object) [
                     'tanggal' => $tanggal,
@@ -164,7 +170,7 @@ class LaporanController extends Controller
                     'jumlah' => $jumlah,
                     'akun' => 'Beban Gaji',
                     'keterangan' => $keterangan,
-                    'referensi' => 'GAJI-' . $item->id,
+                    'referensi' => 'GAJI-'.$item->id,
                 ]);
 
                 $jurnals->push((object) [
@@ -173,7 +179,7 @@ class LaporanController extends Controller
                     'jumlah' => $jumlah,
                     'akun' => 'Kas',
                     'keterangan' => $keterangan,
-                    'referensi' => 'GAJI-' . $item->id,
+                    'referensi' => 'GAJI-'.$item->id,
                 ]);
             }
         }
@@ -209,9 +215,9 @@ class LaporanController extends Controller
         }
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
-                $q->where('no_referensi', 'like', '%' . $search . '%')
-                  ->orWhere('deskripsi', 'like', '%' . $search . '%')
-                  ->orWhere('keterangan', 'like', '%' . $search . '%');
+                $q->where('no_referensi', 'like', '%'.$search.'%')
+                    ->orWhere('deskripsi', 'like', '%'.$search.'%')
+                    ->orWhere('keterangan', 'like', '%'.$search.'%');
             });
         }
 
@@ -253,10 +259,10 @@ class LaporanController extends Controller
 
         $summary = [
             'total_pemasukan' => $totalPemasukanKas,
-            'total_zakat'     => $totalZakat,
-            'total_infak'     => $totalInfak,
-            'total_amil'      => $totalAlokasiAmil,
-            'saldo_dana'      => $saldoDana,
+            'total_zakat' => $totalZakat,
+            'total_infak' => $totalInfak,
+            'total_amil' => $totalAlokasiAmil,
+            'saldo_dana' => $saldoDana,
         ];
 
         return view('admin.laporan.jurnal-pemasukan', compact(
@@ -300,10 +306,10 @@ class LaporanController extends Controller
             if ($tipeFilter === 'penyaluran') {
                 $query->where(function ($q) {
                     $q->where('sumber_tabel', 'ziswaf_penyaluran')
-                      ->orWhere('deskripsi', 'like', '%penyaluran%')
-                      ->orWhereHas('detail', function ($dq) {
-                          $dq->where('jenis_dana', '!=', 'amil');
-                      });
+                        ->orWhere('deskripsi', 'like', '%penyaluran%')
+                        ->orWhereHas('detail', function ($dq) {
+                            $dq->where('jenis_dana', '!=', 'amil');
+                        });
                 });
             } elseif ($tipeFilter === 'operasional') {
                 $query->whereIn('sumber_tabel', ['pengeluaran', 'penggajian']);
@@ -311,9 +317,9 @@ class LaporanController extends Controller
         }
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
-                $q->where('no_referensi', 'like', '%' . $search . '%')
-                  ->orWhere('deskripsi', 'like', '%' . $search . '%')
-                  ->orWhere('keterangan', 'like', '%' . $search . '%');
+                $q->where('no_referensi', 'like', '%'.$search.'%')
+                    ->orWhere('deskripsi', 'like', '%'.$search.'%')
+                    ->orWhere('keterangan', 'like', '%'.$search.'%');
             });
         }
 
@@ -339,7 +345,7 @@ class LaporanController extends Controller
                     $totalPengeluaranKas += (float) $d->credit;
                 }
 
-                if (!$isKasBank && (float) $d->debit > 0) {
+                if (! $isKasBank && (float) $d->debit > 0) {
                     if ($d->jenis_dana === 'zakat') {
                         $totalPenyaluranZakat += (float) $d->debit;
                     } elseif (in_array($d->jenis_dana, ['infak', 'infak_sedekah'])) {
@@ -354,12 +360,12 @@ class LaporanController extends Controller
         }
 
         $summary = [
-            'total_pengeluaran'       => $totalPengeluaranKas,
-            'total_penyaluran_zakat'  => $totalPenyaluranZakat,
-            'total_penyaluran_infak'  => $totalPenyaluranInfak,
-            'total_beban_amil'        => $totalBebanAmil,
-            'total_penyaluran_wakaf'  => $totalPenyaluranWakaf,
-            'saldo_dana'              => $saldoDana,
+            'total_pengeluaran' => $totalPengeluaranKas,
+            'total_penyaluran_zakat' => $totalPenyaluranZakat,
+            'total_penyaluran_infak' => $totalPenyaluranInfak,
+            'total_beban_amil' => $totalBebanAmil,
+            'total_penyaluran_wakaf' => $totalPenyaluranWakaf,
+            'saldo_dana' => $saldoDana,
         ];
 
         return view('admin.laporan.jurnal-pengeluaran', compact(
@@ -373,8 +379,7 @@ class LaporanController extends Controller
         ));
     }
 
-
-    public function arusKas(\Illuminate\Http\Request $request)
+    public function arusKas(Request $request)
     {
         $periode = $request->input('periode', 'bulanan'); // 'bulanan', 'tahunan', 'semua'
         $tahun = (int) $request->input('tahun', now()->year);
@@ -387,6 +392,7 @@ class LaporanController extends Controller
             } elseif ($periode === 'tahunan') {
                 $query->whereYear($column, $tahun);
             }
+
             return $query;
         };
 
@@ -406,11 +412,11 @@ class LaporanController extends Controller
 
         // 1. RINCIAN PENERIMAAN PER KELOMPOK / GOLONGAN ZISWAF
         $golonganZiswaf = [
-            'zakat_maal'        => 'Zakat Maal',
+            'zakat_maal' => 'Zakat Maal',
             'zakat_penghasilan' => 'Zakat Penghasilan',
-            'infaq'             => 'Infak',
-            'wakaf'             => 'Wakaf',
-            'parkir'            => 'Parkir',
+            'infaq' => 'Infak',
+            'wakaf' => 'Wakaf',
+            'parkir' => 'Parkir',
         ];
 
         $detailPemasukan = [];
@@ -429,11 +435,11 @@ class LaporanController extends Controller
             $items = (clone $q)->with('muzakki')->orderByDesc('tanggal')->get();
 
             $detailPemasukan[] = (object) [
-                'kode'       => $key,
-                'label'      => $label,
-                'transaksi'  => $count,
-                'nominal'    => $nominal,
-                'items'      => $items,
+                'kode' => $key,
+                'label' => $label,
+                'transaksi' => $count,
+                'nominal' => $nominal,
+                'items' => $items,
             ];
 
             $totalPemasukan += $nominal;
@@ -448,42 +454,40 @@ class LaporanController extends Controller
         if ($otherPenerimaan->isNotEmpty()) {
             $otherNominal = (int) $otherPenerimaan->sum('nominal');
             $detailPemasukan[] = (object) [
-                'kode'       => 'lainnya_khusus',
-                'label'      => 'Penerimaan Lainnya',
-                'transaksi'  => $otherPenerimaan->count(),
-                'nominal'    => $otherNominal,
-                'items'      => $otherPenerimaan,
+                'kode' => 'lainnya_khusus',
+                'label' => 'Penerimaan Lainnya',
+                'transaksi' => $otherPenerimaan->count(),
+                'nominal' => $otherNominal,
+                'items' => $otherPenerimaan,
             ];
             $totalPemasukan += $otherNominal;
         }
 
-        // 2. RINCIAN PENGELUARAN PER KELOMPOK BEBAN
-        $coaBebanMaster = Coa::where('header_akun', 5)->orderBy('kode_akun')->get();
-        if ($coaBebanMaster->isEmpty()) {
-            $coaFallback = [
-                ['kode_akun' => '5101', 'nama_akun' => 'Biaya Bidang Idaroh'],
-                ['kode_akun' => '5102', 'nama_akun' => 'Biaya Bidang Imaroh'],
-                ['kode_akun' => '5103', 'nama_akun' => 'Biaya Bidang Riayah'],
-                ['kode_akun' => '5104', 'nama_akun' => 'Biaya Honorarium'],
-                ['kode_akun' => '5105', 'nama_akun' => 'Biaya Konsumsi'],
-                ['kode_akun' => '5106', 'nama_akun' => 'Biaya Administrasi Bank'],
-                ['kode_akun' => '5107', 'nama_akun' => 'Biaya Pemeliharaan'],
-                ['kode_akun' => '5108', 'nama_akun' => 'Biaya Kebersihan'],
-                ['kode_akun' => '5109', 'nama_akun' => 'Biaya Kegiatan'],
-                ['kode_akun' => '5110', 'nama_akun' => 'Biaya Pengadaan'],
-                ['kode_akun' => '5111', 'nama_akun' => 'Penyaluran ZISWAF'],
-            ];
-            $coaBebanMaster = collect($coaFallback)->map(fn($item) => (object)$item);
-        }
+        // Rincian arus kas hanya memuat akun yang dapat dipakai untuk
+        // pengeluaran manual dan akun gaji. Akun alokasi antar-dana tidak
+        // dicampurkan dengan pengeluaran kas.
+        $kodePengeluaran = collect(config('coa.manual_expense_accounts', []))
+            ->flatMap(fn (array $accounts) => array_keys($accounts))
+            ->push('5104')
+            ->unique()
+            ->values();
+
+        $coaBebanMaster = Coa::whereIn('kode_akun', $kodePengeluaran)
+            ->orderBy('kode_akun')
+            ->get();
 
         // Ambil data pengeluaran operasional per kategori
-        $pengeluaranGrouped = (clone $queryPengeluaran)
+        $pengeluaranItems = (clone $queryPengeluaran)
             ->with(['coaDebit', 'coaKredit'])
             ->orderByDesc('tanggal')
-            ->get()
-            ->groupBy(function ($item) {
-                return $item->kategori ?: 'Biaya Operasional Lain';
-            });
+            ->get();
+
+        $pengeluaranByCoa = $pengeluaranItems
+            ->filter(fn ($item) => ! empty($item->coa_debit_id))
+            ->groupBy('coa_debit_id');
+        $pengeluaranByName = $pengeluaranItems
+            ->filter(fn ($item) => empty($item->coa_debit_id))
+            ->groupBy(fn ($item) => $item->kategori ?: 'Beban Operasional Lain-lain');
 
         $gajiItems = (clone $queryPenggajian)->with('pegawai')->orderByDesc('tanggal')->get();
         $totalGaji = (int) $gajiItems->sum('total_gaji');
@@ -495,12 +499,13 @@ class LaporanController extends Controller
             $kodeAkun = $coa->kode_akun;
 
             if ($kodeAkun === '5104' || str_contains(strtolower($namaAkun), 'honorarium')) {
-                // Biaya Honorarium bersumber dari Penggajian
+                // Beban gaji dan honorarium bersumber dari Penggajian.
                 $count = $gajiItems->count();
                 $nominal = $totalGaji;
                 $items = $gajiItems;
             } else {
-                $items = $pengeluaranGrouped->get($namaAkun, collect());
+                $items = $pengeluaranByCoa->get($coa->id, collect())
+                    ->concat($pengeluaranByName->get($namaAkun, collect()));
                 $count = $items->count();
                 $nominal = (int) $items->sum(function ($item) {
                     return (int) ($item->nominal ?: $item->jumlah);
@@ -509,11 +514,11 @@ class LaporanController extends Controller
             }
 
             $detailPengeluaran[] = (object) [
-                'kode_akun'  => $kodeAkun,
-                'nama_akun'  => $namaAkun,
-                'transaksi'  => $count,
-                'nominal'    => $nominal,
-                'items'      => $items,
+                'kode_akun' => $kodeAkun,
+                'nama_akun' => $namaAkun,
+                'transaksi' => $count,
+                'nominal' => $nominal,
+                'items' => $items,
             ];
         }
 
@@ -522,14 +527,14 @@ class LaporanController extends Controller
 
         // Pilihan daftar tahun untuk filter
         $tahunSekarang = now()->year;
-        $tahunAwal = ZiswafPenerimaan::min(\Illuminate\Support\Facades\DB::raw('YEAR(tanggal)')) ?: ($tahunSekarang - 2);
+        $tahunAwal = ZiswafPenerimaan::min(DB::raw('YEAR(tanggal)')) ?: ($tahunSekarang - 2);
         $daftarTahun = range(max($tahunAwal, $tahunSekarang - 5), $tahunSekarang);
         rsort($daftarTahun);
 
         $daftarBulan = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
         ];
 
         return view('admin.laporan.arus-kas', compact(
@@ -637,7 +642,7 @@ class LaporanController extends Controller
 
             $arusKas['detail_transaksi'][] = [
                 'tanggal' => Carbon::parse($item->tanggal)->format('Y-m-d'),
-                'keterangan' => 'Penerimaan ' . $jenisZiswaf . ' dari ' . $namaJamaah,
+                'keterangan' => 'Penerimaan '.$jenisZiswaf.' dari '.$namaJamaah,
                 'kategori' => 'operasi',
                 'jenis' => 'masuk',
                 'sub_kategori' => 'penerimaan_ziswaf',
@@ -683,7 +688,7 @@ class LaporanController extends Controller
 
             $arusKas['detail_transaksi'][] = [
                 'tanggal' => Carbon::parse($item->tanggal)->format('Y-m-d'),
-                'keterangan' => 'Gaji ' . $namaPegawai . ' periode ' . $item->periode,
+                'keterangan' => 'Gaji '.$namaPegawai.' periode '.$item->periode,
                 'kategori' => 'operasi',
                 'jenis' => 'keluar',
                 'sub_kategori' => 'beban_gaji',

@@ -1118,6 +1118,15 @@ html[data-finus-theme="dark"] {
                 </li>
                 <li>
                     <a
+                        href="{{ route('admin.kebijakan-zakat.index') }}"
+                        class="{{ request()->routeIs('admin.kebijakan-zakat.*') ? 'active' : '' }}"
+                    >
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        <span>Kebijakan Zakat</span>
+                    </a>
+                </li>
+                <li>
+                    <a
                         href="{{ route('admin.pegawai.index') }}"
                         class="{{ request()->routeIs('admin.pegawai.*') ? 'active' : '' }}"
                     >
