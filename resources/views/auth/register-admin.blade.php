@@ -8,7 +8,7 @@
 @section('panel-title', 'Buat Akun Admin')
 @section('panel-copy', 'Akun admin hanya dapat dibuat satu kali.')
 @section('hero-title', 'Admin FINUS PUSDAI')
-@section('hero-copy', 'Buat akun pengelola utama sebelum menyiapkan data pegawai, jabatan, gaji, dan laporan.')
+@section('hero-copy', 'Buat akun pengelola masjid sebelum menyiapkan data pegawai, jabatan, gaji, dan laporan.')
 
 @section('content')
 <form method="POST" action="{{ route('register.admin.post') }}" class="auth-form" data-loading-title="Membuat akun admin...">
@@ -18,24 +18,31 @@
         <span class="auth-context-icon" aria-hidden="true">1</span>
         <div>
             <p class="auth-context-title">Satu akun administrator utama</p>
-            <p class="auth-context-copy">Nama dapat diubah kembali melalui Profil. Email login Admin tetap dan tidak mengikuti perubahan nama.</p>
+            <p class="auth-context-copy">Nama akun dan email Admin dibuat otomatis dari nama masjid. Untuk saat ini FINUS tetap menggunakan satu akun Admin.</p>
         </div>
     </div>
 
     <div class="auth-field-group">
-        <label for="admin-name" class="auth-label"><span class="auth-label-icon" aria-hidden="true">Aa</span>Nama Admin <span class="auth-required">*</span></label>
-        <input id="admin-name" type="text" name="name" value="{{ old('name') }}"
-               class="auth-field" placeholder="Nama lengkap admin"
-               autocomplete="name" required autofocus
-               @error('name') aria-invalid="true" aria-describedby="name-error" @enderror>
-        @error('name')<p class="auth-error" id="name-error" role="alert">{{ $message }}</p>@enderror
+        <label for="admin-name" class="auth-label"><span class="auth-label-icon" aria-hidden="true">Aa</span>Nama Masjid <span class="auth-required">*</span></label>
+        <input id="admin-name" type="text" name="nama_masjid" value="{{ old('nama_masjid') }}"
+               class="auth-field" placeholder="Nama masjid"
+               autocomplete="organization" required autofocus
+               @error('nama_masjid') aria-invalid="true" aria-describedby="name-error" @enderror>
+        @error('nama_masjid')<p class="auth-error" id="name-error" role="alert">{{ $message }}</p>@enderror
+    </div>
+
+    <div class="auth-field-group">
+        <label for="admin-account-name" class="auth-label"><span class="auth-label-icon" aria-hidden="true">Aa</span>Nama Admin</label>
+        <input id="admin-account-name" type="text" class="auth-field"
+               value="" placeholder="Admin Nama Masjid" readonly aria-readonly="true" tabindex="-1">
+        <p class="auth-help"><b>i</b>Nama Admin dibuat otomatis dari nama masjid.</p>
     </div>
 
     <div class="auth-field-group">
         <label for="admin-email" class="auth-label"><span class="auth-label-icon" aria-hidden="true">@</span>Email Admin</label>
         <input id="admin-email" type="email" class="auth-field"
-               value="admin@pusdai.finus.id" readonly aria-readonly="true" tabindex="-1">
-        <p class="auth-help"><b>i</b>Email Admin dibuat tetap oleh FINUS dan tidak berubah ketika nama Admin diubah.</p>
+               value="" placeholder="admin@namamasjid.finus.id" readonly aria-readonly="true" tabindex="-1">
+        <p class="auth-help"><b>i</b>Email Admin dibuat otomatis setelah nama masjid diisi.</p>
     </div>
 
     <div class="auth-field-group">
@@ -270,6 +277,57 @@
 @push('scripts')
 <script>
 (() => {
+    const masjidInput = document.getElementById('admin-name');
+    const adminNamePreview = document.getElementById('admin-account-name');
+    const adminEmailPreview = document.getElementById('admin-email');
+
+    const normalizeSpaces = value => (value || '')
+        .trim()
+        .replace(/\s+/g, ' ');
+
+    const titleCasePart = value => {
+        if (!value) return '';
+
+        const lowered = value.toLocaleLowerCase('id-ID');
+        return lowered.charAt(0).toLocaleUpperCase('id-ID') + lowered.slice(1);
+    };
+
+    const formatMasjidName = value => normalizeSpaces(value)
+        .split(' ')
+        .filter(Boolean)
+        .map(word => word
+            .split('-')
+            .map(titleCasePart)
+            .join('-'))
+        .join(' ');
+
+    const formatDomainMasjid = value => normalizeSpaces(value)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+
+    const updateAdminIdentityPreview = () => {
+        const rawMasjid = masjidInput?.value || '';
+        const displayMasjid = formatMasjidName(rawMasjid);
+        const domainMasjid = formatDomainMasjid(rawMasjid);
+
+        if (adminNamePreview) {
+            adminNamePreview.value = displayMasjid
+                ? `Admin ${displayMasjid}`
+                : '';
+        }
+
+        if (adminEmailPreview) {
+            adminEmailPreview.value = domainMasjid
+                ? `admin@${domainMasjid}.finus.id`
+                : '';
+        }
+    };
+
+    masjidInput?.addEventListener('input', updateAdminIdentityPreview);
+    updateAdminIdentityPreview();
+
     const button = document.getElementById('generate-admin-recovery');
     const recovery = document.getElementById('recovery_code');
     const status = document.getElementById('recovery-generate-status');
@@ -328,6 +386,7 @@
     });
 })();
 </script>
+
 @endpush
 
 {{-- FINUS DARK MODE LOCAL: auth/register-admin.blade.php --}}
@@ -342,4 +401,3 @@ html[data-finus-theme="dark"] body .auth-field:focus { border-color:#64DD81 !imp
 html[data-finus-theme="dark"] body :where(.auth-info-card,.auth-email-preview,.auth-dialog-details) { border-color:#293D31 !important; background:#101B14 !important; color:#C7D6CC !important; }
 </style>
 @endpush
-

@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller
 {
-    private const ADMIN_EMAIL = 'admin@pusdai.finus.id';
     private const ADMIN_RECOVERY_MIN_LENGTH = 16;
     private const ADMIN_RECOVERY_MAX_LENGTH = 64;
 
@@ -40,14 +40,18 @@ class RegisterController extends Controller
     public function registerAdmin(Request $request)
     {
         $request->merge([
-            'name' => trim((string) $request->input('name')),
+            'nama_masjid' => preg_replace(
+                '/\\s+/u',
+                ' ',
+                trim((string) $request->input('nama_masjid'))
+            ),
             'recovery_code' => User::normalizeRecoveryCode(
                 (string) $request->input('recovery_code')
             ),
         ]);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'nama_masjid' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'recovery_code' => [
                 'required',
@@ -61,7 +65,9 @@ class RegisterController extends Controller
                 'not_regex:/\\s/',
             ],
         ], [
-            'name.required' => 'Nama admin wajib diisi.',
+            'nama_masjid.required' => 'Nama masjid wajib diisi.',
+            'nama_masjid.string' => 'Nama masjid harus berupa teks.',
+            'nama_masjid.max' => 'Nama masjid maksimal 255 karakter.',
             'recovery_code.required' => 'Recovery Code Admin wajib dibuat sebelum akun disimpan.',
             'recovery_code.min' => 'Recovery Code Admin minimal ' . self::ADMIN_RECOVERY_MIN_LENGTH . ' karakter.',
             'recovery_code.max' => 'Recovery Code Admin maksimal ' . self::ADMIN_RECOVERY_MAX_LENGTH . ' karakter.',
@@ -69,8 +75,22 @@ class RegisterController extends Controller
             'recovery_code.not_regex' => 'Recovery Code tidak boleh mengandung spasi.',
         ]);
 
-        $name = trim((string) $validated['name']);
-        $email = self::ADMIN_EMAIL;
+        $namaMasjid = trim((string) $validated['nama_masjid']);
+        $name = 'Admin ' . Str::title($namaMasjid);
+
+        $domainMasjid = Str::of($namaMasjid)
+            ->ascii()
+            ->lower()
+            ->replaceMatches('/[^a-z0-9]+/', '')
+            ->toString();
+
+        if ($domainMasjid === '' || strlen($domainMasjid) > 63) {
+            throw ValidationException::withMessages([
+                'nama_masjid' => 'Nama masjid tidak dapat digunakan sebagai domain FINUS.',
+            ]);
+        }
+
+        $email = 'admin@' . $domainMasjid . '.finus.id';
         $recoveryCode = User::normalizeRecoveryCode(
             (string) $validated['recovery_code']
         );
@@ -78,21 +98,21 @@ class RegisterController extends Controller
         Cache::lock('finus-register-admin', 10)->block(
             5,
             function () use ($name, $email, $recoveryCode, $validated): void {
+                // Tetap satu Admin selama FINUS masih berfokus pada PUSDAI.
                 if (User::where('role', User::ROLE_ADMIN)->exists()) {
                     throw ValidationException::withMessages([
-                        'name' => 'Akun admin sudah tersedia. FINUS hanya mengizinkan satu admin.',
+                        'nama_masjid' => 'Akun admin sudah tersedia. FINUS hanya mengizinkan satu admin.',
                     ]);
                 }
 
                 if (User::where('email', $email)->exists()) {
                     throw ValidationException::withMessages([
-                        'name' => 'Email admin FINUS sudah digunakan.',
+                        'nama_masjid' => 'Email admin FINUS sudah digunakan.',
                     ]);
                 }
 
                 User::create([
                     'name' => $name,
-                    // Email Admin tidak dibentuk dari nama. Identitas login tetap.
                     'email' => $email,
                     'email_verified_at' => now(),
                     'password' => Hash::make($validated['password']),
