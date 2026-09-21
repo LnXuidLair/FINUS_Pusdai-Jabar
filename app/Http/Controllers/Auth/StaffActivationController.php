@@ -18,62 +18,53 @@ class StaffActivationController extends Controller
 {
     private const SESSION_KEY = 'staff_activation';
     private const EXPIRES_MINUTES = 10;
-
     public function create(): View
     {
         return view('auth.verify-staff');
     }
 
-    public function verify(Request $request): View|RedirectResponse
+    public function verify(Request $request): RedirectResponse
     {
-        $request->merge([
-            'name' => trim((string) ($request->input('name') ?: $request->input('nama_pegawai'))),
-            'nip' => trim((string) $request->input('nip')),
-        ]);
-
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'nama_pegawai' => ['required', 'string', 'max:255'],
             'nip' => ['required', 'string', 'max:100'],
         ], [
-            'name.required' => 'Nama pegawai wajib diisi.',
+            'nama_pegawai.required' => 'Nama pegawai wajib diisi.',
             'nip.required' => 'NIP wajib diisi.',
         ]);
 
+        $nama = Str::lower(trim($validated['nama_pegawai']));
+        $nip = trim($validated['nip']);
+
         $pegawai = Pegawai::query()
-            ->where('nip', $validated['nip'])
+            ->where('nip', $nip)
+            ->whereRaw('LOWER(TRIM(nama_pegawai)) = ?', [$nama])
             ->first();
 
-        if (
-            ! $pegawai
-            || $this->normalizeName($pegawai->nama_pegawai) !== $this->normalizeName($validated['name'])
-        ) {
+        if (! $pegawai) {
             throw ValidationException::withMessages([
-                'nip' => 'Nama atau NIP tidak sesuai dengan data pegawai.',
+                'nip' => 'Data pegawai tidak ditemukan. Pastikan nama dan NIP sesuai data dari admin.',
             ]);
         }
 
-        if ($pegawai->is_verified) {
-            throw ValidationException::withMessages([
-                'nip' => 'Akun pegawai sudah aktif. Silakan login.',
-            ]);
-        }
+        $email = $this->staffEmailFor($pegawai);
 
-        $existingUser = User::query()->where('email', strtolower($pegawai->email))->first();
-
-        if ($existingUser && $existingUser->role !== User::ROLE_PEGAWAI) {
-            throw ValidationException::withMessages([
-                'nip' => 'Email pegawai digunakan oleh akun dengan role lain.',
-            ]);
-        }
-
-        $request->session()->put(self::SESSION_KEY, [
-            'pegawai_id' => $pegawai->id,
-            'expires_at' => now()->addMinutes(self::EXPIRES_MINUTES)->timestamp,
+        session([
+            self::SESSION_KEY => [
+                'pegawai_id' => $pegawai->getKey(),
+                'expires_at' => now()->addMinutes(self::EXPIRES_MINUTES)->timestamp,
+            ],
         ]);
 
-        return view('auth.verify-staff', [
-            'verifiedPegawai' => $pegawai,
-        ]);
+        return back()
+            ->with('verified_staff', [
+                'nama_pegawai' => $pegawai->nama_pegawai,
+                'nip' => $pegawai->nip,
+                'jabatan' => $pegawai->jabatan ?: '-',
+                'email' => $email,
+                'message' => 'Verify Success',
+            ])
+            ->with('activation_next_url', route('register.staff'));
     }
 
     public function createPassword(Request $request): View|RedirectResponse
@@ -81,15 +72,14 @@ class StaffActivationController extends Controller
         $pegawai = $this->verifiedPegawaiFromSession($request);
 
         if (! $pegawai) {
-            return redirect()->route('register.staff')
-                ->withErrors([
-                    'nip' => 'Sesi verifikasi pegawai berakhir. Silakan verifikasi ulang.',
-                ]);
+            return redirect()
+                ->route('staff.verify')
+                ->withErrors(['nip' => 'Sesi verifikasi pegawai sudah habis. Silakan verifikasi ulang.']);
         }
 
         return view('auth.activate-staff', [
             'pegawai' => $pegawai,
-            'email' => $pegawai->email,
+            'email' => $this->staffEmailFor($pegawai),
         ]);
     }
 
@@ -98,19 +88,9 @@ class StaffActivationController extends Controller
         $pegawai = $this->verifiedPegawaiFromSession($request);
 
         if (! $pegawai) {
-            return redirect()->route('register.staff')
-                ->withErrors([
-                    'nip' => 'Sesi verifikasi pegawai berakhir. Silakan verifikasi ulang.',
-                ]);
-        }
-
-        if ($pegawai->is_verified) {
-            $request->session()->forget(self::SESSION_KEY);
-
-            return redirect()->route('login.staff')
-                ->withErrors([
-                    'email' => 'Akun pegawai sudah aktif. Silakan login.',
-                ]);
+            return redirect()
+                ->route('staff.verify')
+                ->withErrors(['nip' => 'Sesi verifikasi pegawai sudah habis. Silakan verifikasi ulang.']);
         }
 
         $validated = $request->validate([
@@ -120,66 +100,39 @@ class StaffActivationController extends Controller
             'password.confirmed' => 'Konfirmasi password tidak sama.',
         ]);
 
-        $recoveryCode = null;
-        $email = strtolower(trim((string) $pegawai->email));
+        $email = $this->staffEmailFor($pegawai);
 
-        DB::transaction(function () use ($pegawai, $email, $validated, &$recoveryCode): void {
-            $user = User::query()->where('email', $email)->first();
+        $existingUser = User::query()->where('email', $email)->first();
 
-            if ($user && $user->role !== User::ROLE_PEGAWAI) {
-                throw ValidationException::withMessages([
-                    'password' => 'Email pegawai digunakan oleh akun dengan role lain.',
-                ]);
-            }
+        if ($existingUser && $existingUser->role !== 'pegawai') {
+            throw ValidationException::withMessages([
+                'password' => 'Email pegawai sudah dipakai oleh role lain.',
+            ]);
+        }
 
-            // Kompatibilitas untuk data Pegawai lama yang belum memiliki User.
-            if (! $user) {
-                $user = new User([
+        DB::transaction(function () use ($pegawai, $email, $validated): void {
+            User::query()->updateOrCreate(
+                ['email' => $email],
+                [
                     'name' => $pegawai->nama_pegawai,
-                    'email' => $email,
-                    'password' => Hash::make(Str::random(64)),
-                    'role' => User::ROLE_PEGAWAI,
-                ]);
-                $user->rotateRecoveryCode();
-            }
-
-            if (! $user->recovery_code) {
-                $user->rotateRecoveryCode();
-            }
-
-            $user->forceFill([
-                'name' => $pegawai->nama_pegawai,
-                'email_verified_at' => now(),
-                'password' => Hash::make($validated['password']),
-                'password_changed_at' => now(),
-            ])->save();
+                    'password' => Hash::make($validated['password']),
+                    'role' => 'pegawai',
+                    'email_verified_at' => now(),
+                ]
+            );
 
             $pegawai->forceFill([
+                'email' => $email,
                 'is_verified' => true,
             ])->save();
-
-            $recoveryCode = (string) $user->recovery_code;
         });
 
         $request->session()->forget(self::SESSION_KEY);
 
         return redirect()
-            ->route('register.staff.success')
-            ->with('staff_activation_success', [
-                'email' => $email,
-                'recovery_code' => $recoveryCode,
-            ]);
-    }
-
-    public function success(Request $request): View|RedirectResponse
-    {
-        $activation = $request->session()->get('staff_activation_success');
-
-        if (! is_array($activation) || empty($activation['recovery_code'])) {
-            return redirect()->route('login.staff');
-        }
-
-        return view('auth.staff-activation-success', compact('activation'));
+            ->route('login.staff')
+            ->with('account_activated', true)
+            ->with('status', 'Account Activated');
     }
 
     private function verifiedPegawaiFromSession(Request $request): ?Pegawai
@@ -199,8 +152,100 @@ class StaffActivationController extends Controller
         return Pegawai::query()->find($data['pegawai_id']);
     }
 
-    private function normalizeName(string $name): string
+    private function staffEmailFor(Pegawai $pegawai): string
     {
-        return preg_replace('/\s+/', ' ', mb_strtolower(trim($name)));
+        $staffDomain = $this->staffDomain();
+        $currentEmail = strtolower(trim((string) $pegawai->email));
+
+        if ($currentEmail !== '' && str_ends_with($currentEmail, '@' . $staffDomain)) {
+            return $currentEmail;
+        }
+
+        $email = $this->makeStaffEmail(
+            $pegawai->nama_pegawai,
+            $pegawai->nip,
+            $staffDomain,
+            $pegawai->id,
+            $currentEmail ?: null
+        );
+
+        $pegawai->forceFill([
+            'email' => $email,
+        ])->save();
+
+        return $email;
+    }
+
+    private function staffDomain(): string
+    {
+        $admin = User::query()
+            ->where('role', User::ROLE_ADMIN)
+            ->firstOrFail();
+
+        $adminEmail = strtolower(trim((string) $admin->email));
+
+        if (! preg_match('/^admin@([a-z0-9]+)\.finus\.id$/', $adminEmail, $matches)) {
+            throw ValidationException::withMessages([
+                'email' => 'Email Admin tidak sesuai format FINUS.',
+            ]);
+        }
+
+        return 'staff' . $matches[1] . '.finus.id';
+    }
+
+    private function makeStaffEmail(
+        string $name,
+        string $nip,
+        string $domain,
+        ?int $ignorePegawaiId = null,
+        ?string $allowedUserEmail = null
+    ): string {
+        $parts = collect(preg_split('/\s+/', trim($name)) ?: [])
+            ->filter()
+            ->map(fn ($part) => Str::of($part)
+                ->ascii()
+                ->lower()
+                ->replaceMatches('/[^a-z0-9]/', '')
+                ->toString()
+            )
+            ->filter()
+            ->take(2)
+            ->values();
+
+        $selectedName = $parts->implode('');
+
+        if ($selectedName === '') {
+            $selectedName = 'pegawai';
+        }
+
+        $nipDigits = preg_replace('/\D+/', '', $nip);
+        $nipSuffix = substr($nipDigits, -4);
+
+        if ($nipSuffix === '') {
+            $nipSuffix = (string) random_int(1000, 9999);
+        }
+
+        $email = strtolower($selectedName . $nipSuffix . '@' . $domain);
+
+        if ($this->emailAlreadyUsed($email, $ignorePegawaiId, $allowedUserEmail)) {
+            $email = strtolower($selectedName . $nipSuffix . random_int(10, 99) . '@' . $domain);
+        }
+
+        return $email;
+    }
+
+    private function emailAlreadyUsed(string $email, ?int $ignorePegawaiId = null, ?string $allowedUserEmail = null): bool
+    {
+        $usedByPegawai = Pegawai::where('email', $email)
+            ->when($ignorePegawaiId, fn ($query) => $query->where('id', '!=', $ignorePegawaiId))
+            ->exists();
+
+        if ($usedByPegawai) {
+            return true;
+        }
+
+        return User::where('email', $email)
+            ->when($allowedUserEmail, fn ($query) => $query->where('email', '!=', $allowedUserEmail))
+            ->exists();
     }
 }

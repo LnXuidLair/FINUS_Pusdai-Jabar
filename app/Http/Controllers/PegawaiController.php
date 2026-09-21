@@ -10,13 +10,12 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class PegawaiController extends Controller
 {
-    private const STAFF_DOMAIN = 'staffpusdai.finus.id';
-
     public function index()
     {
         $pegawais = Pegawai::with('gajiJabatan')
@@ -35,18 +34,22 @@ class PegawaiController extends Controller
 
     public function store(Request $request)
     {
+        $staffDomain = $this->staffDomain();
+
         $request->merge([
             'email' => $this->makeStaffEmail(
                 (string) $request->input('nama_pegawai'),
                 (string) $request->input('nip'),
-                self::STAFF_DOMAIN
+                $staffDomain
             ),
         ]);
 
         $validated = $request->validate($this->rules());
 
         DB::transaction(function () use ($validated): void {
-            Pegawai::create($validated);
+            $pegawai = new Pegawai($validated);
+            $pegawai->createdby = Auth::guard(User::ROLE_ADMIN)->id();
+            $pegawai->save();
 
             $user = new User([
                 'name' => $validated['nama_pegawai'],
@@ -110,12 +113,13 @@ class PegawaiController extends Controller
     {
         $pegawai = Pegawai::findOrFail($id);
         $oldEmail = strtolower(trim((string) $pegawai->email));
+        $staffDomain = $this->staffDomain();
 
         $request->merge([
             'email' => $this->makeStaffEmail(
                 (string) $request->input('nama_pegawai', $pegawai->nama_pegawai),
                 (string) $request->input('nip', $pegawai->nip),
-                self::STAFF_DOMAIN,
+                $staffDomain,
                 $pegawai->id,
                 $oldEmail
             ),
@@ -234,6 +238,23 @@ class PegawaiController extends Controller
             'no_telp' => ['nullable', 'string', 'max:20'],
             'alamat' => ['nullable', 'string', 'max:500'],
         ];
+    }
+
+    private function staffDomain(): string
+    {
+        $admin = User::query()
+            ->where('role', User::ROLE_ADMIN)
+            ->firstOrFail();
+
+        $adminEmail = strtolower(trim((string) $admin->email));
+
+        if (! preg_match('/^admin@([a-z0-9]+)\.finus\.id$/', $adminEmail, $matches)) {
+            throw ValidationException::withMessages([
+                'email' => 'Email Admin tidak sesuai format FINUS.',
+            ]);
+        }
+
+        return 'staff' . $matches[1] . '.finus.id';
     }
 
     private function makeStaffEmail(
