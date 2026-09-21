@@ -868,6 +868,12 @@
                                         <i class="fa-solid fa-tag"></i>
                                         {{ $item->kategori }}
                                     </span>
+                                    @if($item instanceof \App\Models\Pengeluaran && $item->zakatPenyaluran->isNotEmpty())
+                                        <small style="display:block;margin-top:7px;color:#64748b;line-height:1.5;">
+                                            {{ number_format($item->zakatPenyaluran->sum('jumlah_penerima'), 0, ',', '.') }} penerima,
+                                            {{ $item->zakatPenyaluran->pluck('asnaf')->map(fn($asnaf) => \App\Models\KebijakanMustahik::ASNAF[$asnaf] ?? $asnaf)->join(', ') }}
+                                        </small>
+                                    @endif
                                 </td>
                                 <td data-label="Deskripsi">
                                     <span class="finus-data-primary">

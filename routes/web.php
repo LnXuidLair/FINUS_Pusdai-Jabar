@@ -11,12 +11,14 @@ use App\Http\Controllers\CoaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GajiJabatanController;
 use App\Http\Controllers\JamaahController;
+use App\Http\Controllers\KebijakanZakatController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PegawaiDashboardController;
 use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\PenggajianController;
 use App\Http\Controllers\PemasukanController;
+use App\Http\Controllers\ParkirController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\ZiswafTransactionController;
 use App\Http\Middleware\EnsureManagementAccess;
@@ -129,6 +131,32 @@ Route::middleware(['auth:admin', 'role:admin'])
                 Route::resource('pegawai', PegawaiController::class);
                 Route::resource('gaji-jabatan', GajiJabatanController::class)
                     ->except(['show']);
+                Route::prefix('kebijakan-zakat')
+                    ->name('kebijakan-zakat.')
+                    ->group(function () {
+                        Route::get('/', [KebijakanZakatController::class, 'index'])
+                            ->name('index');
+                        Route::post('/muzakki', [KebijakanZakatController::class, 'storeMuzakki'])
+                            ->name('muzakki.store');
+                        Route::patch('/muzakki/{pengaturan}', [KebijakanZakatController::class, 'updateMuzakki'])
+                            ->name('muzakki.update');
+                        Route::post('/amil', [KebijakanZakatController::class, 'storeAmil'])
+                            ->name('amil.store');
+                        Route::patch('/amil/{kebijakan}', [KebijakanZakatController::class, 'updateAmil'])
+                            ->name('amil.update');
+                        Route::post('/mustahik', [KebijakanZakatController::class, 'storeMustahik'])
+                            ->name('mustahik.store');
+                        Route::patch('/mustahik/{kebijakan}', [KebijakanZakatController::class, 'updateMustahik'])
+                            ->name('mustahik.update');
+                        Route::post('/barang', [KebijakanZakatController::class, 'storeBarang'])
+                            ->name('barang.store');
+                        Route::patch('/barang/{barang}', [KebijakanZakatController::class, 'updateBarang'])
+                            ->name('barang.update');
+                        Route::post('/harga-barang', [KebijakanZakatController::class, 'storeHargaBarang'])
+                            ->name('harga-barang.store');
+                        Route::patch('/harga-barang/{harga}', [KebijakanZakatController::class, 'updateHargaBarang'])
+                            ->name('harga-barang.update');
+                    });
                 Route::get('coa/template', [CoaController::class, 'downloadTemplate'])
                     ->name('coa.template');
                 Route::post('coa/import', [CoaController::class, 'import'])
@@ -152,6 +180,10 @@ Route::middleware(['auth:admin', 'role:admin'])
                     ->group(function (){
                         Route::get('/jurnal-umum', [LaporanController::class, 'jurnalUmum'])
                             ->name('jurnal-umum');
+                        Route::get('/jurnal-pemasukan', [LaporanController::class, 'jurnalPemasukan'])
+                            ->name('jurnal-pemasukan');
+                        Route::get('/jurnal-pengeluaran', [LaporanController::class, 'jurnalPengeluaran'])
+                            ->name('jurnal-pengeluaran');
                         Route::get('/arus-kas', [LaporanController::class, 'arusKas'])
                             ->name('arus-kas');
                     });
@@ -159,6 +191,15 @@ Route::middleware(['auth:admin', 'role:admin'])
                     ->except(['show']);
                 Route::patch('agenda-kegiatan/{agendaKegiatan}/toggle', [AgendaKegiatanController::class, 'toggleAktif'])
                     ->name('agenda-kegiatan.toggle');
+
+                // ── Parkir QRIS Otomatis ──
+                Route::prefix('parkir')->name('parkir.')->group(function () {
+                    Route::get('/', [ParkirController::class, 'index'])->name('index');
+                    Route::get('/loket', [ParkirController::class, 'create'])->name('loket');
+                    Route::post('/loket', [ParkirController::class, 'store'])->name('store');
+                    Route::patch('/{parkirSesi}/selesai', [ParkirController::class, 'selesai'])->name('selesai');
+                    Route::patch('/{parkirSesi}/batal', [ParkirController::class, 'batal'])->name('batal');
+                });
                 Route::get('pemasukan', [PemasukanController::class, 'index'])
                     ->name('pemasukan.index');
                 Route::post('pemasukan', [PemasukanController::class, 'store'])
@@ -206,6 +247,10 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
             ->group(function () {
                 Route::get('/jurnal-umum', [LaporanController::class, 'jurnalUmum'])
                     ->name('jurnal-umum');
+                Route::get('/jurnal-pemasukan', [LaporanController::class, 'jurnalPemasukan'])
+                    ->name('jurnal-pemasukan');
+                Route::get('/jurnal-pengeluaran', [LaporanController::class, 'jurnalPengeluaran'])
+                    ->name('jurnal-pengeluaran');
                 Route::get('/arus-kas', [LaporanController::class, 'arusKas'])
                     ->name('arus-kas');
             });

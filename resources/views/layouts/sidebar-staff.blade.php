@@ -844,6 +844,20 @@ html[data-finus-theme="dark"] {
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('pegawai.laporan-keuangan.jurnal-pemasukan') }}"
+                            class="{{ request()->routeIs('pegawai.laporan-keuangan.jurnal-pemasukan') ? 'active' : '' }}">
+                            <i class="fa-solid fa-arrow-down-long"></i>
+                            <span>Jurnal Pemasukan</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('pegawai.laporan-keuangan.jurnal-pengeluaran') }}"
+                            class="{{ request()->routeIs('pegawai.laporan-keuangan.jurnal-pengeluaran') ? 'active' : '' }}">
+                            <i class="fa-solid fa-arrow-up-long"></i>
+                            <span>Jurnal Pengeluaran</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('pegawai.laporan-keuangan.arus-kas') }}"
                             class="{{ request()->routeIs('pegawai.laporan-keuangan.arus-kas') ? 'active' : '' }}">
                             <i class="fa-solid fa-chart-line"></i>

@@ -24,4 +24,34 @@ class JurnalUmum extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function scopePemasukan($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('sumber_tabel', 'ziswaf_penerimaan')
+              ->orWhereHas('detail', function ($dq) {
+                  $dq->where('debit', '>', 0)
+                     ->whereHas('coa', function ($cq) {
+                         $cq->whereIn('kode_akun', ['1101', '1102'])
+                            ->orWhere('nama_akun', 'like', '%Kas%')
+                            ->orWhere('nama_akun', 'like', '%Bank%');
+                     });
+              });
+        });
+    }
+
+    public function scopePengeluaran($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereIn('sumber_tabel', ['pengeluaran', 'penggajian', 'ziswaf_penyaluran'])
+              ->orWhereHas('detail', function ($dq) {
+                  $dq->where('credit', '>', 0)
+                     ->whereHas('coa', function ($cq) {
+                         $cq->whereIn('kode_akun', ['1101', '1102'])
+                            ->orWhere('nama_akun', 'like', '%Kas%')
+                            ->orWhere('nama_akun', 'like', '%Bank%');
+                     });
+              });
+        });
+    }
 }

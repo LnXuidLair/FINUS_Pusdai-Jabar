@@ -9,6 +9,7 @@ use App\Services\DataFileImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class CoaController extends Controller
 {
@@ -194,15 +195,13 @@ class CoaController extends Controller
                 'required',
                 'file',
                 'mimes:csv,txt,xlsx,xls',
-                'max:' . self::MAX_IMPORT_FILE_KB,
+                'max:'.self::MAX_IMPORT_FILE_KB,
             ],
         ], [
             'file_csv.required' => 'File data wajib dipilih.',
             'file_csv.file' => 'File yang diupload tidak valid.',
-            'file_csv.mimes' =>
-                'File harus berformat CSV, TXT, XLSX, atau XLS.',
-            'file_csv.max' =>
-                'Ukuran file maksimal 5 MB.',
+            'file_csv.mimes' => 'File harus berformat CSV, TXT, XLSX, atau XLS.',
+            'file_csv.max' => 'Ukuran file maksimal 5 MB.',
         ]);
 
         try {
@@ -219,8 +218,7 @@ class CoaController extends Controller
             report($exception);
 
             return back()->withErrors([
-                'file_csv' =>
-                    'File tidak dapat dibaca. Pastikan format dan isi file sudah benar.',
+                'file_csv' => 'File tidak dapat dibaca. Pastikan format dan isi file sudah benar.',
             ]);
         }
 
@@ -233,14 +231,13 @@ class CoaController extends Controller
         try {
             [$headerRowIndex, $headerIndex] =
                 $this->findCoaHeaderRow($rows);
-        } catch (\Illuminate\Validation\ValidationException $exception) {
+        } catch (ValidationException $exception) {
             throw $exception;
         } catch (\Throwable $exception) {
             report($exception);
 
             return back()->withErrors([
-                'file_csv' =>
-                    'Header file tidak dapat diproses. Pastikan file memiliki kolom kelompok_akun atau header_akun, kode_akun, dan nama_akun.',
+                'file_csv' => 'Header file tidak dapat diproses. Pastikan file memiliki kolom kelompok_akun atau header_akun, kode_akun, dan nama_akun.',
             ]);
         }
 
@@ -262,8 +259,7 @@ class CoaController extends Controller
 
         if ($dataRows === []) {
             return back()->withErrors([
-                'file_csv' =>
-                    'File tidak memiliki baris data setelah header.',
+                'file_csv' => 'File tidak memiliki baris data setelah header.',
             ]);
         }
 
@@ -271,23 +267,22 @@ class CoaController extends Controller
 
         if ($totalDataRows > self::MAX_IMPORT_ROWS) {
             return back()->withErrors([
-                'file_csv' =>
-                    'Jumlah data maksimal '
-                    . number_format(
+                'file_csv' => 'Jumlah data maksimal '
+                    .number_format(
                         self::MAX_IMPORT_ROWS,
                         0,
                         ',',
                         '.'
                     )
-                    . ' baris dalam satu kali import. '
-                    . 'File yang dipilih berisi '
-                    . number_format(
+                    .' baris dalam satu kali import. '
+                    .'File yang dipilih berisi '
+                    .number_format(
                         $totalDataRows,
                         0,
                         ',',
                         '.'
                     )
-                    . ' baris data.',
+                    .' baris data.',
             ]);
         }
 
@@ -360,30 +355,23 @@ class CoaController extends Controller
                         ],
                     ],
                     [
-                        'header_akun.required' =>
-                            'Kelompok akun tidak valid. '
-                            . 'Gunakan Aset, Kewajiban, Dana, '
-                            . 'Penerimaan, Pengeluaran, atau angka 1 sampai 5.',
+                        'header_akun.required' => 'Kelompok akun tidak valid. '
+                            .'Gunakan Aset, Kewajiban, Dana, '
+                            .'Penerimaan, Pengeluaran, atau angka 1 sampai 5.',
 
-                        'header_akun.integer' =>
-                            'Kelompok akun harus menggunakan nilai yang valid.',
+                        'header_akun.integer' => 'Kelompok akun harus menggunakan nilai yang valid.',
 
-                        'header_akun.in' =>
-                            'Kelompok akun hanya boleh Aset, '
-                            . 'Kewajiban, Dana, Penerimaan, '
-                            . 'Pengeluaran, atau angka 1 sampai 5.',
+                        'header_akun.in' => 'Kelompok akun hanya boleh Aset, '
+                            .'Kewajiban, Dana, Penerimaan, '
+                            .'Pengeluaran, atau angka 1 sampai 5.',
 
-                        'kode_akun.required' =>
-                            'Kode akun wajib diisi.',
+                        'kode_akun.required' => 'Kode akun wajib diisi.',
 
-                        'kode_akun.max' =>
-                            'Kode akun maksimal 50 karakter.',
+                        'kode_akun.max' => 'Kode akun maksimal 50 karakter.',
 
-                        'nama_akun.required' =>
-                            'Nama akun wajib diisi.',
+                        'nama_akun.required' => 'Nama akun wajib diisi.',
 
-                        'nama_akun.max' =>
-                            'Nama akun maksimal 255 karakter.',
+                        'nama_akun.max' => 'Nama akun maksimal 255 karakter.',
                     ]
                 );
 
@@ -396,9 +384,9 @@ class CoaController extends Controller
                     ) {
                         $importErrors[] =
                             'Baris '
-                            . $rowNumber
-                            . ': '
-                            . implode(
+                            .$rowNumber
+                            .': '
+                            .implode(
                                 ', ',
                                 $validator->errors()->all()
                             );
@@ -414,10 +402,8 @@ class CoaController extends Controller
 
                 if ($existingCoa) {
                     $existingCoa->update([
-                        'header_akun' =>
-                            (int) $data['header_akun'],
-                        'nama_akun' =>
-                            $data['nama_akun'],
+                        'header_akun' => (int) $data['header_akun'],
+                        'nama_akun' => $data['nama_akun'],
                     ]);
 
                     $updated++;
@@ -426,12 +412,9 @@ class CoaController extends Controller
                 }
 
                 Coa::create([
-                    'header_akun' =>
-                        (int) $data['header_akun'],
-                    'kode_akun' =>
-                        $data['kode_akun'],
-                    'nama_akun' =>
-                        $data['nama_akun'],
+                    'header_akun' => (int) $data['header_akun'],
+                    'kode_akun' => $data['kode_akun'],
+                    'nama_akun' => $data['nama_akun'],
                 ]);
 
                 $created++;
@@ -443,10 +426,10 @@ class CoaController extends Controller
                 ->route('admin.coa.index')
                 ->with(
                     'success',
-                    "Import COA selesai. "
-                    . "Data baru: {$created}, "
-                    . "diperbarui: {$updated}, "
-                    . "dilewati: {$skipped}."
+                    'Import COA selesai. '
+                    ."Data baru: {$created}, "
+                    ."diperbarui: {$updated}, "
+                    ."dilewati: {$skipped}."
                 )
                 ->with('import_errors', $importErrors);
         } catch (\Throwable $exception) {
@@ -455,10 +438,9 @@ class CoaController extends Controller
             report($exception);
 
             return back()->withErrors([
-                'file_csv' =>
-                    'Import COA gagal. '
-                    . 'Tidak ada perubahan data yang disimpan. '
-                    . 'Silakan periksa file dan coba kembali.',
+                'file_csv' => 'Import COA gagal. '
+                    .'Tidak ada perubahan data yang disimpan. '
+                    .'Silakan periksa file dan coba kembali.',
             ]);
         }
     }
@@ -469,113 +451,19 @@ class CoaController extends Controller
     public function downloadTemplate(
         DataFileImportService $dataFileImportService
     ) {
-        $rows = [
-            [
-                'kelompok_akun',
-                'kode_akun',
-                'nama_akun',
-            ],
-            [
-                'Aset',
-                '1101',
-                'Kas',
-            ],
-            [
-                'Aset',
-                '1102',
-                'Bank',
-            ],
-            [
-                'Kewajiban',
-                '2101',
-                'Utang Usaha',
-            ],
-            [
-                'Dana',
-                '3101',
-                'Dana Tidak Terikat',
-            ],
-            [
-                'Penerimaan',
-                '4101',
-                'Infaq Kotak Amal',
-            ],
-            [
-                'Penerimaan',
-                '4102',
-                'Infaq Layanan QRIS',
-            ],
-            [
-                'Penerimaan',
-                '4105',
-                'Zakat',
-            ],
-            [
-                'Penerimaan',
-                '4106',
-                'Infak',
-            ],
-            [
-                'Penerimaan',
-                '4107',
-                'Wakaf',
-            ],
-            [
-                'Pengeluaran',
-                '5101',
-                'Biaya Bidang Idaroh',
-            ],
-            [
-                'Pengeluaran',
-                '5102',
-                'Biaya Bidang Imaroh',
-            ],
-            [
-                'Pengeluaran',
-                '5103',
-                'Biaya Bidang Riayah',
-            ],
-            [
-                'Pengeluaran',
-                '5104',
-                'Biaya Honorarium',
-            ],
-            [
-                'Pengeluaran',
-                '5105',
-                'Biaya Konsumsi',
-            ],
-            [
-                'Pengeluaran',
-                '5106',
-                'Biaya Administrasi Bank',
-            ],
-            [
-                'Pengeluaran',
-                '5107',
-                'Biaya Pemeliharaan',
-            ],
-            [
-                'Pengeluaran',
-                '5108',
-                'Biaya Kebersihan',
-            ],
-            [
-                'Pengeluaran',
-                '5109',
-                'Biaya Kegiatan',
-            ],
-            [
-                'Pengeluaran',
-                '5110',
-                'Biaya Pengadaan',
-            ],
-            [
-                'Pengeluaran',
-                '5111',
-                'Penyaluran ZISWAF',
-            ],
+        $labels = [
+            1 => 'Aset',
+            2 => 'Kewajiban',
+            3 => 'Ekuitas',
+            4 => 'Pendapatan',
+            5 => 'Beban',
         ];
+
+        $rows = [['kelompok_akun', 'kode_akun', 'nama_akun']];
+
+        foreach (config('coa.accounts', []) as [$header, $code, $name]) {
+            $rows[] = [$labels[$header], $code, $name];
+        }
 
         return $dataFileImportService->streamCsvTemplate(
             'template-import-coa.csv',
@@ -624,6 +512,7 @@ class CoaController extends Controller
             default => null,
         };
     }
+
     /**
      * Mencari posisi header COA pada maksimal 25 baris pertama.
      *
@@ -712,11 +601,11 @@ class CoaController extends Controller
             }
 
             if ($duplicates !== []) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'file_csv' => [
                         'Terdapat kolom header yang sama atau duplikat: '
-                        . implode(', ', array_unique($duplicates))
-                        . '.',
+                        .implode(', ', array_unique($duplicates))
+                        .'.',
                     ],
                 ]);
             }
@@ -724,13 +613,13 @@ class CoaController extends Controller
             return [(int) $rowIndex, $columns];
         }
 
-        throw \Illuminate\Validation\ValidationException::withMessages([
+        throw ValidationException::withMessages([
             'file_csv' => [
                 'Header file tidak ditemukan. '
-                . 'Gunakan kolom kelompok_akun atau header_akun, '
-                . 'kode_akun, dan nama_akun. '
-                . 'Header boleh ditulis sebagai Kelompok Akun, '
-                . 'Header Akun, Kode Akun, dan Nama Akun.',
+                .'Gunakan kolom kelompok_akun atau header_akun, '
+                .'kode_akun, dan nama_akun. '
+                .'Header boleh ditulis sebagai Kelompok Akun, '
+                .'Header Akun, Kode Akun, dan Nama Akun.',
             ],
         ]);
     }
@@ -760,5 +649,4 @@ class CoaController extends Controller
 
         return true;
     }
-
 }

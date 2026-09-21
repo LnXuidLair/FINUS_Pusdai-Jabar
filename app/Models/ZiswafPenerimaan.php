@@ -35,6 +35,9 @@ class ZiswafPenerimaan extends Model
         'coa_id',
         'jurnal_id',
         'zakat_setting_id',
+        'persentase_amil',
+        'nominal_amil',
+        'kebijakan_amil_id',
     ];
 
     protected $casts = [

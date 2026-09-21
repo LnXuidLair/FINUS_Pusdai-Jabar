@@ -110,6 +110,9 @@ class PenggajianService
                 'tanggal' => now()->toDateString(),
             ]);
 
+            // Posting otomatis ke jurnal PSAK 109
+            app(\App\Services\Accounting\Psak109PostingService::class)->postPenggajian($penggajian);
+
             return $penggajian->fresh();
         });
     }
@@ -131,6 +134,12 @@ class PenggajianService
                 $pegawai,
                 $penggajian->periode
             );
+
+            // Balikkan jurnal jika sebelumnya sudah terposting
+            if ($penggajian->id_jurnal) {
+                app(\App\Services\Accounting\Psak109PostingService::class)->reverseJurnal($penggajian->id_jurnal, 'Pembayaran gaji dibatalkan');
+                $penggajian->id_jurnal = null;
+            }
 
             $penggajian->update([
                 'jumlah_hari' => $hasil['jumlah_hari'],

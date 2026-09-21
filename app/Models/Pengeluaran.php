@@ -34,4 +34,20 @@ class Pengeluaran extends Model
     {
         return $this->belongsTo(Penggajian::class, 'id_penggajian');
     }
+
+    public function coaDebit()
+    {
+        return $this->belongsTo(Coa::class, 'coa_debit_id');
+    }
+
+    public function coaKredit()
+    {
+        return $this->belongsTo(Coa::class, 'coa_kredit_id');
+    }
+
+    public function zakatPenyaluran()
+    {
+        return $this->hasMany(ZiswafPenyaluran::class, 'id_pengeluaran')
+            ->where('jenis_ziswaf_asal', 'zakat');
+    }
 }

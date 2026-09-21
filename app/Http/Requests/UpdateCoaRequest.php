@@ -15,8 +15,8 @@ class UpdateCoaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'kode_akun' => ['required', 'string', 'max:50', Rule::unique('coas', 'kode_akun')->ignore($this->route('coa'))],
-            'nama_akun' => ['required', 'string', 'max:255'],
+            'kode_akun' => ['required', 'string', 'max:50', Rule::unique('coa', 'kode_akun')->ignore($this->route('coa'))],
+            'nama_akun' => ['required', 'string', 'max:255', Rule::unique('coa', 'nama_akun')->ignore($this->route('coa'))],
             'header_akun' => ['required', 'integer', 'between:1,5'],
         ];
     }
