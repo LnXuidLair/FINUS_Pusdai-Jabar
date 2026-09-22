@@ -11,6 +11,12 @@
 @section('hero-copy', 'Nama dan NIP harus sama dengan data pegawai yang telah didaftarkan oleh admin.')
 
 @section('content')
+@php
+    $verifiedPegawai = session('verified_staff')
+        ? (object) session('verified_staff')
+        : null;
+@endphp
+
 <form method="POST" action="{{ route('verify.staff') }}" class="auth-form" data-loading-title="Memverifikasi data pegawai...">
     @csrf
 
@@ -26,7 +32,7 @@
         <label for="nama_pegawai" class="auth-label"><span class="auth-label-icon" aria-hidden="true">Aa</span>Nama Lengkap <span class="auth-required">*</span></label>
         <input id="nama_pegawai" type="text" name="nama_pegawai" value="{{ old('nama_pegawai') }}"
                class="auth-field" placeholder="Nama sesuai data pegawai"
-               autocomplete="nama_pegawai" required autofocus
+               autocomplete="name" required autofocus
                @error('nama_pegawai') aria-invalid="true" aria-describedby="nama_pegawai-error" @enderror>
         @error('nama_pegawai')<p class="auth-error" id="nama_pegawai-error" role="alert">{{ $message }}</p>@enderror
     </div>
