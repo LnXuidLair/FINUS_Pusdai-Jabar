@@ -140,4 +140,3 @@ html[data-finus-theme="dark"] body :where(.fmu-page,.fr-page) :where(.fmu-hero-b
 html[data-finus-theme="dark"] body :where(.fmu-page,.fr-page) :where(.fmu-side-note,.fr-tip-item,.fr-breakdown-item) { border-color:#293D31 !important; background:#101B14 !important; }
 </style>
 @endpush
-

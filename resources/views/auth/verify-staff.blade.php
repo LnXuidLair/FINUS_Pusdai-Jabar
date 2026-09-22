@@ -23,12 +23,12 @@
     </div>
 
     <div class="auth-field-group">
-        <label for="name" class="auth-label"><span class="auth-label-icon" aria-hidden="true">Aa</span>Nama Lengkap <span class="auth-required">*</span></label>
-        <input id="name" type="text" name="name" value="{{ old('name') }}"
+        <label for="nama_pegawai" class="auth-label"><span class="auth-label-icon" aria-hidden="true">Aa</span>Nama Lengkap <span class="auth-required">*</span></label>
+        <input id="nama_pegawai" type="text" name="nama_pegawai" value="{{ old('nama_pegawai') }}"
                class="auth-field" placeholder="Nama sesuai data pegawai"
-               autocomplete="name" required autofocus
-               @error('name') aria-invalid="true" aria-describedby="name-error" @enderror>
-        @error('name')<p class="auth-error" id="name-error" role="alert">{{ $message }}</p>@enderror
+               autocomplete="nama_pegawai" required autofocus
+               @error('nama_pegawai') aria-invalid="true" aria-describedby="nama_pegawai-error" @enderror>
+        @error('nama_pegawai')<p class="auth-error" id="nama_pegawai-error" role="alert">{{ $message }}</p>@enderror
     </div>
 
     <div class="auth-field-group">
@@ -86,4 +86,3 @@ html[data-finus-theme="dark"] body .auth-field:focus { border-color:#64DD81 !imp
 html[data-finus-theme="dark"] body :where(.auth-info-card,.auth-email-preview,.auth-dialog-details) { border-color:#293D31 !important; background:#101B14 !important; color:#C7D6CC !important; }
 </style>
 @endpush
-
