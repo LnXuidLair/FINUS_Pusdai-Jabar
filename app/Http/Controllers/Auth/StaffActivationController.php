@@ -73,7 +73,7 @@ class StaffActivationController extends Controller
 
         if (! $pegawai) {
             return redirect()
-                ->route('staff.verify')
+                ->route('register.staff')
                 ->withErrors(['nip' => 'Sesi verifikasi pegawai sudah habis. Silakan verifikasi ulang.']);
         }
 
@@ -89,7 +89,7 @@ class StaffActivationController extends Controller
 
         if (! $pegawai) {
             return redirect()
-                ->route('staff.verify')
+                ->route('register.staff')
                 ->withErrors(['nip' => 'Sesi verifikasi pegawai sudah habis. Silakan verifikasi ulang.']);
         }
 
