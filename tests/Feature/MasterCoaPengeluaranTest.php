@@ -22,8 +22,11 @@ class MasterCoaPengeluaranTest extends TestCase
             ->assertSee('Penyaluran Zakat kepada Mustahik')
             ->assertSee('5108 - Beban Kebersihan')
             ->assertSee('5210 - Penyaluran Zakat')
+            ->assertSee('5311 - Penyaluran Infak dan Sedekah')
+            ->assertSee('2201 - Liabilitas Wakaf Temporer')
             ->assertSee('Rincian Penerima Zakat')
-            ->assertSee('Jumlah Penerima');
+            ->assertSee('Jumlah Penerima')
+            ->assertSee('Sifat Infak/Sedekah');
     }
 
     public function test_expense_is_saved_using_selected_coa_id(): void
@@ -131,6 +134,33 @@ class MasterCoaPengeluaranTest extends TestCase
             ->get(route('admin.laporan.arus-kas'))
             ->assertOk()
             ->assertSee('Beban Kebersihan');
+    }
+
+    public function test_psak_specific_receipt_fields_and_report_labels_are_visible(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.pemasukan.index'))
+            ->assertOk()
+            ->assertSee('Sifat Infak/Sedekah')
+            ->assertSee('Jenis Penerimaan Wakaf')
+            ->assertSee('Tanggal Pengembalian Pokok')
+            ->assertSee('Imbalan Nazhir');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.laporan.jurnal-pemasukan'))
+            ->assertOk()
+            ->assertSeeText('Jurnal Pemasukan')
+            ->assertDontSee('PSAK 109')
+            ->assertDontSee('PSAK 112');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.laporan.jurnal-pengeluaran'))
+            ->assertOk()
+            ->assertSeeText('Jurnal Pengeluaran')
+            ->assertDontSee('PSAK 109')
+            ->assertDontSee('PSAK 112');
     }
 
     private function admin(): User

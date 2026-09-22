@@ -353,6 +353,22 @@ class JamaahController extends Controller
                 Rule::in(array_keys($config['metodeOptions'])),
             ],
             'keterangan' => ['nullable', 'string', 'max:1000'],
+            'restriction_type' => [
+                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'infaq'),
+                'nullable',
+                Rule::in(['mutlaqah', 'muqayyadah']),
+            ],
+            'wakaf_type' => [
+                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'wakaf'),
+                'nullable',
+                Rule::in(['permanen', 'temporer']),
+            ],
+            'wakaf_return_date' => [
+                Rule::requiredIf(fn (): bool => $request->input('wakaf_type') === 'temporer'),
+                'nullable',
+                'date',
+                'after:today',
+            ],
         ];
         if (! $paymentGatewayReady) {
             $rules['bukti_pembayaran'] = [
@@ -393,6 +409,15 @@ class JamaahController extends Controller
             'muzakki_id' => $user->id,
             'tanggal' => now()->toDateString(),
             'jenis_ziswaf' => $validated['jenis_ziswaf'],
+            'restriction_type' => $validated['jenis_ziswaf'] === 'infaq'
+                ? $validated['restriction_type']
+                : null,
+            'wakaf_type' => $validated['jenis_ziswaf'] === 'wakaf'
+                ? $validated['wakaf_type']
+                : null,
+            'wakaf_return_date' => ($validated['wakaf_type'] ?? null) === 'temporer'
+                ? $validated['wakaf_return_date']
+                : null,
             'nominal' => $validated['nominal'],
             'metode_pembayaran' => $validated['metode_pembayaran'],
             'payment_status' => $paymentGatewayReady ? 'pending' : 'manual_pending',

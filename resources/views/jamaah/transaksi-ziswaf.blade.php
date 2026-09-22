@@ -456,6 +456,38 @@
                                 @enderror
                             </div>
 
+                            @if($isInfakPage)
+                                <div class="form-group">
+                                    <label for="restriction_type">Sifat Infak/Sedekah</label>
+                                    <select name="restriction_type" id="restriction_type" class="form-control @error('restriction_type') is-invalid @enderror" required>
+                                        <option value="mutlaqah" @selected(old('restriction_type', 'mutlaqah') === 'mutlaqah')>Tidak Terikat (Mutlaqah)</option>
+                                        <option value="muqayyadah" @selected(old('restriction_type') === 'muqayyadah')>Terikat (Muqayyadah)</option>
+                                    </select>
+                                    <small class="small-muted d-block mt-2">Infak terikat akan digunakan sesuai amanah yang ditulis pada keterangan.</small>
+                                    @error('restriction_type')<small class="text-danger">{{ $message }}</small>@enderror
+                                </div>
+                            @endif
+
+                            @if($isWakafPage)
+                                <div class="form-group">
+                                    <label for="wakaf_type">Jenis Wakaf</label>
+                                    <select name="wakaf_type" id="wakaf_type" class="form-control @error('wakaf_type') is-invalid @enderror" required>
+                                        <option value="permanen" @selected(old('wakaf_type', 'permanen') === 'permanen')>Wakaf Permanen</option>
+                                        <option value="temporer" @selected(old('wakaf_type') === 'temporer')>Wakaf Temporer</option>
+                                    </select>
+                                    @error('wakaf_type')<small class="text-danger">{{ $message }}</small>@enderror
+                                </div>
+                                <div class="form-group" id="wakaf_return_group" hidden>
+                                    <label for="wakaf_return_date">Tanggal Pengembalian Pokok</label>
+                                    <input type="date" name="wakaf_return_date" id="wakaf_return_date"
+                                        min="{{ now()->addDay()->format('Y-m-d') }}"
+                                        value="{{ old('wakaf_return_date') }}"
+                                        class="form-control @error('wakaf_return_date') is-invalid @enderror" disabled>
+                                    <small class="small-muted d-block mt-2">Pokok wakaf temporer dicatat sebagai liabilitas dan dikembalikan pada tanggal ini.</small>
+                                    @error('wakaf_return_date')<small class="text-danger">{{ $message }}</small>@enderror
+                                </div>
+                            @endif
+
                             @if($isZakatPage)
                                 <div id="kalkulator-zakat-maal" class="info-box mb-3" style="display: none;">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -820,6 +852,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const jenisZiswaf = document.getElementById('jenis_ziswaf');
+    const wakafType = document.getElementById('wakaf_type');
+    const wakafReturnGroup = document.getElementById('wakaf_return_group');
+    const wakafReturnDate = document.getElementById('wakaf_return_date');
     // nominal hidden (nilai numerik asli, dikirim ke server)
     const nominal = document.getElementById('nominal');
     // nominal_display (format ribuan, ditampilkan ke user)
@@ -851,6 +886,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let nilaiMaal = 0;
     let nilaiPenghasilan = 0;
+
+    function toggleWakafReturnDate() {
+        if (!wakafType || !wakafReturnGroup || !wakafReturnDate) return;
+        const isTemporary = wakafType.value === 'temporer';
+        wakafReturnGroup.hidden = !isTemporary;
+        wakafReturnDate.disabled = !isTemporary;
+        wakafReturnDate.required = isTemporary;
+    }
+
+    if (wakafType) {
+        wakafType.addEventListener('change', toggleWakafReturnDate);
+        toggleWakafReturnDate();
+    }
 
     // ============================================================
     //  Utility: format / parse angka ribuan (ID: titik sebagai

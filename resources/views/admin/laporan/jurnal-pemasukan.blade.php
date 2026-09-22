@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Jurnal Pemasukan PSAK 109')
+@section('title', 'Jurnal Pemasukan')
 @section('hide-page-header', '1')
 
 @php
@@ -18,9 +18,9 @@
                 <i class="fa-solid fa-arrow-down-long"></i>
             </span>
             <div>
-                <h1 class="fr-hero-title">Jurnal Pemasukan (PSAK 109)</h1>
+                <h1 class="fr-hero-title">Jurnal Pemasukan</h1>
                 <p class="fr-hero-subtitle">
-                    Buku jurnal khusus penerimaan kas & bank ZISWAF dengan sistem 1 rekening operasional dan pencatatan multi-dana.
+                    Penerimaan zakat, infak, dan wakaf dicatat berdasarkan golongan dan sumber dananya.
                 </p>
             </div>
         </div>
@@ -37,7 +37,7 @@
         </div>
     </section>
 
-    <!-- Ringkasan Statistik Penerimaan PSAK 109 -->
+    <!-- Ringkasan statistik penerimaan -->
     <section class="fr-summary" style="--summary-columns:4">
         <article class="fr-stat fr-stat-green fr-reveal">
             <span class="fr-stat-icon"><i class="fa-solid fa-money-bill-wave"></i></span>
@@ -98,6 +98,8 @@
                         <option value="infak_sedekah" {{ in_array($danaFilter, ['infak', 'infak_sedekah']) ? 'selected' : '' }}>Dana Infak / Sedekah</option>
                         <option value="amil" {{ $danaFilter === 'amil' ? 'selected' : '' }}>Dana Amil</option>
                         <option value="wakaf" {{ $danaFilter === 'wakaf' ? 'selected' : '' }}>Dana Wakaf</option>
+                        <option value="wakaf_temporer" {{ $danaFilter === 'wakaf_temporer' ? 'selected' : '' }}>Wakaf Temporer</option>
+                        <option value="nazhir" {{ $danaFilter === 'nazhir' ? 'selected' : '' }}>Dana Nazhir</option>
                     </select>
                 </div>
 
@@ -158,15 +160,16 @@
                         <th style="width:200px">Akun Debit (Kas/Bank)</th>
                         <th style="width:200px">Akun Kredit (Penerimaan)</th>
                         <th style="width:130px; text-align:right;">Nominal Kas</th>
-                        <th style="width:130px; text-align:right;">Bagian Amil</th>
+                        <th style="width:140px; text-align:right;">Alokasi Pengelola</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($jurnals as $index => $jurnal)
                         @php
                             $debitKas = $jurnal->detail->first(fn($d) => (float)$d->debit > 0 && (in_array($d->coa?->kode_akun, ['1101', '1102']) || str_contains($d->coa?->nama_akun ?? '', 'Kas') || str_contains($d->coa?->nama_akun ?? '', 'Bank')));
-                            $kreditPenerimaan = $jurnal->detail->first(fn($d) => (float)$d->credit > 0 && $d->coa?->header_akun == 4 && !str_contains(strtolower($d->coa?->nama_akun ?? ''), 'bagian amil'));
+                            $kreditPenerimaan = $jurnal->detail->first(fn($d) => (float)$d->credit > 0 && !in_array($d->coa?->kode_akun, ['4301', '4302', '4310']));
                             $alokasiAmil = $jurnal->detail->first(fn($d) => (float)$d->credit > 0 && str_contains(strtolower($d->coa?->nama_akun ?? ''), 'bagian amil'));
+                            $alokasiNazhir = $jurnal->detail->first(fn($d) => (float)$d->credit > 0 && $d->coa?->kode_akun === '4310');
                             $danaItem = $debitKas?->jenis_dana ?? ($jurnal->detail->first()?->jenis_dana ?? 'amil');
                         @endphp
                         <tr>
@@ -192,12 +195,19 @@
                                     </span>
                                 @elseif($danaItem === 'wakaf')
                                     <span class="fr-badge" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
-                                        <i class="fa-solid fa-landmark"></i> Dana Wakaf (PSAK 112)
+                                        <i class="fa-solid fa-landmark"></i> Dana Wakaf
+                                    </span>
+                                @elseif($danaItem === 'wakaf_temporer')
+                                    <span class="fr-badge" style="background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
+                                        <i class="fa-solid fa-clock-rotate-left"></i> Liabilitas Wakaf Temporer
                                     </span>
                                 @else
                                     <span class="fr-badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
                                         <i class="fa-solid fa-users"></i> Dana Amil
                                     </span>
+                                @endif
+                                @if($debitKas?->restriction_type)
+                                    <div style="font-size:11px;color:#64748b;margin-top:4px;">{{ $debitKas->restriction_type === 'muqayyadah' ? 'Terikat (Muqayyadah)' : 'Tidak Terikat (Mutlaqah)' }}</div>
                                 @endif
                             </td>
                             <td>
@@ -216,8 +226,9 @@
                                 {{ $rupiah($debitKas?->debit ?? 0) }}
                             </td>
                             <td style="text-align: right; font-weight: 600; color: #d97706;">
-                                @if($alokasiAmil)
-                                    {{ $rupiah($alokasiAmil->credit) }}
+                                @if($alokasiAmil || $alokasiNazhir)
+                                    {{ $rupiah($alokasiAmil?->credit ?? $alokasiNazhir?->credit) }}
+                                    <div style="font-size:10px;color:#64748b;">{{ $alokasiNazhir ? 'Nazhir' : 'Amil' }}</div>
                                 @else
                                     <span style="color: #94a3b8;">-</span>
                                 @endif

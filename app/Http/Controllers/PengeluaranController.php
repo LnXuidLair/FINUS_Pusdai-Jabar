@@ -102,11 +102,10 @@ class PengeluaranController extends Controller
                 'required',
                 'integer',
                 Rule::exists('coa', 'id')->where(function ($query): void {
-                    $query
-                        ->where('header_akun', 5)
-                        ->whereIn('kode_akun', $this->manualExpenseCodes());
+                    $query->whereIn('kode_akun', $this->manualExpenseCodes());
                 }),
             ],
+            'restriction_type' => ['nullable', Rule::in(['mutlaqah', 'muqayyadah'])],
             'deskripsi' => ['required', 'string', 'max:255'],
             'jumlah' => ['required', 'integer', 'min:1'],
             'tanggal' => ['required', 'date'],
@@ -124,6 +123,12 @@ class PengeluaranController extends Controller
 
         $coaDebit = Coa::pengeluaranManual()->findOrFail($validated['coa_debit_id']);
         $zakatDetails = [];
+
+        if ($coaDebit->kode_akun === '5311' && empty($validated['restriction_type'])) {
+            throw ValidationException::withMessages([
+                'restriction_type' => 'Pilih sifat infak/sedekah yang akan disalurkan.',
+            ]);
+        }
 
         if ($coaDebit->kode_akun === '5210') {
             $zakatValidated = $request->validate([
@@ -158,6 +163,9 @@ class PengeluaranController extends Controller
             DB::transaction(function () use ($coaDebit, $path, $validated, $zakatDetails): void {
                 $pengeluaran = new Pengeluaran;
                 $pengeluaran->kategori = $coaDebit->nama_akun;
+                $pengeluaran->restriction_type = $coaDebit->kode_akun === '5311'
+                    ? $validated['restriction_type']
+                    : null;
                 $pengeluaran->deskripsi = $validated['deskripsi'];
                 $pengeluaran->jumlah = (int) $validated['jumlah'];
                 $pengeluaran->tanggal = $validated['tanggal'];

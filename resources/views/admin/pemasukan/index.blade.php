@@ -801,6 +801,22 @@
                                     <span class="pm-bdot" style="background:{{ $colors['dot'] }};"></span>
                                     {{ $golLabel }}
                                 </span>
+                                @if($item->jenis_ziswaf === 'infaq' && $item->restriction_type)
+                                    <div style="font-size:11px;color:#64748b;margin-top:5px;">
+                                        {{ $item->restriction_type === 'muqayyadah' ? 'Terikat (Muqayyadah)' : 'Tidak Terikat (Mutlaqah)' }}
+                                    </div>
+                                @elseif($item->jenis_ziswaf === 'wakaf' && $item->wakaf_type)
+                                    <div style="font-size:11px;color:#64748b;margin-top:5px;">
+                                        {{ match($item->wakaf_type) {
+                                            'temporer' => 'Wakaf Temporer',
+                                            'hasil_pengelolaan' => 'Hasil Pengelolaan Wakaf',
+                                            default => 'Wakaf Permanen',
+                                        } }}
+                                        @if($item->wakaf_type === 'temporer' && $item->wakaf_return_date)
+                                            · kembali {{ $item->wakaf_return_date->format('d/m/Y') }}
+                                        @endif
+                                    </div>
+                                @endif
                             </td>
 
                             {{-- Nominal --}}
@@ -932,6 +948,38 @@
                     </select>
                 </div>
 
+                <div class="pm-fgroup" id="pmRestrictionGroup" hidden>
+                    <label class="pm-flabel" for="pm_restriction_type">Sifat Infak/Sedekah <span>*</span></label>
+                    <select name="restriction_type" id="pm_restriction_type" class="pm-fselect" disabled>
+                        <option value="mutlaqah" @selected(old('restriction_type', 'mutlaqah') === 'mutlaqah')>Tidak Terikat (Mutlaqah)</option>
+                        <option value="muqayyadah" @selected(old('restriction_type') === 'muqayyadah')>Terikat (Muqayyadah)</option>
+                    </select>
+                    <div class="pm-fhint">Dana terikat harus digunakan sesuai amanah pemberi.</div>
+                </div>
+
+                <div class="pm-fgroup" id="pmWakafTypeGroup" hidden>
+                    <label class="pm-flabel" for="pm_wakaf_type">Jenis Penerimaan Wakaf <span>*</span></label>
+                    <select name="wakaf_type" id="pm_wakaf_type" class="pm-fselect" disabled>
+                        <option value="permanen" @selected(old('wakaf_type', 'permanen') === 'permanen')>Wakaf Permanen</option>
+                        <option value="temporer" @selected(old('wakaf_type') === 'temporer')>Wakaf Temporer</option>
+                        <option value="hasil_pengelolaan" @selected(old('wakaf_type') === 'hasil_pengelolaan')>Hasil Pengelolaan Wakaf</option>
+                    </select>
+                </div>
+
+                <div class="pm-frow" id="pmWakafRules" hidden>
+                    <div class="pm-fgroup" id="pmWakafReturnGroup" hidden>
+                        <label class="pm-flabel" for="pm_wakaf_return_date">Tanggal Pengembalian Pokok <span>*</span></label>
+                        <input type="date" name="wakaf_return_date" id="pm_wakaf_return_date" class="pm-finput"
+                            value="{{ old('wakaf_return_date') }}" disabled>
+                    </div>
+                    <div class="pm-fgroup" id="pmNazhirGroup" hidden>
+                        <label class="pm-flabel" for="pm_persentase_nazhir">Imbalan Nazhir (%) <span>*</span></label>
+                        <input type="number" name="persentase_nazhir" id="pm_persentase_nazhir" class="pm-finput"
+                            min="0" max="10" step="0.01" value="{{ old('persentase_nazhir', 10) }}" disabled>
+                        <div class="pm-fhint">Maksimal 10% dari hasil pengelolaan neto yang terealisasi.</div>
+                    </div>
+                </div>
+
                 <div class="pm-frow">
                     {{-- Nominal --}}
                     <div class="pm-fgroup">
@@ -1038,6 +1086,42 @@
     document.getElementById('pmTambahOverlay').addEventListener('click', function(e) {
         if (e.target === this) pmCloseTambah();
     });
+
+    const pmGolongan = document.getElementById('pm_golongan');
+    const pmRestrictionGroup = document.getElementById('pmRestrictionGroup');
+    const pmRestriction = document.getElementById('pm_restriction_type');
+    const pmWakafTypeGroup = document.getElementById('pmWakafTypeGroup');
+    const pmWakafType = document.getElementById('pm_wakaf_type');
+    const pmWakafRules = document.getElementById('pmWakafRules');
+    const pmWakafReturnGroup = document.getElementById('pmWakafReturnGroup');
+    const pmWakafReturn = document.getElementById('pm_wakaf_return_date');
+    const pmNazhirGroup = document.getElementById('pmNazhirGroup');
+    const pmNazhir = document.getElementById('pm_persentase_nazhir');
+
+    function pmSyncPostingRules() {
+        const isInfak = pmGolongan.value === 'infaq';
+        const isWakaf = pmGolongan.value === 'wakaf';
+        const isTemporary = isWakaf && pmWakafType.value === 'temporer';
+        const isManagementResult = isWakaf && pmWakafType.value === 'hasil_pengelolaan';
+
+        pmRestrictionGroup.hidden = !isInfak;
+        pmRestriction.disabled = !isInfak;
+        pmRestriction.required = isInfak;
+        pmWakafTypeGroup.hidden = !isWakaf;
+        pmWakafType.disabled = !isWakaf;
+        pmWakafType.required = isWakaf;
+        pmWakafRules.hidden = !(isTemporary || isManagementResult);
+        pmWakafReturnGroup.hidden = !isTemporary;
+        pmWakafReturn.disabled = !isTemporary;
+        pmWakafReturn.required = isTemporary;
+        pmNazhirGroup.hidden = !isManagementResult;
+        pmNazhir.disabled = !isManagementResult;
+        pmNazhir.required = isManagementResult;
+    }
+
+    pmGolongan.addEventListener('change', pmSyncPostingRules);
+    pmWakafType.addEventListener('change', pmSyncPostingRules);
+    pmSyncPostingRules();
 
     /* Buka modal otomatis jika ada validasi error dari server */
     @if($errors->any() && old('jenis_ziswaf'))

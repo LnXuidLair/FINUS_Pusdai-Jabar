@@ -1049,17 +1049,46 @@
                 background: rgba(34, 186, 81, .055);
                 pointer-events: none;
             }
+            /* Satu palet untuk seluruh banner fitur FINUS. */
             .fmu-hero,
+            .fr-hero,
             .employee-hero,
             .finus-data-hero,
             .finus-report-hero,
             .presensi-hero,
             .presensi-form-header,
+            .finus-dashboard-header,
+            .finus-form-header,
+            .ag-form-header,
+            .gj-hero,
+            .jm-hero,
+            .kz-heading,
+            .pm-hero,
+            .lk-hero,
+            .jamaah-hero,
+            .role-hero,
+            .pay-hero,
+            .page-hero,
+            .finus-header-gradient,
             .header-gradient {
                 background:
-                    radial-gradient(circle at 92% 8%, rgba(255,255,255,.18), transparent 30%),
-                    linear-gradient(to right, #0FB442 0%, #1AAF48 39%, #118635 75%, #004716 100%) !important;
+                    radial-gradient(circle at 91% 7%, rgba(255,255,255,.16), transparent 30%),
+                    linear-gradient(135deg, #0E5423 0%, #179B40 48%, #22BA51 100%) !important;
             }
+
+            .pm-hero .pm-btn-add {
+                border-color: rgba(255,255,255,.70) !important;
+                background: #FFFFFF !important;
+                color: #0E5423 !important;
+                box-shadow: 0 9px 20px rgba(0,70,27,.16) !important;
+            }
+            .pm-hero .pm-btn-add:hover,
+            .pm-hero .pm-btn-add:focus-visible {
+                background: #F3FFF6 !important;
+                color: #0E5423 !important;
+                box-shadow: 0 13px 25px rgba(0,70,27,.22) !important;
+            }
+            .pm-hero .pm-btn-add i { color: #179B40 !important; }
             .fmu-hero {
                 position: relative;
                 overflow: hidden;

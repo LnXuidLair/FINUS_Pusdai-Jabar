@@ -21,7 +21,7 @@
             <div>
                 <h1 class="fr-hero-title">Loket Parkir</h1>
                 <p class="fr-hero-subtitle">
-                    Catat kendaraan masuk → konfirmasi bayar QRIS → dana otomatis masuk ke jurnal pemasukan PSAK 109.
+                    Catat kendaraan masuk, konfirmasi pembayaran QRIS, lalu dana otomatis masuk ke jurnal pemasukan.
                 </p>
             </div>
         </div>

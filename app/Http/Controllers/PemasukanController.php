@@ -6,6 +6,7 @@ use App\Models\ZiswafPenerimaan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class PemasukanController extends Controller
 {
@@ -179,6 +180,29 @@ class PemasukanController extends Controller
     {
         $validated = $request->validate([
             'jenis_ziswaf'      => ['required', 'string', 'in:' . implode(',', array_keys(self::golonganLabels()))],
+            'restriction_type'  => [
+                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'infaq'),
+                'nullable',
+                Rule::in(['mutlaqah', 'muqayyadah']),
+            ],
+            'wakaf_type'        => [
+                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'wakaf'),
+                'nullable',
+                Rule::in(['permanen', 'temporer', 'hasil_pengelolaan']),
+            ],
+            'wakaf_return_date' => [
+                Rule::requiredIf(fn (): bool => $request->input('wakaf_type') === 'temporer'),
+                'nullable',
+                'date',
+                'after:tanggal',
+            ],
+            'persentase_nazhir' => [
+                Rule::requiredIf(fn (): bool => $request->input('wakaf_type') === 'hasil_pengelolaan'),
+                'nullable',
+                'numeric',
+                'min:0',
+                'max:10',
+            ],
             'nominal'           => ['required', 'integer', 'min:1000'],
             'tanggal'           => ['required', 'date', 'before_or_equal:today'],
             'metode_pembayaran' => ['required', 'string', 'in:manual_transfer,qris_manual,tunai'],
@@ -203,6 +227,18 @@ class PemasukanController extends Controller
 
         $pemasukan = ZiswafPenerimaan::create([
             'jenis_ziswaf'      => $validated['jenis_ziswaf'],
+            'restriction_type'  => $validated['jenis_ziswaf'] === 'infaq'
+                ? $validated['restriction_type']
+                : null,
+            'wakaf_type'        => $validated['jenis_ziswaf'] === 'wakaf'
+                ? $validated['wakaf_type']
+                : null,
+            'wakaf_return_date' => ($validated['wakaf_type'] ?? null) === 'temporer'
+                ? $validated['wakaf_return_date']
+                : null,
+            'persentase_nazhir' => ($validated['wakaf_type'] ?? null) === 'hasil_pengelolaan'
+                ? (float) $validated['persentase_nazhir']
+                : 0,
             'nominal'           => (int) $validated['nominal'],
             'tanggal'           => $validated['tanggal'],
             'metode_pembayaran' => $validated['metode_pembayaran'],
