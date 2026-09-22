@@ -86,4 +86,3 @@ html[data-finus-theme="dark"] body .auth-field:focus { border-color:#64DD81 !imp
 html[data-finus-theme="dark"] body :where(.auth-info-card,.auth-email-preview,.auth-dialog-details) { border-color:#293D31 !important; background:#101B14 !important; color:#C7D6CC !important; }
 </style>
 @endpush
-
