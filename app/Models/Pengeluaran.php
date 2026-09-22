@@ -14,6 +14,7 @@ class Pengeluaran extends Model
     protected $fillable = [
         'id_penggajian',
         'kategori',
+        'restriction_type',
         'deskripsi',
         'jumlah',
         'tanggal',

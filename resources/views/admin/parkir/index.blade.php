@@ -21,7 +21,7 @@
             <div>
                 <h1 class="fr-hero-title">Monitor Parkir</h1>
                 <p class="fr-hero-subtitle">
-                    Dashboard transaksi parkir QRIS harian — pendapatan otomatis tercatat ke Jurnal Pemasukan PSAK 109.
+                    Dashboard transaksi parkir QRIS harian dengan pencatatan pendapatan otomatis ke jurnal pemasukan.
                 </p>
             </div>
         </div>

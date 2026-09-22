@@ -16,6 +16,9 @@ class ZiswafPenerimaan extends Model
         'id_pegawai',
         'tanggal',
         'jenis_ziswaf',
+        'restriction_type',
+        'wakaf_type',
+        'wakaf_return_date',
         'nominal',
         'metode_pembayaran',
         'payment_status',
@@ -37,16 +40,21 @@ class ZiswafPenerimaan extends Model
         'zakat_setting_id',
         'persentase_amil',
         'nominal_amil',
+        'persentase_nazhir',
+        'nominal_nazhir',
         'kebijakan_amil_id',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
+        'wakaf_return_date' => 'date',
         'nominal' => 'integer',
         'verified_at' => 'datetime',
         'paid_at' => 'datetime',
         'rincian_perhitungan' => 'array',
         'persentase_zakat' => 'decimal:2',
+        'persentase_amil' => 'decimal:2',
+        'persentase_nazhir' => 'decimal:2',
     ];
 
     public function muzakki()

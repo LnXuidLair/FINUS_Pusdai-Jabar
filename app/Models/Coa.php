@@ -27,7 +27,6 @@ class Coa extends Model
             ->all();
 
         return $query
-            ->where('header_akun', 5)
             ->whereIn('kode_akun', $kodeAkun);
     }
 

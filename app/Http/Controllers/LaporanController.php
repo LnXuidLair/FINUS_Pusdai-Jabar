@@ -188,7 +188,7 @@ class LaporanController extends Controller
     }
 
     /**
-     * Jurnal Pemasukan: Buku Jurnal Khusus Penerimaan Kas/Bank ZISWAF berbasis PSAK 109.
+     * Jurnal Pemasukan: penerimaan ZIS menurut PSAK 109 dan wakaf menurut PSAK 112.
      */
     public function jurnalPemasukan(Request $request)
     {
@@ -276,7 +276,7 @@ class LaporanController extends Controller
     }
 
     /**
-     * Jurnal Pengeluaran: Buku Jurnal Khusus Pengeluaran Kas/Bank (Penyaluran & Beban Amil) PSAK 109.
+     * Jurnal Pengeluaran: penyaluran ZIS menurut PSAK 109 dan transaksi wakaf menurut PSAK 112.
      */
     public function jurnalPengeluaran(Request $request)
     {

@@ -18,6 +18,7 @@ return [
         [2, '2101', 'Utang Usaha'],
         [2, '2102', 'Utang Kegiatan'],
         [2, '2103', 'Beban yang Masih Harus Dibayar'],
+        [2, '2201', 'Liabilitas Wakaf Temporer'],
 
         [3, '3101', 'Dana Operasional'],
         [3, '3102', 'Dana Pengembangan'],
@@ -29,11 +30,13 @@ return [
         [4, '4104', 'Jasa Giro dan Bagi Hasil Bank'],
         [4, '4105', 'Penerimaan Zakat'],
         [4, '4106', 'Penerimaan Infak dan Sedekah'],
-        [4, '4107', 'Penerimaan Wakaf'],
+        [4, '4107', 'Penerimaan Wakaf Permanen'],
         [4, '4108', 'Penerimaan Fidyah'],
+        [4, '4109', 'Hasil Pengelolaan dan Pengembangan Wakaf'],
         [4, '4199', 'Penerimaan Lain-lain'],
         [4, '4301', 'Bagian Amil dari Zakat'],
         [4, '4302', 'Bagian Amil dari Infak dan Sedekah'],
+        [4, '4310', 'Bagian Nazhir dari Hasil Pengelolaan Wakaf'],
 
         [5, '5101', 'Beban Administrasi dan ATK'],
         [5, '5102', 'Beban Program Dakwah dan Keagamaan'],
@@ -53,7 +56,8 @@ return [
 
         [5, '5311', 'Penyaluran Infak dan Sedekah'],
         [5, '5312', 'Alokasi Infak dan Sedekah - Bagian Amil'],
-        [5, '5411', 'Penyaluran Wakaf'],
+        [5, '5411', 'Penyaluran Manfaat Wakaf'],
+        [5, '5412', 'Imbalan Nazhir atas Hasil Pengelolaan Wakaf'],
         [5, '5511', 'Penyaluran Fidyah'],
     ],
 
@@ -61,6 +65,7 @@ return [
         'operasional' => 'Beban Operasional',
         'zakat' => 'Penyaluran Zakat kepada Mustahik',
         'sosial' => 'Penyaluran Dana Lainnya',
+        'wakaf' => 'Transaksi Wakaf',
     ],
 
     'manual_expense_accounts' => [
@@ -83,10 +88,13 @@ return [
         ],
         'sosial' => [
             '5311' => 'Penyaluran infak dan sedekah sesuai program atau amanah',
-            '5411' => 'Penyaluran atau pemanfaatan dana wakaf',
             '5511' => 'Penyaluran fidyah kepada penerima yang berhak',
+        ],
+        'wakaf' => [
+            '5411' => 'Penyaluran manfaat wakaf yang telah diterima mauquf alaih',
+            '2201' => 'Pengembalian pokok wakaf temporer kepada wakif saat jatuh tempo',
         ],
     ],
 
-    'automatic_expense_accounts' => ['5104', '5312'],
+    'automatic_expense_accounts' => ['5104', '5312', '5412'],
 ];

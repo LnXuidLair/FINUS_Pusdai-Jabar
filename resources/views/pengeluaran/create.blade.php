@@ -46,7 +46,17 @@
                         Gaji dan honorarium dicatat melalui menu <strong>Penggajian</strong>. Hak amil dialokasikan otomatis dari kebijakan zakat.
                     </span>
                 </div>
-                <div class="fmu-field"><label class="fmu-label" for="tanggal">Tanggal <span class="fmu-required">*</span></label><div class="fmu-input-icon-wrap"><i class="fa-solid fa-calendar-day"></i><input type="date" id="tanggal" name="tanggal" value="{{ old('tanggal', now()->format('Y-m-d')) }}" class="fmu-control @error('tanggal') is-invalid @enderror" required></div>@error('tanggal')<span class="fmu-error">{{ $message }}</span>@enderror</div>
+                <div class="fmu-field"><label class="fmu-label" for="tanggal">Tanggal <span class="fmu-required">*</span></label><div class="fmu-input-icon-wrap"><i class="fa-solid fa-calendar-day"></i><input type="date" id="tanggal" name="tanggal" value="{{ old('tanggal', now()->format('Y-m-d')) }}" class="fmu-control @error('tanggal') is-invalid @enderror" required></div><span class="fmu-help" id="recognitionDateHelp">Tanggal transaksi atau pembayaran.</span>@error('tanggal')<span class="fmu-error">{{ $message }}</span>@enderror</div>
+                <div class="fmu-field fmu-field-full" id="infakRestrictionField" hidden>
+                    <label class="fmu-label" for="restriction_type">Sifat Infak/Sedekah <span class="fmu-required">*</span></label>
+                    <select id="restriction_type" name="restriction_type" class="fmu-control @error('restriction_type') is-invalid @enderror" disabled>
+                        <option value="">-- Pilih Sifat Dana --</option>
+                        <option value="mutlaqah" @selected(old('restriction_type') === 'mutlaqah')>Tidak Terikat (Mutlaqah)</option>
+                        <option value="muqayyadah" @selected(old('restriction_type') === 'muqayyadah')>Terikat (Muqayyadah)</option>
+                    </select>
+                    <span class="fmu-help">Dana terikat hanya boleh disalurkan sesuai amanah pemberi.</span>
+                    @error('restriction_type')<span class="fmu-error">{{ $message }}</span>@enderror
+                </div>
                 <div class="fmu-field fmu-field-full"><label class="fmu-label" for="deskripsi">Deskripsi <span class="fmu-required">*</span></label><textarea id="deskripsi" name="deskripsi" class="fmu-textarea @error('deskripsi') is-invalid @enderror" placeholder="Jelaskan keperluan pengeluaran secara singkat dan jelas" required>{{ old('deskripsi') }}</textarea>@error('deskripsi')<span class="fmu-error">{{ $message }}</span>@enderror</div>
                 <div class="fmu-field"><label class="fmu-label" for="jumlah">Jumlah <span class="fmu-required">*</span></label><div class="fmu-input-icon-wrap"><i class="fa-solid fa-rupiah-sign"></i><input type="number" min="1" step="1" id="jumlah" name="jumlah" value="{{ old('jumlah') }}" class="fmu-control @error('jumlah') is-invalid @enderror" placeholder="0" required></div><span class="fmu-help" id="expenseAmountPreview">Rp 0</span>@error('jumlah')<span class="fmu-error">{{ $message }}</span>@enderror</div>
                 <div class="fmu-field"><label class="fmu-label" for="bukti_pembayaran">Bukti Pembayaran</label><label class="fmu-upload" for="bukti_pembayaran"><span><i class="fa-solid fa-cloud-arrow-up"></i><strong>Pilih bukti pembayaran</strong><span>JPG, JPEG, PNG, atau PDF. Maksimal 2 MB.</span><span class="fmu-file-name" id="expenseFileName"></span></span></label><input type="file" id="bukti_pembayaran" name="bukti_pembayaran" accept=".jpg,.jpeg,.png,.pdf" class="d-none">@error('bukti_pembayaran')<span class="fmu-error">{{ $message }}</span>@enderror</div>
@@ -113,6 +123,9 @@
     input?.addEventListener('change', () => { const file = input.files?.[0]; label.textContent = file?.name || ''; label.classList.toggle('is-visible', Boolean(file)); });
 
     const category = document.getElementById('kategori');
+    const restrictionField = document.getElementById('infakRestrictionField');
+    const restrictionType = document.getElementById('restriction_type');
+    const recognitionDateHelp = document.getElementById('recognitionDateHelp');
     const section = document.getElementById('zakatDetailSection');
     const rows = document.getElementById('zakatDetailRows');
     const template = document.getElementById('zakatDetailTemplate');
@@ -165,6 +178,15 @@
         section.hidden = !visible;
         section.querySelectorAll('input, select').forEach(field => { field.disabled = !visible; });
         if (visible && !rows.children.length) addRow();
+        const isInfak = selectedCode === '5311';
+        restrictionField.hidden = !isInfak;
+        restrictionType.disabled = !isInfak;
+        restrictionType.required = isInfak;
+        recognitionDateHelp.textContent = ['5210', '5311', '5411'].includes(selectedCode)
+            ? 'Gunakan tanggal saat manfaat diterima mustahik atau penerima manfaat.'
+            : selectedCode === '2201'
+                ? 'Gunakan tanggal pengembalian pokok wakaf temporer kepada wakif.'
+                : 'Tanggal transaksi atau pembayaran.';
         syncZakatTotals();
     };
 

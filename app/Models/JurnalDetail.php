@@ -33,6 +33,8 @@ class JurnalDetail extends Model
             'amil' => 'Dana Amil',
             'non_halal' => 'Dana Non-Halal',
             'wakaf' => 'Dana Wakaf',
+            'wakaf_temporer' => 'Liabilitas Wakaf Temporer',
+            'nazhir' => 'Dana Nazhir',
             default => ucfirst(str_replace('_', ' ', $this->jenis_dana ?? 'amil')),
         };
     }
@@ -45,6 +47,8 @@ class JurnalDetail extends Model
             'amil' => 'amber',
             'non_halal' => 'red',
             'wakaf' => 'purple',
+            'wakaf_temporer' => 'indigo',
+            'nazhir' => 'teal',
             default => 'gray',
         };
     }

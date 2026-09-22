@@ -48,6 +48,11 @@ class Psak109PostingService
             }
 
             $jenisDana = $this->resolveJenisDana($penerimaan->jenis_ziswaf);
+            if ($jenisDana === 'wakaf' && $penerimaan->wakaf_type === 'temporer') {
+                $jenisDana = 'wakaf_temporer';
+            }
+            $restrictionType = $this->resolveRestrictionType($penerimaan, $jenisDana);
+            $psakReference = $this->resolvePsakReference($jenisDana);
             $coaKas = $this->resolveCoaKas($penerimaan->metode_pembayaran);
             $coaPenerimaan = $this->resolveCoaPenerimaan($penerimaan);
 
@@ -61,6 +66,8 @@ class Psak109PostingService
                 'debit' => $nominal,
                 'credit' => 0,
                 'jenis_dana' => $jenisDana,
+                'restriction_type' => $restrictionType,
+                'psak_reference' => $psakReference,
             ]);
 
             // 2. Kredit Akun Penerimaan ZISWAF
@@ -71,10 +78,15 @@ class Psak109PostingService
                 'debit' => 0,
                 'credit' => $nominal,
                 'jenis_dana' => $jenisDana,
+                'restriction_type' => $restrictionType,
+                'psak_reference' => $psakReference,
             ]);
 
             // 3. Alokasi Bagian Amil (Jika berlaku dan persentase > 0)
-            $this->alokasiBagianAmil($jurnal, $penerimaan, $jenisDana, $nominal);
+            $this->alokasiBagianAmil($jurnal, $penerimaan, $jenisDana, $nominal, $restrictionType);
+
+            // 4. PSAK 112: imbalan nazhir hanya dari hasil pengelolaan yang terealisasi.
+            $this->alokasiBagianNazhir($jurnal, $penerimaan, $jenisDana, $nominal);
 
             // Simpan link balik jurnal_id
             $penerimaan->jurnal_id = $jurnal->id;
@@ -127,6 +139,10 @@ class Psak109PostingService
 
             $jenisDana = $this->resolveJenisDanaPengeluaran($coaDebit, $pengeluaran->kategori);
             $kategoriBidang = $this->resolveKategoriBidang($coaDebit);
+            $restrictionType = $jenisDana === 'infak_sedekah'
+                ? ($pengeluaran->restriction_type ?: 'mutlaqah')
+                : null;
+            $psakReference = $this->resolvePsakReference($jenisDana);
 
             $zakatDetails = $coaDebit->kode_akun === '5210'
                 ? $pengeluaran->zakatPenyaluran()->get()
@@ -142,6 +158,7 @@ class Psak109PostingService
                         'debit' => $detail->nominal,
                         'credit' => 0,
                         'jenis_dana' => 'zakat',
+                        'psak_reference' => 'PSAK 109',
                         'asnaf' => $detail->asnaf,
                         'kategori_bidang' => null,
                     ]);
@@ -154,6 +171,8 @@ class Psak109PostingService
                     'debit' => $nominal,
                     'credit' => 0,
                     'jenis_dana' => $jenisDana,
+                    'restriction_type' => $restrictionType,
+                    'psak_reference' => $psakReference,
                     'kategori_bidang' => $kategoriBidang,
                 ]);
             }
@@ -166,6 +185,8 @@ class Psak109PostingService
                 'debit' => 0,
                 'credit' => $nominal,
                 'jenis_dana' => $jenisDana,
+                'restriction_type' => $restrictionType,
+                'psak_reference' => $psakReference,
                 'kategori_bidang' => $kategoriBidang,
             ]);
 
@@ -266,15 +287,36 @@ class Psak109PostingService
     /**
      * Hitung alokasi hak amil dan catat jurnal transfer antar-dana.
      */
-    protected function alokasiBagianAmil(JurnalUmum $jurnal, ZiswafPenerimaan $penerimaan, string $jenisDana, int $nominal): void
+    protected function alokasiBagianAmil(
+        JurnalUmum $jurnal,
+        ZiswafPenerimaan $penerimaan,
+        string $jenisDana,
+        int $nominal,
+        ?string $restrictionType = null
+    ): void
     {
         // Hanya dana Zakat dan Infak yang dialokasikan ke Amil
         if (! in_array($jenisDana, ['zakat', 'infak_sedekah'])) {
             return;
         }
 
-        $sumberAturan = $jenisDana === 'zakat' ? 'zakat' : 'infaq_mutlaqah';
+        $sumberAturan = $jenisDana === 'zakat'
+            ? 'zakat'
+            : ($restrictionType === 'muqayyadah' ? 'infaq_muqayyadah' : 'infaq_mutlaqah');
         $kebijakan = KebijakanAmil::ambilKebijakan($sumberAturan, $penerimaan->tanggal);
+
+        if (
+            $jenisDana === 'infak_sedekah'
+            && $restrictionType === 'muqayyadah'
+            && (! $kebijakan || ! $kebijakan->potong_infak_terikat)
+        ) {
+            $penerimaan->persentase_amil = 0;
+            $penerimaan->nominal_amil = 0;
+            $penerimaan->kebijakan_amil_id = $kebijakan?->id;
+            $penerimaan->saveQuietly();
+
+            return;
+        }
 
         $persentase = $kebijakan ? (float) $kebijakan->persentase_amil : ($jenisDana === 'zakat' ? 12.50 : 10.00);
 
@@ -311,6 +353,8 @@ class Psak109PostingService
             'debit' => $nominalAmil,
             'credit' => 0,
             'jenis_dana' => $jenisDana,
+            'restriction_type' => $restrictionType,
+            'psak_reference' => 'PSAK 109',
             'asnaf' => $jenisDana === 'zakat' ? 'amil' : null,
         ]);
 
@@ -322,6 +366,61 @@ class Psak109PostingService
             'debit' => 0,
             'credit' => $nominalAmil,
             'jenis_dana' => 'amil',
+            'restriction_type' => $restrictionType,
+            'psak_reference' => 'PSAK 109',
+        ]);
+    }
+
+    /**
+     * PSAK 112 membatasi imbalan nazhir pada hasil neto pengelolaan wakaf
+     * yang telah terealisasi dalam kas dan setara kas.
+     */
+    protected function alokasiBagianNazhir(
+        JurnalUmum $jurnal,
+        ZiswafPenerimaan $penerimaan,
+        string $jenisDana,
+        int $nominal
+    ): void {
+        if ($jenisDana !== 'wakaf' || $penerimaan->wakaf_type !== 'hasil_pengelolaan') {
+            $penerimaan->persentase_nazhir = 0;
+            $penerimaan->nominal_nazhir = 0;
+            $penerimaan->saveQuietly();
+
+            return;
+        }
+
+        $persentase = min(10, max(0, (float) $penerimaan->persentase_nazhir));
+        $nominalNazhir = (int) round($nominal * ($persentase / 100));
+
+        $penerimaan->persentase_nazhir = $persentase;
+        $penerimaan->nominal_nazhir = $nominalNazhir;
+        $penerimaan->saveQuietly();
+
+        if ($nominalNazhir <= 0) {
+            return;
+        }
+
+        $bebanNazhir = $this->findOrCreateCoa('5412', 'Imbalan Nazhir atas Hasil Pengelolaan Wakaf', 5);
+        $bagianNazhir = $this->findOrCreateCoa('4310', 'Bagian Nazhir dari Hasil Pengelolaan Wakaf', 4);
+
+        JurnalDetail::create([
+            'jurnal_id' => $jurnal->id,
+            'coa_id' => $bebanNazhir->id,
+            'deskripsi' => 'Imbalan nazhir '.$persentase.'% dari hasil pengelolaan wakaf',
+            'debit' => $nominalNazhir,
+            'credit' => 0,
+            'jenis_dana' => 'wakaf',
+            'psak_reference' => 'PSAK 112',
+        ]);
+
+        JurnalDetail::create([
+            'jurnal_id' => $jurnal->id,
+            'coa_id' => $bagianNazhir->id,
+            'deskripsi' => 'Bagian nazhir dari hasil pengelolaan wakaf',
+            'debit' => 0,
+            'credit' => $nominalNazhir,
+            'jenis_dana' => 'nazhir',
+            'psak_reference' => 'PSAK 112',
         ]);
     }
 
@@ -341,6 +440,8 @@ class Psak109PostingService
         $saldoInfak = 0;
         $saldoAmil = 0;
         $saldoWakaf = 0;
+        $saldoWakafTemporer = 0;
+        $saldoNazhir = 0;
         $totalBank = 0;
 
         foreach ($detailKas as $d) {
@@ -352,6 +453,8 @@ class Psak109PostingService
                 'infak', 'infak_sedekah' => $saldoInfak += $mutasi,
                 'amil' => $saldoAmil += $mutasi,
                 'wakaf' => $saldoWakaf += $mutasi,
+                'wakaf_temporer' => $saldoWakafTemporer += $mutasi,
+                'nazhir' => $saldoNazhir += $mutasi,
                 default => $saldoAmil += $mutasi,
             };
         }
@@ -376,6 +479,12 @@ class Psak109PostingService
                 // Debit Penyaluran Infak ke Amil mengurangi hak infak
                 $saldoInfak -= (float) $d->debit;
             }
+            if ($d->coa_id == $this->resolveCoaBagianNazhirWakaf()->id) {
+                $saldoNazhir += (float) $d->credit;
+            }
+            if ($d->coa_id == $this->resolveCoaImbalanNazhirWakaf()->id) {
+                $saldoWakaf -= (float) $d->debit;
+            }
         }
 
         return [
@@ -383,6 +492,8 @@ class Psak109PostingService
             'infak_sedekah' => $saldoInfak,
             'amil' => $saldoAmil,
             'wakaf' => $saldoWakaf,
+            'wakaf_temporer' => $saldoWakafTemporer,
+            'nazhir' => $saldoNazhir,
             'total_bank' => $totalBank,
         ];
     }
@@ -436,6 +547,17 @@ class Psak109PostingService
 
     protected function resolveCoaPenerimaan(ZiswafPenerimaan $penerimaan): Coa
     {
+        $jenis = strtolower($penerimaan->jenis_ziswaf ?? '');
+
+        // Klasifikasi PSAK 112 harus mengalahkan pemetaan akun lama pada transaksi wakaf.
+        if (str_contains($jenis, 'wakaf')) {
+            return match ($penerimaan->wakaf_type) {
+                'temporer' => $this->findOrCreateCoa('2201', 'Liabilitas Wakaf Temporer', 2),
+                'hasil_pengelolaan' => $this->findOrCreateCoa('4109', 'Hasil Pengelolaan dan Pengembangan Wakaf', 4),
+                default => $this->findOrCreateCoa('4107', 'Penerimaan Wakaf Permanen', 4),
+            };
+        }
+
         if ($penerimaan->coa_id) {
             $coa = Coa::find($penerimaan->coa_id);
             if ($coa) {
@@ -443,13 +565,8 @@ class Psak109PostingService
             }
         }
 
-        $jenis = strtolower($penerimaan->jenis_ziswaf ?? '');
-
         if (str_contains($jenis, 'zakat')) {
             return $this->findOrCreateCoa('4105', 'Penerimaan Zakat', 4);
-        }
-        if (str_contains($jenis, 'wakaf')) {
-            return $this->findOrCreateCoa('4107', 'Penerimaan Wakaf', 4);
         }
         if (str_contains($jenis, 'sedekah') || str_contains($jenis, 'shadaqah')) {
             return $this->findOrCreateCoa('4106', 'Penerimaan Infak dan Sedekah', 4);
@@ -492,6 +609,9 @@ class Psak109PostingService
     {
         $code = $coa?->kode_akun ?? '';
 
+        if ($code === '2201') {
+            return 'wakaf_temporer';
+        }
         if (str_starts_with($code, '52')) {
             return 'zakat';
         }
@@ -514,6 +634,26 @@ class Psak109PostingService
         }
 
         return 'amil';
+    }
+
+    protected function resolveRestrictionType(ZiswafPenerimaan $penerimaan, string $jenisDana): ?string
+    {
+        if ($jenisDana !== 'infak_sedekah') {
+            return null;
+        }
+
+        return $penerimaan->restriction_type === 'muqayyadah'
+            ? 'muqayyadah'
+            : 'mutlaqah';
+    }
+
+    protected function resolvePsakReference(string $jenisDana): ?string
+    {
+        return match ($jenisDana) {
+            'zakat', 'infak_sedekah' => 'PSAK 109',
+            'wakaf', 'wakaf_temporer', 'nazhir' => 'PSAK 112',
+            default => null,
+        };
     }
 
     protected function resolveKategoriBidang(?Coa $coa): ?string
@@ -552,6 +692,16 @@ class Psak109PostingService
     public function resolveCoaPenyaluranBagianAmilInfak(): Coa
     {
         return $this->findOrCreateCoa('5312', 'Alokasi Infak dan Sedekah - Bagian Amil', 5);
+    }
+
+    public function resolveCoaBagianNazhirWakaf(): Coa
+    {
+        return $this->findOrCreateCoa('4310', 'Bagian Nazhir dari Hasil Pengelolaan Wakaf', 4);
+    }
+
+    public function resolveCoaImbalanNazhirWakaf(): Coa
+    {
+        return $this->findOrCreateCoa('5412', 'Imbalan Nazhir atas Hasil Pengelolaan Wakaf', 5);
     }
 
     protected function keteranganPenerimaan(ZiswafPenerimaan $item): string

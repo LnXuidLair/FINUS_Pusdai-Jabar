@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Jurnal Pengeluaran PSAK 109')
+@section('title', 'Jurnal Pengeluaran')
 @section('hide-page-header', '1')
 
 @php
@@ -18,9 +18,9 @@
                 <i class="fa-solid fa-arrow-up-long"></i>
             </span>
             <div>
-                <h1 class="fr-hero-title">Jurnal Pengeluaran (PSAK 109)</h1>
+                <h1 class="fr-hero-title">Jurnal Pengeluaran</h1>
                 <p class="fr-hero-subtitle">
-                    Buku jurnal khusus pengeluaran kas & bank: pemisahan tegas antara penyaluran mustahik (beban dana ZIS) dan operasional amil (beban dana amil).
+                    Penyaluran ZIS, manfaat wakaf, operasional pengelola, dan pengembalian wakaf temporer dicatat menurut sumber dananya.
                 </p>
             </div>
         </div>
@@ -37,7 +37,7 @@
         </div>
     </section>
 
-    <!-- Ringkasan Statistik Pengeluaran PSAK 109 -->
+    <!-- Ringkasan statistik pengeluaran -->
     <section class="fr-summary" style="--summary-columns:5">
         <article class="fr-stat fr-stat-red fr-reveal">
             <span class="fr-stat-icon"><i class="fa-solid fa-money-bill-transfer"></i></span>
@@ -118,6 +118,7 @@
                         <option value="infak_sedekah" {{ in_array($danaFilter, ['infak', 'infak_sedekah']) ? 'selected' : '' }}>Dana Infak</option>
                         <option value="amil" {{ $danaFilter === 'amil' ? 'selected' : '' }}>Dana Amil</option>
                         <option value="wakaf" {{ $danaFilter === 'wakaf' ? 'selected' : '' }}>Dana Wakaf</option>
+                        <option value="wakaf_temporer" {{ $danaFilter === 'wakaf_temporer' ? 'selected' : '' }}>Wakaf Temporer</option>
                     </select>
                 </div>
 
@@ -175,7 +176,7 @@
                         <th style="width:140px">Tanggal & Bukti</th>
                         <th>Keterangan / Penerima Manfaat</th>
                         <th style="width:160px">Golongan Dana</th>
-                        <th style="width:200px">Akun Debit (Beban/Penyaluran)</th>
+                        <th style="width:200px">Akun Debit</th>
                         <th style="width:200px">Akun Kredit (Kas/Bank)</th>
                         <th style="width:140px; text-align:right;">Nominal Keluar</th>
                     </tr>
@@ -184,7 +185,7 @@
                     @forelse($jurnals as $index => $jurnal)
                         @php
                             $kreditKas = $jurnal->detail->first(fn($d) => (float)$d->credit > 0 && (in_array($d->coa?->kode_akun, ['1101', '1102']) || str_contains($d->coa?->nama_akun ?? '', 'Kas') || str_contains($d->coa?->nama_akun ?? '', 'Bank')));
-                            $debitBeban = $jurnal->detail->first(fn($d) => (float)$d->debit > 0 && ($d->coa?->header_akun == 5 || $d->coa?->header_akun == 6));
+                            $debitBeban = $jurnal->detail->first(fn($d) => (float)$d->debit > 0 && in_array((int) $d->coa?->header_akun, [2, 5, 6]));
                             $danaItem = $debitBeban?->jenis_dana ?? ($jurnal->detail->first()?->jenis_dana ?? 'amil');
                             $rincianAsnaf = $jurnal->detail->filter(fn($d) => (float)$d->debit > 0 && !empty($d->asnaf) && $d->asnaf !== 'amil');
                         @endphp
@@ -249,10 +250,17 @@
                                     <span class="fr-badge" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
                                         <i class="fa-solid fa-landmark-dome"></i> Penyaluran Wakaf
                                     </span>
+                                @elseif($danaItem === 'wakaf_temporer')
+                                    <span class="fr-badge" style="background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
+                                        <i class="fa-solid fa-clock-rotate-left"></i> Pengembalian Wakaf Temporer
+                                    </span>
                                 @else
                                     <span class="fr-badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
                                         <i class="fa-solid fa-briefcase"></i> Beban Dana Amil
                                     </span>
+                                @endif
+                                @if($debitBeban?->restriction_type)
+                                    <div style="font-size:11px;color:#64748b;margin-top:4px;">{{ $debitBeban->restriction_type === 'muqayyadah' ? 'Terikat (Muqayyadah)' : 'Tidak Terikat (Mutlaqah)' }}</div>
                                 @endif
                             </td>
                             <td>

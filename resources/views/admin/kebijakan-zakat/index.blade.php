@@ -27,49 +27,150 @@
 @push('styles')
 <style>
     .kz-page {
+        --kz-dark: #0E5423;
+        --kz-green: #179B40;
+        --kz-light: #22BA51;
+        --kz-soft: #EAF8EE;
+        --kz-soft-2: #F5FBF7;
+        --kz-text: #172033;
+        --kz-muted: #64748B;
+        --kz-border: #E1EAE4;
+        position: relative;
         padding-bottom: 32px;
-        color: #172033;
+        color: var(--kz-text);
+    }
+    .kz-page::before {
+        content: "";
+        position: absolute;
+        top: -55px;
+        right: 2%;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: rgba(34, 186, 81, .055);
+        pointer-events: none;
     }
     .kz-heading {
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 16px;
-        padding: 20px 22px;
-        border: 1px solid #167636;
-        border-radius: 8px;
-        background: #0E5423;
+        gap: 22px;
+        margin-bottom: 17px;
+        padding: 27px 29px;
+        border: 0;
+        border-radius: 22px;
+        background:
+            radial-gradient(circle at 91% 7%, rgba(255, 255, 255, .16), transparent 30%),
+            linear-gradient(135deg, #0E5423 0%, #179B40 48%, #22BA51 100%);
         color: #fff;
+        box-shadow: 0 18px 38px rgba(14, 84, 35, .17), inset 0 1px 0 rgba(255, 255, 255, .13);
+    }
+    .kz-heading::after {
+        content: "";
+        position: absolute;
+        right: 170px;
+        bottom: -145px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: rgba(126, 255, 135, .12);
+        pointer-events: none;
     }
     .kz-heading-main {
+        position: relative;
+        z-index: 2;
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 16px;
         min-width: 0;
     }
     .kz-heading-icon {
-        display: grid;
-        place-items: center;
-        width: 44px;
-        min-width: 44px;
-        height: 44px;
-        border: 1px solid rgba(255, 255, 255, .3);
-        border-radius: 8px;
-        background: rgba(255, 255, 255, .12);
-        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 58px;
+        min-width: 58px;
+        height: 58px;
+        border: 1px solid rgba(255, 255, 255, .21);
+        border-radius: 17px;
+        background: rgba(255, 255, 255, .14);
+        color: #fff;
+        font-size: 22px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15);
+        backdrop-filter: blur(8px);
     }
     .kz-heading h1 {
         margin: 0;
-        font-size: 21px;
+        color: #fff !important;
+        font-size: 23px;
         font-weight: 800;
-        line-height: 1.25;
+        line-height: 1.3;
         letter-spacing: 0;
     }
     .kz-heading p {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         margin: 4px 0 0;
-        color: rgba(255, 255, 255, .78);
-        font-size: 12px;
+        color: rgba(255, 255, 255, .82) !important;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    .kz-heading p::before {
+        content: "";
+        width: 7px;
+        min-width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #A5FFAE;
+        box-shadow: 0 0 0 4px rgba(165, 255, 174, .13);
+    }
+    .kz-heading-actions {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 9px;
+        flex-wrap: wrap;
+    }
+    .kz-heading-actions .kz-button {
+        min-height: 45px;
+        padding: 0 17px;
+        border-radius: 12px;
+        font-size: 13px;
+        box-shadow: 0 9px 20px rgba(0, 70, 27, .16);
+    }
+    .kz-heading-actions .kz-button-primary {
+        border-color: rgba(255, 255, 255, .70);
+        background: #fff;
+        color: var(--kz-dark) !important;
+    }
+    .kz-heading-actions .kz-button-primary:hover,
+    .kz-heading-actions .kz-button-primary:focus-visible {
+        background: #F3FFF6;
+        color: var(--kz-dark) !important;
+        transform: translateY(-2px);
+    }
+    .kz-heading-actions .kz-button-primary i {
+        color: var(--kz-green);
+    }
+    .kz-heading-actions .kz-button-secondary {
+        border-color: rgba(255, 255, 255, .28);
+        background: rgba(4, 75, 28, .22);
+        color: #fff !important;
+        box-shadow: none;
+        backdrop-filter: blur(8px);
+    }
+    .kz-heading-actions .kz-button-secondary:hover,
+    .kz-heading-actions .kz-button-secondary:focus-visible {
+        border-color: rgba(255, 255, 255, .45);
+        background: rgba(255, 255, 255, .18);
+        color: #fff !important;
+        transform: translateY(-2px);
     }
     .kz-tabs {
         display: flex;
@@ -77,7 +178,7 @@
         margin: 0 0 16px;
         padding: 5px;
         overflow-x: auto;
-        border: 1px solid #DCE6DF;
+        border: 1px solid var(--kz-border);
         border-radius: 8px;
         background: #fff;
     }
@@ -96,13 +197,13 @@
         white-space: nowrap;
     }
     .kz-tab:hover {
-        background: #F2F8F4;
-        color: #0E5423;
+        background: var(--kz-soft-2);
+        color: var(--kz-dark);
     }
     .kz-tab.active {
-        background: #E5F5EA;
-        color: #0E5423;
-        box-shadow: inset 0 0 0 1px #B9DFC4;
+        background: var(--kz-soft);
+        color: var(--kz-dark);
+        box-shadow: inset 0 0 0 1px rgba(23, 155, 64, .22);
     }
     .kz-alert {
         margin-bottom: 14px;
@@ -136,13 +237,6 @@
     }
     .kz-section-gap {
         margin-top: 16px;
-    }
-    .kz-toolbar {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 8px;
-        margin-bottom: 12px;
     }
     .kz-form-modal {
         display: none;
@@ -196,10 +290,10 @@
         outline: none;
     }
     .kz-panel {
-        border: 1px solid #DCE6DF;
-        border-radius: 8px;
+        border: 1px solid rgba(14, 84, 35, .09);
+        border-radius: 20px;
         background: #fff;
-        box-shadow: 0 5px 16px rgba(15, 23, 42, .05);
+        box-shadow: 0 18px 42px rgba(15, 23, 42, .075);
     }
     .kz-panel-head {
         display: flex;
@@ -404,10 +498,25 @@
     @media (max-width: 640px) {
         .kz-heading {
             align-items: flex-start;
-            padding: 16px;
+            flex-direction: column;
+            padding: 23px 20px;
+            border-radius: 18px;
+        }
+        .kz-heading-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+        .kz-heading-actions .kz-button {
+            flex: 1 1 150px;
+        }
+        .kz-heading-icon {
+            width: 51px;
+            min-width: 51px;
+            height: 51px;
+            border-radius: 15px;
         }
         .kz-heading h1 {
-            font-size: 18px;
+            font-size: 20px;
         }
         .kz-form-grid {
             grid-template-columns: 1fr;
@@ -422,7 +531,30 @@
 </style>
 @endpush
 
+@push('dark-styles')
+<style data-finus-dark-local="admin/kebijakan-zakat/index.blade.php">
+html[data-finus-theme="dark"] body .kz-page{--kz-dark:#B9F4C7;--kz-green:#64DD81;--kz-light:#7BE795;--kz-soft:#173620;--kz-soft-2:#14251A;--kz-text:#F1F6F3;--kz-muted:#9EAEA4;--kz-border:#293D31}
+html[data-finus-theme="dark"] body .kz-page::before{background:rgba(38,184,79,.035)!important}
+html[data-finus-theme="dark"] body .kz-heading{border:1px solid rgba(126,255,135,.10)!important;background:radial-gradient(circle at 91% 7%,rgba(255,255,255,.10),transparent 30%),linear-gradient(135deg,#0B5A27,#14863A 50%,#1DB04B)!important;box-shadow:0 18px 38px rgba(0,0,0,.24)!important}
+html[data-finus-theme="dark"] body .kz-heading h1{color:#FFF!important}
+html[data-finus-theme="dark"] body .kz-heading p{color:rgba(255,255,255,.82)!important}
+html[data-finus-theme="dark"] body .kz-heading-actions .kz-button-primary{border-color:rgba(255,255,255,.70)!important;background:#FFF!important;color:#0E5423!important}
+html[data-finus-theme="dark"] body .kz-heading-actions .kz-button-secondary{border-color:rgba(255,255,255,.28)!important;background:rgba(4,75,28,.28)!important;color:#FFF!important}
+html[data-finus-theme="dark"] body .kz-tabs,html[data-finus-theme="dark"] body .kz-panel{border-color:#293D31!important;background:#111A15!important;box-shadow:0 18px 42px rgba(0,0,0,.22)!important}
+html[data-finus-theme="dark"] body .kz-tab{color:#AFC0B5!important}
+html[data-finus-theme="dark"] body .kz-tab:hover{background:#16271D!important;color:#D8EEE0!important}
+html[data-finus-theme="dark"] body .kz-tab.active{background:#1B3C25!important;color:#CFF7D8!important;box-shadow:inset 0 0 0 1px rgba(100,221,129,.20)!important}
+html[data-finus-theme="dark"] body .kz-panel-head{border-color:#293D31!important;background:linear-gradient(180deg,#17251D,#121D17)!important}
+html[data-finus-theme="dark"] body .kz-panel-head h2,html[data-finus-theme="dark"] body .kz-table strong,html[data-finus-theme="dark"] body .kz-field label{color:#F1F6F3!important}
+html[data-finus-theme="dark"] body .kz-field input,html[data-finus-theme="dark"] body .kz-field select,html[data-finus-theme="dark"] body .kz-field textarea{border-color:#31493A!important;background:#0C1610!important;color:#F1F6F3!important}
+html[data-finus-theme="dark"] body .kz-table th{border-color:#293D31!important;background:#17261D!important;color:#D2E1D6!important}
+html[data-finus-theme="dark"] body .kz-table td{border-color:#24372B!important;color:#DCE7E0!important}
+html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="dark"] body .kz-modal-close{border-color:#30493A!important;background:#14211A!important;color:#DCE7E0!important}
+</style>
+@endpush
+
 @section('content')
+@include('layouts.partials.finus-ui')
 <div class="kz-page">
     <header class="kz-heading">
         <div class="kz-heading-main">
@@ -431,6 +563,33 @@
                 <h1>Kebijakan Zakat</h1>
                 <p>Barang, harga, perhitungan muzakki, hak amil, dan penyaluran mustahik</p>
             </div>
+        </div>
+        <div class="kz-heading-actions" aria-label="Aksi kebijakan zakat">
+            @if ($tab === 'barang')
+                <button class="kz-button kz-button-secondary" type="button" data-kz-modal-open="kz-modal-harga">
+                    <i class="fa-solid fa-tag"></i>
+                    {{ $editHarga ? 'Ubah Harga' : 'Tambah Harga' }}
+                </button>
+                <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-barang">
+                    <i class="fa-solid fa-plus"></i>
+                    {{ $editBarang ? 'Ubah Barang' : 'Tambah Barang' }}
+                </button>
+            @elseif ($tab === 'muzakki')
+                <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-muzakki">
+                    <i class="fa-solid fa-plus"></i>
+                    {{ $editMuzakki ? 'Ubah Aturan' : 'Tambah Aturan' }}
+                </button>
+            @elseif ($tab === 'amil')
+                <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-amil">
+                    <i class="fa-solid fa-plus"></i>
+                    {{ $editAmil ? 'Ubah Kebijakan' : 'Tambah Kebijakan' }}
+                </button>
+            @else
+                <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-mustahik">
+                    <i class="fa-solid fa-plus"></i>
+                    {{ $editMustahik ? 'Ubah Kebijakan' : 'Tambah Kebijakan' }}
+                </button>
+            @endif
         </div>
     </header>
 
@@ -472,14 +631,6 @@
     </nav>
 
     @if ($tab === 'barang')
-        <div class="kz-toolbar">
-            <button class="kz-button kz-button-secondary" type="button" data-kz-modal-open="kz-modal-harga">
-                <i class="fa-solid fa-tag"></i> Tambah Harga
-            </button>
-            <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-barang">
-                <i class="fa-solid fa-plus"></i> Tambah Barang
-            </button>
-        </div>
         <div class="kz-form-panels">
             @php $barangForm = $editBarang; @endphp
             <section id="kz-modal-barang" class="kz-panel kz-form-modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
@@ -734,11 +885,6 @@
         </section>
     @elseif ($tab === 'muzakki')
         @php $form = $editMuzakki; @endphp
-        <div class="kz-toolbar">
-            <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-muzakki">
-                <i class="fa-solid fa-plus"></i> {{ $form ? 'Ubah Aturan' : 'Tambah Aturan' }}
-            </button>
-        </div>
         <div class="kz-layout kz-list-layout">
             <section id="kz-modal-muzakki" class="kz-panel kz-form-modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
                 <div class="kz-panel-head">
@@ -873,11 +1019,6 @@
         </div>
     @elseif ($tab === 'amil')
         @php $form = $editAmil; @endphp
-        <div class="kz-toolbar">
-            <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-amil">
-                <i class="fa-solid fa-plus"></i> {{ $form ? 'Ubah Kebijakan' : 'Tambah Kebijakan' }}
-            </button>
-        </div>
         <div class="kz-layout kz-list-layout">
             <section id="kz-modal-amil" class="kz-panel kz-form-modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
                 <div class="kz-panel-head">
@@ -991,11 +1132,6 @@
         </div>
     @else
         @php $form = $editMustahik; @endphp
-        <div class="kz-toolbar">
-            <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-mustahik">
-                <i class="fa-solid fa-plus"></i> {{ $form ? 'Ubah Kebijakan' : 'Tambah Kebijakan' }}
-            </button>
-        </div>
         <div class="kz-layout kz-list-layout">
             <section id="kz-modal-mustahik" class="kz-panel kz-form-modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
                 <div class="kz-panel-head">
