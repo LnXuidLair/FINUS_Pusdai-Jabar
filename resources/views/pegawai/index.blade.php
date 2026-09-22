@@ -761,4 +761,3 @@ html[data-finus-theme="dark"] body .employee-delete-modal .employee-modal-cancel
 }
 </style>
 @endpush
-

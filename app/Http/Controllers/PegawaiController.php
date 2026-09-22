@@ -29,6 +29,7 @@ class PegawaiController extends Controller
     {
         return view('pegawai.create', [
             'jabatanOptions' => $this->jabatanOptions(),
+            'staffDomain' => $this->staffDomain(),
         ]);
     }
 
