@@ -151,10 +151,13 @@ class Psak109PostingService
             if ($zakatDetails->isNotEmpty()) {
                 foreach ($zakatDetails as $detail) {
                     $asnaf = ucwords(str_replace('_', ' ', $detail->asnaf));
+                    $penerima = $detail->nama_penerima
+                        ? ' - '.$detail->nama_penerima
+                        : '';
                     JurnalDetail::create([
                         'jurnal_id' => $jurnal->id,
                         'coa_id' => $coaDebit->id,
-                        'deskripsi' => "Penyaluran zakat - {$asnaf} ({$detail->jumlah_penerima} orang)",
+                        'deskripsi' => "Penyaluran zakat - {$asnaf}{$penerima} ({$detail->jumlah_penerima} orang)",
                         'debit' => $detail->nominal,
                         'credit' => 0,
                         'jenis_dana' => 'zakat',
@@ -293,8 +296,7 @@ class Psak109PostingService
         string $jenisDana,
         int $nominal,
         ?string $restrictionType = null
-    ): void
-    {
+    ): void {
         // Hanya dana Zakat dan Infak yang dialokasikan ke Amil
         if (! in_array($jenisDana, ['zakat', 'infak_sedekah'])) {
             return;
@@ -528,8 +530,6 @@ class Psak109PostingService
             str_contains($jenis, 'fitrah') => 'fitrah',
             str_contains($jenis, 'pertanian_berbiaya') => 'pertanian_berbiaya',
             str_contains($jenis, 'pertanian_alami') => 'pertanian_alami',
-            str_contains($jenis, 'perdagangan') => 'perdagangan',
-            str_contains($jenis, 'rikaz') => 'rikaz',
             str_contains($jenis, 'peternakan') => 'peternakan',
             default => 'maal',
         };

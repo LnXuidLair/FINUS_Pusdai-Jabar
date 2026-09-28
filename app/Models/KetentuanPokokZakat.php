@@ -25,8 +25,6 @@ class KetentuanPokokZakat extends Model
         'fitrah' => 'Zakat Fitrah',
         'pertanian_berbiaya' => 'Pertanian (Berbiaya)',
         'pertanian_alami' => 'Pertanian (Alami)',
-        'perdagangan' => 'Zakat Perdagangan',
-        'rikaz' => 'Zakat Rikaz',
         'peternakan' => 'Zakat Peternakan',
     ];
 

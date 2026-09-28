@@ -3,15 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\AgendaKegiatan;
+use App\Models\BarangZakat;
+use App\Models\HargaBarangZakat;
+use App\Models\KetentuanPokokZakat;
+use App\Models\MasterAsnaf;
 use App\Models\User;
 use App\Models\ZiswafPenerimaan;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Midtrans\Config as MidtransConfig;
 use Midtrans\Snap;
+use Midtrans\Transaction;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -32,11 +37,13 @@ class JamaahController extends Controller
             ], 'created_at')
             ->orderBy('name')
             ->get();
+
         return view('jamaah.index', compact('jamaahs'));
     }
+
     public function dashboard(Request $request)
     {
-        /** @var \App\Models\User $jamaah */
+        /** @var User $jamaah */
         $jamaah = $request->user();
         $jenisLabels = $this->jenisLabels();
         $transaksiBerhasilSaya = ZiswafPenerimaan::query()
@@ -51,6 +58,8 @@ class JamaahController extends Controller
                 'zakat_maal',
                 'zakat_fitrah',
                 'zakat_penghasilan',
+                'zakat_pertanian_berbiaya',
+                'zakat_pertanian_alami',
             ])
             ->sum('nominal');
         $totalInfakSaya = (int) (clone $transaksiBerhasilSaya)
@@ -69,13 +78,14 @@ class JamaahController extends Controller
             ->orderBy('id')
             ->get()
             ->map(fn ($item) => [
-                'judul'     => $item->judul,
-                'hari'      => $item->hari,
-                'waktu'     => $item->waktu,
-                'lokasi'    => $item->lokasi,
-                'kategori'  => $item->kategori_label,
+                'judul' => $item->judul,
+                'hari' => $item->hari,
+                'waktu' => $item->waktu,
+                'lokasi' => $item->lokasi,
+                'kategori' => $item->kategori_label,
                 'deskripsi' => $item->deskripsi,
             ]);
+
         return view('dashboard.jamaah', compact(
             'jamaah',
             'jenisLabels',
@@ -88,6 +98,7 @@ class JamaahController extends Controller
             'agendaKegiatan'
         ));
     }
+
     /**
      * Menampilkan seluruh riwayat transaksi milik jamaah yang sedang login.
      */
@@ -126,6 +137,7 @@ class JamaahController extends Controller
             ->latest('id')
             ->paginate(10)
             ->withQueryString();
+
         return view('jamaah.riwayat-transaksi', [
             'jamaah' => $request->user(),
             'transaksi' => $transaksi,
@@ -150,22 +162,22 @@ class JamaahController extends Controller
         );
 
         $transaksi->load('muzakki');
-        $jenisLabels  = $this->jenisLabels();
+        $jenisLabels = $this->jenisLabels();
         $metodeLabels = $this->metodeLabels();
 
         return response()->json([
-            'referensi'   => $transaksi->order_id ?: 'ZSF-' . $transaksi->id,
+            'referensi' => $transaksi->order_id ?: 'ZSF-'.$transaksi->id,
             'jamaah_nama' => $jamaah->name,
-            'jamaah_email'=> $jamaah->email ?? '-',
-            'jenis'       => $jenisLabels[$transaksi->jenis_ziswaf] ?? $transaksi->jenis_ziswaf,
-            'nominal'     => $transaksi->nominal,
-            'nominal_fmt' => 'Rp ' . number_format($transaksi->nominal, 0, ',', '.'),
-            'metode'      => $metodeLabels[$transaksi->metode_pembayaran] ?? ($transaksi->metode_pembayaran ?? '-'),
-            'tanggal'     => $transaksi->tanggal?->format('d F Y'),
-            'verified_at' => $transaksi->verified_at?->format('d F Y, H:i') . ' WIB',
-            'keterangan'  => $transaksi->keterangan,
-            'catatan'     => $transaksi->catatan_verifikasi,
-            'url_cetak'   => route('jamaah.riwayat.invoice.cetak', $transaksi),
+            'jamaah_email' => $jamaah->email ?? '-',
+            'jenis' => $jenisLabels[$transaksi->jenis_ziswaf] ?? $transaksi->jenis_ziswaf,
+            'nominal' => $transaksi->nominal,
+            'nominal_fmt' => 'Rp '.number_format($transaksi->nominal, 0, ',', '.'),
+            'metode' => $metodeLabels[$transaksi->metode_pembayaran] ?? ($transaksi->metode_pembayaran ?? '-'),
+            'tanggal' => $transaksi->tanggal?->format('d F Y'),
+            'verified_at' => $transaksi->verified_at?->format('d F Y, H:i').' WIB',
+            'keterangan' => $transaksi->keterangan,
+            'catatan' => $transaksi->catatan_verifikasi,
+            'url_cetak' => route('jamaah.riwayat.invoice.cetak', $transaksi),
         ]);
     }
 
@@ -181,17 +193,18 @@ class JamaahController extends Controller
             403
         );
 
-        $jenisLabels  = $this->jenisLabels();
+        $jenisLabels = $this->jenisLabels();
         $metodeLabels = $this->metodeLabels();
 
         return view('jamaah.invoice-print', [
-            'jamaah'       => $jamaah,
-            'transaksi'    => $transaksi,
-            'jenisLabel'   => $jenisLabels[$transaksi->jenis_ziswaf]  ?? $transaksi->jenis_ziswaf,
-            'metodeLabel'  => $metodeLabels[$transaksi->metode_pembayaran] ?? ($transaksi->metode_pembayaran ?? '-'),
-            'referensi'    => $transaksi->order_id ?: 'ZSF-' . $transaksi->id,
+            'jamaah' => $jamaah,
+            'transaksi' => $transaksi,
+            'jenisLabel' => $jenisLabels[$transaksi->jenis_ziswaf] ?? $transaksi->jenis_ziswaf,
+            'metodeLabel' => $metodeLabels[$transaksi->metode_pembayaran] ?? ($transaksi->metode_pembayaran ?? '-'),
+            'referensi' => $transaksi->order_id ?: 'ZSF-'.$transaksi->id,
         ]);
     }
+
     /**
      * Menampilkan laporan transaksi pribadi berdasarkan periode.
      */
@@ -242,6 +255,7 @@ class JamaahController extends Controller
             ->latest('tanggal')
             ->latest('id')
             ->get();
+
         return view('jamaah.laporan-transaksi', [
             'jamaah' => $request->user(),
             'filters' => $filters,
@@ -257,6 +271,7 @@ class JamaahController extends Controller
             'metodeLabels' => $this->metodeLabels(),
         ]);
     }
+
     /**
      * Mengunduh laporan pribadi dalam format CSV tanpa package tambahan.
      */
@@ -280,6 +295,7 @@ class JamaahController extends Controller
         $jenisLabels = $this->jenisLabels();
         $statusLabels = $this->statusLabels();
         $metodeLabels = $this->metodeLabels();
+
         return response()->streamDownload(
             function () use (
                 $transaksi,
@@ -306,7 +322,7 @@ class JamaahController extends Controller
                 foreach ($transaksi as $item) {
                     $status = $item->status_verifikasi ?: 'pending';
                     fputcsv($output, [
-                        $item->order_id ?: 'ZSF-' . $item->id,
+                        $item->order_id ?: 'ZSF-'.$item->id,
                         optional($item->tanggal)->format('d/m/Y'),
                         $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf,
                         $metodeLabels[$item->metode_pembayaran]
@@ -323,21 +339,54 @@ class JamaahController extends Controller
             ['Content-Type' => 'text/csv; charset=UTF-8']
         );
     }
+
     public function createTransaksi(string $jenis)
     {
         $config = $this->transaksiConfig($jenis);
         $paymentGatewayReady = $this->isPaymentGatewayReady();
+
+        $zakatPolicies = [];
+        $zakatCalculationCategories = [];
+        $masterAsnaf = collect();
+        $hargaBeras = null;
+        $hargaEmas = null;
+        $hargaPertanian = [];
+
+        if ($jenis === 'zakat') {
+            $zakatPolicies = $this->zakatPoliciesForJamaah();
+            $zakatCalculationCategories = $this->zakatCalculationCategories();
+            $masterAsnaf = MasterAsnaf::semuaAktif();
+            $hargaBeras = $this->activeRicePrice();
+            $hargaEmas = $this->activeGoldPrice();
+            $hargaPertanian = [
+                'padi_gabah' => $this->activeAgriculturalPrice('padi_gabah'),
+                'beras' => $hargaBeras,
+            ];
+        }
+
         return view('jamaah.transaksi-ziswaf', compact(
             'jenis',
             'config',
-            'paymentGatewayReady'
+            'paymentGatewayReady',
+            'zakatPolicies',
+            'zakatCalculationCategories',
+            'masterAsnaf',
+            'hargaBeras',
+            'hargaEmas',
+            'hargaPertanian'
         ));
     }
+
     public function storeTransaksi(Request $request, string $jenis)
     {
         $config = $this->transaksiConfig($jenis);
         $paymentGatewayReady = $this->isPaymentGatewayReady();
         $minimalNominal = $paymentGatewayReady ? 10000 : 1000;
+        $ketentuanZakat = $this->zakatPolicyForTransaction((string) $request->input('jenis_ziswaf'));
+        $calculationCategories = $this->zakatCalculationCategories();
+        $allowedCalculationCategories = array_keys(
+            $calculationCategories[(string) $request->input('jenis_ziswaf')] ?? []
+        );
         $rules = [
             'jenis_ziswaf' => [
                 'required',
@@ -346,13 +395,52 @@ class JamaahController extends Controller
             'nominal' => [
                 'required',
                 'integer',
-                'min:' . $minimalNominal,
+                'min:'.$minimalNominal,
             ],
             'metode_pembayaran' => [
                 'required',
                 Rule::in(array_keys($config['metodeOptions'])),
             ],
             'keterangan' => ['nullable', 'string', 'max:1000'],
+            'kategori_perhitungan' => [
+                Rule::requiredIf(fn (): bool => in_array(
+                    $request->input('jenis_ziswaf'),
+                    [
+                        'zakat_maal',
+                        'zakat_penghasilan',
+                        'zakat_pertanian_berbiaya',
+                        'zakat_pertanian_alami',
+                    ],
+                    true
+                )),
+                'nullable',
+                Rule::in($allowedCalculationCategories),
+            ],
+            'tanggal_mulai_kepemilikan' => [
+                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_maal'),
+                'nullable',
+                'date',
+                'before_or_equal:today',
+            ],
+            'berat_emas_gram' => [
+                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_maal'
+                    && $request->input('kategori_perhitungan') === 'emas_logam_mulia'),
+                'nullable',
+                'numeric',
+                'min:0.01',
+                'max:999999999',
+            ],
+            'berat_panen_kg' => [
+                Rule::requiredIf(fn (): bool => in_array(
+                    $request->input('jenis_ziswaf'),
+                    ['zakat_pertanian_berbiaya', 'zakat_pertanian_alami'],
+                    true
+                )),
+                'nullable',
+                'numeric',
+                'min:0.01',
+                'max:999999999',
+            ],
             'restriction_type' => [
                 Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'infaq'),
                 'nullable',
@@ -392,12 +480,171 @@ class JamaahController extends Controller
             'bukti_pembayaran.file' => 'Bukti pembayaran harus berupa file.',
             'bukti_pembayaran.mimes' => 'Bukti pembayaran harus berformat JPG, JPEG, PNG, atau PDF.',
             'bukti_pembayaran.max' => 'Ukuran bukti pembayaran maksimal 2 MB.',
+            'tanggal_mulai_kepemilikan.required' => 'Tanggal mulai kepemilikan harta atau barang wajib diisi untuk menghitung haul.',
+            'tanggal_mulai_kepemilikan.date' => 'Tanggal mulai kepemilikan tidak valid.',
+            'tanggal_mulai_kepemilikan.before_or_equal' => 'Tanggal mulai kepemilikan tidak boleh melewati hari ini.',
+            'kategori_perhitungan.required' => 'Kategori perhitungan wajib dipilih.',
+            'kategori_perhitungan.in' => 'Kategori perhitungan tidak sesuai dengan jenis zakat yang dipilih.',
+            'berat_emas_gram.required' => 'Berat emas wajib diisi untuk menghitung zakat emas.',
+            'berat_emas_gram.numeric' => 'Berat emas harus berupa angka.',
+            'berat_emas_gram.min' => 'Berat emas minimal 0,01 gram.',
+            'berat_panen_kg.required' => 'Berat hasil panen wajib diisi.',
+            'berat_panen_kg.numeric' => 'Berat hasil panen harus berupa angka.',
+            'berat_panen_kg.min' => 'Berat hasil panen minimal 0,01 kilogram.',
         ];
         $validated = $request->validate($rules, $messages);
         $user = $request->user();
+
+        $batasAwalHaul = $ketentuanZakat
+            ? $this->haulCutoffDate($ketentuanZakat->haul)
+            : null;
+        $memenuhiHaul = $validated['jenis_ziswaf'] !== 'zakat_maal'
+            || ($batasAwalHaul && Carbon::parse($validated['tanggal_mulai_kepemilikan'])->lte($batasAwalHaul));
+
+        if ($validated['jenis_ziswaf'] === 'zakat_maal' && ! $batasAwalHaul) {
+            throw ValidationException::withMessages([
+                'tanggal_mulai_kepemilikan' => 'Format haul pada kebijakan admin belum dapat dihitung. Hubungi admin untuk memperbaiki aturan haul.',
+            ]);
+        }
+
+        if (! $memenuhiHaul) {
+            throw ValidationException::withMessages([
+                'tanggal_mulai_kepemilikan' => sprintf(
+                    'Harta atau barang belum memenuhi haul %s. Agar memenuhi haul hari ini, kepemilikan harus dimulai paling lambat %s.',
+                    $ketentuanZakat->haul,
+                    $batasAwalHaul->translatedFormat('d F Y')
+                ),
+            ]);
+        }
+
+        $rincianPerhitunganKhusus = [];
+        $hargaEmas = null;
+        $hargaPertanianAktif = null;
+
+        if (($validated['kategori_perhitungan'] ?? null) === 'emas_logam_mulia') {
+            $hargaEmas = $this->activeGoldPrice();
+            $nisabEmasGram = $this->extractGoldNisabGrams($ketentuanZakat?->nisab_pokok);
+            $hargaEmasPerGram = $this->resolveGoldPricePerGram($ketentuanZakat, $hargaEmas);
+            $beratEmasGram = (float) $validated['berat_emas_gram'];
+
+            if ($nisabEmasGram <= 0 || $hargaEmasPerGram <= 0) {
+                throw ValidationException::withMessages([
+                    'berat_emas_gram' => 'Harga emas atau nisab emas belum ditetapkan pada kebijakan admin.',
+                ]);
+            }
+
+            if ($beratEmasGram < $nisabEmasGram) {
+                throw ValidationException::withMessages([
+                    'berat_emas_gram' => sprintf(
+                        'Berat emas belum mencapai nisab %s gram.',
+                        rtrim(rtrim(number_format($nisabEmasGram, 2, ',', '.'), '0'), ',')
+                    ),
+                ]);
+            }
+
+            $nilaiEmasRupiah = (int) round($beratEmasGram * $hargaEmasPerGram);
+            $nisabEmasRupiah = (int) round($nisabEmasGram * $hargaEmasPerGram);
+            $zakatEmas = (int) round(
+                $nilaiEmasRupiah * ((float) $ketentuanZakat->kadar_persentase / 100)
+            );
+
+            $validated['nominal'] = $zakatEmas;
+            $rincianPerhitunganKhusus = [
+                'catatan' => 'Zakat emas dihitung otomatis dari berat emas, harga per gram, nisab, kadar zakat, dan haul aktif.',
+                'berat_emas_gram' => $beratEmasGram,
+                'harga_emas_per_gram' => $hargaEmasPerGram,
+                'nilai_emas_rupiah' => $nilaiEmasRupiah,
+                'nisab_emas_gram' => $nisabEmasGram,
+                'nisab_emas_rupiah' => $nisabEmasRupiah,
+                'jumlah_zakat_dihitung' => $zakatEmas,
+                'sumber_harga_emas' => $hargaEmas?->sumber_harga ?? 'Nilai nisab rupiah kebijakan zakat',
+            ];
+        }
+
+        if (in_array($validated['jenis_ziswaf'], ['zakat_pertanian_berbiaya', 'zakat_pertanian_alami'], true)) {
+            $kategoriPertanian = $validated['kategori_perhitungan'];
+            $beratPanenKg = (float) $validated['berat_panen_kg'];
+            $nisabPanenKg = $this->agriculturalNisabKg($kategoriPertanian);
+            $hargaPertanianAktif = $this->activeAgriculturalPrice($kategoriPertanian);
+            $hargaPerKg = (int) ($hargaPertanianAktif?->harga_per_satuan ?? 0);
+
+            if ($hargaPerKg <= 0) {
+                throw ValidationException::withMessages([
+                    'berat_panen_kg' => 'Harga aktif hasil pertanian belum ditetapkan pada Master Barang & Harga.',
+                ]);
+            }
+
+            if ($beratPanenKg < $nisabPanenKg) {
+                throw ValidationException::withMessages([
+                    'berat_panen_kg' => sprintf(
+                        'Hasil panen belum mencapai nisab %s kilogram.',
+                        rtrim(rtrim(number_format($nisabPanenKg, 2, ',', '.'), '0'), ',')
+                    ),
+                ]);
+            }
+
+            $nilaiPanenRupiah = (int) round($beratPanenKg * $hargaPerKg);
+            $nisabPanenRupiah = (int) round($nisabPanenKg * $hargaPerKg);
+            $persentaseZakat = (float) $ketentuanZakat->kadar_persentase;
+            $zakatPanenKg = $beratPanenKg * ($persentaseZakat / 100);
+            $zakatPanenRupiah = (int) round($nilaiPanenRupiah * ($persentaseZakat / 100));
+
+            $validated['nominal'] = $zakatPanenRupiah;
+            $rincianPerhitunganKhusus = [
+                'catatan' => 'Zakat pertanian dihitung otomatis dari berat panen, harga per kilogram, nisab, dan metode pengairan.',
+                'berat_panen_kg' => $beratPanenKg,
+                'harga_per_kg' => $hargaPerKg,
+                'nilai_panen_rupiah' => $nilaiPanenRupiah,
+                'nisab_panen_kg' => $nisabPanenKg,
+                'nisab_pertanian_rupiah' => $nisabPanenRupiah,
+                'zakat_panen_kg' => $zakatPanenKg,
+                'jumlah_zakat_dihitung' => $zakatPanenRupiah,
+                'metode_pengairan' => $validated['jenis_ziswaf'] === 'zakat_pertanian_berbiaya'
+                    ? 'berbiaya'
+                    : 'alami',
+                'sumber_harga_pertanian' => $hargaPertanianAktif->sumber_harga,
+            ];
+        }
+
+        $snapshotKebijakan = $ketentuanZakat?->toSnapshot();
+
+        if ($hargaEmas && $snapshotKebijakan) {
+            $snapshotKebijakan['harga_emas'] = [
+                'harga_barang_zakat_id' => $hargaEmas->id,
+                'barang_zakat_id' => $hargaEmas->barang_zakat_id,
+                'harga_per_gram' => (int) $hargaEmas->harga_per_satuan,
+                'wilayah' => $hargaEmas->wilayah,
+                'berlaku_mulai' => $hargaEmas->berlaku_mulai?->toDateString(),
+                'sumber_harga' => $hargaEmas->sumber_harga,
+            ];
+        }
+
+        if ($hargaPertanianAktif && $snapshotKebijakan) {
+            $snapshotKebijakan['harga_pertanian'] = [
+                'harga_barang_zakat_id' => $hargaPertanianAktif->id,
+                'barang_zakat_id' => $hargaPertanianAktif->barang_zakat_id,
+                'harga_per_kg' => (int) $hargaPertanianAktif->harga_per_satuan,
+                'wilayah' => $hargaPertanianAktif->wilayah,
+                'berlaku_mulai' => $hargaPertanianAktif->berlaku_mulai?->toDateString(),
+                'sumber_harga' => $hargaPertanianAktif->sumber_harga,
+            ];
+        }
+
+        if ($validated['jenis_ziswaf'] === 'zakat_fitrah' && $snapshotKebijakan) {
+            $hargaBeras = $this->activeRicePrice();
+            $snapshotKebijakan['harga_beras'] = $hargaBeras ? [
+                'harga_barang_zakat_id' => $hargaBeras->id,
+                'barang_zakat_id' => $hargaBeras->barang_zakat_id,
+                'harga_per_kg' => (int) $hargaBeras->harga_per_satuan,
+                'wilayah' => $hargaBeras->wilayah,
+                'berlaku_mulai' => $hargaBeras->berlaku_mulai?->toDateString(),
+                'sumber_harga' => $hargaBeras->sumber_harga,
+            ] : null;
+        }
+
         // Format pendek: ZSF-{base36 dari unix timestamp}-{3 digit random}
         // Contoh: ZSF-l8n4kx-427 (~14 karakter, unik, sesuai standar Midtrans)
-        $orderId = 'ZSF-' . base_convert((string) now()->timestamp, 10, 36) . '-' . random_int(100, 999);
+        $orderId = 'ZSF-'.base_convert((string) now()->timestamp, 10, 36).'-'.random_int(100, 999);
         $buktiPembayaranPath = null;
         if (! $paymentGatewayReady && $request->hasFile('bukti_pembayaran')) {
             $buktiPembayaranPath = $request->file('bukti_pembayaran')
@@ -424,14 +671,31 @@ class JamaahController extends Controller
             'status_verifikasi' => 'pending',
             'bukti_pembayaran' => $buktiPembayaranPath,
             'keterangan' => $validated['keterangan'] ?? null,
-            'rincian_perhitungan' => [
-                'catatan' => 'Perhitungan saat ini mengikuti nominal yang diinput jamaah.',
-            ],
+            'rincian_perhitungan' => array_merge([
+                'catatan' => $ketentuanZakat
+                    ? 'Ketentuan zakat aktif disimpan saat transaksi; nominal dikonfirmasi oleh jamaah.'
+                    : 'Nominal mengikuti input jamaah.',
+                'tanggal_mulai_kepemilikan' => $validated['tanggal_mulai_kepemilikan'] ?? null,
+                'batas_awal_haul' => $batasAwalHaul?->toDateString(),
+                'memenuhi_haul' => $ketentuanZakat?->jenis === 'maal' ? $memenuhiHaul : null,
+                'kategori_perhitungan' => $validated['kategori_perhitungan'] ?? null,
+                'kategori_perhitungan_label' => isset($validated['kategori_perhitungan'])
+                    ? ($calculationCategories[$validated['jenis_ziswaf']][$validated['kategori_perhitungan']] ?? null)
+                    : null,
+            ], $rincianPerhitunganKhusus),
+            'nisab_digunakan' => $rincianPerhitunganKhusus['nisab_emas_rupiah']
+                ?? $rincianPerhitunganKhusus['nisab_pertanian_rupiah']
+                ?? ($ketentuanZakat?->nisab_rupiah
+                    ? (int) round((float) $ketentuanZakat->nisab_rupiah)
+                    : null),
+            'persentase_zakat' => $ketentuanZakat?->kadar_persentase,
+            'persentase_amil' => $ketentuanZakat?->persentase_amil ?? 0,
+            'snapshot_kebijakan' => $snapshotKebijakan,
         ]);
         if (! $paymentGatewayReady) {
             return redirect()
                 ->route('jamaah.riwayat.index')
-                ->with('success', $config['successMessage'] . ' Menunggu verifikasi admin.');
+                ->with('success', $config['successMessage'].' Menunggu verifikasi admin.');
         }
         $this->configureMidtrans();
         $params = [
@@ -470,6 +734,7 @@ class JamaahController extends Controller
                 'status_verifikasi' => 'pending',
                 'catatan_verifikasi' => 'Gagal membuat token pembayaran Midtrans. Silakan ulangi pembayaran atau hubungi admin.',
             ]);
+
             return back()
                 ->withInput()
                 ->withErrors([
@@ -479,10 +744,12 @@ class JamaahController extends Controller
         $transaksi->update([
             'snap_token' => $snapToken,
         ]);
+
         return redirect()
             ->route('jamaah.pembayaran.show', $transaksi)
             ->with('success', 'Transaksi berhasil dibuat. Silakan lanjutkan pembayaran.');
     }
+
     public function showPembayaran(Request $request, ZiswafPenerimaan $transaksi)
     {
         abort_unless(
@@ -499,6 +766,7 @@ class JamaahController extends Controller
                 ->route('jamaah.riwayat.index')
                 ->with('warning', 'Payment gateway belum aktif atau token pembayaran belum tersedia.');
         }
+
         return view('jamaah.pembayaran-midtrans', [
             'transaksi' => $transaksi,
             'clientKey' => config('services.midtrans.client_key'),
@@ -507,9 +775,10 @@ class JamaahController extends Controller
             'metodeLabels' => $this->metodeLabels(),
         ]);
     }
+
     public function batalPembayaran(
-    Request $request,
-    ZiswafPenerimaan $transaksi
+        Request $request,
+        ZiswafPenerimaan $transaksi
     ) {
         abort_unless(
             (int) $transaksi->muzakki_id === (int) $request->user()->id,
@@ -547,8 +816,8 @@ class JamaahController extends Controller
             try {
                 $this->configureMidtrans();
 
-                \Midtrans\Transaction::cancel($transaksi->order_id);
-            } catch (\Throwable $exception) {
+                Transaction::cancel($transaksi->order_id);
+            } catch (Throwable $exception) {
                 /*
                  * Order mungkin sudah kedaluwarsa, sudah dibatalkan,
                  * atau belum tersedia di Midtrans. Pembatalan lokal
@@ -604,10 +873,10 @@ class JamaahController extends Controller
         try {
             $this->configureMidtrans();
 
-            $status = \Midtrans\Transaction::status(
+            $status = Transaction::status(
                 $transaksi->order_id
             );
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             report($exception);
 
             return redirect()
@@ -663,8 +932,7 @@ class JamaahController extends Controller
                 'transaction_id' => $transactionId,
                 'fraud_status' => $fraudStatus,
                 'status_verifikasi' => 'diterima',
-                'catatan_verifikasi' =>
-                    'Pembayaran terkonfirmasi melalui cek status manual.',
+                'catatan_verifikasi' => 'Pembayaran terkonfirmasi melalui cek status manual.',
                 'verified_at' => now(),
                 'paid_at' => $transaksi->paid_at ?? now(),
             ]);
@@ -706,8 +974,7 @@ class JamaahController extends Controller
                 'transaction_id' => $transactionId,
                 'fraud_status' => $fraudStatus,
                 'status_verifikasi' => 'ditolak',
-                'catatan_verifikasi' =>
-                    'Pembayaran gagal, dibatalkan, atau kedaluwarsa (sinkron dari cek status manual).',
+                'catatan_verifikasi' => 'Pembayaran gagal, dibatalkan, atau kedaluwarsa (sinkron dari cek status manual).',
                 'verified_at' => now(),
                 'snap_token' => null,
             ]);
@@ -717,8 +984,8 @@ class JamaahController extends Controller
                 ->with(
                     'warning',
                     'Pembayaran '
-                        . $transactionStatus
-                        . '. Transaksi telah ditandai sebagai ditolak.'
+                        .$transactionStatus
+                        .'. Transaksi telah ditandai sebagai ditolak.'
                 );
         }
 
@@ -727,8 +994,8 @@ class JamaahController extends Controller
             ->with(
                 'warning',
                 'Status Midtrans: '
-                    . ($transactionStatus ?: 'tidak diketahui')
-                    . '. Tidak ada perubahan yang dilakukan.'
+                    .($transactionStatus ?: 'tidak diketahui')
+                    .'. Tidak ada perubahan yang dilakukan.'
             );
     }
 
@@ -758,30 +1025,31 @@ class JamaahController extends Controller
         // memanggil Midtrans API lagi
         if (in_array($transaksi->payment_status, ['settlement', 'capture'], true)) {
             return response()->json([
-                'status'       => 'paid',
+                'status' => 'paid',
                 'redirect_url' => route('jamaah.riwayat.index'),
             ]);
         }
 
         if (in_array($transaksi->payment_status, ['deny', 'cancel', 'expire', 'failure'], true)) {
             return response()->json([
-                'status'       => 'failed',
+                'status' => 'failed',
                 'redirect_url' => route('jamaah.riwayat.index'),
             ]);
         }
 
         try {
             $this->configureMidtrans();
-            $statusResponse = \Midtrans\Transaction::status($transaksi->order_id);
-        } catch (\Throwable $exception) {
+            $statusResponse = Transaction::status($transaksi->order_id);
+        } catch (Throwable $exception) {
             report($exception);
+
             return response()->json(['status' => 'error', 'message' => 'Gagal menghubungi Midtrans.'], 200);
         }
 
         $transactionStatus = (string) ($statusResponse->transaction_status ?? '');
-        $fraudStatus       = $statusResponse->fraud_status ?? null;
-        $paymentType       = $statusResponse->payment_type ?? null;
-        $transactionId     = $statusResponse->transaction_id ?? null;
+        $fraudStatus = $statusResponse->fraud_status ?? null;
+        $paymentType = $statusResponse->payment_type ?? null;
+        $transactionId = $statusResponse->transaction_id ?? null;
 
         if (
             $transactionStatus === 'settlement'
@@ -791,36 +1059,36 @@ class JamaahController extends Controller
             )
         ) {
             $transaksi->update([
-                'payment_status'      => $transactionStatus,
-                'payment_type'        => $paymentType,
-                'transaction_id'      => $transactionId,
-                'fraud_status'        => $fraudStatus,
-                'status_verifikasi'   => 'diterima',
-                'catatan_verifikasi'  => 'Pembayaran terkonfirmasi otomatis melalui polling status.',
-                'verified_at'         => now(),
-                'paid_at'             => $transaksi->paid_at ?? now(),
+                'payment_status' => $transactionStatus,
+                'payment_type' => $paymentType,
+                'transaction_id' => $transactionId,
+                'fraud_status' => $fraudStatus,
+                'status_verifikasi' => 'diterima',
+                'catatan_verifikasi' => 'Pembayaran terkonfirmasi otomatis melalui polling status.',
+                'verified_at' => now(),
+                'paid_at' => $transaksi->paid_at ?? now(),
             ]);
 
             return response()->json([
-                'status'       => 'paid',
+                'status' => 'paid',
                 'redirect_url' => route('jamaah.riwayat.index'),
             ]);
         }
 
         if (in_array($transactionStatus, ['deny', 'cancel', 'expire', 'failure'], true)) {
             $transaksi->update([
-                'payment_status'     => $transactionStatus,
-                'payment_type'       => $paymentType,
-                'transaction_id'     => $transactionId,
-                'fraud_status'       => $fraudStatus,
-                'status_verifikasi'  => 'ditolak',
+                'payment_status' => $transactionStatus,
+                'payment_type' => $paymentType,
+                'transaction_id' => $transactionId,
+                'fraud_status' => $fraudStatus,
+                'status_verifikasi' => 'ditolak',
                 'catatan_verifikasi' => 'Pembayaran gagal/kedaluwarsa (deteksi otomatis).',
-                'verified_at'        => now(),
-                'snap_token'         => null,
+                'verified_at' => now(),
+                'snap_token' => null,
             ]);
 
             return response()->json([
-                'status'       => 'failed',
+                'status' => 'failed',
                 'redirect_url' => route('jamaah.riwayat.index'),
             ]);
         }
@@ -843,7 +1111,7 @@ class JamaahController extends Controller
         $signatureKey = (string) $request->input('signature_key');
         $validSignature = hash(
             'sha512',
-            $orderId . $statusCode . $grossAmount . $serverKey
+            $orderId.$statusCode.$grossAmount.$serverKey
         );
         if (! hash_equals($validSignature, $signatureKey)) {
             return response()->json([
@@ -882,6 +1150,7 @@ class JamaahController extends Controller
                 'verified_at' => now(),
                 'paid_at' => $transaksi->paid_at ?? now(),
             ]);
+
             return response()->json([
                 'message' => 'Payment accepted.',
             ]);
@@ -894,6 +1163,7 @@ class JamaahController extends Controller
                 'fraud_status' => $fraudStatus,
                 'status_verifikasi' => 'pending',
             ]);
+
             return response()->json([
                 'message' => 'Payment pending.',
             ]);
@@ -908,6 +1178,7 @@ class JamaahController extends Controller
                 'catatan_verifikasi' => 'Pembayaran gagal, dibatalkan, atau kedaluwarsa melalui payment gateway.',
                 'verified_at' => now(),
             ]);
+
             return response()->json([
                 'message' => 'Payment failed.',
             ]);
@@ -918,15 +1189,18 @@ class JamaahController extends Controller
             'transaction_id' => $transactionId,
             'fraud_status' => $fraudStatus,
         ]);
+
         return response()->json([
             'message' => 'Notification received.',
         ]);
     }
+
     private function penerimaanResmiQuery(): Builder
     {
         return ZiswafPenerimaan::query()
             ->where('status_verifikasi', 'diterima');
     }
+
     private function validatedTransactionFilters(
         Request $request,
         bool $defaultPeriod = false
@@ -959,8 +1233,10 @@ class JamaahController extends Controller
             $filters['tanggal_selesai'] = $filters['tanggal_selesai']
                 ?? now()->toDateString();
         }
+
         return $filters;
     }
+
     /**
      * Query selalu dibatasi dengan muzakki_id user yang sedang login.
      */
@@ -980,8 +1256,8 @@ class JamaahController extends Controller
                 $search,
                 $referenceId
             ): void {
-                $builder->where('keterangan', 'like', '%' . $search . '%')
-                    ->orWhere('order_id', 'like', '%' . $search . '%');
+                $builder->where('keterangan', 'like', '%'.$search.'%')
+                    ->orWhere('order_id', 'like', '%'.$search.'%');
 
                 if ($referenceId !== null && $referenceId > 0) {
                     $builder->orWhere('id', $referenceId);
@@ -1010,8 +1286,10 @@ class JamaahController extends Controller
         if (! empty($filters['tanggal_selesai'])) {
             $query->whereDate('tanggal', '<=', $filters['tanggal_selesai']);
         }
+
         return $query;
     }
+
     private function buildMonthlyChart(
         Carbon $start,
         Carbon $end,
@@ -1030,14 +1308,17 @@ class JamaahController extends Controller
             $cursor->addMonth();
             $iteration++;
         }
+
         return [$labels, $data];
     }
+
     private function isPaymentGatewayReady(): bool
     {
         return (bool) config('services.midtrans.enabled')
             && filled(config('services.midtrans.server_key'))
             && filled(config('services.midtrans.client_key'));
     }
+
     private function configureMidtrans(): void
     {
         MidtransConfig::$serverKey = config('services.midtrans.server_key');
@@ -1045,13 +1326,15 @@ class JamaahController extends Controller
         MidtransConfig::$isSanitized = (bool) config('services.midtrans.is_sanitized');
         MidtransConfig::$is3ds = (bool) config('services.midtrans.is_3ds');
     }
+
     private function enabledPaymentsFor(
         string $metode,
         ?string $bankVaPilihan = null,
         ?string $ewalletPilihan = null
     ): array {
-        $validBankVa  = ['bca_va', 'bni_va', 'bri_va', 'permata_va', 'other_va'];
+        $validBankVa = ['bca_va', 'bni_va', 'bri_va', 'permata_va', 'other_va'];
         $validEwallet = ['gopay', 'shopeepay', 'dana'];
+
         return match ($metode) {
             'qris' => [
                 'qris',
@@ -1077,6 +1360,7 @@ class JamaahController extends Controller
             ],
         };
     }
+
     private function transaksiConfig(string $jenis): array
     {
         $paymentGatewayReady = $this->isPaymentGatewayReady();
@@ -1090,14 +1374,12 @@ class JamaahController extends Controller
                 'manual_transfer' => 'Transfer Bank Manual',
                 'qris_manual' => 'QRIS Manual',
             ];
+
         return match ($jenis) {
             'zakat' => [
                 'title' => 'Transaksi Zakat',
-                'subtitle' => 'Catat transaksi zakat maal atau zakat penghasilan.',
-                'jenisOptions' => [
-                    'zakat_maal' => 'Zakat Maal',
-                    'zakat_penghasilan' => 'Zakat Penghasilan',
-                ],
+                'subtitle' => 'Hitung dan tunaikan zakat dengan ketentuan aktif yang sama seperti pengaturan admin.',
+                'jenisOptions' => $this->activeZakatTypeOptions(),
                 'metodeOptions' => $metodeOptions,
                 'successMessage' => 'Transaksi zakat berhasil dibuat.',
             ],
@@ -1122,18 +1404,220 @@ class JamaahController extends Controller
             default => abort(404),
         };
     }
+
+    private function activeZakatTypeOptions(): array
+    {
+        $options = [];
+
+        foreach ($this->jamaahZakatTypeMap() as $transactionType => $policyType) {
+            $policy = KetentuanPokokZakat::untukJenis($policyType);
+
+            if ($policy) {
+                $options[$transactionType] = $policy->nama;
+            }
+        }
+
+        return $options;
+    }
+
+    private function zakatPoliciesForJamaah(): array
+    {
+        $policies = [];
+
+        foreach ($this->jamaahZakatTypeMap() as $transactionType => $policyType) {
+            $policy = KetentuanPokokZakat::untukJenis($policyType);
+
+            if (! $policy) {
+                continue;
+            }
+
+            $policies[$transactionType] = array_merge($policy->toSnapshot(), [
+                'nama' => $policy->nama,
+                'deskripsi' => $policy->deskripsi,
+                'dasar_hukum' => $policy->dasar_hukum,
+                'dasar_regulasi' => $policy->dasar_regulasi,
+                'batas_awal_haul' => $this->haulCutoffDate($policy->haul)?->toDateString(),
+                'nisab_emas_gram' => $policy->jenis === 'maal'
+                    ? $this->extractGoldNisabGrams($policy->nisab_pokok)
+                    : null,
+            ]);
+        }
+
+        return $policies;
+    }
+
+    private function zakatPolicyForTransaction(string $transactionType): ?KetentuanPokokZakat
+    {
+        $policyType = $this->jamaahZakatTypeMap()[$transactionType] ?? null;
+
+        return $policyType ? KetentuanPokokZakat::untukJenis($policyType) : null;
+    }
+
+    private function jamaahZakatTypeMap(): array
+    {
+        return [
+            'zakat_maal' => 'maal',
+            'zakat_penghasilan' => 'penghasilan',
+            'zakat_fitrah' => 'fitrah',
+            'zakat_pertanian_berbiaya' => 'pertanian_berbiaya',
+            'zakat_pertanian_alami' => 'pertanian_alami',
+        ];
+    }
+
+    private function zakatCalculationCategories(): array
+    {
+        return [
+            'zakat_maal' => [
+                'simpanan_uang_tunai' => 'Simpanan dan Uang Tunai',
+                'emas_logam_mulia' => 'Emas dan Logam Mulia',
+            ],
+            'zakat_penghasilan' => [
+                'gaji_upah' => 'Gaji atau Upah',
+                'honorarium_jasa' => 'Honorarium atau Jasa Profesional',
+                'bonus_tunjangan' => 'Bonus atau Tunjangan',
+                'pendapatan_jasa_lainnya' => 'Pendapatan Jasa Lainnya',
+            ],
+            'zakat_pertanian_berbiaya' => [
+                'padi_gabah' => 'Padi / Gabah',
+                'beras' => 'Beras',
+            ],
+            'zakat_pertanian_alami' => [
+                'padi_gabah' => 'Padi / Gabah',
+                'beras' => 'Beras',
+            ],
+        ];
+    }
+
+    private function agriculturalNisabKg(string $category): float
+    {
+        return $category === 'beras' ? 520 : 653;
+    }
+
+    private function activeAgriculturalPrice(string $category): ?HargaBarangZakat
+    {
+        if ($category === 'beras') {
+            return $this->activeRicePrice();
+        }
+
+        if ($category !== 'padi_gabah') {
+            return null;
+        }
+
+        $commodity = BarangZakat::query()
+            ->where('aktif', true)
+            ->where('kategori', 'hasil_pertanian')
+            ->where('satuan_dasar', 'kg')
+            ->where(function (Builder $query): void {
+                $query->whereRaw('LOWER(nama) LIKE ?', ['%gabah%'])
+                    ->orWhereRaw('LOWER(nama) LIKE ?', ['%padi%'])
+                    ->orWhereRaw('LOWER(kode) LIKE ?', ['%gabah%'])
+                    ->orWhereRaw('LOWER(kode) LIKE ?', ['%padi%']);
+            })
+            ->first();
+
+        return $commodity?->harga()
+            ->berlakuPada()
+            ->latest('berlaku_mulai')
+            ->latest('id')
+            ->first();
+    }
+
+    private function activeRicePrice(): ?HargaBarangZakat
+    {
+        $beras = BarangZakat::query()
+            ->where('aktif', true)
+            ->where(function (Builder $query): void {
+                $query->whereRaw('LOWER(nama) = ?', ['beras'])
+                    ->orWhereRaw('LOWER(kode) = ?', ['beras']);
+            })
+            ->first();
+
+        return $beras?->harga()
+            ->berlakuPada()
+            ->latest('berlaku_mulai')
+            ->latest('id')
+            ->first();
+    }
+
+    private function activeGoldPrice(): ?HargaBarangZakat
+    {
+        $emas = BarangZakat::query()
+            ->where('aktif', true)
+            ->where('kategori', 'logam_mulia')
+            ->where('satuan_dasar', 'gram')
+            ->where(function (Builder $query): void {
+                $query->whereRaw('LOWER(nama) LIKE ?', ['%emas%'])
+                    ->orWhereRaw('LOWER(kode) LIKE ?', ['%emas%']);
+            })
+            ->first();
+
+        return $emas?->harga()
+            ->berlakuPada()
+            ->latest('berlaku_mulai')
+            ->latest('id')
+            ->first();
+    }
+
+    private function resolveGoldPricePerGram(
+        ?KetentuanPokokZakat $policy,
+        ?HargaBarangZakat $goldPrice
+    ): int {
+        if ($goldPrice) {
+            return (int) $goldPrice->harga_per_satuan;
+        }
+
+        $nisabGram = $this->extractGoldNisabGrams($policy?->nisab_pokok);
+        $nisabRupiah = (float) ($policy?->nisab_rupiah ?? 0);
+
+        return $nisabGram > 0 && $nisabRupiah > 0
+            ? (int) round($nisabRupiah / $nisabGram)
+            : 0;
+    }
+
+    private function extractGoldNisabGrams(?string $nisab): float
+    {
+        if (! preg_match('/([\d.,]+)\s*gram/i', (string) $nisab, $matches)) {
+            return 0;
+        }
+
+        $normalized = str_replace(',', '.', $matches[1]);
+
+        return max((float) $normalized, 0);
+    }
+
+    private function haulCutoffDate(?string $haul): ?Carbon
+    {
+        $normalized = strtolower(trim((string) $haul));
+
+        if (! preg_match('/(\d+)\s*(tahun|bulan|hari)/', $normalized, $matches)) {
+            return null;
+        }
+
+        $amount = max((int) $matches[1], 1);
+        $today = now()->startOfDay();
+
+        return match ($matches[2]) {
+            'tahun' => $today->subYearsNoOverflow($amount),
+            'bulan' => $today->subMonthsNoOverflow($amount),
+            'hari' => $today->subDays($amount),
+        };
+    }
+
     private function jenisLabels(): array
     {
         return [
             'zakat_maal' => 'Zakat Maal',
             'zakat_fitrah' => 'Zakat Fitrah',
             'zakat_penghasilan' => 'Zakat Penghasilan',
+            'zakat_pertanian_berbiaya' => 'Zakat Pertanian (Berbiaya)',
+            'zakat_pertanian_alami' => 'Zakat Pertanian (Alami)',
             'infaq' => 'Infak',
             'shadaqah' => 'Sedekah',
             'wakaf' => 'Wakaf',
             'fidyah' => 'Fidyah',
         ];
     }
+
     private function statusLabels(): array
     {
         return [
@@ -1143,6 +1627,7 @@ class JamaahController extends Controller
             'dibatalkan' => 'Dibatalkan',
         ];
     }
+
     private function metodeLabels(): array
     {
         return [
