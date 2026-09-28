@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pegawai;
 use App\Models\ZiswafPenerimaan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class PemasukanController extends Controller
 {
@@ -170,6 +173,10 @@ class PemasukanController extends Controller
             'golonganColors'     => self::golonganColors(),
             'metodeLabels'       => self::metodeLabels(),
             'statusLabels'       => self::statusLabels(),
+            'pegawaiPenanggungJawab' => Pegawai::query()
+                ->where('is_verified', true)
+                ->orderBy('nama_pegawai')
+                ->get(['id', 'nama_pegawai', 'jabatan']),
         ]);
     }
 
@@ -178,6 +185,8 @@ class PemasukanController extends Controller
      */
     public function store(Request $request)
     {
+        $isParkir = $request->input('jenis_ziswaf') === 'parkir';
+
         $validated = $request->validate([
             'jenis_ziswaf'      => ['required', 'string', 'in:' . implode(',', array_keys(self::golonganLabels()))],
             'restriction_type'  => [
@@ -208,7 +217,14 @@ class PemasukanController extends Controller
             'metode_pembayaran' => ['required', 'string', 'in:manual_transfer,qris_manual,tunai'],
             'nama_donatur'      => ['nullable', 'string', 'max:255'],
             'keterangan'        => ['nullable', 'string', 'max:1000'],
-            'bukti_pembayaran'  => ['nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:2048'],
+            'id_pegawai'        => [
+                Rule::requiredIf($isParkir),
+                'nullable',
+                Rule::exists('pegawai', 'id')->where(fn ($query) => $query->where('is_verified', true)),
+            ],
+            'shift'             => [Rule::requiredIf($isParkir), 'nullable', Rule::in(['pagi', 'siang', 'malam'])],
+            'nomor_rekap'       => ['nullable', 'string', 'max:80'],
+            'bukti_pembayaran'  => [Rule::requiredIf($isParkir), 'nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:2048'],
         ]);
 
         $buktiPath = null;
@@ -217,46 +233,77 @@ class PemasukanController extends Controller
                 ->store('bukti_pemasukan', 'public');
         }
 
-        /* Sisipkan nama donatur ke keterangan jika diisi */
-        $keterangan = null;
-        if (!empty($validated['nama_donatur'])) {
-            $keterangan = '[Donatur: ' . $validated['nama_donatur'] . '] ' . ($validated['keterangan'] ?? '');
-        } else {
-            $keterangan = $validated['keterangan'] ?? null;
+        try {
+            DB::transaction(function () use ($request, $validated, $isParkir, $buktiPath): void {
+                $shiftTimes = [
+                    'pagi' => ['06:00', '14:00'],
+                    'siang' => ['14:00', '22:00'],
+                    'malam' => ['22:00', '06:00'],
+                ];
+
+                if ($isParkir) {
+                    [$waktuMulai, $waktuSelesai] = $shiftTimes[$validated['shift']];
+                    $keterangan = 'Setoran parkir shift '.ucfirst($validated['shift']);
+                    if (! empty($validated['keterangan'])) {
+                        $keterangan .= ' - '.$validated['keterangan'];
+                    }
+                    $rincianPerhitungan = array_filter([
+                        'shift' => $validated['shift'],
+                        'waktu_mulai' => $waktuMulai,
+                        'waktu_selesai' => $waktuSelesai,
+                        'nomor_rekap' => $validated['nomor_rekap'] ?? null,
+                    ], static fn ($value): bool => $value !== null && $value !== '');
+                } elseif (! empty($validated['nama_donatur'])) {
+                    $keterangan = '[Donatur: '.$validated['nama_donatur'].'] '.($validated['keterangan'] ?? '');
+                    $rincianPerhitungan = null;
+                } else {
+                    $keterangan = $validated['keterangan'] ?? null;
+                    $rincianPerhitungan = null;
+                }
+
+                $pemasukan = ZiswafPenerimaan::create([
+                    'id_pegawai' => $isParkir ? $validated['id_pegawai'] : null,
+                    'jenis_ziswaf' => $validated['jenis_ziswaf'],
+                    'restriction_type' => $validated['jenis_ziswaf'] === 'infaq'
+                        ? $validated['restriction_type']
+                        : null,
+                    'wakaf_type' => $validated['jenis_ziswaf'] === 'wakaf'
+                        ? $validated['wakaf_type']
+                        : null,
+                    'wakaf_return_date' => ($validated['wakaf_type'] ?? null) === 'temporer'
+                        ? $validated['wakaf_return_date']
+                        : null,
+                    'persentase_nazhir' => ($validated['wakaf_type'] ?? null) === 'hasil_pengelolaan'
+                        ? (float) $validated['persentase_nazhir']
+                        : 0,
+                    'nominal' => (int) $validated['nominal'],
+                    'tanggal' => $validated['tanggal'],
+                    'metode_pembayaran' => $validated['metode_pembayaran'],
+                    'muzakki_id' => null,
+                    'keterangan' => $keterangan,
+                    'rincian_perhitungan' => $rincianPerhitungan,
+                    'bukti_pembayaran' => $buktiPath,
+                    'status_verifikasi' => 'diterima',
+                    'verified_by' => $request->user()->id,
+                    'verified_at' => now(),
+                    'payment_status' => 'manual_paid',
+                ]);
+
+                app(\App\Services\Accounting\Psak109PostingService::class)->postPenerimaan($pemasukan);
+            });
+        } catch (Throwable $exception) {
+            if ($buktiPath) {
+                Storage::disk('public')->delete($buktiPath);
+            }
+
+            throw $exception;
         }
-
-        $pemasukan = ZiswafPenerimaan::create([
-            'jenis_ziswaf'      => $validated['jenis_ziswaf'],
-            'restriction_type'  => $validated['jenis_ziswaf'] === 'infaq'
-                ? $validated['restriction_type']
-                : null,
-            'wakaf_type'        => $validated['jenis_ziswaf'] === 'wakaf'
-                ? $validated['wakaf_type']
-                : null,
-            'wakaf_return_date' => ($validated['wakaf_type'] ?? null) === 'temporer'
-                ? $validated['wakaf_return_date']
-                : null,
-            'persentase_nazhir' => ($validated['wakaf_type'] ?? null) === 'hasil_pengelolaan'
-                ? (float) $validated['persentase_nazhir']
-                : 0,
-            'nominal'           => (int) $validated['nominal'],
-            'tanggal'           => $validated['tanggal'],
-            'metode_pembayaran' => $validated['metode_pembayaran'],
-            'muzakki_id'        => null,
-            'keterangan'        => $keterangan,
-            'bukti_pembayaran'  => $buktiPath,
-            'status_verifikasi' => 'diterima',
-            'verified_by'       => $request->user()->id,
-            'verified_at'       => now(),
-            'payment_status'    => 'manual_paid',
-        ]);
-
-        // Posting otomatis ke jurnal PSAK 109
-        app(\App\Services\Accounting\Psak109PostingService::class)->postPenerimaan($pemasukan);
 
         return redirect()
             ->route($this->indexRoute($request))
-            ->with('success', 'Pemasukan berhasil ditambahkan dan dijurnal.');
+            ->with('success', $isParkir
+                ? 'Pemasukan parkir berhasil ditambahkan dan dijurnal.'
+                : 'Pemasukan berhasil ditambahkan dan dijurnal.');
     }
 
     /**

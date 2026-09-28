@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Coa;
-use App\Models\KebijakanMustahik;
+use App\Models\MasterAsnaf;
 use App\Models\Pengeluaran;
 use App\Models\Penggajian;
 use App\Services\Accounting\Psak109PostingService;
@@ -79,7 +79,9 @@ class PengeluaranController extends Controller
             })
             ->values();
 
-        return view('pengeluaran.index', compact('allPengeluaran'));
+        $asnafLabels = MasterAsnaf::labels();
+
+        return view('pengeluaran.index', compact('allPengeluaran', 'asnafLabels'));
     }
 
     public function create()
@@ -90,13 +92,15 @@ class PengeluaranController extends Controller
 
         $coaBebanGrouped = $coaBeban->groupBy('kelompok_pengeluaran');
         $kelompokPengeluaran = config('coa.expense_groups', []);
-        $asnafLabels = collect(KebijakanMustahik::ASNAF)->except('amil')->all();
+        $asnafLabels = collect(MasterAsnaf::labels())->except('amil')->all();
 
         return view('pengeluaran.create', compact('coaBebanGrouped', 'kelompokPengeluaran', 'asnafLabels'));
     }
 
     public function store(Request $request)
     {
+        $asnafLabels = collect(MasterAsnaf::labels())->except('amil')->all();
+
         $validated = $request->validate([
             'coa_debit_id' => [
                 'required',
@@ -137,7 +141,7 @@ class PengeluaranController extends Controller
                     'required',
                     'string',
                     'distinct',
-                    Rule::in(array_keys(collect(KebijakanMustahik::ASNAF)->except('amil')->all())),
+                    Rule::in(array_keys($asnafLabels)),
                 ],
                 'zakat_details.*.jumlah_penerima' => ['required', 'integer', 'min:1'],
                 'zakat_details.*.nominal' => ['required', 'integer', 'min:1'],
@@ -160,7 +164,7 @@ class PengeluaranController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($coaDebit, $path, $validated, $zakatDetails): void {
+            DB::transaction(function () use ($asnafLabels, $coaDebit, $path, $validated, $zakatDetails): void {
                 $pengeluaran = new Pengeluaran;
                 $pengeluaran->kategori = $coaDebit->nama_akun;
                 $pengeluaran->restriction_type = $coaDebit->kode_akun === '5311'
@@ -184,7 +188,7 @@ class PengeluaranController extends Controller
                 $pengeluaran->save();
 
                 foreach ($zakatDetails as $detail) {
-                    $label = KebijakanMustahik::ASNAF[$detail['asnaf']];
+                    $label = $asnafLabels[$detail['asnaf']];
                     $pengeluaran->zakatPenyaluran()->create([
                         'tanggal' => $validated['tanggal'],
                         'kategori_program' => 'Penyaluran Zakat - '.$label,

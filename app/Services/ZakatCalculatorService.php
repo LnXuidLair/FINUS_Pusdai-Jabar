@@ -2,57 +2,29 @@
 
 namespace App\Services;
 
-use App\Models\ZakatSetting;
+use App\Models\KetentuanPokokZakat;
 
 class ZakatCalculatorService
 {
     public function penghasilan(
         array $data,
-        ZakatSetting $setting
+        KetentuanPokokZakat $ketentuan
     ): array {
-        $pendapatanUtama = $this->nilai(
-            $data,
-            'pendapatan_utama'
-        );
+        $pendapatanUtama = $this->nilai($data, 'pendapatan_utama');
+        $pendapatanLain = $this->nilai($data, 'pendapatan_lain');
+        $pengurang = $this->nilai($data, 'pengurang');
 
-        $pendapatanLain = $this->nilai(
-            $data,
-            'pendapatan_lain'
-        );
-
-        $pengurang = $this->nilai(
-            $data,
-            'pengurang'
-        );
-
-        $penghasilanBruto =
-            $pendapatanUtama +
-            $pendapatanLain;
-
-        $pengurangTerpakai = min(
-            $pengurang,
-            $penghasilanBruto
-        );
-
-        $dasarZakat = max(
-            $penghasilanBruto - $pengurangTerpakai,
-            0
-        );
-
-        $periode = $data['periode_penghasilan'];
+        $penghasilanBruto = $pendapatanUtama + $pendapatanLain;
+        $pengurangTerpakai = min($pengurang, $penghasilanBruto);
+        $dasarZakat = max($penghasilanBruto - $pengurangTerpakai, 0);
+        $periode = $data['periode_penghasilan'] ?? 'tahunan';
 
         $nisab = $periode === 'tahunan'
-            ? (int) $setting->nisab_penghasilan_tahunan
-            : (int) $setting->nisab_penghasilan_bulanan;
+            ? (float) $ketentuan->nisab_rupiah
+            : ((float) $ketentuan->nisab_rupiah) / 12;
 
         $memenuhiNisab = $dasarZakat >= $nisab;
-
-        $jumlahZakat = $memenuhiNisab
-            ? $this->persentase(
-                $dasarZakat,
-                (float) $setting->persentase_zakat
-            )
-            : 0;
+        $jumlahZakat = $memenuhiNisab ? $this->persentase($dasarZakat, (float) $ketentuan->kadar_persentase) : 0;
 
         return [
             'jenis' => 'zakat_penghasilan',
@@ -63,84 +35,36 @@ class ZakatCalculatorService
             'pengurang' => $pengurangTerpakai,
             'dasar_zakat' => $dasarZakat,
             'nisab' => $nisab,
-            'persentase' => (float) $setting->persentase_zakat,
+            'persentase' => (float) $ketentuan->kadar_persentase,
             'memenuhi_nisab' => $memenuhiNisab,
             'memenuhi_haul' => null,
             'jumlah_zakat' => $jumlahZakat,
-
-            'pesan' => $memenuhiNisab
-                ? 'Penghasilan telah mencapai nisab.'
-                : 'Penghasilan belum mencapai nisab pada periode yang dipilih.',
+            'pesan' => $memenuhiNisab ? 'Penghasilan telah mencapai nisab.' : 'Penghasilan belum mencapai nisab.',
         ];
     }
 
     public function maal(
         array $data,
-        ZakatSetting $setting
+        KetentuanPokokZakat $ketentuan
     ): array {
         $rincianAset = [
-            'uang_tunai' => $this->nilai(
-                $data,
-                'uang_tunai'
-            ),
-
-            'tabungan_deposito' => $this->nilai(
-                $data,
-                'tabungan_deposito'
-            ),
-
-            'emas_logam_mulia' => $this->nilai(
-                $data,
-                'emas_logam_mulia'
-            ),
-
-            'surat_berharga' => $this->nilai(
-                $data,
-                'surat_berharga'
-            ),
-
-            'piutang_tertagih' => $this->nilai(
-                $data,
-                'piutang_tertagih'
-            ),
-
-            'persediaan_usaha' => $this->nilai(
-                $data,
-                'persediaan_usaha'
-            ),
-
-            'aset_dagang' => $this->nilai(
-                $data,
-                'aset_dagang'
-            ),
-
-            'harta_lain' => $this->nilai(
-                $data,
-                'harta_lain'
-            ),
+            'uang_tunai' => $this->nilai($data, 'uang_tunai'),
+            'tabungan_deposito' => $this->nilai($data, 'tabungan_deposito'),
+            'emas_logam_mulia' => $this->nilai($data, 'emas_logam_mulia'),
+            'surat_berharga' => $this->nilai($data, 'surat_berharga'),
+            'piutang_tertagih' => $this->nilai($data, 'piutang_tertagih'),
+            'persediaan_usaha' => $this->nilai($data, 'persediaan_usaha'),
+            'aset_dagang' => $this->nilai($data, 'aset_dagang'),
+            'harta_lain' => $this->nilai($data, 'harta_lain'),
         ];
 
         $totalAset = array_sum($rincianAset);
+        $utangJatuhTempo = min($this->nilai($data, 'utang_jatuh_tempo'), $totalAset);
+        $hartaBersih = max($totalAset - $utangJatuhTempo, 0);
 
-        $utangJatuhTempo = min(
-            $this->nilai($data, 'utang_jatuh_tempo'),
-            $totalAset
-        );
-
-        $hartaBersih = max(
-            $totalAset - $utangJatuhTempo,
-            0
-        );
-
-        $memenuhiNisab =
-            $hartaBersih >= (int) $setting->nisab_maal;
-
-        $memenuhiHaul =
-            (bool) ($data['memenuhi_haul'] ?? false);
-
-        $wajibZakat =
-            $memenuhiNisab &&
-            $memenuhiHaul;
+        $memenuhiNisab = $hartaBersih >= (float) $ketentuan->nisab_rupiah;
+        $memenuhiHaul = (bool) ($data['memenuhi_haul'] ?? false);
+        $wajibZakat = $memenuhiNisab && $memenuhiHaul;
 
         return [
             'jenis' => 'zakat_maal',
@@ -148,86 +72,50 @@ class ZakatCalculatorService
             'total_aset' => $totalAset,
             'utang_jatuh_tempo' => $utangJatuhTempo,
             'dasar_zakat' => $hartaBersih,
-            'nisab' => (int) $setting->nisab_maal,
-            'persentase' => (float) $setting->persentase_zakat,
+            'nisab' => (float) $ketentuan->nisab_rupiah,
+            'persentase' => (float) $ketentuan->kadar_persentase,
             'memenuhi_nisab' => $memenuhiNisab,
             'memenuhi_haul' => $memenuhiHaul,
-
-            'jumlah_zakat' => $wajibZakat
-                ? $this->persentase(
-                    $hartaBersih,
-                    (float) $setting->persentase_zakat
-                )
-                : 0,
-
+            'jumlah_zakat' => $wajibZakat ? $this->persentase($hartaBersih, (float) $ketentuan->kadar_persentase) : 0,
             'pesan' => match (true) {
-                !$memenuhiNisab =>
-                    'Harta bersih belum mencapai nisab zakat maal.',
-
-                !$memenuhiHaul =>
-                    'Harta belum memenuhi haul satu tahun.',
-
-                default =>
-                    'Harta telah mencapai nisab dan memenuhi haul.',
+                !$memenuhiNisab => 'Harta bersih belum mencapai nisab zakat maal.',
+                !$memenuhiHaul => 'Harta belum memenuhi haul satu tahun.',
+                default => 'Harta telah mencapai nisab dan memenuhi haul.',
             },
         ];
     }
 
     public function fitrah(
         array $data,
-        ZakatSetting $setting
+        KetentuanPokokZakat $ketentuan,
+        float $hargaBerasPerKg
     ): array {
-        $jumlahJiwa = max(
-            (int) ($data['jumlah_jiwa'] ?? 0),
-            0
-        );
-
-        $nominalPerJiwa =
-            (int) $setting->zakat_fitrah_per_jiwa;
+        $jumlahJiwa = max((int) ($data['jumlah_jiwa'] ?? 0), 0);
+        $nominalPerJiwa = $ketentuan->berat_fitrah_kg * $hargaBerasPerKg;
 
         return [
             'jenis' => 'zakat_fitrah',
             'jumlah_jiwa' => $jumlahJiwa,
             'nominal_per_jiwa' => $nominalPerJiwa,
-
-            'beras_per_jiwa_kg' =>
-                (float) $setting->beras_fitrah_kg,
-
-            'beras_per_jiwa_liter' =>
-                (float) $setting->beras_fitrah_liter,
-
-            'dasar_zakat' =>
-                $jumlahJiwa * $nominalPerJiwa,
-
+            'beras_per_jiwa_kg' => (float) $ketentuan->berat_fitrah_kg,
+            'beras_per_jiwa_liter' => (float) $ketentuan->berat_fitrah_liter,
+            'dasar_zakat' => $jumlahJiwa * $nominalPerJiwa,
             'nisab' => null,
             'persentase' => null,
             'memenuhi_nisab' => null,
             'memenuhi_haul' => null,
-
-            'jumlah_zakat' =>
-                $jumlahJiwa * $nominalPerJiwa,
-
-            'pesan' =>
-                'Nominal dihitung berdasarkan jumlah jiwa dan ketetapan per jiwa yang aktif.',
+            'jumlah_zakat' => $jumlahJiwa * $nominalPerJiwa,
+            'pesan' => 'Nominal dihitung berdasarkan jumlah jiwa dan ketetapan per jiwa yang aktif.',
         ];
     }
 
-    private function nilai(
-        array $data,
-        string $key
-    ): int {
-        return max(
-            (int) ($data[$key] ?? 0),
-            0
-        );
+    private function nilai(array $data, string $key): int
+    {
+        return max((int) ($data[$key] ?? 0), 0);
     }
 
-    private function persentase(
-        int $nilai,
-        float $persentase
-    ): int {
-        return (int) round(
-            $nilai * ($persentase / 100)
-        );
+    private function persentase(int $nilai, float $persentase): int
+    {
+        return (int) round($nilai * ($persentase / 100));
     }
 }

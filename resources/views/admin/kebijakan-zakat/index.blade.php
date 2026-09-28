@@ -4,9 +4,9 @@
 @section('hide-page-header', '1')
 
 @php
-    $tab = in_array($activeTab, ['barang', 'muzakki', 'amil', 'mustahik'], true)
+    $tab = in_array($activeTab, ['ketentuan_pokok', 'barang'], true)
         ? $activeTab
-        : 'barang';
+        : 'ketentuan_pokok';
 
     $dateValue = static fn ($value) => $value
         ? \Illuminate\Support\Carbon::parse($value)->format('Y-m-d')
@@ -15,13 +15,12 @@
     $autoModal = old('form_context')
         ? 'kz-modal-' . old('form_context')
         : match (true) {
-            (bool) $editBarang => 'kz-modal-barang',
-            (bool) $editHarga => 'kz-modal-harga',
-            (bool) $editMuzakki => 'kz-modal-muzakki',
-            (bool) $editAmil => 'kz-modal-amil',
-            (bool) $editMustahik => 'kz-modal-mustahik',
+            (bool) ($editKetentuanPokok ?? false) => 'kz-modal-ketentuan',
+            (bool) ($editBarang ?? false) => 'kz-modal-barang',
+            (bool) ($editHarga ?? false) => 'kz-modal-harga',
             default => null,
         };
+
 @endphp
 
 @push('styles')
@@ -476,6 +475,98 @@
         background: #F1F3F5;
         color: #667085;
     }
+    .kz-badge-draft {
+        background: #FFF4D6;
+        color: #8A5A00;
+    }
+    .kz-badge-scheduled {
+        background: #EAF2FF;
+        color: #2458A6;
+    }
+    .kz-badge-locked {
+        background: #FCE8E8;
+        color: #B32D2D;
+    }
+    .kz-info-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin: 0 0 16px;
+        padding: 18px 20px;
+        border: 1px solid #CFE3D5;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #F4FBF6 0%, #EAF8EE 100%);
+    }
+    .kz-info-card-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        min-width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: var(--kz-green);
+        color: #fff;
+        font-size: 18px;
+    }
+    .kz-info-card-body {
+        min-width: 0;
+    }
+    .kz-info-card-body strong {
+        font-size: 14px;
+        color: var(--kz-dark);
+    }
+    .kz-info-card-body p {
+        font-size: 13px;
+        color: var(--kz-muted);
+    }
+    .kz-version-context {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin: 0 0 16px;
+        padding: 13px 15px;
+        border: 1px solid #CFE3D5;
+        border-radius: 8px;
+        background: #F4FBF6;
+    }
+    .kz-version-context strong,
+    .kz-version-context small {
+        display: block;
+    }
+    .kz-version-context small {
+        margin-top: 3px;
+        color: var(--kz-muted);
+    }
+    .kz-version-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        padding: 16px;
+    }
+    .kz-version-stat {
+        min-height: 92px;
+        padding: 14px;
+        border: 1px solid var(--kz-border);
+        border-radius: 8px;
+        background: #FAFCFA;
+    }
+    .kz-version-stat span,
+    .kz-version-stat small {
+        display: block;
+        color: var(--kz-muted);
+    }
+    .kz-version-stat strong {
+        display: block;
+        margin: 5px 0 2px;
+        font-size: 20px;
+    }
+    .kz-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
     .kz-empty {
         padding: 34px 18px;
         color: #667085;
@@ -527,6 +618,13 @@
         .kz-panel-body {
             padding: 13px;
         }
+        .kz-version-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .kz-version-context {
+            align-items: flex-start;
+            flex-direction: column;
+        }
     }
 </style>
 @endpush
@@ -550,6 +648,11 @@ html[data-finus-theme="dark"] body .kz-field input,html[data-finus-theme="dark"]
 html[data-finus-theme="dark"] body .kz-table th{border-color:#293D31!important;background:#17261D!important;color:#D2E1D6!important}
 html[data-finus-theme="dark"] body .kz-table td{border-color:#24372B!important;color:#DCE7E0!important}
 html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="dark"] body .kz-modal-close{border-color:#30493A!important;background:#14211A!important;color:#DCE7E0!important}
+html[data-finus-theme="dark"] body .kz-version-context,html[data-finus-theme="dark"] body .kz-version-stat{border-color:#30493A!important;background:#121F17!important}
+html[data-finus-theme="dark"] body .kz-badge-locked{background:#3D1A1A!important;color:#F7A8A8!important}
+html[data-finus-theme="dark"] body .kz-info-card{border-color:#293D31!important;background:linear-gradient(135deg,#121F17,#17251D)!important}
+html[data-finus-theme="dark"] body .kz-info-card-body strong{color:#D8EEE0!important}
+html[data-finus-theme="dark"] body .kz-info-card-body p{color:#9EAEA4!important}
 </style>
 @endpush
 
@@ -565,7 +668,12 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
             </div>
         </div>
         <div class="kz-heading-actions" aria-label="Aksi kebijakan zakat">
-            @if ($tab === 'barang')
+            @if ($tab === 'ketentuan_pokok' && $editKetentuanPokok && !$editKetentuanPokok->terkunci)
+                <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-ketentuan">
+                    <i class="fa-solid fa-pen"></i>
+                    Ubah Ketentuan
+                </button>
+            @elseif ($tab === 'barang')
                 <button class="kz-button kz-button-secondary" type="button" data-kz-modal-open="kz-modal-harga">
                     <i class="fa-solid fa-tag"></i>
                     {{ $editHarga ? 'Ubah Harga' : 'Tambah Harga' }}
@@ -573,21 +681,6 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                 <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-barang">
                     <i class="fa-solid fa-plus"></i>
                     {{ $editBarang ? 'Ubah Barang' : 'Tambah Barang' }}
-                </button>
-            @elseif ($tab === 'muzakki')
-                <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-muzakki">
-                    <i class="fa-solid fa-plus"></i>
-                    {{ $editMuzakki ? 'Ubah Aturan' : 'Tambah Aturan' }}
-                </button>
-            @elseif ($tab === 'amil')
-                <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-amil">
-                    <i class="fa-solid fa-plus"></i>
-                    {{ $editAmil ? 'Ubah Kebijakan' : 'Tambah Kebijakan' }}
-                </button>
-            @else
-                <button class="kz-button kz-button-primary" type="button" data-kz-modal-open="kz-modal-mustahik">
-                    <i class="fa-solid fa-plus"></i>
-                    {{ $editMustahik ? 'Ubah Kebijakan' : 'Tambah Kebijakan' }}
                 </button>
             @endif
         </div>
@@ -608,29 +701,342 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
     @endif
 
     <nav class="kz-tabs" aria-label="Bagian kebijakan zakat">
+        <a class="kz-tab {{ $tab === 'ketentuan_pokok' ? 'active' : '' }}"
+           href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'ketentuan_pokok']) }}">
+            <i class="fa-solid fa-book-quran"></i>
+            Ketentuan Pokok
+        </a>
         <a class="kz-tab {{ $tab === 'barang' ? 'active' : '' }}"
            href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'barang']) }}">
             <i class="fa-solid fa-boxes-stacked"></i>
             Barang & Harga
         </a>
-        <a class="kz-tab {{ $tab === 'muzakki' ? 'active' : '' }}"
-           href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'muzakki']) }}">
-            <i class="fa-solid fa-hand-holding-heart"></i>
-            Muzakki
-        </a>
-        <a class="kz-tab {{ $tab === 'amil' ? 'active' : '' }}"
-           href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'amil']) }}">
-            <i class="fa-solid fa-user-tie"></i>
-            Hak Amil
-        </a>
-        <a class="kz-tab {{ $tab === 'mustahik' ? 'active' : '' }}"
-           href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'mustahik']) }}">
-            <i class="fa-solid fa-people-group"></i>
-            Mustahik
-        </a>
     </nav>
 
-    @if ($tab === 'barang')
+
+
+    @if ($tab === 'ketentuan_pokok')
+        {{-- Modal edit ketentuan pokok --}}
+        @if ($editKetentuanPokok && !$editKetentuanPokok->terkunci)
+            <section id="kz-modal-ketentuan" class="kz-panel kz-form-modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
+                <div class="kz-panel-head">
+                    <h2>Ubah Ketentuan Pokok: {{ $editKetentuanPokok->nama }}</h2>
+                </div>
+                <div class="kz-panel-body">
+                    <form method="POST" action="{{ route('admin.kebijakan-zakat.ketentuan-pokok.update', $editKetentuanPokok) }}">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="form_context" value="ketentuan">
+                        <div class="kz-form-grid">
+                            <div class="kz-field kz-field-full">
+                                <label for="kp_nama">Nama ketentuan</label>
+                                <input id="kp_nama" name="nama" type="text" maxlength="150" required
+                                       value="{{ old('nama', $editKetentuanPokok->nama) }}">
+                            </div>
+                            <div class="kz-field">
+                                <label for="kp_kadar">Kadar zakat (%)</label>
+                                <input id="kp_kadar" name="kadar_persentase" type="number" min="0" max="100" step="0.01" required
+                                       value="{{ old('kadar_persentase', $editKetentuanPokok->kadar_persentase) }}">
+                            </div>
+                            <div class="kz-field">
+                                <label for="kp_haul">Haul / waktu penghitungan</label>
+                                <input id="kp_haul" name="haul" type="text" maxlength="30" required
+                                       value="{{ old('haul', $editKetentuanPokok->haul) }}">
+                            </div>
+                            <div class="kz-field kz-field-full">
+                                <label for="kp_nisab">Nisab pokok (non-rupiah)</label>
+                                <input id="kp_nisab" name="nisab_pokok" type="text" maxlength="100"
+                                       value="{{ old('nisab_pokok', $editKetentuanPokok->nisab_pokok) }}">
+                            </div>
+                            @if ($editKetentuanPokok->jenis === 'fitrah')
+                                <div class="kz-field">
+                                    <label for="kp_fitrah_kg">Berat fitrah (kg/jiwa)</label>
+                                    <input id="kp_fitrah_kg" name="berat_fitrah_kg" type="number" min="0" max="100" step="0.01"
+                                           value="{{ old('berat_fitrah_kg', $editKetentuanPokok->berat_fitrah_kg) }}">
+                                </div>
+                                <div class="kz-field">
+                                    <label for="kp_fitrah_liter">Berat fitrah (liter/jiwa)</label>
+                                    <input id="kp_fitrah_liter" name="berat_fitrah_liter" type="number" min="0" max="100" step="0.01"
+                                           value="{{ old('berat_fitrah_liter', $editKetentuanPokok->berat_fitrah_liter) }}">
+                                </div>
+                            @endif
+                            <div class="kz-field kz-field-full">
+                                <label for="kp_deskripsi">Deskripsi</label>
+                                <textarea id="kp_deskripsi" name="deskripsi">{{ old('deskripsi', $editKetentuanPokok->deskripsi) }}</textarea>
+                            </div>
+                            <div class="kz-field kz-field-full">
+                                <label for="kp_dasar_hukum">Dasar hukum syariat</label>
+                                <textarea id="kp_dasar_hukum" name="dasar_hukum">{{ old('dasar_hukum', $editKetentuanPokok->dasar_hukum) }}</textarea>
+                            </div>
+                            <div class="kz-field kz-field-full">
+                                <label for="kp_dasar_regulasi">Dasar regulasi (UU/PMA)</label>
+                                <textarea id="kp_dasar_regulasi" name="dasar_regulasi">{{ old('dasar_regulasi', $editKetentuanPokok->dasar_regulasi) }}</textarea>
+                            </div>
+                            <div class="kz-field kz-field-full kz-check-row">
+                                <label class="kz-check">
+                                    <input type="hidden" name="aktif" value="0">
+                                    <input type="checkbox" name="aktif" value="1" {{ old('aktif', $editKetentuanPokok->aktif) ? 'checked' : '' }}>
+                                    Aktif
+                                </label>
+                            </div>
+
+                            <hr style="grid-column: 1 / -1; margin: 10px 0; border: 0; border-top: 1px dashed #DCE6DF;">
+                            <h3 style="grid-column: 1 / -1; margin-bottom: 5px; font-size: 14px;">Nilai Acuan & Kebijakan Operasional</h3>
+
+                            <div class="kz-field">
+                                <label for="kp_nisab_rupiah">Nisab Rupiah (jika ada)</label>
+                                <input id="kp_nisab_rupiah" name="nisab_rupiah" type="number" min="0" step="0.01"
+                                       value="{{ old('nisab_rupiah', $editKetentuanPokok->nisab_rupiah) }}">
+                            </div>
+                            <div class="kz-field">
+                                <label for="kp_persentase_amil">Hak Amil (%) - Maks 12.5%</label>
+                                <input id="kp_persentase_amil" name="persentase_amil" type="number" min="0" max="12.5" step="0.01"
+                                       value="{{ old('persentase_amil', $editKetentuanPokok->persentase_amil) }}">
+                            </div>
+                            <div class="kz-field kz-field-full">
+                                <label>Target Prioritas Mustahik & Persentase Penyaluran (%)</label>
+                                <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Total persentase Amil + Asnaf harus sama dengan 100%.</p>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 5px;">
+                                    @php $selectedMustahik = old('target_mustahik', $editKetentuanPokok->target_mustahik ?? []); @endphp
+                                    @foreach ($masterAsnaf as $asnaf)
+                                        @if($asnaf->kode !== 'AMIL')
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <label style="font-weight: 500; font-size: 12px; color: #333;">{{ $asnaf->nama }}</label>
+                                            <div style="display: flex; align-items: center; gap: 5px;">
+                                                <input type="number" name="target_mustahik[{{ $asnaf->kode }}]" value="{{ $selectedMustahik[$asnaf->kode] ?? 0 }}" min="0" max="100" step="0.01" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                                                <span style="font-size: 12px;">%</span>
+                                            </div>
+                                        </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kz-actions">
+                            <button class="kz-button kz-button-primary" type="submit">
+                                <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan
+                            </button>
+                            <a class="kz-button kz-button-secondary" href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'ketentuan_pokok']) }}">
+                                <i class="fa-solid fa-xmark"></i> Batal
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        @endif
+
+        {{-- Penjelasan tiga lapisan --}}
+        <div class="kz-info-card">
+            <div class="kz-info-card-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <div class="kz-info-card-body">
+                <strong>Tiga Lapisan Pengaturan Zakat</strong>
+                <p style="margin:6px 0 0;line-height:1.6">
+                    <span class="kz-badge kz-badge-locked" style="font-size:11px;margin-right:4px">🔒 Ketentuan Pokok</span>
+                    Aturan syariat yang bersifat tetap (kadar, asnaf, berat fitrah) — terkunci secara default.<br>
+                    <span class="kz-badge kz-badge-scheduled" style="font-size:11px;margin-right:4px">📅 Nilai Acuan</span>
+                    Nisab Rp, harga beras, harga emas — berubah setiap tahun mengikuti kondisi ekonomi.<br>
+                    <span class="kz-badge kz-badge-draft" style="font-size:11px;margin-right:4px">⚙️ Kebijakan Operasional</span>
+                    Hak amil, prioritas mustahik, target alokasi — diatur per versi oleh pengurus.
+                </p>
+            </div>
+        </div>
+
+        {{-- Tabel Ketentuan Pokok Zakat --}}
+        <section class="kz-panel kz-section-gap">
+            <div class="kz-panel-head">
+                <h2>Ketentuan Pokok Zakat</h2>
+                <span class="kz-count">{{ $ketentuanPokok->count() }}</span>
+            </div>
+            <div class="kz-table-wrap">
+                <table class="kz-table">
+                    <thead>
+                        <tr>
+                            <th>Jenis Zakat</th>
+                            <th>Kadar</th>
+                            <th>Nisab Pokok</th>
+                            <th>Haul</th>
+                            <th>Dasar Hukum</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($ketentuanPokok as $item)
+                            <tr>
+                                <td>
+                                    <strong>{{ $item->nama }}</strong><br>
+                                    <small>{{ $item->kode }}</small>
+                                </td>
+                                <td>
+                                    @if ($item->satuan_kadar === 'berat')
+                                        {{ number_format((float) $item->berat_fitrah_kg, 2, ',', '.') }} kg<br>
+                                        <small>{{ number_format((float) $item->berat_fitrah_liter, 2, ',', '.') }} liter</small>
+                                    @else
+                                        <strong>{{ number_format((float) $item->kadar_persentase, 2, ',', '.') }}%</strong>
+                                    @endif
+                                </td>
+                                <td>{{ $item->nisab_pokok ?? '-' }}</td>
+                                <td>{{ $item->haul }}</td>
+                                <td><small>{{ \Illuminate\Support\Str::limit($item->dasar_hukum, 55) }}</small></td>
+                                <td>
+                                    <span class="kz-badge {{ $item->terkunci ? 'kz-badge-locked' : 'kz-badge-active' }}">
+                                        {{ $item->terkunci ? '🔒 Terkunci' : '🔓 Terbuka' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="kz-row-actions">
+
+                                        @unless ($item->terkunci)
+                                            <a class="kz-button kz-button-secondary" title="Ubah ketentuan"
+                                               href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'ketentuan_pokok', 'edit_ketentuan' => $item->id]) }}">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </a>
+                                        @endunless
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="7" class="kz-empty"><i class="fa-regular fa-folder-open"></i>Belum ada ketentuan pokok.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        {{-- Tabel Master Asnaf --}}
+        <section class="kz-panel kz-section-gap">
+            <div class="kz-panel-head">
+                <h2>Delapan Asnaf Penerima Zakat</h2>
+                <span class="kz-count">{{ $masterAsnaf->count() }}</span>
+            </div>
+            <div class="kz-table-wrap">
+                <table class="kz-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Golongan</th>
+                            <th>Definisi</th>
+                            <th>Dasar Hukum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($masterAsnaf as $asnaf)
+                            <tr>
+                                <td><strong>{{ $asnaf->urutan }}</strong></td>
+                                <td><strong>{{ $asnaf->nama }}</strong><br><small>{{ $asnaf->kode }}</small></td>
+                                <td>{{ $asnaf->definisi ?? '-' }}</td>
+                                <td><small>{{ $asnaf->dasar_hukum ?? '-' }}</small></td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="kz-empty"><i class="fa-regular fa-folder-open"></i>Belum ada data asnaf.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    @elseif ($tab === 'periode')
+        @php $versionForm = $editVersion; @endphp
+        <section id="kz-modal-version" class="kz-panel kz-form-modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
+            <div class="kz-panel-head">
+                <h2>{{ $versionForm ? 'Ubah Draft Kebijakan' : 'Buat Versi Kebijakan' }}</h2>
+            </div>
+            <div class="kz-panel-body">
+                <form method="POST" action="{{ $versionForm
+                    ? route('admin.kebijakan-zakat.versi.update', $versionForm)
+                    : route('admin.kebijakan-zakat.versi.store') }}">
+                    @csrf
+                    <input type="hidden" name="form_context" value="version">
+                    @if ($versionForm) @method('PATCH') @endif
+                    <div class="kz-form-grid">
+                        <div class="kz-field kz-field-full">
+                            <label for="nama_version">Nama kebijakan</label>
+                            <input id="nama_version" name="nama" type="text" maxlength="150" required
+                                   value="{{ old('nama', $versionForm?->nama) }}" placeholder="Contoh: Kebijakan Zakat 2027">
+                        </div>
+                        <div class="kz-field">
+                            <label for="version_mulai">Mulai berlaku</label>
+                            <input id="version_mulai" name="berlaku_mulai" type="date" required
+                                   value="{{ old('berlaku_mulai', $dateValue($versionForm?->berlaku_mulai)) }}">
+                        </div>
+                        <div class="kz-field">
+                            <label for="version_sampai">Selesai berlaku</label>
+                            <input id="version_sampai" name="berlaku_sampai" type="date"
+                                   value="{{ old('berlaku_sampai', $dateValue($versionForm?->berlaku_sampai)) }}">
+                        </div>
+                        @unless ($versionForm)
+                            <div class="kz-field kz-field-full">
+                                <label for="sumber_version_id">Salin aturan dari</label>
+                                <select id="sumber_version_id" name="sumber_version_id">
+                                    <option value="">Mulai tanpa menyalin aturan</option>
+                                    @foreach ($versiKebijakan as $version)
+                                        <option value="{{ $version->id }}" {{ (string) old('sumber_version_id', $versiDipilih?->id) === (string) $version->id ? 'selected' : '' }}>
+                                            {{ $version->nama }} ({{ $version->status_label }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endunless
+                        <div class="kz-field kz-field-full">
+                            <label for="catatan_version">Catatan keputusan</label>
+                            <textarea id="catatan_version" name="catatan">{{ old('catatan', $versionForm?->catatan) }}</textarea>
+                        </div>
+                    </div>
+                    <div class="kz-actions">
+                        <button class="kz-button kz-button-primary" type="submit">
+                            <i class="fa-solid fa-floppy-disk"></i> {{ $versionForm ? 'Simpan Draft' : 'Buat Draft' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        @if ($versiDipilih)
+            <section class="kz-panel">
+                <div class="kz-panel-head">
+                    <h2>{{ $versiDipilih->nama }}</h2>
+                    <span class="kz-badge {{ $versiDipilih->status === 'aktif' ? 'kz-badge-active' : ($versiDipilih->status === 'terjadwal' ? 'kz-badge-scheduled' : ($versiDipilih->status === 'draft' ? 'kz-badge-draft' : 'kz-badge-inactive')) }}">{{ $versiDipilih->status_label }}</span>
+                </div>
+                <div class="kz-version-grid">
+                    <div class="kz-version-stat"><span>Periode</span><strong>{{ $versiDipilih->berlaku_mulai->format('d/m/Y') }}</strong><small>sampai {{ $versiDipilih->berlaku_sampai?->format('d/m/Y') ?? 'tanpa batas' }}</small></div>
+                    <div class="kz-version-stat"><span>Aturan Muzakki</span><strong>{{ $versiDipilih->pengaturan_muzakki_count }}</strong><small>nisab dan kadar zakat</small></div>
+                    <div class="kz-version-stat"><span>Aturan Amil</span><strong>{{ $versiDipilih->kebijakan_amil_count }}</strong><small>berdasarkan sumber dana</small></div>
+                    <div class="kz-version-stat"><span>Aturan Mustahik</span><strong>{{ $versiDipilih->kebijakan_mustahik_count }}</strong><small>golongan dan alokasi</small></div>
+                </div>
+            </section>
+        @endif
+
+        <section class="kz-panel kz-section-gap">
+            <div class="kz-panel-head"><h2>Daftar Versi Kebijakan</h2><span class="kz-count">{{ $versiKebijakan->count() }}</span></div>
+            <div class="kz-table-wrap">
+                <table class="kz-table">
+                    <thead><tr><th>Kode & Nama</th><th>Periode</th><th>Isi Aturan</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    @forelse ($versiKebijakan as $version)
+                        <tr>
+                            <td><strong>{{ $version->nama }}</strong><br><small>{{ $version->kode }}</small></td>
+                            <td class="kz-nowrap">{{ $version->berlaku_mulai->format('d/m/Y') }}<br><small>{{ $version->berlaku_sampai?->format('d/m/Y') ?? 'Tanpa batas' }}</small></td>
+                            <td>{{ $version->pengaturan_muzakki_count }} muzakki · {{ $version->kebijakan_amil_count }} amil · {{ $version->kebijakan_mustahik_count }} mustahik</td>
+                            <td><span class="kz-badge {{ $version->status === 'aktif' ? 'kz-badge-active' : ($version->status === 'terjadwal' ? 'kz-badge-scheduled' : ($version->status === 'draft' ? 'kz-badge-draft' : 'kz-badge-inactive')) }}">{{ $version->status_label }}</span></td>
+                            <td>
+                                <div class="kz-row-actions">
+                                    <a class="kz-button kz-button-secondary" title="Lihat versi" href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'periode', 'versi' => $version->id]) }}"><i class="fa-solid fa-eye"></i></a>
+                                    @if ($version->dapat_diubah)
+                                        <a class="kz-button kz-button-secondary" title="Ubah draft" href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'periode', 'versi' => $version->id, 'edit_version' => $version->id]) }}"><i class="fa-solid fa-pen"></i></a>
+                                        <form method="POST" action="{{ route('admin.kebijakan-zakat.versi.publish', $version) }}" onsubmit="return confirm('Terbitkan versi kebijakan ini? Setelah diterbitkan, isinya akan dikunci.');">
+                                            @csrf @method('PATCH')
+                                            <button class="kz-button kz-button-primary" type="submit" title="Terbitkan"><i class="fa-solid fa-check"></i></button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="kz-empty"><i class="fa-regular fa-folder-open"></i>Belum ada versi kebijakan.</td></tr>
+                    @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    @elseif ($tab === 'barang')
         <div class="kz-form-panels">
             @php $barangForm = $editBarang; @endphp
             <section id="kz-modal-barang" class="kz-panel kz-form-modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
@@ -896,15 +1302,15 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                         : route('admin.kebijakan-zakat.muzakki.store') }}">
                         @csrf
                         <input type="hidden" name="form_context" value="muzakki">
+                        <input type="hidden" name="kebijakan_zakat_version_id" value="{{ $versiDipilih?->id }}">
+                        <input type="hidden" name="tahun" value="{{ old('tahun', $form?->tahun ?? $versiDipilih?->berlaku_mulai?->year ?? now()->year) }}">
+                        <input type="hidden" name="berlaku_mulai" value="{{ $dateValue($versiDipilih?->berlaku_mulai) }}">
+                        <input type="hidden" name="berlaku_sampai" value="{{ $dateValue($versiDipilih?->berlaku_sampai) }}">
+                        <input type="hidden" name="aktif" value="0">
                         @if ($form) @method('PATCH') @endif
 
                         <div class="kz-form-grid">
-                            <div class="kz-field">
-                                <label for="tahun">Tahun</label>
-                                <input id="tahun" name="tahun" type="number" min="2000" max="2100" required
-                                       value="{{ old('tahun', $form?->tahun ?? now()->year) }}">
-                            </div>
-                            <div class="kz-field">
+                            <div class="kz-field kz-field-full">
                                 <label for="persentase_zakat">Kadar zakat (%)</label>
                                 <input id="persentase_zakat" name="persentase_zakat" type="number" min="0.01" max="100" step="0.01" required
                                        value="{{ old('persentase_zakat', $form?->persentase_zakat ?? '2.50') }}">
@@ -939,27 +1345,9 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                                 <input id="beras_fitrah_liter" name="beras_fitrah_liter" type="number" min="0.01" max="100" step="0.01" required
                                        value="{{ old('beras_fitrah_liter', $form?->beras_fitrah_liter ?? '3.50') }}">
                             </div>
-                            <div class="kz-field">
-                                <label for="muzakki_mulai">Mulai berlaku</label>
-                                <input id="muzakki_mulai" name="berlaku_mulai" type="date" required
-                                       value="{{ old('berlaku_mulai', $dateValue($form?->berlaku_mulai)) }}">
-                            </div>
-                            <div class="kz-field">
-                                <label for="muzakki_sampai">Selesai berlaku</label>
-                                <input id="muzakki_sampai" name="berlaku_sampai" type="date"
-                                       value="{{ old('berlaku_sampai', $dateValue($form?->berlaku_sampai)) }}">
-                            </div>
                             <div class="kz-field kz-field-full">
                                 <label for="sumber">Dasar aturan</label>
                                 <textarea id="sumber" name="sumber">{{ old('sumber', $form?->sumber) }}</textarea>
-                            </div>
-                            <div class="kz-field kz-field-full kz-check-row">
-                                <label class="kz-check">
-                                    <input type="hidden" name="aktif" value="0">
-                                    <input type="checkbox" name="aktif" value="1"
-                                           {{ old('aktif', $form?->aktif ?? true) ? 'checked' : '' }}>
-                                    Aktif
-                                </label>
                             </div>
                         </div>
                         <div class="kz-actions">
@@ -968,7 +1356,7 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                                 {{ $form ? 'Simpan Perubahan' : 'Tambah Aturan' }}
                             </button>
                             @if ($form)
-                                <a class="kz-button kz-button-secondary" href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'muzakki']) }}">
+                                <a class="kz-button kz-button-secondary" href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'muzakki', 'versi' => $versiDipilih?->id]) }}">
                                     <i class="fa-solid fa-xmark"></i> Batal
                                 </a>
                             @endif
@@ -1001,12 +1389,14 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                                     <td>Rp{{ number_format($item->nisab_penghasilan_tahunan, 0, ',', '.') }}<br><small>Rp{{ number_format($item->nisab_penghasilan_bulanan, 0, ',', '.') }}/bulan</small></td>
                                     <td>Rp{{ number_format($item->zakat_fitrah_per_jiwa, 0, ',', '.') }}<br><small>{{ number_format((float) $item->beras_fitrah_kg, 2, ',', '.') }} kg/jiwa</small></td>
                                     <td class="kz-nowrap">{{ $item->berlaku_mulai->format('d/m/Y') }}<br><small>{{ $item->berlaku_sampai?->format('d/m/Y') ?? 'Tanpa batas' }}</small></td>
-                                    <td><span class="kz-badge {{ $item->aktif ? 'kz-badge-active' : 'kz-badge-inactive' }}">{{ $item->aktif ? 'Aktif' : 'Nonaktif' }}</span></td>
+                                    <td><span class="kz-badge {{ $versiDipilih?->status === 'aktif' ? 'kz-badge-active' : ($versiDipilih?->status === 'terjadwal' ? 'kz-badge-scheduled' : ($versiDipilih?->status === 'draft' ? 'kz-badge-draft' : 'kz-badge-inactive')) }}">{{ $versiDipilih?->status_label ?? ($item->aktif ? 'Aktif' : 'Nonaktif') }}</span></td>
                                     <td>
-                                        <a class="kz-button kz-button-secondary" title="Ubah aturan"
-                                           href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'muzakki', 'edit_muzakki' => $item->id]) }}">
-                                            <i class="fa-solid fa-pen"></i>
-                                        </a>
+                                        @if ($versiDipilih?->dapat_diubah)
+                                            <a class="kz-button kz-button-secondary" title="Ubah aturan"
+                                               href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'muzakki', 'versi' => $versiDipilih->id, 'edit_muzakki' => $item->id]) }}">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </a>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -1030,6 +1420,10 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                         : route('admin.kebijakan-zakat.amil.store') }}">
                         @csrf
                         <input type="hidden" name="form_context" value="amil">
+                        <input type="hidden" name="kebijakan_zakat_version_id" value="{{ $versiDipilih?->id }}">
+                        <input type="hidden" name="berlaku_mulai" value="{{ $dateValue($versiDipilih?->berlaku_mulai) }}">
+                        <input type="hidden" name="berlaku_sampai" value="{{ $dateValue($versiDipilih?->berlaku_sampai) }}">
+                        <input type="hidden" name="aktif" value="0">
                         @if ($form) @method('PATCH') @endif
                         <div class="kz-form-grid">
                             <div class="kz-field kz-field-full">
@@ -1045,16 +1439,6 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                                 <input id="persentase_amil" name="persentase_amil" type="number" min="0" max="100" step="0.01" required
                                        value="{{ old('persentase_amil', $form?->persentase_amil ?? '12.50') }}">
                             </div>
-                            <div class="kz-field">
-                                <label for="amil_mulai">Mulai berlaku</label>
-                                <input id="amil_mulai" name="berlaku_mulai" type="date" required
-                                       value="{{ old('berlaku_mulai', $dateValue($form?->berlaku_mulai)) }}">
-                            </div>
-                            <div class="kz-field">
-                                <label for="amil_sampai">Selesai berlaku</label>
-                                <input id="amil_sampai" name="berlaku_sampai" type="date"
-                                       value="{{ old('berlaku_sampai', $dateValue($form?->berlaku_sampai)) }}">
-                            </div>
                             <div class="kz-field kz-field-full">
                                 <label for="dasar_amil">Dasar aturan</label>
                                 <input id="dasar_amil" name="dasar_aturan" type="text" maxlength="255"
@@ -1067,12 +1451,6 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                                            {{ old('potong_infak_terikat', $form?->potong_infak_terikat ?? false) ? 'checked' : '' }}>
                                     Berlaku untuk infak terikat
                                 </label>
-                                <label class="kz-check">
-                                    <input type="hidden" name="aktif" value="0">
-                                    <input type="checkbox" name="aktif" value="1"
-                                           {{ old('aktif', $form?->aktif ?? true) ? 'checked' : '' }}>
-                                    Aktif
-                                </label>
                             </div>
                         </div>
                         <div class="kz-actions">
@@ -1081,7 +1459,7 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                                 {{ $form ? 'Simpan Perubahan' : 'Tambah Kebijakan' }}
                             </button>
                             @if ($form)
-                                <a class="kz-button kz-button-secondary" href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'amil']) }}">
+                                <a class="kz-button kz-button-secondary" href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'amil', 'versi' => $versiDipilih?->id]) }}">
                                     <i class="fa-solid fa-xmark"></i> Batal
                                 </a>
                             @endif
@@ -1114,12 +1492,14 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                                     <td>{{ number_format((float) $item->persentase_amil, 2, ',', '.') }}%</td>
                                     <td>{{ $item->dasar_aturan ?: '-' }}</td>
                                     <td class="kz-nowrap">{{ $item->berlaku_mulai->format('d/m/Y') }}<br><small>{{ $item->berlaku_sampai?->format('d/m/Y') ?? 'Tanpa batas' }}</small></td>
-                                    <td><span class="kz-badge {{ $item->aktif ? 'kz-badge-active' : 'kz-badge-inactive' }}">{{ $item->aktif ? 'Aktif' : 'Nonaktif' }}</span></td>
+                                    <td><span class="kz-badge {{ $versiDipilih?->status === 'aktif' ? 'kz-badge-active' : ($versiDipilih?->status === 'terjadwal' ? 'kz-badge-scheduled' : ($versiDipilih?->status === 'draft' ? 'kz-badge-draft' : 'kz-badge-inactive')) }}">{{ $versiDipilih?->status_label ?? ($item->aktif ? 'Aktif' : 'Nonaktif') }}</span></td>
                                     <td>
-                                        <a class="kz-button kz-button-secondary" title="Ubah kebijakan"
-                                           href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'amil', 'edit_amil' => $item->id]) }}">
-                                            <i class="fa-solid fa-pen"></i>
-                                        </a>
+                                        @if ($versiDipilih?->dapat_diubah)
+                                            <a class="kz-button kz-button-secondary" title="Ubah kebijakan"
+                                               href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'amil', 'versi' => $versiDipilih->id, 'edit_amil' => $item->id]) }}">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </a>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -1143,6 +1523,10 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                         : route('admin.kebijakan-zakat.mustahik.store') }}">
                         @csrf
                         <input type="hidden" name="form_context" value="mustahik">
+                        <input type="hidden" name="kebijakan_zakat_version_id" value="{{ $versiDipilih?->id }}">
+                        <input type="hidden" name="berlaku_mulai" value="{{ $dateValue($versiDipilih?->berlaku_mulai) }}">
+                        <input type="hidden" name="berlaku_sampai" value="{{ $dateValue($versiDipilih?->berlaku_sampai) }}">
+                        <input type="hidden" name="aktif" value="0">
                         @if ($form) @method('PATCH') @endif
                         <div class="kz-form-grid">
                             <div class="kz-field">
@@ -1185,24 +1569,6 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                                 <input id="dasar_mustahik" name="dasar_aturan" type="text" maxlength="255"
                                        value="{{ old('dasar_aturan', $form?->dasar_aturan) }}">
                             </div>
-                            <div class="kz-field">
-                                <label for="mustahik_mulai">Mulai berlaku</label>
-                                <input id="mustahik_mulai" name="berlaku_mulai" type="date" required
-                                       value="{{ old('berlaku_mulai', $dateValue($form?->berlaku_mulai)) }}">
-                            </div>
-                            <div class="kz-field">
-                                <label for="mustahik_sampai">Selesai berlaku</label>
-                                <input id="mustahik_sampai" name="berlaku_sampai" type="date"
-                                       value="{{ old('berlaku_sampai', $dateValue($form?->berlaku_sampai)) }}">
-                            </div>
-                            <div class="kz-field kz-field-full kz-check-row">
-                                <label class="kz-check">
-                                    <input type="hidden" name="aktif" value="0">
-                                    <input type="checkbox" name="aktif" value="1"
-                                           {{ old('aktif', $form?->aktif ?? true) ? 'checked' : '' }}>
-                                    Aktif
-                                </label>
-                            </div>
                         </div>
                         <div class="kz-actions">
                             <button class="kz-button kz-button-primary" type="submit">
@@ -1210,7 +1576,7 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                                 {{ $form ? 'Simpan Perubahan' : 'Tambah Kebijakan' }}
                             </button>
                             @if ($form)
-                                <a class="kz-button kz-button-secondary" href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'mustahik']) }}">
+                                <a class="kz-button kz-button-secondary" href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'mustahik', 'versi' => $versiDipilih?->id]) }}">
                                     <i class="fa-solid fa-xmark"></i> Batal
                                 </a>
                             @endif
@@ -1247,12 +1613,14 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
                                     <td>{{ $item->batas_bantuan !== null ? 'Rp' . number_format($item->batas_bantuan, 0, ',', '.') : '-' }}</td>
                                     <td>{{ $bentukPenyaluranLabels[$item->bentuk_penyaluran] ?? $item->bentuk_penyaluran }}</td>
                                     <td class="kz-nowrap">{{ $item->berlaku_mulai->format('d/m/Y') }}<br><small>{{ $item->berlaku_sampai?->format('d/m/Y') ?? 'Tanpa batas' }}</small></td>
-                                    <td><span class="kz-badge {{ $item->aktif ? 'kz-badge-active' : 'kz-badge-inactive' }}">{{ $item->aktif ? 'Aktif' : 'Nonaktif' }}</span></td>
+                                    <td><span class="kz-badge {{ $versiDipilih?->status === 'aktif' ? 'kz-badge-active' : ($versiDipilih?->status === 'terjadwal' ? 'kz-badge-scheduled' : ($versiDipilih?->status === 'draft' ? 'kz-badge-draft' : 'kz-badge-inactive')) }}">{{ $versiDipilih?->status_label ?? ($item->aktif ? 'Aktif' : 'Nonaktif') }}</span></td>
                                     <td>
-                                        <a class="kz-button kz-button-secondary" title="Ubah kebijakan"
-                                           href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'mustahik', 'edit_mustahik' => $item->id]) }}">
-                                            <i class="fa-solid fa-pen"></i>
-                                        </a>
+                                        @if ($versiDipilih?->dapat_diubah)
+                                            <a class="kz-button kz-button-secondary" title="Ubah kebijakan"
+                                               href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'mustahik', 'versi' => $versiDipilih->id, 'edit_mustahik' => $item->id]) }}">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </a>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -1367,6 +1735,25 @@ html[data-finus-theme="dark"] body .kz-button-secondary,html[data-finus-theme="d
     if (autoModal) {
         openModal(autoModal);
     }
+
+    const ketentuanForms = document.querySelectorAll('form[action*="ketentuan-pokok"]');
+    ketentuanForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const amilInput = form.querySelector('input[name="persentase_amil"]');
+            if (amilInput) {
+                let total = parseFloat(amilInput.value) || 0;
+                const asnafInputs = form.querySelectorAll('input[name^="target_mustahik["]');
+                asnafInputs.forEach(input => {
+                    total += parseFloat(input.value) || 0;
+                });
+
+                if (Math.abs(total - 100) > 0.01) {
+                    e.preventDefault();
+                    alert(`Total persentase pembagian (Amil + Asnaf Lainnya) harus pas 100%.\nSaat ini totalnya: ${total.toFixed(2)}%`);
+                }
+            }
+        });
+    });
 })();
 </script>
 @endpush

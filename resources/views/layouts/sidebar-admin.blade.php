@@ -1155,15 +1155,6 @@ html[data-finus-theme="dark"] {
                 </li>
                 <li>
                     <a
-                        href="{{ route('admin.parkir.index') }}"
-                        class="{{ request()->routeIs('admin.parkir.*') ? 'active' : '' }}"
-                    >
-                        <i class="fa-solid fa-square-parking"></i>
-                        <span>Parkir QRIS</span>
-                    </a>
-                </li>
-                <li>
-                    <a
                         href="{{ route('admin.pengeluaran.index') }}"
                         class="{{ request()->routeIs('admin.pengeluaran.*') ? 'active' : '' }}"
                     >

@@ -37,12 +37,11 @@ class ZiswafPenerimaan extends Model
         'persentase_zakat',
         'coa_id',
         'jurnal_id',
-        'zakat_setting_id',
         'persentase_amil',
         'nominal_amil',
         'persentase_nazhir',
         'nominal_nazhir',
-        'kebijakan_amil_id',
+        'snapshot_kebijakan',
     ];
 
     protected $casts = [
@@ -55,6 +54,7 @@ class ZiswafPenerimaan extends Model
         'persentase_zakat' => 'decimal:2',
         'persentase_amil' => 'decimal:2',
         'persentase_nazhir' => 'decimal:2',
+        'snapshot_kebijakan' => 'array',
     ];
 
     public function muzakki()
@@ -70,10 +70,5 @@ class ZiswafPenerimaan extends Model
     public function coa()
     {
         return $this->belongsTo(Coa::class, 'coa_id');
-    }
-
-    public function zakatSetting()
-    {
-        return $this->belongsTo(ZakatSetting::class, 'zakat_setting_id');
     }
 }

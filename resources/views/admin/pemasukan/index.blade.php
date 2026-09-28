@@ -94,6 +94,33 @@
         text-decoration: none;
     }
 
+    .pm-hero-actions {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .pm-btn-add.is-primary {
+        background: #fff;
+        color: #0e5423;
+        border-color: #fff;
+    }
+
+    .pm-btn-add.is-primary:hover {
+        background: #ecfdf5;
+        color: #0e5423;
+    }
+
+    @media (max-width: 680px) {
+        .pm-hero { align-items: flex-start; flex-direction: column; }
+        .pm-hero-actions { justify-content: flex-start; width: 100%; }
+        .pm-btn-add { justify-content: center; flex: 1 1 190px; }
+    }
+
     /* ============================================================
        SUMMARY CARDS — 3 kolom
     ============================================================ */
@@ -517,7 +544,7 @@
     .pm-ftarea { min-height: 82px; resize: vertical; }
     .pm-fhint  { font-size: 11px; color: #94a3b8; margin-top: 4px; }
     .pm-frow   { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    @media (max-width: 480px) { .pm-frow { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .pm-frow { grid-template-columns: 1fr; } }
 
     .pm-modal-foot {
         display: flex;
@@ -642,11 +669,13 @@
     <div class="pm-hero">
         <div class="pm-hero-left">
             <h1><i class="fa-solid fa-hand-holding-dollar" style="margin-right:10px;opacity:.85;"></i>Pemasukan</h1>
-            <p>Kelola seluruh pemasukan ZISWAF — dari jamaah maupun input manual admin.</p>
+            <p>Kelola pemasukan masjid dari ZISWAF, kegiatan, dan setoran parkir per shift.</p>
         </div>
-        <button type="button" class="pm-btn-add" onclick="pmOpenTambah()">
-            <i class="fa-solid fa-plus"></i> Tambah Pemasukan
-        </button>
+        <div class="pm-hero-actions">
+            <button type="button" class="pm-btn-add is-primary" onclick="pmOpenTambah()">
+                <i class="fa-solid fa-plus"></i> Tambah Pemasukan
+            </button>
+        </div>
     </div>
 
     {{-- ====== 2 SUMMARY CARDS ====== --}}
@@ -742,7 +771,7 @@
                     <tr>
                         <th style="width: 55px;">No.</th>
                         <th>Tanggal</th>
-                        <th>Sumber / Muzakki</th>
+                        <th>Sumber</th>
                         <th>Golongan</th>
                         <th>Nominal</th>
                         <th>Metode</th>
@@ -754,6 +783,7 @@
                     @forelse($transaksi as $item)
                         @php
                             $isJamaah = $item->muzakki_id !== null;
+                            $isParkir = in_array($item->jenis_ziswaf, ['parkir', 'hasil_parkir'], true);
                             $golLabel = $golonganLabels[$item->jenis_ziswaf] ?? ($item->jenis_ziswaf === 'hasil_parkir' ? 'Parkir' : $item->jenis_ziswaf);
                             $colors   = ($item->jenis_ziswaf === 'hasil_parkir')
                                 ? ['bg'=>'#ecfdf5','text'=>'#047857','border'=>'#a7f3d0','dot'=>'#10b981']
@@ -761,7 +791,7 @@
                             $metLabel = $metodeLabels[$item->metode_pembayaran] ?? ($item->metode_pembayaran ?? '-');
 
                             // Nama donatur dari keterangan manual
-                            $namaSumber = $item->muzakki?->name;
+                            $namaSumber = $isParkir ? $item->pegawai?->nama_pegawai : $item->muzakki?->name;
                             if (!$namaSumber && !empty($item->keterangan)) {
                                 $namaSumber = $item->keterangan;
                             }
@@ -783,11 +813,13 @@
                                 </div>
                             </td>
 
-                            {{-- Sumber / Muzakki --}}
+                            {{-- Sumber --}}
                             <td>
                                 <div style="font-weight:700;color:#0f172a;">{{ $namaSumber }}</div>
                                 <div style="margin-top:2px;">
-                                    @if($isJamaah)
+                                    @if($isParkir)
+                                        <span class="pm-badge pm-src-admin"><i class="fa-solid fa-user-clock" style="font-size:9px;"></i> Penanggung Jawab Shift</span>
+                                    @elseif($isJamaah)
                                         <span class="pm-badge pm-src-jamaah"><i class="fa-solid fa-user" style="font-size:9px;"></i> Jamaah</span>
                                     @else
                                         <span class="pm-badge pm-src-admin"><i class="fa-solid fa-user-gear" style="font-size:9px;"></i> Admin</span>
@@ -814,6 +846,16 @@
                                         } }}
                                         @if($item->wakaf_type === 'temporer' && $item->wakaf_return_date)
                                             · kembali {{ $item->wakaf_return_date->format('d/m/Y') }}
+                                        @endif
+                                    </div>
+                                @elseif($isParkir && data_get($item->rincian_perhitungan, 'shift'))
+                                    <div style="font-size:11px;color:#64748b;margin-top:5px;line-height:1.5;">
+                                        Shift {{ ucfirst(data_get($item->rincian_perhitungan, 'shift')) }}
+                                        @if(data_get($item->rincian_perhitungan, 'waktu_mulai') && data_get($item->rincian_perhitungan, 'waktu_selesai'))
+                                            · {{ data_get($item->rincian_perhitungan, 'waktu_mulai') }}-{{ data_get($item->rincian_perhitungan, 'waktu_selesai') }}
+                                        @endif
+                                        @if(data_get($item->rincian_perhitungan, 'nomor_rekap'))
+                                            · {{ data_get($item->rincian_perhitungan, 'nomor_rekap') }}
                                         @endif
                                     </div>
                                 @endif
@@ -926,7 +968,7 @@
             <div class="pm-modal-title">
                 <span class="pm-modal-title-icon"><i class="fa-solid fa-plus"></i></span>
                 <div>
-                    <h2>Tambah Pemasukan Manual</h2>
+                    <h2>Tambah Pemasukan</h2>
                     <p>Catat penerimaan dengan data transaksi yang lengkap.</p>
                 </div>
             </div>
@@ -946,6 +988,35 @@
                             <option value="{{ $val }}" {{ old('jenis_ziswaf') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
                         @endforeach
                     </select>
+                </div>
+
+                <div id="pmParkingFields" hidden>
+                    <div class="pm-frow">
+                        <div class="pm-fgroup">
+                            <label class="pm-flabel" for="pm_parkir_pegawai">Penanggung Jawab Shift <span>*</span></label>
+                            <select name="id_pegawai" id="pm_parkir_pegawai" class="pm-fselect" disabled>
+                                <option value="">-- Pilih Pegawai --</option>
+                                @foreach($pegawaiPenanggungJawab as $pegawaiItem)
+                                    <option value="{{ $pegawaiItem->id }}" @selected((string) old('id_pegawai') === (string) $pegawaiItem->id)>
+                                        {{ $pegawaiItem->nama_pegawai }} · {{ $pegawaiItem->jabatan ?: 'Pegawai Umum' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="pm-fgroup">
+                            <label class="pm-flabel" for="pm_parkir_shift">Shift <span>*</span></label>
+                            <select name="shift" id="pm_parkir_shift" class="pm-fselect" disabled>
+                                <option value="pagi" @selected(old('shift', 'pagi') === 'pagi')>Pagi</option>
+                                <option value="siang" @selected(old('shift') === 'siang')>Siang</option>
+                                <option value="malam" @selected(old('shift') === 'malam')>Malam</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="pm-fgroup">
+                        <label class="pm-flabel" for="pm_parkir_rekap">Nomor Laporan / Rekap</label>
+                        <input type="text" name="nomor_rekap" id="pm_parkir_rekap" class="pm-finput" disabled
+                            maxlength="80" placeholder="Contoh: PKR-270926-P1" value="{{ old('nomor_rekap') }}">
+                    </div>
                 </div>
 
                 <div class="pm-fgroup" id="pmRestrictionGroup" hidden>
@@ -983,7 +1054,7 @@
                 <div class="pm-frow">
                     {{-- Nominal --}}
                     <div class="pm-fgroup">
-                        <label class="pm-flabel" for="pm_nominal">Nominal (Rp) <span>*</span></label>
+                        <label class="pm-flabel" for="pm_nominal" id="pmNominalLabel">Nominal (Rp) <span>*</span></label>
                         <input type="number" name="nominal" id="pm_nominal" class="pm-finput"
                             min="1000" step="1" placeholder="Contoh: 1250 atau 500000"
                             value="{{ old('nominal') }}" required>
@@ -1009,7 +1080,7 @@
                 </div>
 
                 {{-- Nama Donatur --}}
-                <div class="pm-fgroup">
+                <div class="pm-fgroup" id="pmDonaturGroup">
                     <label class="pm-flabel" for="pm_donatur">Nama Donatur / Muzakki</label>
                     <input type="text" name="nama_donatur" id="pm_donatur" class="pm-finput"
                         placeholder="Opsional — kosongkan jika anonim"
@@ -1019,14 +1090,14 @@
 
                 {{-- Keterangan --}}
                 <div class="pm-fgroup">
-                    <label class="pm-flabel" for="pm_ket">Keterangan</label>
+                    <label class="pm-flabel" for="pm_ket" id="pmKeteranganLabel">Keterangan</label>
                     <textarea name="keterangan" id="pm_ket" class="pm-ftarea"
                         placeholder="Keterangan tambahan (opsional)…" maxlength="1000">{{ old('keterangan') }}</textarea>
                 </div>
 
                 {{-- Bukti --}}
                 <div class="pm-fgroup">
-                    <label class="pm-flabel" for="pm_bukti">Bukti Pembayaran</label>
+                    <label class="pm-flabel" for="pm_bukti" id="pmBuktiLabel">Bukti Pembayaran</label>
                     <input type="file" name="bukti_pembayaran" id="pm_bukti" class="pm-finput"
                         accept=".jpg,.jpeg,.png,.pdf" style="padding:7px 12px;">
                     <div class="pm-fhint">JPG, PNG atau PDF. Maks. 2 MB.</div>
@@ -1088,6 +1159,17 @@
     });
 
     const pmGolongan = document.getElementById('pm_golongan');
+    const pmParkingFields = document.getElementById('pmParkingFields');
+    const pmParkingEmployee = document.getElementById('pm_parkir_pegawai');
+    const pmParkingShift = document.getElementById('pm_parkir_shift');
+    const pmParkingReport = document.getElementById('pm_parkir_rekap');
+    const pmNominalLabel = document.getElementById('pmNominalLabel');
+    const pmDonaturGroup = document.getElementById('pmDonaturGroup');
+    const pmDonatur = document.getElementById('pm_donatur');
+    const pmKeteranganLabel = document.getElementById('pmKeteranganLabel');
+    const pmKeterangan = document.getElementById('pm_ket');
+    const pmBuktiLabel = document.getElementById('pmBuktiLabel');
+    const pmBukti = document.getElementById('pm_bukti');
     const pmRestrictionGroup = document.getElementById('pmRestrictionGroup');
     const pmRestriction = document.getElementById('pm_restriction_type');
     const pmWakafTypeGroup = document.getElementById('pmWakafTypeGroup');
@@ -1101,8 +1183,29 @@
     function pmSyncPostingRules() {
         const isInfak = pmGolongan.value === 'infaq';
         const isWakaf = pmGolongan.value === 'wakaf';
+        const isParkir = pmGolongan.value === 'parkir';
         const isTemporary = isWakaf && pmWakafType.value === 'temporer';
         const isManagementResult = isWakaf && pmWakafType.value === 'hasil_pengelolaan';
+
+        pmParkingFields.hidden = !isParkir;
+        pmParkingEmployee.disabled = !isParkir;
+        pmParkingEmployee.required = isParkir;
+        pmParkingShift.disabled = !isParkir;
+        pmParkingShift.required = isParkir;
+        pmParkingReport.disabled = !isParkir;
+        pmDonaturGroup.hidden = isParkir;
+        pmDonatur.disabled = isParkir;
+        pmBukti.required = isParkir;
+        pmNominalLabel.innerHTML = isParkir
+            ? 'Jumlah Uang Masuk (Rp) <span>*</span>'
+            : 'Nominal (Rp) <span>*</span>';
+        pmKeteranganLabel.textContent = isParkir ? 'Catatan Laporan' : 'Keterangan';
+        pmKeterangan.placeholder = isParkir
+            ? 'Catatan laporan atau serah terima shift'
+            : 'Keterangan tambahan (opsional)…';
+        pmBuktiLabel.innerHTML = isParkir
+            ? 'Bukti Laporan Parkir <span>*</span>'
+            : 'Bukti Pembayaran';
 
         pmRestrictionGroup.hidden = !isInfak;
         pmRestriction.disabled = !isInfak;
@@ -1158,6 +1261,7 @@
             pmSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan…';
         });
     }
+
 </script>
 @endsection
 
