@@ -35,6 +35,7 @@ class JurnalDetail extends Model
             'wakaf' => 'Dana Wakaf',
             'wakaf_temporer' => 'Liabilitas Wakaf Temporer',
             'nazhir' => 'Dana Nazhir',
+            'operasional' => 'Dana Operasional',
             default => ucfirst(str_replace('_', ' ', $this->jenis_dana ?? 'amil')),
         };
     }

@@ -871,7 +871,7 @@
                                     @if($item instanceof \App\Models\Pengeluaran && $item->zakatPenyaluran->isNotEmpty())
                                         <small style="display:block;margin-top:7px;color:#64748b;line-height:1.5;">
                                             {{ number_format($item->zakatPenyaluran->sum('jumlah_penerima'), 0, ',', '.') }} penerima,
-                                            {{ $item->zakatPenyaluran->pluck('asnaf')->map(fn($asnaf) => \App\Models\KebijakanMustahik::ASNAF[$asnaf] ?? $asnaf)->join(', ') }}
+                                            {{ $item->zakatPenyaluran->pluck('asnaf')->map(fn($asnaf) => $asnafLabels[$asnaf] ?? $asnaf)->join(', ') }}
                                         </small>
                                     @endif
                                 </td>

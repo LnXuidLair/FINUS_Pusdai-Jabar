@@ -5,7 +5,7 @@ namespace App\Services\Accounting;
 use App\Models\Coa;
 use App\Models\JurnalDetail;
 use App\Models\JurnalUmum;
-use App\Models\KebijakanAmil;
+use App\Models\KetentuanPokokZakat;
 use App\Models\Pengeluaran;
 use App\Models\Penggajian;
 use App\Models\ZiswafPenerimaan;
@@ -300,25 +300,21 @@ class Psak109PostingService
             return;
         }
 
-        $sumberAturan = $jenisDana === 'zakat'
-            ? 'zakat'
-            : ($restrictionType === 'muqayyadah' ? 'infaq_muqayyadah' : 'infaq_mutlaqah');
-        $kebijakan = KebijakanAmil::ambilKebijakan($sumberAturan, $penerimaan->tanggal);
-
-        if (
-            $jenisDana === 'infak_sedekah'
-            && $restrictionType === 'muqayyadah'
-            && (! $kebijakan || ! $kebijakan->potong_infak_terikat)
-        ) {
+        if ($jenisDana === 'infak_sedekah' && $restrictionType === 'muqayyadah') {
             $penerimaan->persentase_amil = 0;
             $penerimaan->nominal_amil = 0;
-            $penerimaan->kebijakan_amil_id = $kebijakan?->id;
             $penerimaan->saveQuietly();
 
             return;
         }
 
-        $persentase = $kebijakan ? (float) $kebijakan->persentase_amil : ($jenisDana === 'zakat' ? 12.50 : 10.00);
+        $ketentuan = $jenisDana === 'zakat'
+            ? KetentuanPokokZakat::untukJenis($this->resolveJenisKetentuanZakat($penerimaan->jenis_ziswaf))
+            : null;
+
+        $persentase = $jenisDana === 'zakat'
+            ? (float) ($penerimaan->snapshot_kebijakan['persentase_amil'] ?? $ketentuan?->persentase_amil ?? 12.50)
+            : 10.00;
 
         if ($persentase <= 0) {
             $penerimaan->persentase_amil = 0;
@@ -333,7 +329,9 @@ class Psak109PostingService
         // Simpan snapshot pada penerimaan
         $penerimaan->persentase_amil = $persentase;
         $penerimaan->nominal_amil = $nominalAmil;
-        $penerimaan->kebijakan_amil_id = $kebijakan?->id;
+        if ($ketentuan && empty($penerimaan->snapshot_kebijakan)) {
+            $penerimaan->snapshot_kebijakan = $ketentuan->toSnapshot();
+        }
         $penerimaan->saveQuietly();
 
         // Cari atau siapkan akun alokasi amil
@@ -515,10 +513,26 @@ class Psak109PostingService
             return 'wakaf';
         }
         if (str_contains($jenis, 'parkir')) {
-            return 'amil';
+            return 'operasional';
         }
 
         return 'amil';
+    }
+
+    protected function resolveJenisKetentuanZakat(?string $jenisZiswaf): string
+    {
+        $jenis = strtolower($jenisZiswaf ?? '');
+
+        return match (true) {
+            str_contains($jenis, 'penghasilan'), str_contains($jenis, 'profesi') => 'penghasilan',
+            str_contains($jenis, 'fitrah') => 'fitrah',
+            str_contains($jenis, 'pertanian_berbiaya') => 'pertanian_berbiaya',
+            str_contains($jenis, 'pertanian_alami') => 'pertanian_alami',
+            str_contains($jenis, 'perdagangan') => 'perdagangan',
+            str_contains($jenis, 'rikaz') => 'rikaz',
+            str_contains($jenis, 'peternakan') => 'peternakan',
+            default => 'maal',
+        };
     }
 
     protected function resolveCoaKas(?string $metode): Coa
@@ -706,6 +720,12 @@ class Psak109PostingService
 
     protected function keteranganPenerimaan(ZiswafPenerimaan $item): string
     {
+        if (str_contains(strtolower($item->jenis_ziswaf ?? ''), 'parkir')) {
+            $penanggungJawab = $item->pegawai?->nama_pegawai ?? 'pegawai';
+
+            return 'Penerimaan parkir per shift oleh '.$penanggungJawab;
+        }
+
         $namaJamaah = $item->muzakki?->name ?? 'Jamaah';
         $jenis = ucfirst(str_replace('_', ' ', $item->jenis_ziswaf ?? 'Penerimaan'));
 

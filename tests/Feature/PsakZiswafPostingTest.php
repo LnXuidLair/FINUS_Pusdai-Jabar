@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Coa;
+use App\Models\KetentuanPokokZakat;
 use App\Models\Pengeluaran;
 use App\Models\ZiswafPenerimaan;
 use App\Services\Accounting\Psak109PostingService;
@@ -12,6 +13,29 @@ use Tests\TestCase;
 class PsakZiswafPostingTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_zakat_amil_share_uses_the_single_core_policy_table(): void
+    {
+        $ketentuan = KetentuanPokokZakat::untukJenis('maal');
+        $ketentuan->update(['persentase_amil' => 11]);
+
+        $receipt = $this->receipt([
+            'jenis_ziswaf' => 'zakat_maal',
+            'nominal' => 1_000_000,
+        ]);
+
+        app(Psak109PostingService::class)->postPenerimaan($receipt);
+        $receipt->refresh();
+
+        $this->assertSame(110_000, (int) $receipt->nominal_amil);
+        $this->assertSame($ketentuan->id, $receipt->snapshot_kebijakan['ketentuan_pokok_id']);
+        $this->assertSame(11.0, (float) $receipt->snapshot_kebijakan['persentase_amil']);
+        $this->assertDatabaseHas('jurnal_detail', [
+            'jurnal_id' => $receipt->jurnal_id,
+            'coa_id' => $this->account('4301')->id,
+            'credit' => 110_000,
+        ]);
+    }
 
     public function test_restricted_infak_keeps_the_restriction_and_is_not_automatically_cut_for_amil(): void
     {

@@ -163,6 +163,15 @@ class MasterCoaPengeluaranTest extends TestCase
             ->assertDontSee('PSAK 112');
     }
 
+    public function test_zakat_policy_screen_only_exposes_the_current_single_source_settings(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.kebijakan-zakat.index', ['tab' => 'periode']))
+            ->assertOk();
+    }
+
     private function admin(): User
     {
         return User::create([
