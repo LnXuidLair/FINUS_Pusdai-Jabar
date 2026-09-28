@@ -870,8 +870,11 @@
                                     </span>
                                     @if($item instanceof \App\Models\Pengeluaran && $item->zakatPenyaluran->isNotEmpty())
                                         <small style="display:block;margin-top:7px;color:#64748b;line-height:1.5;">
+                                            @if($item->periodePenyaluranZakat)
+                                                <strong>{{ $item->nomor_batch }}</strong> · Periode {{ \Carbon\Carbon::createFromFormat('Y-m', $item->periodePenyaluranZakat->periode)->translatedFormat('F Y') }}<br>
+                                            @endif
                                             {{ number_format($item->zakatPenyaluran->sum('jumlah_penerima'), 0, ',', '.') }} penerima,
-                                            {{ $item->zakatPenyaluran->pluck('asnaf')->map(fn($asnaf) => $asnafLabels[$asnaf] ?? $asnaf)->join(', ') }}
+                                            {{ $item->zakatPenyaluran->pluck('asnaf')->unique()->map(fn($asnaf) => $asnafLabels[$asnaf] ?? $asnaf)->join(', ') }}
                                         </small>
                                     @endif
                                 </td>

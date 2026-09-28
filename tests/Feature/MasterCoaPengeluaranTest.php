@@ -6,6 +6,8 @@ use App\Models\Coa;
 use App\Models\JurnalDetail;
 use App\Models\Pengeluaran;
 use App\Models\User;
+use App\Models\ZiswafPenerimaan;
+use App\Services\Accounting\Psak109PostingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -26,6 +28,8 @@ class MasterCoaPengeluaranTest extends TestCase
             ->assertSee('2201 - Liabilitas Wakaf Temporer')
             ->assertSee('Rincian Penerima Zakat')
             ->assertSee('Jumlah Penerima')
+            ->assertSee('Batch Akhir Periode')
+            ->assertSee('Target Mustahik Per Asnaf')
             ->assertSee('Sifat Infak/Sedekah');
     }
 
@@ -57,20 +61,31 @@ class MasterCoaPengeluaranTest extends TestCase
     public function test_zakat_distribution_uses_zakat_fund_dimension(): void
     {
         $account = Coa::where('kode_akun', '5210')->firstOrFail();
+        $receipt = ZiswafPenerimaan::create([
+            'tanggal' => '2026-09-15',
+            'jenis_ziswaf' => 'zakat_maal',
+            'nominal' => 1_000_000,
+            'metode_pembayaran' => 'tunai',
+            'status_verifikasi' => 'diterima',
+        ]);
+        app(Psak109PostingService::class)->postPenerimaan($receipt);
 
         $this->actingAs($this->admin(), 'admin')
             ->post(route('admin.pengeluaran.store'), [
                 'coa_debit_id' => $account->id,
                 'deskripsi' => 'Penyaluran kepada mustahik miskin',
                 'jumlah' => 500000,
-                'tanggal' => '2026-09-21',
+                'tanggal' => '2026-09-30',
+                'periode_zakat' => '2026-09',
                 'zakat_details' => [
                     [
+                        'nama_penerima' => 'Program Fakir',
                         'asnaf' => 'fakir',
                         'jumlah_penerima' => 3,
                         'nominal' => 300000,
                     ],
                     [
+                        'nama_penerima' => 'Program Miskin',
                         'asnaf' => 'miskin',
                         'jumlah_penerima' => 2,
                         'nominal' => 200000,
@@ -93,12 +108,13 @@ class MasterCoaPengeluaranTest extends TestCase
             'asnaf' => 'fakir',
             'jumlah_penerima' => 3,
             'nominal' => 300000,
+            'nama_penerima' => 'Program Fakir',
         ]);
 
         $this->get(route('admin.laporan.jurnal-pengeluaran'))
             ->assertOk()
-            ->assertSee('Penyaluran zakat - Fakir (3 orang)')
-            ->assertSee('Penyaluran zakat - Miskin (2 orang)');
+            ->assertSee('Penyaluran zakat - Fakir - Program Fakir (3 orang)')
+            ->assertSee('Penyaluran zakat - Miskin - Program Miskin (2 orang)');
     }
 
     public function test_zakat_distribution_detail_must_match_expense_total(): void
@@ -110,8 +126,10 @@ class MasterCoaPengeluaranTest extends TestCase
                 'coa_debit_id' => $account->id,
                 'deskripsi' => 'Penyaluran zakat tidak seimbang',
                 'jumlah' => 100000,
-                'tanggal' => '2026-09-21',
+                'tanggal' => '2026-09-30',
+                'periode_zakat' => '2026-09',
                 'zakat_details' => [[
+                    'nama_penerima' => 'Mustahik Tunggal',
                     'asnaf' => 'fakir',
                     'jumlah_penerima' => 1,
                     'nominal' => 90000,

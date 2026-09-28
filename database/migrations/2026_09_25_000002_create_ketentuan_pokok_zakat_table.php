@@ -25,7 +25,7 @@ return new class extends Migration
             // --- Identitas jenis zakat ---
             $table->string('kode', 30)->unique();                // e.g. ZAKAT-PENGHASILAN
             $table->string('nama', 150);                         // e.g. Zakat Penghasilan / Profesi
-            $table->string('jenis', 30)->index();                // penghasilan, maal, fitrah, pertanian_berbiaya, pertanian_alami, peternakan, perdagangan, rikaz
+            $table->string('jenis', 30)->index();                // penghasilan, maal, fitrah, pertanian_berbiaya, pertanian_alami, peternakan
             $table->text('deskripsi')->nullable();
 
             // --- Kadar / persentase zakat ---
@@ -193,42 +193,6 @@ return new class extends Migration
                 'berat_fitrah_liter' => null,
                 'dasar_hukum' => 'QS Al-An\'am:141; HR Bukhari',
                 'dasar_regulasi' => 'PMA No. 52 Tahun 2014 Pasal 14',
-                'terkunci' => true,
-                'aktif' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'kode' => 'ZAKAT-PERDAGANGAN',
-                'nama' => 'Zakat Perdagangan',
-                'jenis' => 'perdagangan',
-                'deskripsi' => 'Zakat atas barang dagangan yang telah mencapai nisab setara 85 gram emas dan melewati haul.',
-                'kadar_persentase' => 2.50,
-                'satuan_kadar' => 'persen',
-                'nisab_pokok' => '85 gram emas',
-                'haul' => '1 tahun',
-                'berat_fitrah_kg' => null,
-                'berat_fitrah_liter' => null,
-                'dasar_hukum' => 'QS Al-Baqarah:267',
-                'dasar_regulasi' => 'PMA No. 52 Tahun 2014 Pasal 17',
-                'terkunci' => true,
-                'aktif' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'kode' => 'ZAKAT-RIKAZ',
-                'nama' => 'Zakat Rikaz (Temuan)',
-                'jenis' => 'rikaz',
-                'deskripsi' => 'Zakat atas harta temuan (rikaz) yang dikeluarkan saat ditemukan tanpa haul.',
-                'kadar_persentase' => 20.00,
-                'satuan_kadar' => 'persen',
-                'nisab_pokok' => 'Tidak ada nisab minimum',
-                'haul' => 'saat ditemukan',
-                'berat_fitrah_kg' => null,
-                'berat_fitrah_liter' => null,
-                'dasar_hukum' => 'HR Bukhari No. 1499, HR Muslim',
-                'dasar_regulasi' => 'PMA No. 52 Tahun 2014 Pasal 24',
                 'terkunci' => true,
                 'aktif' => true,
                 'created_at' => $now,

@@ -148,7 +148,7 @@ class KebijakanZakatController extends Controller
 
         $barang->update($validated);
 
-        return redirect()->route('kebijakan-zakat.index')->with('success', 'Barang zakat berhasil diperbarui.');
+        return redirect()->route('admin.kebijakan-zakat.index')->with('success', 'Barang zakat berhasil diperbarui.');
     }
 
     public function storeHargaBarang(Request $request)

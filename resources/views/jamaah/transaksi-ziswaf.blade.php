@@ -132,6 +132,11 @@
         color: #15803d;
     }
 
+    .option-card[data-value="zakat_pertanian"] .option-icon {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
     .option-card[data-value="infaq"] .option-icon {
         background: #cffafe;
         color: #0e7490;
@@ -303,6 +308,53 @@
         border-bottom: 0;
     }
 
+    .policy-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+    }
+
+    .policy-item {
+        border-radius: 12px;
+        padding: 18px;
+        background: linear-gradient(155deg, #064e3b 0%, #065f22 28%, #0f8a3c 58%, #16a34a 100%);
+        color: #ffffff;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 4px 12px rgba(6, 78, 59, 0.25);
+        transition: all 0.3s ease;
+    }
+
+    .policy-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(6, 78, 59, 0.4);
+        background: linear-gradient(155deg, #065f22 0%, #0f8a3c 40%, #16a34a 100%);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .policy-item strong {
+        font-weight: 700;
+        font-size: 1.05rem;
+    }
+
+    .policy-item span {
+        font-weight: 700;
+        font-size: 1.05rem;
+    }
+
+    .policy-item small {
+        display: block;
+        color: rgba(235, 255, 240, .85);
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    .calculation-status {
+        min-height: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
     .slide-in-calc {
         animation: slideInCalc 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
@@ -330,7 +382,52 @@
     $isInfakPage = ($jenis ?? null) === 'infak';
     $isWakafPage = ($jenis ?? null) === 'wakaf';
 
+    $zakatPolicies = $zakatPolicies ?? [];
+    $masterAsnaf = $masterAsnaf ?? collect();
+    $maalPolicy = $zakatPolicies['zakat_maal'] ?? [];
+    $penghasilanPolicy = $zakatPolicies['zakat_penghasilan'] ?? [];
+    $fitrahPolicy = $zakatPolicies['zakat_fitrah'] ?? [];
+    $pertanianBerbiayaPolicy = $zakatPolicies['zakat_pertanian_berbiaya'] ?? [];
+    $pertanianAlamiPolicy = $zakatPolicies['zakat_pertanian_alami'] ?? [];
+    $zakatCalculationCategories = $zakatCalculationCategories ?? [];
+    $maalCategories = $zakatCalculationCategories['zakat_maal'] ?? [];
+    $penghasilanCategories = $zakatCalculationCategories['zakat_penghasilan'] ?? [];
+    $pertanianBerbiayaCategories = $zakatCalculationCategories['zakat_pertanian_berbiaya'] ?? [];
+    $pertanianAlamiCategories = $zakatCalculationCategories['zakat_pertanian_alami'] ?? [];
+    $hargaBerasPerKg = (int) ($hargaBeras?->harga_per_satuan ?? 0);
+    $hargaPertanian = $hargaPertanian ?? [];
+    $hargaPertanianPerKg = collect($hargaPertanian)
+        ->mapWithKeys(fn ($harga, $kategori) => [$kategori => (int) ($harga?->harga_per_satuan ?? 0)])
+        ->all();
+    $nisabEmasGram = (float) ($maalPolicy['nisab_emas_gram'] ?? 0);
+    $hargaEmasPerGram = (int) ($hargaEmas?->harga_per_satuan ?? 0);
+    if ($hargaEmasPerGram <= 0 && $nisabEmasGram > 0 && ! empty($maalPolicy['nisab_rupiah'])) {
+        $hargaEmasPerGram = (int) round($maalPolicy['nisab_rupiah'] / $nisabEmasGram);
+    }
+    $nisabEmasRupiah = (int) round($nisabEmasGram * $hargaEmasPerGram);
+    $formatPersentase = static fn ($value): string => rtrim(rtrim(number_format((float) $value, 2, ',', '.'), '0'), ',');
+
     $minimalNominal = $paymentGatewayReady ? 10000 : 1000;
+
+    $displayJenisOptions = [];
+    $pertanianDitampilkan = false;
+    foreach ($jenisOptions as $value => $label) {
+        if (in_array($value, ['zakat_pertanian_berbiaya', 'zakat_pertanian_alami'], true)) {
+            if (! $pertanianDitampilkan) {
+                $displayJenisOptions['zakat_pertanian'] = 'Zakat Pertanian';
+                $pertanianDitampilkan = true;
+            }
+            continue;
+        }
+        $displayJenisOptions[$value] = $label;
+    }
+    $oldJenisZakat = old('jenis_ziswaf');
+    $oldJenisCard = in_array($oldJenisZakat, ['zakat_pertanian_berbiaya', 'zakat_pertanian_alami'], true)
+        ? 'zakat_pertanian'
+        : $oldJenisZakat;
+    $defaultJenisPertanian = isset($jenisOptions['zakat_pertanian_berbiaya'])
+        ? 'zakat_pertanian_berbiaya'
+        : (isset($jenisOptions['zakat_pertanian_alami']) ? 'zakat_pertanian_alami' : '');
 @endphp
 
 <div class="page-hero p-4 p-md-5 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -409,6 +506,12 @@
                                                     <i class="fa-solid fa-mosque"></i>
                                                 @elseif($singleJenisKey === 'zakat_penghasilan')
                                                     <i class="fa-solid fa-briefcase"></i>
+                                                @elseif($singleJenisKey === 'zakat_fitrah')
+                                                    <i class="fa-solid fa-bowl-rice"></i>
+                                                @elseif($singleJenisKey === 'zakat_pertanian_berbiaya')
+                                                    <i class="fa-solid fa-faucet-drip"></i>
+                                                @elseif($singleJenisKey === 'zakat_pertanian_alami')
+                                                    <i class="fa-solid fa-cloud-rain"></i>
                                                 @else
                                                     <i class="fa-solid fa-hand-holding-heart"></i>
                                                 @endif
@@ -430,13 +533,17 @@
                                     </select>
 
                                     <div class="option-grid" id="jenis_ziswaf_cards">
-                                        @foreach($jenisOptions as $value => $label)
-                                            <div class="option-card @if(old('jenis_ziswaf') === $value) active @endif" data-value="{{ $value }}">
+                                        @foreach($displayJenisOptions as $value => $label)
+                                            <div class="option-card @if($oldJenisCard === $value) active @endif" data-value="{{ $value }}">
                                                 <div class="option-icon">
                                                     @if($value === 'zakat_maal')
                                                         <i class="fa-solid fa-hand-holding-heart"></i>
                                                     @elseif($value === 'zakat_penghasilan')
                                                         <i class="fa-solid fa-briefcase"></i>
+                                                    @elseif($value === 'zakat_fitrah')
+                                                        <i class="fa-solid fa-bowl-rice"></i>
+                                                    @elseif($value === 'zakat_pertanian')
+                                                        <i class="fa-solid fa-wheat-awn"></i>
                                                     @elseif($value === 'infaq')
                                                         <i class="fa-solid fa-circle-dollar-to-slot"></i>
                                                     @elseif($value === 'wakaf')
@@ -489,19 +596,45 @@
                             @endif
 
                             @if($isZakatPage)
+                                <input type="hidden"
+                                    name="kategori_perhitungan"
+                                    id="kategori_perhitungan"
+                                    value="{{ old('kategori_perhitungan') }}">
+                                <input type="hidden"
+                                    name="berat_panen_kg"
+                                    id="berat_panen_kg"
+                                    value="{{ old('berat_panen_kg') }}">
+
                                 <div id="kalkulator-zakat-maal" class="info-box mb-3" style="display: none;">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <h6 class="font-weight-bold mb-0">Kalkulator Zakat Maal</h6>
-                                        <span class="zakat-type-badge">2,5%</span>
+                                        <span class="zakat-type-badge">{{ $formatPersentase($maalPolicy['kadar_persentase'] ?? 0) }}%</span>
                                     </div>
 
                                     <p class="small-muted mb-3">
-                                        Zakat maal dihitung dari harta yang sudah mencapai nisab dan haul.
-                                        Perhitungan sederhananya adalah 2,5% dari total harta wajib zakat.
+                                        Nisab {{ $maalPolicy['nisab_pokok'] ?? '-' }}
+                                        @if(! empty($maalPolicy['nisab_rupiah']))
+                                            (Rp{{ number_format($maalPolicy['nisab_rupiah'], 0, ',', '.') }})
+                                        @endif
+                                        dan haul {{ $maalPolicy['haul'] ?? '-' }}.
                                     </p>
 
                                     <div class="form-group mb-2">
-                                        <label>Total Harta Wajib Zakat</label>
+                                        <label for="kategori_harta_maal">Kategori Harta / Barang</label>
+                                        <select id="kategori_harta_maal" class="form-control @error('kategori_perhitungan') is-invalid @enderror">
+                                            <option value="">Pilih kategori harta</option>
+                                            @foreach($maalCategories as $value => $label)
+                                                <option value="{{ $value }}" @selected(old('kategori_perhitungan') === $value)>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="small-muted d-block mt-2">Pilih satu kategori untuk setiap perhitungan. Kategori dengan tanggal kepemilikan berbeda dicatat terpisah.</small>
+                                        @error('kategori_perhitungan')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+
+                                    <div id="nilai-harta-umum-group" class="form-group mb-2">
+                                        <label>Total Nilai Harta Wajib Zakat</label>
                                         <div class="input-group-currency">
                                             <span class="currency-addon">Rp</span>
                                             <input type="text"
@@ -512,9 +645,78 @@
                                         </div>
                                     </div>
 
+                                    <div id="nilai-emas-group" style="display: none;">
+                                        <div class="form-group mb-2">
+                                            <label for="berat_emas_gram">Berat Emas yang Dimiliki</label>
+                                            <div class="input-group">
+                                                <input type="number"
+                                                    name="berat_emas_gram"
+                                                    id="berat_emas_gram"
+                                                    class="form-control @error('berat_emas_gram') is-invalid @enderror"
+                                                    inputmode="decimal"
+                                                    min="0.01"
+                                                    step="0.01"
+                                                    value="{{ old('berat_emas_gram') }}"
+                                                    placeholder="Contoh: 100">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text">gram</span>
+                                                </div>
+                                            </div>
+                                            @error('berat_emas_gram')
+                                                <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                            @enderror
+                                        </div>
+
+                                        <div class="formula-box mb-3">
+                                            <div class="summary-item">
+                                                <span class="small-muted">Harga emas aktif</span>
+                                                <strong>
+                                                    {{ $hargaEmasPerGram > 0 ? 'Rp'.number_format($hargaEmasPerGram, 0, ',', '.').' / gram' : 'Belum ditetapkan' }}
+                                                </strong>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="small-muted">Nisab emas</span>
+                                                <strong>{{ $formatPersentase($nisabEmasGram) }} gram</strong>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="small-muted">Nilai nisab dalam rupiah</span>
+                                                <strong>{{ $nisabEmasRupiah > 0 ? 'Rp'.number_format($nisabEmasRupiah, 0, ',', '.') : '-' }}</strong>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="small-muted">Nilai emas yang dimiliki</span>
+                                                <strong id="nilai_emas_rupiah">Rp0</strong>
+                                            </div>
+                                            <small class="small-muted d-block mt-2">
+                                                Sumber harga: {{ $hargaEmas?->sumber_harga ?? 'nilai nisab rupiah pada kebijakan aktif' }}.
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label for="tanggal_mulai_kepemilikan">Tanggal Mulai Kepemilikan Harta / Barang</label>
+                                        <input type="date"
+                                            name="tanggal_mulai_kepemilikan"
+                                            id="tanggal_mulai_kepemilikan"
+                                            class="form-control @error('tanggal_mulai_kepemilikan') is-invalid @enderror"
+                                            max="{{ now()->toDateString() }}"
+                                            value="{{ old('tanggal_mulai_kepemilikan') }}">
+                                        @if(! empty($maalPolicy['batas_awal_haul']))
+                                            <small class="small-muted d-block mt-2">
+                                                Untuk memenuhi haul {{ $maalPolicy['haul'] ?? '' }} hari ini, kepemilikan harus dimulai paling lambat
+                                                {{ \Carbon\Carbon::parse($maalPolicy['batas_awal_haul'])->translatedFormat('d F Y') }}.
+                                            </small>
+                                        @endif
+                                        <small class="small-muted d-block mt-1">
+                                            Jika harta atau barang diperoleh pada tanggal berbeda, hitung terpisah per kelompok tanggal kepemilikan.
+                                        </small>
+                                        @error('tanggal_mulai_kepemilikan')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+
                                     <div class="formula-box">
                                         <small class="d-block text-muted mb-1">Rumus</small>
-                                        <strong>Zakat Maal = Total Harta × 2,5%</strong>
+                                        <strong id="rumus_maal">Zakat Maal = Total Harta × {{ $formatPersentase($maalPolicy['kadar_persentase'] ?? 0) }}%</strong>
 
                                         <hr>
 
@@ -522,6 +724,7 @@
                                         <h5 class="mb-0 font-weight-bold text-success" id="hasil_maal">
                                             Rp0
                                         </h5>
+                                        <div id="status_maal" class="calculation-status text-muted mt-2"></div>
 
                                         <button type="button" id="pakai_hasil_maal" class="btn btn-sm btn-success mt-3">
                                             Pakai hasil ini sebagai nominal
@@ -532,13 +735,37 @@
                                 <div id="kalkulator-zakat-penghasilan" class="info-box mb-3" style="display: none;">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <h6 class="font-weight-bold mb-0">Kalkulator Zakat Penghasilan</h6>
-                                        <span class="zakat-type-badge">2,5%</span>
+                                        <span class="zakat-type-badge">{{ $formatPersentase($penghasilanPolicy['kadar_persentase'] ?? 0) }}%</span>
                                     </div>
 
                                     <p class="small-muted mb-3">
-                                        Zakat penghasilan dihitung dari penghasilan bersih yang sudah mencapai nisab.
-                                        Perhitungan sederhana: 2,5% dari penghasilan wajib zakat.
+                                        Nisab tahunan {{ $penghasilanPolicy['nisab_pokok'] ?? '-' }}
+                                        @if(! empty($penghasilanPolicy['nisab_rupiah']))
+                                            (Rp{{ number_format($penghasilanPolicy['nisab_rupiah'], 0, ',', '.') }})
+                                        @endif.
                                     </p>
+
+                                    <div class="form-group mb-2">
+                                        <label for="kategori_penghasilan">Kategori Penghasilan</label>
+                                        <select id="kategori_penghasilan" class="form-control @error('kategori_perhitungan') is-invalid @enderror">
+                                            <option value="">Pilih kategori penghasilan</option>
+                                            @foreach($penghasilanCategories as $value => $label)
+                                                <option value="{{ $value }}" @selected(old('kategori_perhitungan') === $value)>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="small-muted d-block mt-2">Pilih sumber utama dari penghasilan yang sedang dihitung.</small>
+                                        @error('kategori_perhitungan')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+
+                                    <div class="form-group mb-2">
+                                        <label for="periode_penghasilan">Periode Penghasilan</label>
+                                        <select id="periode_penghasilan" class="form-control">
+                                            <option value="bulanan">Bulanan</option>
+                                            <option value="tahunan">Tahunan</option>
+                                        </select>
+                                    </div>
 
                                     <div class="form-group mb-2">
                                         <label>Penghasilan Utama</label>
@@ -578,7 +805,7 @@
 
                                     <div class="formula-box">
                                         <small class="d-block text-muted mb-1">Rumus</small>
-                                        <strong>Zakat Penghasilan = Penghasilan Bersih × 2,5%</strong>
+                                        <strong>Zakat Penghasilan = Penghasilan Bersih × {{ $formatPersentase($penghasilanPolicy['kadar_persentase'] ?? 0) }}%</strong>
 
                                         <hr>
 
@@ -591,8 +818,212 @@
                                         <h5 class="mb-0 font-weight-bold text-success" id="hasil_penghasilan">
                                             Rp0
                                         </h5>
+                                        <div id="status_penghasilan" class="calculation-status text-muted mt-2"></div>
 
                                         <button type="button" id="pakai_hasil_penghasilan" class="btn btn-sm btn-success mt-3">
+                                            Pakai hasil ini sebagai nominal
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="kalkulator-zakat-fitrah" class="info-box mb-3" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="font-weight-bold mb-0">Kalkulator Zakat Fitrah</h6>
+                                        <span class="zakat-type-badge">
+                                            {{ $formatPersentase($fitrahPolicy['berat_fitrah_kg'] ?? 0) }} kg / jiwa
+                                        </span>
+                                    </div>
+
+                                    <p class="small-muted mb-3">
+                                        Ketentuan per jiwa {{ $formatPersentase($fitrahPolicy['berat_fitrah_kg'] ?? 0) }} kg
+                                        atau {{ $formatPersentase($fitrahPolicy['berat_fitrah_liter'] ?? 0) }} liter beras.
+                                    </p>
+
+                                    <div class="form-group mb-2">
+                                        <label for="jumlah_jiwa_fitrah">Jumlah Jiwa</label>
+                                        <input type="number"
+                                            id="jumlah_jiwa_fitrah"
+                                            class="form-control"
+                                            min="1"
+                                            step="1"
+                                            placeholder="Contoh: 4">
+                                    </div>
+
+                                    <div class="formula-box">
+                                        <small class="d-block text-muted mb-1">Harga Beras Aktif</small>
+                                        <strong>
+                                            @if($hargaBerasPerKg > 0)
+                                                Rp{{ number_format($hargaBerasPerKg, 0, ',', '.') }} / kg
+                                                @if($hargaBeras?->wilayah)
+                                                    - {{ $hargaBeras->wilayah }}
+                                                @endif
+                                            @else
+                                                Belum ditetapkan admin
+                                            @endif
+                                        </strong>
+
+                                        <hr>
+
+                                        <small class="d-block text-muted mb-1">Hasil Perhitungan</small>
+                                        <h5 class="mb-0 font-weight-bold text-success" id="hasil_fitrah">Rp0</h5>
+                                        <div id="status_fitrah" class="calculation-status text-muted mt-2"></div>
+
+                                        <button type="button" id="pakai_hasil_fitrah" class="btn btn-sm btn-success mt-3">
+                                            Pakai hasil ini sebagai nominal
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="metode-pertanian-group" class="info-box mb-3" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="font-weight-bold mb-0">Kalkulator Zakat Pertanian</h6>
+                                        <span class="zakat-type-badge">Saat panen</span>
+                                    </div>
+                                    <p class="small-muted mb-3">
+                                        Pilih metode pengairan agar kadar zakat yang digunakan sesuai dengan biaya pengelolaan panen.
+                                    </p>
+                                    <div class="form-group mb-0">
+                                        <label for="metode_pengairan">Metode Pengairan</label>
+                                        <select id="metode_pengairan" class="form-control">
+                                            @if(isset($jenisOptions['zakat_pertanian_berbiaya']))
+                                                <option value="zakat_pertanian_berbiaya" @selected($oldJenisZakat === 'zakat_pertanian_berbiaya')>
+                                                    Irigasi / menggunakan biaya ({{ $formatPersentase($pertanianBerbiayaPolicy['kadar_persentase'] ?? 0) }}%)
+                                                </option>
+                                            @endif
+                                            @if(isset($jenisOptions['zakat_pertanian_alami']))
+                                                <option value="zakat_pertanian_alami" @selected($oldJenisZakat === 'zakat_pertanian_alami')>
+                                                    Tadah hujan / alami tanpa biaya ({{ $formatPersentase($pertanianAlamiPolicy['kadar_persentase'] ?? 0) }}%)
+                                                </option>
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div id="kalkulator-zakat-pertanian-berbiaya" class="info-box mb-3" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="font-weight-bold mb-0">Perhitungan Panen Berbiaya</h6>
+                                        <span class="zakat-type-badge">{{ $formatPersentase($pertanianBerbiayaPolicy['kadar_persentase'] ?? 0) }}%</span>
+                                    </div>
+                                    <p class="small-muted mb-3">
+                                        Nisab {{ $pertanianBerbiayaPolicy['nisab_pokok'] ?? '-' }}.
+                                        Zakat dikeluarkan saat panen untuk pertanian yang diairi dengan irigasi / berbiaya.
+                                    </p>
+                                    <div class="form-group mb-2">
+                                        <label for="kategori_pertanian_berbiaya">Kategori Hasil Pertanian</label>
+                                        <select id="kategori_pertanian_berbiaya" class="form-control @error('kategori_perhitungan') is-invalid @enderror">
+                                            <option value="">Pilih kategori</option>
+                                            @foreach($pertanianBerbiayaCategories as $value => $label)
+                                                <option value="{{ $value }}" @selected(old('kategori_perhitungan') === $value)>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('kategori_perhitungan')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group mb-2">
+                                        <label for="panen_pertanian_berbiaya">Berat Bersih Hasil Panen</label>
+                                        <div class="input-group">
+                                            <input type="number"
+                                                id="panen_pertanian_berbiaya"
+                                                class="form-control @error('berat_panen_kg') is-invalid @enderror"
+                                                inputmode="decimal"
+                                                min="0.01"
+                                                step="0.01"
+                                                value="{{ old('berat_panen_kg') }}"
+                                                placeholder="Contoh: 700">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text">kg</span>
+                                            </div>
+                                        </div>
+                                        @error('berat_panen_kg')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="formula-box">
+                                        <small class="d-block text-muted mb-1">Rumus</small>
+                                        <strong>Berat Panen &times; Harga/kg &times; {{ $formatPersentase($pertanianBerbiayaPolicy['kadar_persentase'] ?? 0) }}%</strong>
+                                        <div class="summary-item mt-3">
+                                            <span class="small-muted">Harga aktif per kilogram</span>
+                                            <strong id="harga_pertanian_berbiaya">-</strong>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="small-muted">Nilai panen</span>
+                                            <strong id="nilai_panen_pertanian_berbiaya">Rp0</strong>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="small-muted">Zakat dalam hasil panen</span>
+                                            <strong id="berat_zakat_pertanian_berbiaya">0 kg</strong>
+                                        </div>
+                                        <hr>
+                                        <small class="d-block text-muted mb-1">Zakat yang wajib dibayarkan</small>
+                                        <h5 class="mb-0 font-weight-bold text-success" id="hasil_pertanian_berbiaya">Rp0</h5>
+                                        <div id="status_pertanian_berbiaya" class="calculation-status text-muted mt-2"></div>
+                                        <button type="button" id="pakai_hasil_pertanian_berbiaya" class="btn btn-sm btn-success mt-3">
+                                            Pakai hasil ini sebagai nominal
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="kalkulator-zakat-pertanian-alami" class="info-box mb-3" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="font-weight-bold mb-0">Perhitungan Panen Alami</h6>
+                                        <span class="zakat-type-badge">{{ $formatPersentase($pertanianAlamiPolicy['kadar_persentase'] ?? 0) }}%</span>
+                                    </div>
+                                    <p class="small-muted mb-3">
+                                        Nisab {{ $pertanianAlamiPolicy['nisab_pokok'] ?? '-' }}.
+                                        Zakat dikeluarkan saat panen untuk pertanian tadah hujan / alami tanpa biaya irigasi.
+                                    </p>
+                                    <div class="form-group mb-2">
+                                        <label for="kategori_pertanian_alami">Kategori Hasil Pertanian</label>
+                                        <select id="kategori_pertanian_alami" class="form-control @error('kategori_perhitungan') is-invalid @enderror">
+                                            <option value="">Pilih kategori</option>
+                                            @foreach($pertanianAlamiCategories as $value => $label)
+                                                <option value="{{ $value }}" @selected(old('kategori_perhitungan') === $value)>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('kategori_perhitungan')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group mb-2">
+                                        <label for="panen_pertanian_alami">Berat Bersih Hasil Panen</label>
+                                        <div class="input-group">
+                                            <input type="number"
+                                                id="panen_pertanian_alami"
+                                                class="form-control @error('berat_panen_kg') is-invalid @enderror"
+                                                inputmode="decimal"
+                                                min="0.01"
+                                                step="0.01"
+                                                value="{{ old('berat_panen_kg') }}"
+                                                placeholder="Contoh: 700">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text">kg</span>
+                                            </div>
+                                        </div>
+                                        @error('berat_panen_kg')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="formula-box">
+                                        <small class="d-block text-muted mb-1">Rumus</small>
+                                        <strong>Berat Panen &times; Harga/kg &times; {{ $formatPersentase($pertanianAlamiPolicy['kadar_persentase'] ?? 0) }}%</strong>
+                                        <div class="summary-item mt-3">
+                                            <span class="small-muted">Harga aktif per kilogram</span>
+                                            <strong id="harga_pertanian_alami">-</strong>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="small-muted">Nilai panen</span>
+                                            <strong id="nilai_panen_pertanian_alami">Rp0</strong>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="small-muted">Zakat dalam hasil panen</span>
+                                            <strong id="berat_zakat_pertanian_alami">0 kg</strong>
+                                        </div>
+                                        <hr>
+                                        <small class="d-block text-muted mb-1">Zakat yang wajib dibayarkan</small>
+                                        <h5 class="mb-0 font-weight-bold text-success" id="hasil_pertanian_alami">Rp0</h5>
+                                        <div id="status_pertanian_alami" class="calculation-status text-muted mt-2"></div>
+                                        <button type="button" id="pakai_hasil_pertanian_alami" class="btn btn-sm btn-success mt-3">
                                             Pakai hasil ini sebagai nominal
                                         </button>
                                     </div>
@@ -795,31 +1226,40 @@
             </div>
         </div>
 
-        <!-- Informasi ZISWAF Sederhana & Fleksibel -->
         @if($isZakatPage)
             <div class="row mt-4">
-                <div class="col-md-6 mb-3">
-                    <div class="info-box h-100">
-                        <h6 class="font-weight-bold text-success mb-2"><i class="fa fa-coins mr-1"></i> Zakat Maal</h6>
-                        <p class="text-muted small mb-3">
-                            Zakat atas harta yang disimpan (tabungan, emas, perdagangan) apabila sudah mencapai nisab (setara 85 gram emas) dan haul (1 tahun kepemilikan).
-                        </p>
-                        <div class="formula-box py-2 px-3 small">
-                            <strong>Zakat Maal = Total Harta × 2,5%</strong>
+                <div class="col-12 mb-3">
+                    <div class="info-box">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+                            <div>
+                                <h5 class="font-weight-bold mb-1">Ketentuan Zakat Aktif</h5>
+                                <p class="small-muted mb-0">Informasi ini otomatis mengikuti kebijakan yang berlaku di halaman admin.</p>
+                            </div>
+                            <span class="zakat-type-badge mt-2 mt-md-0">Hanya baca</span>
+                        </div>
+
+                        <div class="policy-grid">
+                            @foreach($zakatPolicies as $policy)
+                                <div class="policy-item">
+                                    <strong class="d-block mb-2">{{ $policy['nama'] }}</strong>
+                                    @if(($policy['jenis'] ?? null) === 'fitrah')
+                                        <small>Ketentuan per jiwa</small>
+                                        <span>{{ $formatPersentase($policy['berat_fitrah_kg'] ?? 0) }} kg / {{ $formatPersentase($policy['berat_fitrah_liter'] ?? 0) }} liter</span>
+                                    @else
+                                        <small>Kadar zakat</small>
+                                        <span>{{ $formatPersentase($policy['kadar_persentase'] ?? 0) }}%</span>
+                                    @endif
+                                    <small class="mt-2">Nisab</small>
+                                    <span>{{ $policy['nisab_pokok'] ?: '-' }}</span>
+                                    @if(! empty($policy['nisab_rupiah']))
+                                        <span class="d-block">Rp{{ number_format($policy['nisab_rupiah'], 0, ',', '.') }}</span>
+                                    @endif
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <div class="info-box h-100">
-                        <h6 class="font-weight-bold text-success mb-2"><i class="fa-solid fa-briefcase mr-1"></i> Zakat Penghasilan</h6>
-                        <p class="text-muted small mb-3">
-                            Zakat atas pendapatan dari pekerjaan yang sudah mencapai nisab yang dihitung dari pendapatan bersih setelah pengeluaran kebutuhan pokok.
-                        </p>
-                        <div class="formula-box py-2 px-3 small">
-                            <strong>Zakat Penghasilan = Pendapatan Bersih × 2,5%</strong>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         @elseif($isInfakPage)
             <div class="row mt-4">
@@ -851,6 +1291,11 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const zakatPolicies = @json($zakatPolicies);
+    const hargaBerasPerKg = {{ $hargaBerasPerKg }};
+    const hargaEmasPerGram = {{ $hargaEmasPerGram }};
+    const hargaPertanianPerKg = @json($hargaPertanianPerKg);
+    const nisabEmasGram = {{ $nisabEmasGram }};
     const jenisZiswaf = document.getElementById('jenis_ziswaf');
     const wakafType = document.getElementById('wakaf_type');
     const wakafReturnGroup = document.getElementById('wakaf_return_group');
@@ -859,20 +1304,60 @@ document.addEventListener('DOMContentLoaded', function () {
     const nominal = document.getElementById('nominal');
     // nominal_display (format ribuan, ditampilkan ke user)
     const nominalDisplay = document.getElementById('nominal_display');
+    const kategoriPerhitungan = document.getElementById('kategori_perhitungan');
+    const kategoriHartaMaal = document.getElementById('kategori_harta_maal');
+    const kategoriPenghasilan = document.getElementById('kategori_penghasilan');
 
     const kalkulatorMaal = document.getElementById('kalkulator-zakat-maal');
     const kalkulatorPenghasilan = document.getElementById('kalkulator-zakat-penghasilan');
+    const kalkulatorFitrah = document.getElementById('kalkulator-zakat-fitrah');
 
     const hartaMaal = document.getElementById('harta_maal');
+    const nilaiHartaUmumGroup = document.getElementById('nilai-harta-umum-group');
+    const nilaiEmasGroup = document.getElementById('nilai-emas-group');
+    const beratEmasGram = document.getElementById('berat_emas_gram');
+    const nilaiEmasRupiah = document.getElementById('nilai_emas_rupiah');
+    const rumusMaal = document.getElementById('rumus_maal');
+    const tanggalMulaiKepemilikan = document.getElementById('tanggal_mulai_kepemilikan');
     const hasilMaal = document.getElementById('hasil_maal');
+    const statusMaal = document.getElementById('status_maal');
     const pakaiHasilMaal = document.getElementById('pakai_hasil_maal');
 
+    const periodePenghasilan = document.getElementById('periode_penghasilan');
     const penghasilanUtama = document.getElementById('penghasilan_utama');
     const penghasilanLain = document.getElementById('penghasilan_lain');
     const pengurangPenghasilan = document.getElementById('pengurang_penghasilan');
     const penghasilanBersih = document.getElementById('penghasilan_bersih');
     const hasilPenghasilan = document.getElementById('hasil_penghasilan');
+    const statusPenghasilan = document.getElementById('status_penghasilan');
     const pakaiHasilPenghasilan = document.getElementById('pakai_hasil_penghasilan');
+
+    const jumlahJiwaFitrah = document.getElementById('jumlah_jiwa_fitrah');
+    const hasilFitrah = document.getElementById('hasil_fitrah');
+    const statusFitrah = document.getElementById('status_fitrah');
+    const pakaiHasilFitrah = document.getElementById('pakai_hasil_fitrah');
+
+    const kalkulatorPertanianBerbiaya = document.getElementById('kalkulator-zakat-pertanian-berbiaya');
+    const kalkulatorPertanianAlami = document.getElementById('kalkulator-zakat-pertanian-alami');
+    const metodePertanianGroup = document.getElementById('metode-pertanian-group');
+    const metodePengairan = document.getElementById('metode_pengairan');
+    const kategoriPertanianBerbiaya = document.getElementById('kategori_pertanian_berbiaya');
+    const kategoriPertanianAlami = document.getElementById('kategori_pertanian_alami');
+    const beratPanen = document.getElementById('berat_panen_kg');
+    const panenPertanianBerbiaya = document.getElementById('panen_pertanian_berbiaya');
+    const panenPertanianAlami = document.getElementById('panen_pertanian_alami');
+    const hargaPertanianBerbiaya = document.getElementById('harga_pertanian_berbiaya');
+    const hargaPertanianAlami = document.getElementById('harga_pertanian_alami');
+    const nilaiPanenPertanianBerbiaya = document.getElementById('nilai_panen_pertanian_berbiaya');
+    const nilaiPanenPertanianAlami = document.getElementById('nilai_panen_pertanian_alami');
+    const beratZakatPertanianBerbiaya = document.getElementById('berat_zakat_pertanian_berbiaya');
+    const beratZakatPertanianAlami = document.getElementById('berat_zakat_pertanian_alami');
+    const hasilPertanianBerbiaya = document.getElementById('hasil_pertanian_berbiaya');
+    const hasilPertanianAlami = document.getElementById('hasil_pertanian_alami');
+    const statusPertanianBerbiaya = document.getElementById('status_pertanian_berbiaya');
+    const statusPertanianAlami = document.getElementById('status_pertanian_alami');
+    const pakaiHasilPertanianBerbiaya = document.getElementById('pakai_hasil_pertanian_berbiaya');
+    const pakaiHasilPertanianAlami = document.getElementById('pakai_hasil_pertanian_alami');
 
     const metodePembayaran = document.getElementById('metode_pembayaran');
 
@@ -886,6 +1371,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let nilaiMaal = 0;
     let nilaiPenghasilan = 0;
+    let nilaiFitrah = 0;
+    let nilaiPertanianBerbiaya = 0;
+    let nilaiPertanianAlami = 0;
 
     function toggleWakafReturnDate() {
         if (!wakafType || !wakafReturnGroup || !wakafReturnDate) return;
@@ -996,6 +1484,67 @@ document.addEventListener('DOMContentLoaded', function () {
             kalkulatorPenghasilan.style.display = 'none';
             kalkulatorPenghasilan.classList.remove('slide-in-calc');
         }
+
+        if (kalkulatorFitrah) {
+            kalkulatorFitrah.style.display = 'none';
+            kalkulatorFitrah.classList.remove('slide-in-calc');
+        }
+
+        [metodePertanianGroup, kalkulatorPertanianBerbiaya, kalkulatorPertanianAlami].forEach(function (element) {
+            if (element) {
+                element.style.display = 'none';
+                element.classList.remove('slide-in-calc');
+            }
+        });
+    }
+
+    function syncKategoriPerhitungan() {
+        if (!kategoriPerhitungan || !jenisZiswaf) {
+            return;
+        }
+
+        if (jenisZiswaf.value === 'zakat_maal') {
+            kategoriPerhitungan.value = kategoriHartaMaal ? kategoriHartaMaal.value : '';
+        } else if (jenisZiswaf.value === 'zakat_penghasilan') {
+            kategoriPerhitungan.value = kategoriPenghasilan ? kategoriPenghasilan.value : '';
+        } else if (jenisZiswaf.value === 'zakat_pertanian_berbiaya') {
+            kategoriPerhitungan.value = kategoriPertanianBerbiaya ? kategoriPertanianBerbiaya.value : '';
+        } else if (jenisZiswaf.value === 'zakat_pertanian_alami') {
+            kategoriPerhitungan.value = kategoriPertanianAlami ? kategoriPertanianAlami.value : '';
+        } else {
+            kategoriPerhitungan.value = '';
+        }
+    }
+
+    function toggleMaalCategory() {
+        const isMaal = Boolean(jenisZiswaf && jenisZiswaf.value === 'zakat_maal');
+        const isGold = Boolean(kategoriHartaMaal && kategoriHartaMaal.value === 'emas_logam_mulia');
+
+        if (nilaiHartaUmumGroup) {
+            nilaiHartaUmumGroup.style.display = isGold ? 'none' : 'block';
+        }
+
+        if (nilaiEmasGroup) {
+            nilaiEmasGroup.style.display = isGold ? 'block' : 'none';
+        }
+
+        if (hartaMaal) {
+            hartaMaal.required = isMaal && !isGold;
+        }
+
+        if (beratEmasGram) {
+            beratEmasGram.required = isMaal && isGold;
+        }
+
+        if (rumusMaal) {
+            const rate = Number((zakatPolicies.zakat_maal || {}).kadar_persentase || 0)
+                .toLocaleString('id-ID');
+            rumusMaal.textContent = isGold
+                ? 'Zakat Emas = Berat Emas × Harga per Gram × ' + rate + '%'
+                : 'Zakat Maal = Total Harta × ' + rate + '%';
+        }
+
+        hitungMaal();
     }
 
     function toggleJenisZakat() {
@@ -1007,23 +1556,121 @@ document.addEventListener('DOMContentLoaded', function () {
 
         hideAllCalculator();
 
+        if (tanggalMulaiKepemilikan) {
+            tanggalMulaiKepemilikan.required = jenis === 'zakat_maal';
+        }
+
+        if (kategoriHartaMaal) {
+            kategoriHartaMaal.required = jenis === 'zakat_maal';
+        }
+
+        if (kategoriPenghasilan) {
+            kategoriPenghasilan.required = jenis === 'zakat_penghasilan';
+        }
+
+        if (kategoriPertanianBerbiaya) {
+            kategoriPertanianBerbiaya.required = jenis === 'zakat_pertanian_berbiaya';
+        }
+
+        if (kategoriPertanianAlami) {
+            kategoriPertanianAlami.required = jenis === 'zakat_pertanian_alami';
+        }
+
+        syncKategoriPerhitungan();
+        toggleMaalCategory();
+
         if (kalkulatorMaal && jenis === 'zakat_maal') {
             kalkulatorMaal.style.display = 'block';
             kalkulatorMaal.classList.add('slide-in-calc');
+            hitungMaal();
         }
 
         if (kalkulatorPenghasilan && jenis === 'zakat_penghasilan') {
             kalkulatorPenghasilan.style.display = 'block';
             kalkulatorPenghasilan.classList.add('slide-in-calc');
         }
+
+        if (kalkulatorFitrah && jenis === 'zakat_fitrah') {
+            kalkulatorFitrah.style.display = 'block';
+            kalkulatorFitrah.classList.add('slide-in-calc');
+        }
+
+        const isPertanian = jenis === 'zakat_pertanian_berbiaya' || jenis === 'zakat_pertanian_alami';
+        if (metodePertanianGroup && isPertanian) {
+            metodePertanianGroup.style.display = 'block';
+            metodePertanianGroup.classList.add('slide-in-calc');
+        }
+
+        if (kalkulatorPertanianBerbiaya && jenis === 'zakat_pertanian_berbiaya') {
+            kalkulatorPertanianBerbiaya.style.display = 'block';
+            kalkulatorPertanianBerbiaya.classList.add('slide-in-calc');
+            hitungPertanianBerbiaya();
+        }
+
+        if (kalkulatorPertanianAlami && jenis === 'zakat_pertanian_alami') {
+            kalkulatorPertanianAlami.style.display = 'block';
+            kalkulatorPertanianAlami.classList.add('slide-in-calc');
+            hitungPertanianAlami();
+        }
     }
 
     function hitungMaal() {
-        const harta = getHartaMaal();
-        nilaiMaal = Math.floor(harta * 0.025);
+        const policy = zakatPolicies.zakat_maal || {};
+        const isGold = Boolean(kategoriHartaMaal && kategoriHartaMaal.value === 'emas_logam_mulia');
+        const beratEmas = Math.max(Number(beratEmasGram ? beratEmasGram.value : 0) || 0, 0);
+        const harta = isGold
+            ? Math.round(beratEmas * hargaEmasPerGram)
+            : getHartaMaal();
+        const nisab = isGold
+            ? Math.round(nisabEmasGram * hargaEmasPerGram)
+            : Number(policy.nisab_rupiah || 0);
+        const rate = Number(policy.kadar_persentase || 0) / 100;
+        const memenuhiNisab = isGold
+            ? hargaEmasPerGram > 0 && nisabEmasGram > 0 && beratEmas >= nisabEmasGram
+            : nisab <= 0 || harta >= nisab;
+        const batasAwalHaul = String(policy.batas_awal_haul || '');
+        const tanggalMulai = tanggalMulaiKepemilikan ? tanggalMulaiKepemilikan.value : '';
+        const memenuhiHaul = Boolean(
+            tanggalMulai
+            && batasAwalHaul
+            && tanggalMulai <= batasAwalHaul
+        );
+
+        nilaiMaal = memenuhiNisab && memenuhiHaul
+            ? Math.round(harta * rate)
+            : 0;
 
         if (hasilMaal) {
             hasilMaal.textContent = rupiah(nilaiMaal);
+        }
+
+        if (nilaiEmasRupiah) {
+            nilaiEmasRupiah.textContent = rupiah(harta);
+        }
+
+        if (statusMaal) {
+            if (isGold && hargaEmasPerGram <= 0) {
+                statusMaal.textContent = 'Harga emas aktif belum ditetapkan admin.';
+                statusMaal.className = 'calculation-status text-danger mt-2';
+            } else if (isGold && beratEmas < nisabEmasGram) {
+                statusMaal.textContent = 'Berat emas belum mencapai nisab ' + nisabEmasGram.toLocaleString('id-ID') + ' gram.';
+                statusMaal.className = 'calculation-status text-danger mt-2';
+            } else if (!memenuhiNisab) {
+                statusMaal.textContent = 'Harta belum mencapai nisab ' + rupiah(nisab) + '.';
+                statusMaal.className = 'calculation-status text-danger mt-2';
+            } else if (!tanggalMulai) {
+                statusMaal.textContent = 'Masukkan tanggal mulai kepemilikan untuk menghitung haul.';
+                statusMaal.className = 'calculation-status text-warning mt-2';
+            } else if (!batasAwalHaul) {
+                statusMaal.textContent = 'Format haul dari kebijakan admin belum dapat dihitung.';
+                statusMaal.className = 'calculation-status text-danger mt-2';
+            } else if (!memenuhiHaul) {
+                statusMaal.textContent = 'Harta atau barang belum memenuhi haul ' + String(policy.haul || '') + '.';
+                statusMaal.className = 'calculation-status text-warning mt-2';
+            } else {
+                statusMaal.textContent = 'Harta atau barang telah mencapai nisab dan memenuhi haul.';
+                statusMaal.className = 'calculation-status text-success mt-2';
+            }
         }
     }
 
@@ -1033,7 +1680,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const pengurang = getPengurang();
 
         const bersih = Math.max((utama + lain) - pengurang, 0);
-        nilaiPenghasilan = Math.floor(bersih * 0.025);
+        const policy = zakatPolicies.zakat_penghasilan || {};
+        const nisabTahunan = Number(policy.nisab_rupiah || 0);
+        const nisab = periodePenghasilan && periodePenghasilan.value === 'tahunan'
+            ? nisabTahunan
+            : nisabTahunan / 12;
+        const rate = Number(policy.kadar_persentase || 0) / 100;
+        const memenuhiNisab = nisab <= 0 || bersih >= nisab;
+
+        nilaiPenghasilan = memenuhiNisab
+            ? Math.round(bersih * rate)
+            : 0;
 
         if (penghasilanBersih) {
             penghasilanBersih.textContent = rupiah(bersih);
@@ -1042,6 +1699,132 @@ document.addEventListener('DOMContentLoaded', function () {
         if (hasilPenghasilan) {
             hasilPenghasilan.textContent = rupiah(nilaiPenghasilan);
         }
+
+        if (statusPenghasilan) {
+            statusPenghasilan.textContent = memenuhiNisab
+                ? 'Penghasilan bersih telah mencapai nisab ' + rupiah(nisab) + '.'
+                : 'Penghasilan bersih belum mencapai nisab ' + rupiah(nisab) + '.';
+            statusPenghasilan.className = memenuhiNisab
+                ? 'calculation-status text-success mt-2'
+                : 'calculation-status text-danger mt-2';
+        }
+    }
+
+    function hitungFitrah() {
+        const jumlahJiwa = Math.max(parseInt(jumlahJiwaFitrah ? jumlahJiwaFitrah.value : '0', 10) || 0, 0);
+        const policy = zakatPolicies.zakat_fitrah || {};
+        const beratPerJiwa = Number(policy.berat_fitrah_kg || 0);
+
+        nilaiFitrah = Math.round(jumlahJiwa * beratPerJiwa * hargaBerasPerKg);
+
+        if (hasilFitrah) {
+            hasilFitrah.textContent = rupiah(nilaiFitrah);
+        }
+
+        if (statusFitrah) {
+            if (hargaBerasPerKg <= 0) {
+                statusFitrah.textContent = 'Harga beras aktif belum ditetapkan admin. Isi nominal transaksi secara manual.';
+                statusFitrah.className = 'calculation-status text-warning mt-2';
+            } else if (jumlahJiwa <= 0) {
+                statusFitrah.textContent = 'Masukkan jumlah jiwa yang ditunaikan.';
+                statusFitrah.className = 'calculation-status text-muted mt-2';
+            } else {
+                statusFitrah.textContent = jumlahJiwa + ' jiwa × ' + beratPerJiwa.toLocaleString('id-ID') + ' kg × ' + rupiah(hargaBerasPerKg) + '.';
+                statusFitrah.className = 'calculation-status text-success mt-2';
+            }
+        }
+    }
+
+    function hitungPertanian(
+        kategoriElement,
+        beratElement,
+        policy,
+        hargaElement,
+        nilaiPanenElement,
+        beratZakatElement,
+        hasilElement,
+        statusElement
+    ) {
+        const kategori = kategoriElement ? kategoriElement.value : '';
+        const berat = Math.max(Number(beratElement ? beratElement.value : 0) || 0, 0);
+        const hargaPerKg = Number(hargaPertanianPerKg[kategori] || 0);
+        const nisabKg = kategori === 'beras' ? 520 : 653;
+        const rate = Number(policy.kadar_persentase || 0) / 100;
+        const nilaiPanen = Math.round(berat * hargaPerKg);
+        const memenuhiNisab = Boolean(kategori && berat >= nisabKg);
+        const hasil = memenuhiNisab && hargaPerKg > 0
+            ? Math.round(nilaiPanen * rate)
+            : 0;
+
+        if (beratPanen && jenisZiswaf && (
+            jenisZiswaf.value === 'zakat_pertanian_berbiaya'
+            || jenisZiswaf.value === 'zakat_pertanian_alami'
+        )) {
+            beratPanen.value = berat > 0 ? String(berat) : '';
+        }
+
+        if (hargaElement) {
+            hargaElement.textContent = hargaPerKg > 0 ? rupiah(hargaPerKg) + ' / kg' : 'Belum ditetapkan';
+        }
+
+        if (nilaiPanenElement) {
+            nilaiPanenElement.textContent = rupiah(nilaiPanen);
+        }
+
+        if (beratZakatElement) {
+            const zakatKg = memenuhiNisab ? berat * rate : 0;
+            beratZakatElement.textContent = zakatKg.toLocaleString('id-ID', {
+                maximumFractionDigits: 2
+            }) + ' kg';
+        }
+
+        if (hasilElement) {
+            hasilElement.textContent = rupiah(hasil);
+        }
+
+        if (statusElement) {
+            if (!kategori) {
+                statusElement.textContent = 'Pilih kategori hasil pertanian.';
+                statusElement.className = 'calculation-status text-muted mt-2';
+            } else if (hargaPerKg <= 0) {
+                statusElement.textContent = 'Harga aktif per kilogram belum ditetapkan admin.';
+                statusElement.className = 'calculation-status text-danger mt-2';
+            } else if (berat < nisabKg) {
+                statusElement.textContent = 'Hasil panen belum mencapai nisab ' + nisabKg.toLocaleString('id-ID') + ' kg.';
+                statusElement.className = 'calculation-status text-warning mt-2';
+            } else {
+                statusElement.textContent = 'Hasil panen mencapai nisab dan zakat dikeluarkan saat panen.';
+                statusElement.className = 'calculation-status text-success mt-2';
+            }
+        }
+
+        return hasil;
+    }
+
+    function hitungPertanianBerbiaya() {
+        nilaiPertanianBerbiaya = hitungPertanian(
+            kategoriPertanianBerbiaya,
+            panenPertanianBerbiaya,
+            zakatPolicies.zakat_pertanian_berbiaya || {},
+            hargaPertanianBerbiaya,
+            nilaiPanenPertanianBerbiaya,
+            beratZakatPertanianBerbiaya,
+            hasilPertanianBerbiaya,
+            statusPertanianBerbiaya
+        );
+    }
+
+    function hitungPertanianAlami() {
+        nilaiPertanianAlami = hitungPertanian(
+            kategoriPertanianAlami,
+            panenPertanianAlami,
+            zakatPolicies.zakat_pertanian_alami || {},
+            hargaPertanianAlami,
+            nilaiPanenPertanianAlami,
+            beratZakatPertanianAlami,
+            hasilPertanianAlami,
+            statusPertanianAlami
+        );
     }
 
     // ============================================================
@@ -1135,7 +1918,9 @@ document.addEventListener('DOMContentLoaded', function () {
             this.classList.add('active');
             const val = this.getAttribute('data-value');
             if (jenisZiswaf) {
-                jenisZiswaf.value = val;
+                jenisZiswaf.value = val === 'zakat_pertanian'
+                    ? (metodePengairan ? metodePengairan.value : @json($defaultJenisPertanian))
+                    : val;
                 jenisZiswaf.dispatchEvent(new Event('change'));
             }
         });
@@ -1181,8 +1966,50 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleJenisZakat();
     }
 
+    if (kategoriHartaMaal) {
+        kategoriHartaMaal.addEventListener('change', function () {
+            syncKategoriPerhitungan();
+            toggleMaalCategory();
+        });
+    }
+
+    if (kategoriPenghasilan) {
+        kategoriPenghasilan.addEventListener('change', syncKategoriPerhitungan);
+    }
+
+    if (metodePengairan) {
+        metodePengairan.addEventListener('change', function () {
+            if (jenisZiswaf) {
+                jenisZiswaf.value = this.value;
+                jenisZiswaf.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+
+    if (kategoriPertanianBerbiaya) {
+        kategoriPertanianBerbiaya.addEventListener('change', function () {
+            syncKategoriPerhitungan();
+            hitungPertanianBerbiaya();
+        });
+    }
+
+    if (kategoriPertanianAlami) {
+        kategoriPertanianAlami.addEventListener('change', function () {
+            syncKategoriPerhitungan();
+            hitungPertanianAlami();
+        });
+    }
+
     if (hartaMaal) {
         hartaMaal.addEventListener('input', hitungMaal);
+    }
+
+    if (beratEmasGram) {
+        beratEmasGram.addEventListener('input', hitungMaal);
+    }
+
+    if (tanggalMulaiKepemilikan) {
+        tanggalMulaiKepemilikan.addEventListener('change', hitungMaal);
     }
 
     if (pakaiHasilMaal) {
@@ -1204,6 +2031,10 @@ document.addEventListener('DOMContentLoaded', function () {
         penghasilanUtama.addEventListener('input', hitungPenghasilan);
     }
 
+    if (periodePenghasilan) {
+        periodePenghasilan.addEventListener('change', hitungPenghasilan);
+    }
+
     if (penghasilanLain) {
         penghasilanLain.addEventListener('input', hitungPenghasilan);
     }
@@ -1223,6 +2054,49 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (nominal) {
                     nominal.value = nilaiPenghasilan;
                 }
+            }
+        });
+    }
+
+    if (jumlahJiwaFitrah) {
+        jumlahJiwaFitrah.addEventListener('input', hitungFitrah);
+    }
+
+    if (pakaiHasilFitrah) {
+        pakaiHasilFitrah.addEventListener('click', function () {
+            if (nilaiFitrah > 0) {
+                if (nominalDisplay) {
+                    nominalDisplay.value = nilaiFitrah.toLocaleString('id-ID');
+                }
+                if (nominal) {
+                    nominal.value = nilaiFitrah;
+                }
+            }
+        });
+    }
+
+    if (panenPertanianBerbiaya) {
+        panenPertanianBerbiaya.addEventListener('input', hitungPertanianBerbiaya);
+    }
+
+    if (panenPertanianAlami) {
+        panenPertanianAlami.addEventListener('input', hitungPertanianAlami);
+    }
+
+    if (pakaiHasilPertanianBerbiaya) {
+        pakaiHasilPertanianBerbiaya.addEventListener('click', function () {
+            if (nilaiPertanianBerbiaya > 0 && nominalDisplay && nominal) {
+                nominalDisplay.value = nilaiPertanianBerbiaya.toLocaleString('id-ID');
+                nominal.value = nilaiPertanianBerbiaya;
+            }
+        });
+    }
+
+    if (pakaiHasilPertanianAlami) {
+        pakaiHasilPertanianAlami.addEventListener('click', function () {
+            if (nilaiPertanianAlami > 0 && nominalDisplay && nominal) {
+                nominalDisplay.value = nilaiPertanianAlami.toLocaleString('id-ID');
+                nominal.value = nilaiPertanianAlami;
             }
         });
     }
@@ -1260,6 +2134,7 @@ html[data-finus-theme="dark"] body .finus-card .option-card:hover { border-color
 html[data-finus-theme="dark"] body .finus-card .option-card.active { border-color:#64DD81 !important; background:#173620 !important; box-shadow:0 0 0 3px rgba(100,221,129,.10) !important; }
 html[data-finus-theme="dark"] body .finus-card .option-card .option-icon { background:#17261D !important; }
 html[data-finus-theme="dark"] body .finus-card :where(.info-box,.formula-box,.custom-dropzone) { border-color:#293D31 !important; background:#101B14 !important; color:#C8D6CC !important; }
+html[data-finus-theme="dark"] body .policy-item { border-color:#293D31 !important; background:#111A15 !important; color:#F1F6F3 !important; }
 html[data-finus-theme="dark"] body .finus-card .custom-dropzone:hover { border-color:#64DD81 !important; background:#14261A !important; }
 html[data-finus-theme="dark"] body .finus-card .file-name-badge { border-color:#31503C !important; background:#173620 !important; color:#BFF4CA !important; }
 html[data-finus-theme="dark"] body .finus-card .btn-light { border-color:#334B3B !important; background:#14211A !important; color:#D0DDD4 !important; }

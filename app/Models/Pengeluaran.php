@@ -15,6 +15,8 @@ class Pengeluaran extends Model
         'id_penggajian',
         'kategori',
         'restriction_type',
+        'periode_penyaluran_zakat_id',
+        'nomor_batch',
         'deskripsi',
         'jumlah',
         'tanggal',
@@ -50,5 +52,10 @@ class Pengeluaran extends Model
     {
         return $this->hasMany(ZiswafPenyaluran::class, 'id_pengeluaran')
             ->where('jenis_ziswaf_asal', 'zakat');
+    }
+
+    public function periodePenyaluranZakat()
+    {
+        return $this->belongsTo(PeriodePenyaluranZakat::class, 'periode_penyaluran_zakat_id');
     }
 }
