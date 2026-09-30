@@ -783,11 +783,6 @@ html[data-finus-theme="dark"] body .kz-info-card-body p{color:#9EAEA4!important}
                             <h3 style="grid-column: 1 / -1; margin-bottom: 5px; font-size: 14px;">Nilai Acuan & Kebijakan Operasional</h3>
 
                             <div class="kz-field">
-                                <label for="kp_nisab_rupiah">Nisab Rupiah (jika ada)</label>
-                                <input id="kp_nisab_rupiah" name="nisab_rupiah" type="number" min="0" step="0.01"
-                                       value="{{ old('nisab_rupiah', $editKetentuanPokok->nisab_rupiah) }}">
-                            </div>
-                            <div class="kz-field">
                                 <label for="kp_persentase_amil">Hak Amil (%) - Maks 12.5%</label>
                                 <input id="kp_persentase_amil" name="persentase_amil" type="number" min="0" max="12.5" step="0.01"
                                        value="{{ old('persentase_amil', $editKetentuanPokok->persentase_amil) }}">
@@ -833,7 +828,7 @@ html[data-finus-theme="dark"] body .kz-info-card-body p{color:#9EAEA4!important}
                     <span class="kz-badge kz-badge-locked" style="font-size:11px;margin-right:4px">🔒 Ketentuan Pokok</span>
                     Aturan syariat yang bersifat tetap (kadar, asnaf, berat fitrah) — terkunci secara default.<br>
                     <span class="kz-badge kz-badge-scheduled" style="font-size:11px;margin-right:4px">📅 Nilai Acuan</span>
-                    Nisab Rp, harga beras, harga emas — berubah setiap tahun mengikuti kondisi ekonomi.<br>
+                    Harga beras dan harga emas diperbarui melalui Barang & Harga; nisab rupiah dihitung otomatis dari ketentuan pokok.<br>
                     <span class="kz-badge kz-badge-draft" style="font-size:11px;margin-right:4px">⚙️ Kebijakan Operasional</span>
                     Hak amil, prioritas mustahik, target alokasi — diatur per versi oleh pengurus.
                 </p>
@@ -884,7 +879,6 @@ html[data-finus-theme="dark"] body .kz-info-card-body p{color:#9EAEA4!important}
                                 </td>
                                 <td>
                                     <div class="kz-row-actions">
-
                                         @unless ($item->terkunci)
                                             <a class="kz-button kz-button-secondary" title="Ubah ketentuan"
                                                href="{{ route('admin.kebijakan-zakat.index', ['tab' => 'ketentuan_pokok', 'edit_ketentuan' => $item->id]) }}">

@@ -232,6 +232,17 @@ class PengeluaranController extends Controller
             $ketentuanZakat = KetentuanPokokZakat::untukJenis('maal')
                 ?? KetentuanPokokZakat::query()->aktif()->first();
             $persentaseAmil = (float) ($ketentuanZakat?->persentase_amil ?? 0);
+        } else {
+            $jenisDana = app(Psak109PostingService::class)->resolveJenisDanaPengeluaran($coaDebit, $coaDebit->nama_akun);
+            $saldoDanaAll = app(Psak109PostingService::class)->getSaldoDana();
+            $saldoTersedia = (int) round((float) ($saldoDanaAll[$jenisDana] ?? 0));
+            
+            if ((int) $validated['jumlah'] > $saldoTersedia) {
+                $namaDana = ucwords(str_replace('_', ' ', $jenisDana));
+                throw ValidationException::withMessages([
+                    'jumlah' => "Jumlah pengeluaran melebihi saldo dana {$namaDana} yang tersedia (Rp " . number_format($saldoTersedia, 0, ',', '.') . ").",
+                ]);
+            }
         }
 
         $path = null;

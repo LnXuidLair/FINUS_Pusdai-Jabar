@@ -8,7 +8,6 @@ use App\Models\HargaBarangZakat;
 use App\Models\KetentuanPokokZakat;
 use App\Models\MasterAsnaf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class KebijakanZakatController extends Controller
@@ -53,9 +52,9 @@ class KebijakanZakatController extends Controller
         ]);
     }
 
-    public function updateKetentuanPokok(Request $request, KetentuanPokokZakat $ketentuanPokok)
+    public function updateKetentuanPokok(Request $request, KetentuanPokokZakat $ketentuan)
     {
-        abort_if($ketentuanPokok->terkunci, 403, 'Ketentuan pokok sedang terkunci dan tidak dapat diubah.');
+        abort_if($ketentuan->terkunci, 403, 'Ketentuan pokok sedang terkunci dan tidak dapat diubah.');
 
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:150'],
@@ -68,7 +67,6 @@ class KebijakanZakatController extends Controller
             'dasar_hukum' => ['nullable', 'string'],
             'dasar_regulasi' => ['nullable', 'string'],
             'aktif' => ['boolean'],
-            'nisab_rupiah' => ['nullable', 'numeric', 'min:0'],
             'persentase_amil' => ['nullable', 'numeric', 'min:0', 'max:12.5'],
             'target_mustahik' => ['nullable', 'array'],
             'target_mustahik.*' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -87,25 +85,26 @@ class KebijakanZakatController extends Controller
 
         $totalSum = $amil + $totalMustahik;
         if (abs($totalSum - 100.0) > 0.01) {
-            return back()->withInput()->withErrors(['target_mustahik' => 'Total persentase (Amil + Mustahik) harus pas 100%. Saat ini totalnya: ' . $totalSum . '%']);
+            return back()->withInput()->withErrors(['target_mustahik' => 'Total persentase (Amil + Mustahik) harus pas 100%. Saat ini totalnya: '.$totalSum.'%']);
         }
 
         $validated['aktif'] = $request->boolean('aktif');
         $validated['updated_by'] = $request->user()->id;
 
-        $ketentuanPokok->update($validated);
+        $ketentuan->update($validated);
 
-        return redirect()->route('kebijakan-zakat.index', ['tab' => 'ketentuan_pokok'])->with('success', 'Ketentuan pokok zakat berhasil diperbarui.');
+        return redirect()->route('admin.kebijakan-zakat.index', ['tab' => 'ketentuan_pokok'])->with('success', 'Ketentuan pokok zakat berhasil diperbarui.');
     }
 
-    public function toggleLockKetentuanPokok(Request $request, KetentuanPokokZakat $ketentuanPokok)
+    public function toggleLockKetentuanPokok(Request $request, KetentuanPokokZakat $ketentuan)
     {
-        $ketentuanPokok->update([
-            'terkunci' => ! $ketentuanPokok->terkunci,
+        $ketentuan->update([
+            'terkunci' => ! $ketentuan->terkunci,
             'updated_by' => $request->user()->id,
         ]);
 
-        $status = $ketentuanPokok->terkunci ? 'dikunci' : 'dibuka kuncinya';
+        $status = $ketentuan->terkunci ? 'dikunci' : 'dibuka kuncinya';
+
         return back()->with('success', "Ketentuan pokok berhasil {$status}.");
     }
 
@@ -197,12 +196,13 @@ class KebijakanZakatController extends Controller
 
         $harga->update($validated);
 
-        return redirect()->route('kebijakan-zakat.index')->with('success', 'Harga barang berhasil diperbarui.');
+        return redirect()->route('admin.kebijakan-zakat.index')->with('success', 'Harga barang berhasil diperbarui.');
     }
 
     public function destroyHargaBarang(HargaBarangZakat $harga)
     {
         $harga->delete();
+
         return back()->with('success', 'Harga barang berhasil dihapus.');
     }
 }

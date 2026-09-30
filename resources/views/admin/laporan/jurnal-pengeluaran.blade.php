@@ -6,9 +6,13 @@
 @php
     $rupiah = fn ($value) => 'Rp ' . number_format((float) $value, 0, ',', '.');
     $totalTransaksi = $jurnals->total();
+    $pageDetails = $jurnals->getCollection()->flatMap(fn ($jurnal) => $jurnal->detail);
+    $pageDebit = (float) $pageDetails->sum('debit');
+    $pageCredit = (float) $pageDetails->sum('credit');
 @endphp
 
 @include('layouts.partials.finus-ui')
+@include('admin.laporan.partials.journal-columns-styles')
 
 @section('content')
 <div class="fr-page">
@@ -169,25 +173,45 @@
         </header>
 
         <div class="fr-table-wrap">
-            <table class="fr-table">
+            <table class="fr-table jct-table">
                 <thead>
                     <tr>
                         <th style="width:50px">No</th>
                         <th style="width:140px">Tanggal & Bukti</th>
-                        <th>Keterangan / Penerima Manfaat</th>
+                        <th style="width:270px">Uraian Transaksi</th>
                         <th style="width:160px">Golongan Dana</th>
                         <th style="width:200px">Akun Debit</th>
-                        <th style="width:200px">Akun Kredit (Kas/Bank)</th>
-                        <th style="width:140px; text-align:right;">Nominal Keluar</th>
+                        <th class="jct-debit-heading" style="width:140px">Debit</th>
+                        <th style="width:200px">Akun Kredit</th>
+                        <th class="jct-credit-heading" style="width:140px">Kredit</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($jurnals as $index => $jurnal)
                         @php
-                            $kreditKas = $jurnal->detail->first(fn($d) => (float)$d->credit > 0 && (in_array($d->coa?->kode_akun, ['1101', '1102']) || str_contains($d->coa?->nama_akun ?? '', 'Kas') || str_contains($d->coa?->nama_akun ?? '', 'Bank')));
                             $debitBeban = $jurnal->detail->first(fn($d) => (float)$d->debit > 0 && in_array((int) $d->coa?->header_akun, [2, 5, 6]));
+                            $debitDetails = $jurnal->detail->filter(fn($d) => (float)$d->debit > 0)->values();
+                            $creditDetails = $jurnal->detail->filter(fn($d) => (float)$d->credit > 0)->values();
+                            $entryDebit = (float) $debitDetails->sum('debit');
+                            $entryCredit = (float) $creditDetails->sum('credit');
                             $danaItem = $debitBeban?->jenis_dana ?? ($jurnal->detail->first()?->jenis_dana ?? 'amil');
                             $rincianAsnaf = $jurnal->detail->filter(fn($d) => (float)$d->debit > 0 && !empty($d->asnaf) && $d->asnaf !== 'amil');
+                            $displayDescription = trim((string) $jurnal->deskripsi) ?: 'Transaksi pengeluaran';
+                            $displayNote = trim((string) $jurnal->keterangan);
+                            $normalizedDescription = str($displayDescription)->lower()->squish()->toString();
+                            $normalizedNote = str($displayNote)->lower()->squish()->toString();
+
+                            if ($normalizedNote !== '' && $normalizedDescription === $normalizedNote) {
+                                $displayNote = '';
+                            } elseif ($normalizedNote !== '' && str_contains($normalizedDescription, $normalizedNote)) {
+                                $shortTitle = str($displayDescription)->before(' - ')->trim()->toString();
+
+                                if ($shortTitle !== '' && $shortTitle !== $displayDescription) {
+                                    $displayDescription = $shortTitle;
+                                } else {
+                                    $displayNote = '';
+                                }
+                            }
                         @endphp
                         <tr>
                             <td>{{ $jurnals->firstItem() + $index }}</td>
@@ -195,11 +219,15 @@
                                 <strong>{{ $jurnal->tanggal ? $jurnal->tanggal->format('d/m/Y') : '-' }}</strong><br>
                                 <span style="font-size: 11px; color: #64748b; font-family: monospace;">{{ $jurnal->no_referensi }}</span>
                             </td>
-                            <td>
-                                <strong>{{ $jurnal->deskripsi }}</strong>
-                                @if($jurnal->keterangan && $jurnal->keterangan !== $jurnal->deskripsi)
-                                    <div style="font-size: 12px; color: #64748b;">{{ $jurnal->keterangan }}</div>
+                            <td class="jct-description-cell">
+                                <strong class="jct-description-title">{{ $displayDescription }}</strong>
+                                @if($displayNote !== '')
+                                    <span class="jct-description-note">{{ $displayNote }}</span>
                                 @endif
+                                <span class="jct-balance {{ abs($entryDebit - $entryCredit) < 0.5 ? '' : 'is-unbalanced' }}">
+                                    <i class="fa-solid {{ abs($entryDebit - $entryCredit) < 0.5 ? 'fa-circle-check' : 'fa-triangle-exclamation' }}"></i>
+                                    {{ abs($entryDebit - $entryCredit) < 0.5 ? 'Seimbang' : 'Tidak seimbang' }}
+                                </span>
                                 @if($rincianAsnaf->isNotEmpty())
                                     <div style="display:grid;gap:3px;margin-top:6px;">
                                         @foreach($rincianAsnaf as $rincian)
@@ -264,30 +292,87 @@
                                 @endif
                             </td>
                             <td>
-                                <span style="font-weight: 600; color: #0f172a;">
-                                    {{ $debitBeban?->coa?->nama_akun ?? 'Beban Operasional' }}
-                                </span>
-                                <div style="font-size: 11px; color: #64748b;">Kode: {{ $debitBeban?->coa?->kode_akun ?? '51xx' }}</div>
+                                <div class="jct-account-list">
+                                    @forelse($debitDetails as $detail)
+                                        <div class="jct-account-line">
+                                            <span class="jct-account-name">{{ $detail->coa?->nama_akun ?? 'Akun belum dipetakan' }}</span>
+                                            <span class="jct-account-code">Kode: {{ $detail->coa?->kode_akun ?? '----' }}</span>
+                                        </div>
+                                    @empty
+                                        <span class="jct-empty">-</span>
+                                    @endforelse
+                                </div>
+                            </td>
+                            <td class="jct-amount-cell jct-debit-cell">
+                                <div class="jct-amount-list">
+                                    @forelse($debitDetails as $detail)
+                                        <div class="jct-amount-line">
+                                            <span class="jct-money is-debit">
+                                                <span class="jct-currency">Rp</span>
+                                                <span class="jct-value">{{ number_format((float) $detail->debit, 0, ',', '.') }}</span>
+                                            </span>
+                                        </div>
+                                    @empty
+                                        <span class="jct-empty">-</span>
+                                    @endforelse
+                                </div>
                             </td>
                             <td>
-                                <span style="font-weight: 600; color: #0f172a;">
-                                    {{ $kreditKas?->coa?->nama_akun ?? 'Kas / Bank' }}
-                                </span>
-                                <div style="font-size: 11px; color: #64748b;">Kode: {{ $kreditKas?->coa?->kode_akun ?? '1102' }}</div>
+                                <div class="jct-account-list">
+                                    @forelse($creditDetails as $detail)
+                                        <div class="jct-account-line">
+                                            <span class="jct-account-name">{{ $detail->coa?->nama_akun ?? 'Akun belum dipetakan' }}</span>
+                                            <span class="jct-account-code">Kode: {{ $detail->coa?->kode_akun ?? '----' }}</span>
+                                        </div>
+                                    @empty
+                                        <span class="jct-empty">-</span>
+                                    @endforelse
+                                </div>
                             </td>
-                            <td style="text-align: right; font-weight: 700; color: #dc2626;">
-                                {{ $rupiah($kreditKas?->credit ?? ($debitBeban?->debit ?? 0)) }}
+                            <td class="jct-amount-cell jct-credit-cell">
+                                <div class="jct-amount-list">
+                                    @forelse($creditDetails as $detail)
+                                        <div class="jct-amount-line">
+                                            <span class="jct-money is-credit">
+                                                <span class="jct-currency">Rp</span>
+                                                <span class="jct-value">{{ number_format((float) $detail->credit, 0, ',', '.') }}</span>
+                                            </span>
+                                        </div>
+                                    @empty
+                                        <span class="jct-empty">-</span>
+                                    @endforelse
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" style="text-align: center; padding: 36px; color: #64748b;">
+                            <td colspan="8" style="text-align: center; padding: 36px; color: #64748b;">
                                 <i class="fa-solid fa-folder-open" style="font-size: 32px; color: #cbd5e1; margin-bottom: 8px; display: block;"></i>
                                 Belum ada data jurnal pengeluaran untuk kriteria yang dipilih.
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
+                @if($jurnals->count() > 0)
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="jct-total-label">Total Debit Halaman Ini</td>
+                            <td class="jct-amount-cell jct-total-cell">
+                                <span class="jct-money is-debit">
+                                    <span class="jct-currency">Rp</span>
+                                    <span class="jct-value">{{ number_format($pageDebit, 0, ',', '.') }}</span>
+                                </span>
+                            </td>
+                            <td class="jct-total-label">Total Kredit</td>
+                            <td class="jct-amount-cell jct-total-cell">
+                                <span class="jct-money is-credit">
+                                    <span class="jct-currency">Rp</span>
+                                    <span class="jct-value">{{ number_format($pageCredit, 0, ',', '.') }}</span>
+                                </span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                @endif
             </table>
         </div>
 

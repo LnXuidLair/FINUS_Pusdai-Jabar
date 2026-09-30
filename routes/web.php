@@ -73,6 +73,8 @@ Route::middleware(['guest:pegawai', EnsureManagementAccess::class . ':staff',])
             ->name('register.staff.account');
         Route::post('/register/pegawai', [StaffActivationController::class, 'storePassword'])
             ->name('register.staff.post');
+        Route::get('/register/pegawai/selesai', [StaffActivationController::class, 'success'])
+            ->name('register.staff.success');
     });
 Route::middleware('guest:jamaah')
     ->group(function(){

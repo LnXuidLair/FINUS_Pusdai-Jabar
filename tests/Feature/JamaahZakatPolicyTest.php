@@ -27,12 +27,10 @@ class JamaahZakatPolicyTest extends TestCase
     {
         KetentuanPokokZakat::untukJenis('maal')->update([
             'kadar_persentase' => 3,
-            'nisab_rupiah' => 120_000_000,
             'persentase_amil' => 10,
         ]);
         KetentuanPokokZakat::untukJenis('penghasilan')->update([
             'kadar_persentase' => 2.75,
-            'nisab_rupiah' => 96_000_000,
         ]);
 
         $beras = BarangZakat::query()->where('nama', 'Beras')->firstOrFail();
@@ -54,8 +52,6 @@ class JamaahZakatPolicyTest extends TestCase
             ->assertOk()
             ->assertSee('Ketentuan Zakat Aktif')
             ->assertSee('Zakat Fitrah')
-            ->assertSee('120.000.000')
-            ->assertSee('96.000.000')
             ->assertSee('16.000')
             ->assertSee('Kategori Harta / Barang')
             ->assertSee('Simpanan dan Uang Tunai')
@@ -66,6 +62,10 @@ class JamaahZakatPolicyTest extends TestCase
             ->assertSee('110.500.000')
             ->assertSee('Kategori Penghasilan')
             ->assertSee('Honorarium atau Jasa Profesional')
+            ->assertSee('Penghasilan/Pendapatan Bersih')
+            ->assertDontSee('Penghasilan Utama')
+            ->assertDontSee('Penghasilan Lain')
+            ->assertDontSee('Pengurang/Kebutuhan Pokok')
             ->assertSee('Tanggal Mulai Kepemilikan Harta / Barang')
             ->assertSee('hitung terpisah per kelompok tanggal kepemilikan')
             ->assertViewHas('zakatPolicies', function (array $policies): bool {
@@ -191,10 +191,10 @@ class JamaahZakatPolicyTest extends TestCase
         $policy = KetentuanPokokZakat::untukJenis('maal');
         $policy->update([
             'kadar_persentase' => 3.25,
-            'nisab_rupiah' => 110_000_000,
             'persentase_amil' => 11,
             'haul' => '6 bulan',
         ]);
+        $this->createActiveGoldPrice(1_200_000);
 
         $response = $this->actingAs($this->jamaah(), User::ROLE_JAMAAH)
             ->post(route('jamaah.transaksi.store', 'zakat'), [
@@ -218,7 +218,7 @@ class JamaahZakatPolicyTest extends TestCase
         $this->assertSame($policy->id, $transaction->snapshot_kebijakan['ketentuan_pokok_id']);
         $this->assertSame(3.25, (float) $transaction->snapshot_kebijakan['kadar_persentase']);
         $this->assertSame(11.0, (float) $transaction->snapshot_kebijakan['persentase_amil']);
-        $this->assertSame(110_000_000, (int) $transaction->nisab_digunakan);
+        $this->assertSame(102_000_000, (int) $transaction->nisab_digunakan);
         $this->assertSame(3.25, (float) $transaction->persentase_zakat);
         $this->assertSame(11.0, (float) $transaction->persentase_amil);
         $this->assertTrue($transaction->rincian_perhitungan['memenuhi_haul']);
@@ -315,12 +315,20 @@ class JamaahZakatPolicyTest extends TestCase
     public function test_jamaah_income_zakat_stores_the_selected_income_category(): void
     {
         Storage::fake('public');
+        KetentuanPokokZakat::untukJenis('penghasilan')->update([
+            'kadar_persentase' => 2.5,
+        ]);
+        $this->createActiveGoldPrice(1_200_000);
 
         $response = $this->actingAs($this->jamaah(), User::ROLE_JAMAAH)
             ->post(route('jamaah.transaksi.store', 'zakat'), [
                 'jenis_ziswaf' => 'zakat_penghasilan',
                 'nominal' => 250_000,
                 'kategori_perhitungan' => 'honorarium_jasa',
+                'periode_penghasilan' => 'bulanan',
+                'bulan_penghasilan' => now()->format('Y-m'),
+                'tahun_penghasilan' => now()->year,
+                'penghasilan_bersih' => 10_000_000,
                 'metode_pembayaran' => 'manual_transfer',
                 'bukti_pembayaran' => UploadedFile::fake()->create(
                     'bukti-transfer.jpg',
@@ -337,7 +345,68 @@ class JamaahZakatPolicyTest extends TestCase
             'Honorarium atau Jasa Profesional',
             $transaction->rincian_perhitungan['kategori_perhitungan_label']
         );
+        $this->assertSame('bulanan', $transaction->rincian_perhitungan['periode_penghasilan']);
+        $this->assertSame(now()->format('Y-m'), $transaction->rincian_perhitungan['bulan_penghasilan']);
+        $this->assertSame(102_000_000, (int) $transaction->rincian_perhitungan['nisab_tahunan']);
+        $this->assertSame(8_500_000, (int) $transaction->rincian_perhitungan['nisab_bulanan']);
+        $this->assertSame(8_500_000, (int) $transaction->nisab_digunakan);
+        $this->assertSame(10_000_000, (int) $transaction->rincian_perhitungan['dasar_zakat']);
+        $this->assertSame('penghasilan_bersih', $transaction->rincian_perhitungan['metode_dasar_zakat']);
+        $this->assertSame(250_000, (int) $transaction->nominal);
         $this->assertNull($transaction->rincian_perhitungan['memenuhi_haul']);
+    }
+
+    public function test_annual_income_zakat_reconciles_verified_payments_from_the_same_year(): void
+    {
+        Storage::fake('public');
+        $jamaah = $this->jamaah();
+        KetentuanPokokZakat::untukJenis('penghasilan')->update([
+            'kadar_persentase' => 2.5,
+        ]);
+        $this->createActiveGoldPrice(1_200_000);
+
+        ZiswafPenerimaan::create([
+            'muzakki_id' => $jamaah->id,
+            'tanggal' => now()->startOfYear()->addMonth()->toDateString(),
+            'jenis_ziswaf' => 'zakat_penghasilan',
+            'nominal' => 1_000_000,
+            'metode_pembayaran' => 'manual_transfer',
+            'status_verifikasi' => 'diterima',
+            'rincian_perhitungan' => [
+                'periode_penghasilan' => 'bulanan',
+                'bulan_penghasilan' => now()->startOfYear()->addMonth()->format('Y-m'),
+                'tahun_penghasilan' => now()->year,
+            ],
+        ]);
+
+        $response = $this->actingAs($jamaah, User::ROLE_JAMAAH)
+            ->post(route('jamaah.transaksi.store', 'zakat'), [
+                'jenis_ziswaf' => 'zakat_penghasilan',
+                'nominal' => 9_999_999,
+                'kategori_perhitungan' => 'gaji_upah',
+                'periode_penghasilan' => 'tahunan',
+                'tahun_penghasilan' => now()->year,
+                'penghasilan_bersih' => 120_000_000,
+                'metode_pembayaran' => 'manual_transfer',
+                'bukti_pembayaran' => UploadedFile::fake()->create(
+                    'bukti-transfer-tahunan.jpg',
+                    100,
+                    'image/jpeg'
+                ),
+            ]);
+
+        $response->assertRedirect(route('jamaah.riwayat.index'));
+
+        $transaction = ZiswafPenerimaan::query()->latest('id')->firstOrFail();
+        $calculation = $transaction->rincian_perhitungan;
+
+        $this->assertSame('tahunan', $calculation['periode_penghasilan']);
+        $this->assertSame(120_000_000, (int) $calculation['dasar_zakat']);
+        $this->assertSame(3_000_000, (int) $calculation['kewajiban_zakat']);
+        $this->assertSame(1_000_000, (int) $calculation['zakat_sudah_dibayar']);
+        $this->assertSame(2_000_000, (int) $calculation['jumlah_zakat']);
+        $this->assertSame(2_000_000, (int) $transaction->nominal);
+        $this->assertSame(102_000_000, (int) $transaction->nisab_digunakan);
     }
 
     public function test_income_zakat_rejects_a_maal_category(): void
