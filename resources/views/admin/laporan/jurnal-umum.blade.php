@@ -126,15 +126,23 @@
         </header>
 
         <div class="fr-table-wrap">
-            <table id="searchTable" class="fr-table">
+            <table id="searchTable" class="fr-table ju-table">
+                <colgroup>
+                    <col class="ju-col-number">
+                    <col class="ju-col-date">
+                    <col class="ju-col-account">
+                    <col class="ju-col-description">
+                    <col class="ju-col-amount">
+                    <col class="ju-col-amount">
+                </colgroup>
                 <thead>
                     <tr>
-                        <th style="width:70px">No</th>
+                        <th>No</th>
                         <th>Tanggal</th>
                         <th>Akun</th>
                         <th>Keterangan</th>
-                        <th>Debit</th>
-                        <th>Kredit</th>
+                        <th class="ju-amount-heading ju-debit-heading">Debit</th>
+                        <th class="ju-amount-heading ju-credit-heading">Kredit</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -161,15 +169,25 @@
                             </td>
                             <td><strong>{{ $item->akun }}</strong></td>
                             <td>{{ $item->keterangan ?: '-' }}</td>
-                            <td>
-                                <span class="fr-money {{ $debitValue > 0 ? 'is-debit' : 'is-muted' }}">
-                                    {{ $debitText }}
-                                </span>
+                            <td class="ju-amount-cell ju-debit-cell">
+                                @if($debitValue > 0)
+                                    <span class="ju-money is-debit" aria-label="{{ $debitText }}">
+                                        <span class="ju-money-currency">Rp</span>
+                                        <span class="ju-money-value">{{ number_format($debitValue, 0, ',', '.') }}</span>
+                                    </span>
+                                @else
+                                    <span class="ju-empty-amount" aria-label="Tidak ada nilai debit">-</span>
+                                @endif
                             </td>
-                            <td>
-                                <span class="fr-money {{ $kreditValue > 0 ? 'is-credit' : 'is-muted' }}">
-                                    {{ $kreditText }}
-                                </span>
+                            <td class="ju-amount-cell ju-credit-cell">
+                                @if($kreditValue > 0)
+                                    <span class="ju-money is-credit" aria-label="{{ $kreditText }}">
+                                        <span class="ju-money-currency">Rp</span>
+                                        <span class="ju-money-value">{{ number_format($kreditValue, 0, ',', '.') }}</span>
+                                    </span>
+                                @else
+                                    <span class="ju-empty-amount" aria-label="Tidak ada nilai kredit">-</span>
+                                @endif
                             </td>
                         </tr>
                     @empty
@@ -190,6 +208,25 @@
                         </td>
                     </tr>
                 </tbody>
+                @if($jurnalItems->isNotEmpty())
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="ju-total-label">Total pada halaman ini</td>
+                            <td class="ju-amount-cell ju-debit-cell ju-total-cell">
+                                <span class="ju-money is-debit" aria-label="{{ $rupiah($totalDebit) }}">
+                                    <span class="ju-money-currency">Rp</span>
+                                    <span class="ju-money-value">{{ number_format($totalDebit, 0, ',', '.') }}</span>
+                                </span>
+                            </td>
+                            <td class="ju-amount-cell ju-credit-cell ju-total-cell">
+                                <span class="ju-money is-credit" aria-label="{{ $rupiah($totalKredit) }}">
+                                    <span class="ju-money-currency">Rp</span>
+                                    <span class="ju-money-value">{{ number_format($totalKredit, 0, ',', '.') }}</span>
+                                </span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                @endif
             </table>
         </div>
 
@@ -201,6 +238,121 @@
     </section>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .ju-table {
+        min-width: 980px;
+        table-layout: fixed;
+    }
+
+    .ju-col-number { width: 70px; }
+    .ju-col-date { width: 170px; }
+    .ju-col-account { width: 250px; }
+    .ju-col-description { width: auto; }
+    .ju-col-amount { width: 170px; }
+
+    .ju-table .ju-amount-heading,
+    .ju-table .ju-amount-cell {
+        text-align: right;
+    }
+
+    .ju-table .ju-debit-heading {
+        color: #176c32;
+        background: #f2faf4;
+    }
+
+    .ju-table .ju-credit-heading {
+        color: #8a5200;
+        background: #fff8eb;
+    }
+
+    .ju-table tbody .ju-debit-cell {
+        background: rgba(23, 108, 50, .025);
+    }
+
+    .ju-table tbody .ju-credit-cell {
+        background: rgba(154, 90, 0, .025);
+    }
+
+    .ju-money {
+        display: grid;
+        grid-template-columns: 25px minmax(0, 1fr);
+        align-items: baseline;
+        width: 100%;
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .ju-money.is-debit { color: #176c32; }
+    .ju-money.is-credit { color: #9a5a00; }
+
+    .ju-money-currency {
+        font-size: 10px;
+        font-weight: 700;
+        text-align: left;
+    }
+
+    .ju-money-value {
+        text-align: right;
+    }
+
+    .ju-empty-amount {
+        display: block;
+        color: #a0aaa4;
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .ju-table tfoot td {
+        padding: 14px 12px;
+        border-top: 1px solid #dce9df;
+        background: #f8fbf9;
+    }
+
+    .ju-total-label {
+        color: #405047;
+        font-size: 11px;
+        font-weight: 800;
+        text-align: right;
+        text-transform: uppercase;
+    }
+
+    .ju-total-cell .ju-money-value {
+        font-size: 13px;
+    }
+
+    html[data-finus-theme="dark"] body .ju-table .ju-debit-heading,
+    html[data-finus-theme="dark"] body .ju-table tbody .ju-debit-cell {
+        background: rgba(76, 175, 105, .07) !important;
+    }
+
+    html[data-finus-theme="dark"] body .ju-table .ju-credit-heading,
+    html[data-finus-theme="dark"] body .ju-table tbody .ju-credit-cell {
+        background: rgba(230, 168, 70, .07) !important;
+    }
+
+    html[data-finus-theme="dark"] body .ju-table .ju-debit-heading,
+    html[data-finus-theme="dark"] body .ju-money.is-debit {
+        color: #7bd895 !important;
+    }
+
+    html[data-finus-theme="dark"] body .ju-table .ju-credit-heading,
+    html[data-finus-theme="dark"] body .ju-money.is-credit {
+        color: #f1bd68 !important;
+    }
+
+    html[data-finus-theme="dark"] body .ju-table tfoot td {
+        border-top-color: #2b4334 !important;
+        background: #111d16 !important;
+    }
+
+    html[data-finus-theme="dark"] body .ju-total-label {
+        color: #c7d6cc !important;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>

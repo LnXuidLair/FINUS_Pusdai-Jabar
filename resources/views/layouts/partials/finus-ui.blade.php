@@ -270,6 +270,11 @@
                 z-index: 1;
             }
 
+            .fr-stat-copy {
+                min-width: 0;
+                overflow: hidden;
+            }
+
             .fr-stat-icon {
                 display: inline-flex;
                 align-items: center;
@@ -295,10 +300,12 @@
                 display: block;
                 margin-top: 4px;
                 color: var(--fr-text);
-                font-size: clamp(17px, 2vw, 21px);
+                font-size: clamp(13px, 1.2vw, 18px);
                 font-weight: 800;
                 line-height: 1.25;
-                word-break: break-word;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             .fr-stat-note {

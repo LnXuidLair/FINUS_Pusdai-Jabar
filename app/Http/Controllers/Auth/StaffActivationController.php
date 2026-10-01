@@ -17,7 +17,9 @@ use Illuminate\View\View;
 class StaffActivationController extends Controller
 {
     private const SESSION_KEY = 'staff_activation';
+
     private const EXPIRES_MINUTES = 10;
+
     public function create(): View
     {
         return view('auth.verify-staff');
@@ -44,6 +46,12 @@ class StaffActivationController extends Controller
         if (! $pegawai) {
             throw ValidationException::withMessages([
                 'nip' => 'Data pegawai tidak ditemukan. Pastikan nama dan NIP sesuai data dari admin.',
+            ]);
+        }
+
+        if ($pegawai->is_verified) {
+            throw ValidationException::withMessages([
+                'nip' => 'Akun pegawai sudah aktif. Silakan login.',
             ]);
         }
 
@@ -77,6 +85,14 @@ class StaffActivationController extends Controller
                 ->withErrors(['nip' => 'Sesi verifikasi pegawai sudah habis. Silakan verifikasi ulang.']);
         }
 
+        if ($pegawai->is_verified) {
+            $request->session()->forget(self::SESSION_KEY);
+
+            return redirect()
+                ->route('login.staff')
+                ->withErrors(['email' => 'Akun pegawai sudah aktif. Silakan login.']);
+        }
+
         return view('auth.activate-staff', [
             'pegawai' => $pegawai,
             'email' => $this->staffEmailFor($pegawai),
@@ -91,6 +107,14 @@ class StaffActivationController extends Controller
             return redirect()
                 ->route('register.staff')
                 ->withErrors(['nip' => 'Sesi verifikasi pegawai sudah habis. Silakan verifikasi ulang.']);
+        }
+
+        if ($pegawai->is_verified) {
+            $request->session()->forget(self::SESSION_KEY);
+
+            return redirect()
+                ->route('login.staff')
+                ->withErrors(['email' => 'Akun pegawai sudah aktif. Silakan login.']);
         }
 
         $validated = $request->validate([
@@ -110,29 +134,60 @@ class StaffActivationController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($pegawai, $email, $validated): void {
-            User::query()->updateOrCreate(
-                ['email' => $email],
-                [
+        $recoveryCode = '';
+
+        DB::transaction(function () use ($pegawai, $email, $validated, &$recoveryCode): void {
+            $user = User::query()->where('email', $email)->first();
+
+            // Menangani data pegawai lama yang belum memiliki akun User.
+            if (! $user) {
+                $user = new User([
                     'name' => $pegawai->nama_pegawai,
-                    'password' => Hash::make($validated['password']),
-                    'role' => 'pegawai',
-                    'email_verified_at' => now(),
-                ]
-            );
+                    'email' => $email,
+                    'password' => Hash::make(Str::random(64)),
+                    'role' => User::ROLE_PEGAWAI,
+                ]);
+                $user->rotateRecoveryCode();
+            }
+
+            if (! $user->recovery_code) {
+                $user->rotateRecoveryCode();
+            }
+
+            $user->forceFill([
+                'name' => $pegawai->nama_pegawai,
+                'email_verified_at' => now(),
+                'password' => Hash::make($validated['password']),
+                'password_changed_at' => now(),
+            ])->save();
 
             $pegawai->forceFill([
                 'email' => $email,
                 'is_verified' => true,
             ])->save();
+
+            $recoveryCode = (string) $user->recovery_code;
         });
 
         $request->session()->forget(self::SESSION_KEY);
 
         return redirect()
-            ->route('login.staff')
-            ->with('account_activated', true)
-            ->with('status', 'Account Activated');
+            ->route('register.staff.success')
+            ->with('staff_activation_success', [
+                'email' => $email,
+                'recovery_code' => $recoveryCode,
+            ]);
+    }
+
+    public function success(Request $request): View|RedirectResponse
+    {
+        $activation = $request->session()->pull('staff_activation_success');
+
+        if (! is_array($activation) || empty($activation['recovery_code'])) {
+            return redirect()->route('login.staff');
+        }
+
+        return view('auth.staff-activation-success', compact('activation'));
     }
 
     private function verifiedPegawaiFromSession(Request $request): ?Pegawai
@@ -157,7 +212,7 @@ class StaffActivationController extends Controller
         $staffDomain = $this->staffDomain();
         $currentEmail = strtolower(trim((string) $pegawai->email));
 
-        if ($currentEmail !== '' && str_ends_with($currentEmail, '@' . $staffDomain)) {
+        if ($currentEmail !== '' && str_ends_with($currentEmail, '@'.$staffDomain)) {
             return $currentEmail;
         }
 
@@ -190,7 +245,7 @@ class StaffActivationController extends Controller
             ]);
         }
 
-        return 'staff' . $matches[1] . '.finus.id';
+        return 'staff'.$matches[1].'.finus.id';
     }
 
     private function makeStaffEmail(
@@ -225,10 +280,10 @@ class StaffActivationController extends Controller
             $nipSuffix = (string) random_int(1000, 9999);
         }
 
-        $email = strtolower($selectedName . $nipSuffix . '@' . $domain);
+        $email = strtolower($selectedName.$nipSuffix.'@'.$domain);
 
         if ($this->emailAlreadyUsed($email, $ignorePegawaiId, $allowedUserEmail)) {
-            $email = strtolower($selectedName . $nipSuffix . random_int(10, 99) . '@' . $domain);
+            $email = strtolower($selectedName.$nipSuffix.random_int(10, 99).'@'.$domain);
         }
 
         return $email;

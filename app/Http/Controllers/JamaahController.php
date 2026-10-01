@@ -9,6 +9,7 @@ use App\Models\KetentuanPokokZakat;
 use App\Models\MasterAsnaf;
 use App\Models\User;
 use App\Models\ZiswafPenerimaan;
+use App\Services\ZakatCalculatorService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -22,6 +23,10 @@ use Throwable;
 
 class JamaahController extends Controller
 {
+    public function __construct(
+        private readonly ZakatCalculatorService $zakatCalculator
+    ) {}
+
     public function index()
     {
         $jamaahs = User::query()
@@ -340,7 +345,7 @@ class JamaahController extends Controller
         );
     }
 
-    public function createTransaksi(string $jenis)
+    public function createTransaksi(Request $request, string $jenis)
     {
         $config = $this->transaksiConfig($jenis);
         $paymentGatewayReady = $this->isPaymentGatewayReady();
@@ -351,17 +356,22 @@ class JamaahController extends Controller
         $hargaBeras = null;
         $hargaEmas = null;
         $hargaPertanian = [];
+        $zakatPenghasilanTerbayar = [
+            'per_bulan' => [],
+            'per_tahun' => [],
+        ];
 
         if ($jenis === 'zakat') {
-            $zakatPolicies = $this->zakatPoliciesForJamaah();
+            $hargaEmas = $this->activeGoldPrice();
+            $zakatPolicies = $this->zakatPoliciesForJamaah($hargaEmas);
             $zakatCalculationCategories = $this->zakatCalculationCategories();
             $masterAsnaf = MasterAsnaf::semuaAktif();
             $hargaBeras = $this->activeRicePrice();
-            $hargaEmas = $this->activeGoldPrice();
             $hargaPertanian = [
                 'padi_gabah' => $this->activeAgriculturalPrice('padi_gabah'),
                 'beras' => $hargaBeras,
             ];
+            $zakatPenghasilanTerbayar = $this->incomeZakatPaymentSummary((int) $request->user()->id);
         }
 
         return view('jamaah.transaksi-ziswaf', compact(
@@ -373,7 +383,8 @@ class JamaahController extends Controller
             'masterAsnaf',
             'hargaBeras',
             'hargaEmas',
-            'hargaPertanian'
+            'hargaPertanian',
+            'zakatPenghasilanTerbayar'
         ));
     }
 
@@ -415,6 +426,30 @@ class JamaahController extends Controller
                 )),
                 'nullable',
                 Rule::in($allowedCalculationCategories),
+            ],
+            'periode_penghasilan' => [
+                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_penghasilan'),
+                'nullable',
+                Rule::in(['bulanan', 'tahunan']),
+            ],
+            'bulan_penghasilan' => [
+                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_penghasilan'
+                    && $request->input('periode_penghasilan') === 'bulanan'),
+                'nullable',
+                'date_format:Y-m',
+            ],
+            'tahun_penghasilan' => [
+                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_penghasilan'),
+                'nullable',
+                'integer',
+                'min:2000',
+                'max:'.now()->year,
+            ],
+            'penghasilan_bersih' => [
+                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_penghasilan'),
+                'nullable',
+                'integer',
+                'min:1',
             ],
             'tanggal_mulai_kepemilikan' => [
                 Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_maal'),
@@ -485,6 +520,16 @@ class JamaahController extends Controller
             'tanggal_mulai_kepemilikan.before_or_equal' => 'Tanggal mulai kepemilikan tidak boleh melewati hari ini.',
             'kategori_perhitungan.required' => 'Kategori perhitungan wajib dipilih.',
             'kategori_perhitungan.in' => 'Kategori perhitungan tidak sesuai dengan jenis zakat yang dipilih.',
+            'periode_penghasilan.required' => 'Metode perhitungan penghasilan wajib dipilih.',
+            'periode_penghasilan.in' => 'Metode perhitungan penghasilan harus bulanan atau tahunan.',
+            'bulan_penghasilan.required' => 'Bulan penghasilan wajib dipilih untuk metode bulanan.',
+            'bulan_penghasilan.date_format' => 'Format bulan penghasilan tidak valid.',
+            'tahun_penghasilan.required' => 'Tahun penghasilan wajib dipilih.',
+            'tahun_penghasilan.integer' => 'Tahun penghasilan tidak valid.',
+            'tahun_penghasilan.max' => 'Tahun penghasilan tidak boleh melewati tahun berjalan.',
+            'penghasilan_bersih.required' => 'Penghasilan atau pendapatan bersih wajib diisi.',
+            'penghasilan_bersih.integer' => 'Penghasilan atau pendapatan bersih harus berupa angka.',
+            'penghasilan_bersih.min' => 'Penghasilan atau pendapatan bersih harus lebih dari nol.',
             'berat_emas_gram.required' => 'Berat emas wajib diisi untuk menghitung zakat emas.',
             'berat_emas_gram.numeric' => 'Berat emas harus berupa angka.',
             'berat_emas_gram.min' => 'Berat emas minimal 0,01 gram.',
@@ -520,11 +565,97 @@ class JamaahController extends Controller
         $rincianPerhitunganKhusus = [];
         $hargaEmas = null;
         $hargaPertanianAktif = null;
+        $nisabEmasGramAcuan = 0;
+        $nisabRupiahAcuan = null;
+        $hargaEmasPerGramAcuan = 0;
+
+        if ($ketentuanZakat && in_array($ketentuanZakat->jenis, ['maal', 'penghasilan'], true)) {
+            $hargaEmas = $this->activeGoldPrice();
+            $nisabEmasGramAcuan = $this->extractGoldNisabGrams($ketentuanZakat->nisab_pokok);
+            $hargaEmasPerGramAcuan = $this->resolveGoldPricePerGram($hargaEmas);
+
+            if ($nisabEmasGramAcuan <= 0 || $hargaEmasPerGramAcuan <= 0) {
+                $field = $ketentuanZakat->jenis === 'penghasilan'
+                    ? 'periode_penghasilan'
+                    : 'kategori_perhitungan';
+
+                throw ValidationException::withMessages([
+                    $field => 'Harga emas aktif belum tersedia. Admin harus memperbarui harga emas pada Master Barang & Harga.',
+                ]);
+            }
+
+            $nisabRupiahAcuan = (int) round($nisabEmasGramAcuan * $hargaEmasPerGramAcuan);
+        }
+
+        if ($validated['jenis_ziswaf'] === 'zakat_penghasilan') {
+            $periodePenghasilan = $validated['periode_penghasilan'];
+            $bulanPenghasilan = $periodePenghasilan === 'bulanan'
+                ? $validated['bulan_penghasilan']
+                : null;
+            $tahunPenghasilan = $periodePenghasilan === 'bulanan'
+                ? (int) substr($bulanPenghasilan, 0, 4)
+                : (int) $validated['tahun_penghasilan'];
+
+            if ($periodePenghasilan === 'bulanan' && $bulanPenghasilan > now()->format('Y-m')) {
+                throw ValidationException::withMessages([
+                    'bulan_penghasilan' => 'Bulan penghasilan tidak boleh melewati bulan berjalan.',
+                ]);
+            }
+
+            $pembayaranTerverifikasi = $this->incomeZakatPaymentSummary((int) $user->id);
+            $zakatSudahDibayar = $periodePenghasilan === 'bulanan'
+                ? (int) ($pembayaranTerverifikasi['per_bulan'][$bulanPenghasilan] ?? 0)
+                : (int) ($pembayaranTerverifikasi['per_tahun'][(string) $tahunPenghasilan] ?? 0);
+
+            $ketentuanPerhitungan = clone $ketentuanZakat;
+            $ketentuanPerhitungan->setAttribute('nisab_rupiah', $nisabRupiahAcuan);
+
+            $perhitunganPenghasilan = $this->zakatCalculator->penghasilan([
+                'periode_penghasilan' => $periodePenghasilan,
+                'penghasilan_bersih' => $validated['penghasilan_bersih'],
+                'zakat_sudah_dibayar' => $zakatSudahDibayar,
+            ], $ketentuanPerhitungan);
+
+            if ($perhitunganPenghasilan['penghasilan_bruto'] <= 0) {
+                throw ValidationException::withMessages([
+                    'penghasilan_bersih' => 'Penghasilan atau pendapatan bersih harus lebih dari nol.',
+                ]);
+            }
+
+            if (! $perhitunganPenghasilan['memenuhi_nisab']) {
+                throw ValidationException::withMessages([
+                    'penghasilan_bersih' => sprintf(
+                        'Penghasilan bersih belum mencapai nisab %s sebesar Rp%s.',
+                        $periodePenghasilan,
+                        number_format((int) $perhitunganPenghasilan['nisab'], 0, ',', '.')
+                    ),
+                ]);
+            }
+
+            if ($perhitunganPenghasilan['jumlah_zakat'] <= 0) {
+                throw ValidationException::withMessages([
+                    'periode_penghasilan' => 'Kewajiban zakat penghasilan pada periode ini sudah terpenuhi berdasarkan pembayaran yang telah diverifikasi.',
+                ]);
+            }
+
+            $validated['tahun_penghasilan'] = $tahunPenghasilan;
+            $validated['nominal'] = (int) $perhitunganPenghasilan['jumlah_zakat'];
+            $rincianPerhitunganKhusus = array_merge($perhitunganPenghasilan, [
+                'catatan' => $periodePenghasilan === 'bulanan'
+                    ? 'Zakat penghasilan bulanan dihitung dari nisab tahunan aktif dibagi 12.'
+                    : 'Zakat penghasilan tahunan direkonsiliasi dengan pembayaran terverifikasi pada tahun yang sama.',
+                'periode_penghasilan' => $periodePenghasilan,
+                'bulan_penghasilan' => $bulanPenghasilan,
+                'tahun_penghasilan' => $tahunPenghasilan,
+                'nisab_emas_gram' => $nisabEmasGramAcuan,
+                'harga_emas_per_gram' => $hargaEmasPerGramAcuan,
+                'sumber_harga_emas' => $hargaEmas?->sumber_harga,
+            ]);
+        }
 
         if (($validated['kategori_perhitungan'] ?? null) === 'emas_logam_mulia') {
-            $hargaEmas = $this->activeGoldPrice();
-            $nisabEmasGram = $this->extractGoldNisabGrams($ketentuanZakat?->nisab_pokok);
-            $hargaEmasPerGram = $this->resolveGoldPricePerGram($ketentuanZakat, $hargaEmas);
+            $nisabEmasGram = $nisabEmasGramAcuan;
+            $hargaEmasPerGram = $this->resolveGoldPricePerGram($hargaEmas);
             $beratEmasGram = (float) $validated['berat_emas_gram'];
 
             if ($nisabEmasGram <= 0 || $hargaEmasPerGram <= 0) {
@@ -608,6 +739,18 @@ class JamaahController extends Controller
 
         $snapshotKebijakan = $ketentuanZakat?->toSnapshot();
 
+        if ($snapshotKebijakan && $nisabRupiahAcuan) {
+            $snapshotKebijakan['nisab_emas_gram'] = $nisabEmasGramAcuan;
+            $snapshotKebijakan['nisab_rupiah'] = $nisabRupiahAcuan;
+            $snapshotKebijakan['sumber_nisab'] = 'harga_emas_aktif';
+        }
+
+        if ($validated['jenis_ziswaf'] === 'zakat_penghasilan' && $snapshotKebijakan) {
+            $snapshotKebijakan['nisab_tahunan'] = $rincianPerhitunganKhusus['nisab_tahunan'];
+            $snapshotKebijakan['nisab_bulanan'] = $rincianPerhitunganKhusus['nisab_bulanan'];
+            $snapshotKebijakan['metode_perhitungan'] = $rincianPerhitunganKhusus['periode_penghasilan'];
+        }
+
         if ($hargaEmas && $snapshotKebijakan) {
             $snapshotKebijakan['harga_emas'] = [
                 'harga_barang_zakat_id' => $hargaEmas->id,
@@ -685,9 +828,8 @@ class JamaahController extends Controller
             ], $rincianPerhitunganKhusus),
             'nisab_digunakan' => $rincianPerhitunganKhusus['nisab_emas_rupiah']
                 ?? $rincianPerhitunganKhusus['nisab_pertanian_rupiah']
-                ?? ($ketentuanZakat?->nisab_rupiah
-                    ? (int) round((float) $ketentuanZakat->nisab_rupiah)
-                    : null),
+                ?? $rincianPerhitunganKhusus['nisab']
+                ?? $nisabRupiahAcuan,
             'persentase_zakat' => $ketentuanZakat?->kadar_persentase,
             'persentase_amil' => $ketentuanZakat?->persentase_amil ?? 0,
             'snapshot_kebijakan' => $snapshotKebijakan,
@@ -1420,7 +1562,7 @@ class JamaahController extends Controller
         return $options;
     }
 
-    private function zakatPoliciesForJamaah(): array
+    private function zakatPoliciesForJamaah(?HargaBarangZakat $hargaEmas): array
     {
         $policies = [];
 
@@ -1431,15 +1573,22 @@ class JamaahController extends Controller
                 continue;
             }
 
+            $nisabEmasGram = in_array($policy->jenis, ['maal', 'penghasilan'], true)
+                ? $this->extractGoldNisabGrams($policy->nisab_pokok)
+                : 0;
+            $nisabRupiah = $nisabEmasGram > 0 && $hargaEmas
+                ? (int) round($nisabEmasGram * $hargaEmas->harga_per_satuan)
+                : null;
+
             $policies[$transactionType] = array_merge($policy->toSnapshot(), [
                 'nama' => $policy->nama,
                 'deskripsi' => $policy->deskripsi,
                 'dasar_hukum' => $policy->dasar_hukum,
                 'dasar_regulasi' => $policy->dasar_regulasi,
+                'nisab_rupiah' => $nisabRupiah,
                 'batas_awal_haul' => $this->haulCutoffDate($policy->haul)?->toDateString(),
-                'nisab_emas_gram' => $policy->jenis === 'maal'
-                    ? $this->extractGoldNisabGrams($policy->nisab_pokok)
-                    : null,
+                'nisab_emas_gram' => $nisabEmasGram ?: null,
+                'sumber_nisab' => $nisabRupiah ? 'harga_emas_aktif' : null,
             ]);
         }
 
@@ -1486,6 +1635,39 @@ class JamaahController extends Controller
                 'beras' => 'Beras',
             ],
         ];
+    }
+
+    private function incomeZakatPaymentSummary(int $muzakkiId): array
+    {
+        $summary = [
+            'per_bulan' => [],
+            'per_tahun' => [],
+        ];
+
+        $payments = ZiswafPenerimaan::query()
+            ->where('muzakki_id', $muzakkiId)
+            ->where('jenis_ziswaf', 'zakat_penghasilan')
+            ->where('status_verifikasi', 'diterima')
+            ->get(['nominal', 'tanggal', 'rincian_perhitungan']);
+
+        foreach ($payments as $payment) {
+            $detail = $payment->rincian_perhitungan ?? [];
+            $periode = $detail['periode_penghasilan'] ?? null;
+            $bulan = $detail['bulan_penghasilan'] ?? $payment->tanggal?->format('Y-m');
+            $tahun = (string) ($detail['tahun_penghasilan'] ?? $payment->tanggal?->year ?? '');
+
+            if ($tahun !== '') {
+                $summary['per_tahun'][$tahun] = ($summary['per_tahun'][$tahun] ?? 0)
+                    + (int) $payment->nominal;
+            }
+
+            if ($periode === 'bulanan' && $bulan) {
+                $summary['per_bulan'][$bulan] = ($summary['per_bulan'][$bulan] ?? 0)
+                    + (int) $payment->nominal;
+            }
+        }
+
+        return $summary;
     }
 
     private function agriculturalNisabKg(string $category): float
@@ -1558,20 +1740,9 @@ class JamaahController extends Controller
             ->first();
     }
 
-    private function resolveGoldPricePerGram(
-        ?KetentuanPokokZakat $policy,
-        ?HargaBarangZakat $goldPrice
-    ): int {
-        if ($goldPrice) {
-            return (int) $goldPrice->harga_per_satuan;
-        }
-
-        $nisabGram = $this->extractGoldNisabGrams($policy?->nisab_pokok);
-        $nisabRupiah = (float) ($policy?->nisab_rupiah ?? 0);
-
-        return $nisabGram > 0 && $nisabRupiah > 0
-            ? (int) round($nisabRupiah / $nisabGram)
-            : 0;
+    private function resolveGoldPricePerGram(?HargaBarangZakat $goldPrice): int
+    {
+        return $goldPrice ? (int) $goldPrice->harga_per_satuan : 0;
     }
 
     private function extractGoldNisabGrams(?string $nisab): float

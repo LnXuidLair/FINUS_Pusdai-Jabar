@@ -18,7 +18,7 @@
         <span class="auth-context-icon" aria-hidden="true">✓</span>
         <div>
             <p class="auth-context-title">Identitas pegawai sudah cocok</p>
-            <p class="auth-context-copy">Buat password untuk menyelesaikan aktivasi dan melindungi akun Anda.</p>
+            <p class="auth-context-copy">Buat password untuk menyelesaikan aktivasi. Recovery Code akan ditampilkan satu kali pada langkah berikutnya.</p>
         </div>
     </div>
 

@@ -401,11 +401,16 @@
         ->all();
     $nisabEmasGram = (float) ($maalPolicy['nisab_emas_gram'] ?? 0);
     $hargaEmasPerGram = (int) ($hargaEmas?->harga_per_satuan ?? 0);
-    if ($hargaEmasPerGram <= 0 && $nisabEmasGram > 0 && ! empty($maalPolicy['nisab_rupiah'])) {
-        $hargaEmasPerGram = (int) round($maalPolicy['nisab_rupiah'] / $nisabEmasGram);
-    }
     $nisabEmasRupiah = (int) round($nisabEmasGram * $hargaEmasPerGram);
     $formatPersentase = static fn ($value): string => rtrim(rtrim(number_format((float) $value, 2, ',', '.'), '0'), ',');
+    $nisabPenghasilanTahunan = (int) round((float) ($penghasilanPolicy['nisab_rupiah'] ?? 0));
+    $nisabPenghasilanBulanan = $nisabPenghasilanTahunan > 0
+        ? (int) round($nisabPenghasilanTahunan / 12)
+        : 0;
+    $zakatPenghasilanTerbayar = $zakatPenghasilanTerbayar ?? ['per_bulan' => [], 'per_tahun' => []];
+    $periodePenghasilanAwal = old('periode_penghasilan', 'bulanan');
+    $bulanPenghasilanAwal = old('bulan_penghasilan', now()->format('Y-m'));
+    $tahunPenghasilanAwal = (int) old('tahun_penghasilan', now()->year);
 
     $minimalNominal = $paymentGatewayReady ? 10000 : 1000;
 
@@ -687,7 +692,7 @@
                                                 <strong id="nilai_emas_rupiah">Rp0</strong>
                                             </div>
                                             <small class="small-muted d-block mt-2">
-                                                Sumber harga: {{ $hargaEmas?->sumber_harga ?? 'nilai nisab rupiah pada kebijakan aktif' }}.
+                                                Sumber harga: {{ $hargaEmas?->sumber_harga ?? 'harga emas aktif belum tersedia' }}.
                                             </small>
                                         </div>
                                     </div>
@@ -739,11 +744,28 @@
                                     </div>
 
                                     <p class="small-muted mb-3">
-                                        Nisab tahunan {{ $penghasilanPolicy['nisab_pokok'] ?? '-' }}
-                                        @if(! empty($penghasilanPolicy['nisab_rupiah']))
-                                            (Rp{{ number_format($penghasilanPolicy['nisab_rupiah'], 0, ',', '.') }})
-                                        @endif.
+                                        Nisab tahunan {{ $penghasilanPolicy['nisab_pokok'] ?? '-' }}.
+                                        Nilai rupiah mengikuti harga emas aktif
+                                        @if($hargaEmasPerGram > 0)
+                                            Rp{{ number_format($hargaEmasPerGram, 0, ',', '.') }} per gram
+                                        @endif
+                                        dan nisab bulanan dihitung otomatis dari nisab tahunan dibagi 12.
                                     </p>
+
+                                    <div class="row mb-2">
+                                        <div class="col-sm-6 mb-2">
+                                            <div class="p-3 border rounded h-100">
+                                                <small class="small-muted d-block">Nisab Tahunan</small>
+                                                <strong>{{ $nisabPenghasilanTahunan > 0 ? 'Rp'.number_format($nisabPenghasilanTahunan, 0, ',', '.') : '-' }}</strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 mb-2">
+                                            <div class="p-3 border rounded h-100">
+                                                <small class="small-muted d-block">Nisab Bulanan</small>
+                                                <strong>{{ $nisabPenghasilanBulanan > 0 ? 'Rp'.number_format($nisabPenghasilanBulanan, 0, ',', '.') : '-' }}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div class="form-group mb-2">
                                         <label for="kategori_penghasilan">Kategori Penghasilan</label>
@@ -760,47 +782,65 @@
                                     </div>
 
                                     <div class="form-group mb-2">
-                                        <label for="periode_penghasilan">Periode Penghasilan</label>
-                                        <select id="periode_penghasilan" class="form-control">
-                                            <option value="bulanan">Bulanan</option>
-                                            <option value="tahunan">Tahunan</option>
+                                        <label for="periode_penghasilan">Metode Perhitungan</label>
+                                        <select name="periode_penghasilan" id="periode_penghasilan" class="form-control @error('periode_penghasilan') is-invalid @enderror">
+                                            <option value="bulanan" @selected($periodePenghasilanAwal === 'bulanan')>Bulanan</option>
+                                            <option value="tahunan" @selected($periodePenghasilanAwal === 'tahunan')>Tahunan</option>
                                         </select>
+                                        <small class="small-muted d-block mt-2">
+                                            Bulanan memakai nisab tahunan dibagi 12. Tahunan memakai nisab penuh dan mengurangi pembayaran terverifikasi pada tahun yang sama.
+                                        </small>
+                                        @error('periode_penghasilan')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+
+                                    <div class="form-group mb-2" id="bulan-penghasilan-group">
+                                        <label for="bulan_penghasilan">Bulan Penghasilan</label>
+                                        <input type="month"
+                                            name="bulan_penghasilan"
+                                            id="bulan_penghasilan"
+                                            class="form-control @error('bulan_penghasilan') is-invalid @enderror"
+                                            max="{{ now()->format('Y-m') }}"
+                                            value="{{ $bulanPenghasilanAwal }}">
+                                        @error('bulan_penghasilan')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+
+                                    <div class="form-group mb-2" id="tahun-penghasilan-group" style="display: none;">
+                                        <label for="tahun_penghasilan">Tahun Penghasilan</label>
+                                        <input type="number"
+                                            name="tahun_penghasilan"
+                                            id="tahun_penghasilan"
+                                            class="form-control @error('tahun_penghasilan') is-invalid @enderror"
+                                            min="2000"
+                                            max="{{ now()->year }}"
+                                            value="{{ $tahunPenghasilanAwal }}">
+                                        @error('tahun_penghasilan')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
                                     </div>
 
                                     <div class="form-group mb-2">
-                                        <label>Penghasilan Utama</label>
+                                        <label for="penghasilan_bersih_input">Penghasilan/Pendapatan Bersih</label>
                                         <div class="input-group-currency">
                                             <span class="currency-addon">Rp</span>
                                             <input type="text"
-                                                id="penghasilan_utama"
-                                                class="form-control currency-input"
+                                                id="penghasilan_bersih_input"
+                                                class="form-control currency-input @error('penghasilan_bersih') is-invalid @enderror"
                                                 inputmode="numeric"
-                                                placeholder="Contoh: 5.000.000">
+                                                value="{{ old('penghasilan_bersih') ? number_format(old('penghasilan_bersih'), 0, ',', '.') : '' }}"
+                                                placeholder="Contoh: 8.000.000"
+                                                autocomplete="off">
+                                            <input type="hidden" name="penghasilan_bersih" id="penghasilan_bersih_value" value="{{ old('penghasilan_bersih') }}">
                                         </div>
-                                    </div>
-
-                                    <div class="form-group mb-2">
-                                        <label>Penghasilan Lain</label>
-                                        <div class="input-group-currency">
-                                            <span class="currency-addon">Rp</span>
-                                            <input type="text"
-                                                id="penghasilan_lain"
-                                                class="form-control currency-input"
-                                                inputmode="numeric"
-                                                placeholder="Contoh: 500.000">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group mb-2">
-                                        <label>Pengurang/Kebutuhan Pokok</label>
-                                        <div class="input-group-currency">
-                                            <span class="currency-addon">Rp</span>
-                                            <input type="text"
-                                                id="pengurang_penghasilan"
-                                                class="form-control currency-input"
-                                                inputmode="numeric"
-                                                placeholder="Contoh: 1.000.000">
-                                        </div>
+                                        <small class="small-muted d-block mt-2">
+                                            Masukkan jumlah yang sudah bersih setelah pengurang atau kebutuhan pokok yang digunakan.
+                                        </small>
+                                        @error('penghasilan_bersih')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
                                     </div>
 
                                     <div class="formula-box">
@@ -814,7 +854,16 @@
                                             Rp0
                                         </h6>
 
-                                        <small class="d-block text-muted mb-1">Hasil Perhitungan</small>
+                                        <small class="d-block text-muted mb-1">Nisab yang Digunakan</small>
+                                        <h6 class="mb-2 font-weight-bold text-dark" id="nisab_penghasilan_digunakan">Rp0</h6>
+
+                                        <small class="d-block text-muted mb-1">Kewajiban Sebelum Pembayaran Terdahulu</small>
+                                        <h6 class="mb-2 font-weight-bold text-dark" id="kewajiban_penghasilan">Rp0</h6>
+
+                                        <small class="d-block text-muted mb-1">Sudah Dibayar dan Terverifikasi</small>
+                                        <h6 class="mb-2 font-weight-bold text-dark" id="zakat_penghasilan_terbayar">Rp0</h6>
+
+                                        <small class="d-block text-muted mb-1">Sisa Zakat yang Dibayar</small>
                                         <h5 class="mb-0 font-weight-bold text-success" id="hasil_penghasilan">
                                             Rp0
                                         </h5>
@@ -1292,6 +1341,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const zakatPolicies = @json($zakatPolicies);
+    const zakatPenghasilanTerbayar = @json($zakatPenghasilanTerbayar);
     const hargaBerasPerKg = {{ $hargaBerasPerKg }};
     const hargaEmasPerGram = {{ $hargaEmasPerGram }};
     const hargaPertanianPerKg = @json($hargaPertanianPerKg);
@@ -1324,10 +1374,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const pakaiHasilMaal = document.getElementById('pakai_hasil_maal');
 
     const periodePenghasilan = document.getElementById('periode_penghasilan');
-    const penghasilanUtama = document.getElementById('penghasilan_utama');
-    const penghasilanLain = document.getElementById('penghasilan_lain');
-    const pengurangPenghasilan = document.getElementById('pengurang_penghasilan');
+    const bulanPenghasilan = document.getElementById('bulan_penghasilan');
+    const tahunPenghasilan = document.getElementById('tahun_penghasilan');
+    const bulanPenghasilanGroup = document.getElementById('bulan-penghasilan-group');
+    const tahunPenghasilanGroup = document.getElementById('tahun-penghasilan-group');
+    const penghasilanBersihInput = document.getElementById('penghasilan_bersih_input');
+    const penghasilanBersihValue = document.getElementById('penghasilan_bersih_value');
     const penghasilanBersih = document.getElementById('penghasilan_bersih');
+    const nisabPenghasilanDigunakan = document.getElementById('nisab_penghasilan_digunakan');
+    const kewajibanPenghasilan = document.getElementById('kewajiban_penghasilan');
+    const zakatPenghasilanTerbayarElement = document.getElementById('zakat_penghasilan_terbayar');
     const hasilPenghasilan = document.getElementById('hasil_penghasilan');
     const statusPenghasilan = document.getElementById('status_penghasilan');
     const pakaiHasilPenghasilan = document.getElementById('pakai_hasil_penghasilan');
@@ -1448,9 +1504,7 @@ document.addEventListener('DOMContentLoaded', function () {
     //  Pasang currency format ke semua field keuangan
     // ============================================================
     const getHartaMaal          = attachCurrencyInput(hartaMaal);
-    const getPenghasilanUtama   = attachCurrencyInput(penghasilanUtama);
-    const getPenghasilanLain    = attachCurrencyInput(penghasilanLain);
-    const getPengurang          = attachCurrencyInput(pengurangPenghasilan);
+    const getPenghasilanBersih  = attachCurrencyInput(penghasilanBersihInput);
     const getNominalDisplay     = attachCurrencyInput(nominalDisplay);
 
     // Sync nominalDisplay → nominal (hidden) setiap kali user mengetik
@@ -1578,6 +1632,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         syncKategoriPerhitungan();
         toggleMaalCategory();
+        togglePeriodePenghasilan();
 
         if (kalkulatorMaal && jenis === 'zakat_maal') {
             kalkulatorMaal.style.display = 'block';
@@ -1675,25 +1730,39 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function hitungPenghasilan() {
-        const utama    = getPenghasilanUtama();
-        const lain     = getPenghasilanLain();
-        const pengurang = getPengurang();
-
-        const bersih = Math.max((utama + lain) - pengurang, 0);
+        const bersih = Math.max(getPenghasilanBersih(), 0);
         const policy = zakatPolicies.zakat_penghasilan || {};
-        const nisabTahunan = Number(policy.nisab_rupiah || 0);
-        const nisab = periodePenghasilan && periodePenghasilan.value === 'tahunan'
-            ? nisabTahunan
-            : nisabTahunan / 12;
+        const periode = periodePenghasilan ? periodePenghasilan.value : 'bulanan';
+        const nisabTahunan = Math.round(Number(policy.nisab_rupiah || 0));
+        const nisabBulanan = nisabTahunan > 0 ? Math.round(nisabTahunan / 12) : 0;
+        const nisab = periode === 'tahunan' ? nisabTahunan : nisabBulanan;
         const rate = Number(policy.kadar_persentase || 0) / 100;
-        const memenuhiNisab = nisab <= 0 || bersih >= nisab;
+        const memenuhiNisab = nisab > 0 && bersih >= nisab;
+        const kewajiban = memenuhiNisab ? Math.round(bersih * rate) : 0;
+        const bulan = bulanPenghasilan ? bulanPenghasilan.value : '';
+        const tahun = periode === 'bulanan'
+            ? String(bulan || '').slice(0, 4)
+            : String(tahunPenghasilan ? tahunPenghasilan.value : '');
+        const sudahDibayar = periode === 'bulanan'
+            ? Number((zakatPenghasilanTerbayar.per_bulan || {})[bulan] || 0)
+            : Number((zakatPenghasilanTerbayar.per_tahun || {})[tahun] || 0);
 
-        nilaiPenghasilan = memenuhiNisab
-            ? Math.round(bersih * rate)
-            : 0;
+        nilaiPenghasilan = Math.max(kewajiban - sudahDibayar, 0);
 
         if (penghasilanBersih) {
             penghasilanBersih.textContent = rupiah(bersih);
+        }
+
+        if (nisabPenghasilanDigunakan) {
+            nisabPenghasilanDigunakan.textContent = rupiah(nisab);
+        }
+
+        if (kewajibanPenghasilan) {
+            kewajibanPenghasilan.textContent = rupiah(kewajiban);
+        }
+
+        if (zakatPenghasilanTerbayarElement) {
+            zakatPenghasilanTerbayarElement.textContent = rupiah(sudahDibayar);
         }
 
         if (hasilPenghasilan) {
@@ -1701,13 +1770,48 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (statusPenghasilan) {
-            statusPenghasilan.textContent = memenuhiNisab
-                ? 'Penghasilan bersih telah mencapai nisab ' + rupiah(nisab) + '.'
-                : 'Penghasilan bersih belum mencapai nisab ' + rupiah(nisab) + '.';
-            statusPenghasilan.className = memenuhiNisab
-                ? 'calculation-status text-success mt-2'
-                : 'calculation-status text-danger mt-2';
+            if (nisab <= 0) {
+                statusPenghasilan.textContent = 'Nisab tahunan belum ditetapkan oleh admin.';
+                statusPenghasilan.className = 'calculation-status text-danger mt-2';
+            } else if (!memenuhiNisab) {
+                statusPenghasilan.textContent = 'Penghasilan bersih belum mencapai nisab ' + periode + ' ' + rupiah(nisab) + '.';
+                statusPenghasilan.className = 'calculation-status text-warning mt-2';
+            } else if (nilaiPenghasilan <= 0) {
+                statusPenghasilan.textContent = 'Kewajiban zakat untuk periode ini sudah terpenuhi.';
+                statusPenghasilan.className = 'calculation-status text-success mt-2';
+            } else {
+                statusPenghasilan.textContent = periode === 'tahunan'
+                    ? 'Sisa zakat tahunan setelah dikurangi pembayaran terverifikasi.'
+                    : 'Penghasilan bersih telah mencapai nisab bulanan.';
+                statusPenghasilan.className = 'calculation-status text-success mt-2';
+            }
         }
+    }
+
+    function togglePeriodePenghasilan() {
+        const tahunan = Boolean(periodePenghasilan && periodePenghasilan.value === 'tahunan');
+        const penghasilanDipilih = Boolean(jenisZiswaf && jenisZiswaf.value === 'zakat_penghasilan');
+
+        if (bulanPenghasilanGroup) {
+            bulanPenghasilanGroup.style.display = tahunan ? 'none' : 'block';
+        }
+
+        if (tahunPenghasilanGroup) {
+            tahunPenghasilanGroup.style.display = tahunan ? 'block' : 'none';
+        }
+
+        if (bulanPenghasilan) {
+            bulanPenghasilan.required = penghasilanDipilih && !tahunan;
+        }
+
+        if (tahunPenghasilan) {
+            tahunPenghasilan.required = penghasilanDipilih;
+            if (!tahunan && bulanPenghasilan && bulanPenghasilan.value) {
+                tahunPenghasilan.value = bulanPenghasilan.value.slice(0, 4);
+            }
+        }
+
+        hitungPenghasilan();
     }
 
     function hitungFitrah() {
@@ -2027,21 +2131,33 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (penghasilanUtama) {
-        penghasilanUtama.addEventListener('input', hitungPenghasilan);
+    if (penghasilanBersihInput) {
+        penghasilanBersihInput.addEventListener('input', function () {
+            if (penghasilanBersihValue) {
+                penghasilanBersihValue.value = getPenghasilanBersih();
+            }
+            hitungPenghasilan();
+        });
     }
 
     if (periodePenghasilan) {
-        periodePenghasilan.addEventListener('change', hitungPenghasilan);
+        periodePenghasilan.addEventListener('change', togglePeriodePenghasilan);
     }
 
-    if (penghasilanLain) {
-        penghasilanLain.addEventListener('input', hitungPenghasilan);
+    if (bulanPenghasilan) {
+        bulanPenghasilan.addEventListener('change', function () {
+            if (tahunPenghasilan && this.value) {
+                tahunPenghasilan.value = this.value.slice(0, 4);
+            }
+            hitungPenghasilan();
+        });
     }
 
-    if (pengurangPenghasilan) {
-        pengurangPenghasilan.addEventListener('input', hitungPenghasilan);
+    if (tahunPenghasilan) {
+        tahunPenghasilan.addEventListener('input', hitungPenghasilan);
     }
+
+    togglePeriodePenghasilan();
 
     if (pakaiHasilPenghasilan) {
         pakaiHasilPenghasilan.addEventListener('click', function () {
@@ -2114,6 +2230,9 @@ document.addEventListener('DOMContentLoaded', function () {
         form.addEventListener('submit', function () {
             if (nominalDisplay && nominal) {
                 nominal.value = unformatRibuan(nominalDisplay.value) || '';
+            }
+            if (penghasilanBersihValue) {
+                penghasilanBersihValue.value = getPenghasilanBersih();
             }
         });
     }

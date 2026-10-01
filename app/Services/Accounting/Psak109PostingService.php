@@ -619,7 +619,7 @@ class Psak109PostingService
         return $this->findOrCreateCoa('5199', 'Beban Operasional Lain-lain', 5);
     }
 
-    protected function resolveJenisDanaPengeluaran(?Coa $coa, ?string $kategori): string
+    public function resolveJenisDanaPengeluaran(?Coa $coa, ?string $kategori): string
     {
         $code = $coa?->kode_akun ?? '';
 

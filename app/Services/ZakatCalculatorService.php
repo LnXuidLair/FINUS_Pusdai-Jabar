@@ -10,21 +10,38 @@ class ZakatCalculatorService
         array $data,
         KetentuanPokokZakat $ketentuan
     ): array {
-        $pendapatanUtama = $this->nilai($data, 'pendapatan_utama');
-        $pendapatanLain = $this->nilai($data, 'pendapatan_lain');
-        $pengurang = $this->nilai($data, 'pengurang');
+        $menggunakanNilaiBersih = array_key_exists('penghasilan_bersih', $data);
+        $pendapatanUtama = $menggunakanNilaiBersih
+            ? 0
+            : $this->nilai($data, 'pendapatan_utama');
+        $pendapatanLain = $menggunakanNilaiBersih
+            ? 0
+            : $this->nilai($data, 'pendapatan_lain');
+        $pengurang = $menggunakanNilaiBersih
+            ? 0
+            : $this->nilai($data, 'pengurang');
 
-        $penghasilanBruto = $pendapatanUtama + $pendapatanLain;
+        $penghasilanBruto = $menggunakanNilaiBersih
+            ? $this->nilai($data, 'penghasilan_bersih')
+            : $pendapatanUtama + $pendapatanLain;
         $pengurangTerpakai = min($pengurang, $penghasilanBruto);
         $dasarZakat = max($penghasilanBruto - $pengurangTerpakai, 0);
-        $periode = $data['periode_penghasilan'] ?? 'tahunan';
+        $periode = ($data['periode_penghasilan'] ?? 'tahunan') === 'bulanan'
+            ? 'bulanan'
+            : 'tahunan';
+        $nisabTahunan = max((int) round((float) $ketentuan->nisab_rupiah), 0);
+        $nisabBulanan = $nisabTahunan > 0
+            ? (int) round($nisabTahunan / 12)
+            : 0;
+        $nisab = $periode === 'bulanan' ? $nisabBulanan : $nisabTahunan;
+        $sudahDibayar = $this->nilai($data, 'zakat_sudah_dibayar');
 
-        $nisab = $periode === 'tahunan'
-            ? (float) $ketentuan->nisab_rupiah
-            : ((float) $ketentuan->nisab_rupiah) / 12;
-
-        $memenuhiNisab = $dasarZakat >= $nisab;
-        $jumlahZakat = $memenuhiNisab ? $this->persentase($dasarZakat, (float) $ketentuan->kadar_persentase) : 0;
+        $memenuhiNisab = $nisab > 0 && $dasarZakat >= $nisab;
+        $kewajibanZakat = $memenuhiNisab
+            ? $this->persentase($dasarZakat, (float) $ketentuan->kadar_persentase)
+            : 0;
+        $jumlahZakat = max($kewajibanZakat - $sudahDibayar, 0);
+        $kelebihanBayar = max($sudahDibayar - $kewajibanZakat, 0);
 
         return [
             'jenis' => 'zakat_penghasilan',
@@ -33,13 +50,24 @@ class ZakatCalculatorService
             'pendapatan_lain' => $pendapatanLain,
             'penghasilan_bruto' => $penghasilanBruto,
             'pengurang' => $pengurangTerpakai,
+            'metode_dasar_zakat' => $menggunakanNilaiBersih ? 'penghasilan_bersih' : 'rincian_penghasilan',
             'dasar_zakat' => $dasarZakat,
             'nisab' => $nisab,
+            'nisab_tahunan' => $nisabTahunan,
+            'nisab_bulanan' => $nisabBulanan,
             'persentase' => (float) $ketentuan->kadar_persentase,
             'memenuhi_nisab' => $memenuhiNisab,
             'memenuhi_haul' => null,
+            'kewajiban_zakat' => $kewajibanZakat,
+            'zakat_sudah_dibayar' => $sudahDibayar,
+            'kelebihan_bayar' => $kelebihanBayar,
             'jumlah_zakat' => $jumlahZakat,
-            'pesan' => $memenuhiNisab ? 'Penghasilan telah mencapai nisab.' : 'Penghasilan belum mencapai nisab.',
+            'pesan' => match (true) {
+                $nisab <= 0 => 'Nisab tahunan belum ditetapkan pada kebijakan zakat.',
+                ! $memenuhiNisab => 'Penghasilan belum mencapai nisab '.$periode.'.',
+                $jumlahZakat === 0 => 'Kewajiban zakat untuk periode ini sudah terpenuhi.',
+                default => 'Penghasilan telah mencapai nisab '.$periode.'.',
+            },
         ];
     }
 
@@ -78,8 +106,8 @@ class ZakatCalculatorService
             'memenuhi_haul' => $memenuhiHaul,
             'jumlah_zakat' => $wajibZakat ? $this->persentase($hartaBersih, (float) $ketentuan->kadar_persentase) : 0,
             'pesan' => match (true) {
-                !$memenuhiNisab => 'Harta bersih belum mencapai nisab zakat maal.',
-                !$memenuhiHaul => 'Harta belum memenuhi haul satu tahun.',
+                ! $memenuhiNisab => 'Harta bersih belum mencapai nisab zakat maal.',
+                ! $memenuhiHaul => 'Harta belum memenuhi haul satu tahun.',
                 default => 'Harta telah mencapai nisab dan memenuhi haul.',
             },
         ];
