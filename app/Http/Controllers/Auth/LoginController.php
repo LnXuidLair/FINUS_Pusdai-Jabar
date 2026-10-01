@@ -134,7 +134,7 @@ class LoginController extends Controller
         if (Auth::guard('web')->check()) {
             Auth::guard('web')->logout();
             $request->session()->forget(
-                'last_activity_at'
+                'last_activity_at.web'
             );
             $request->session()->migrate(true);
 
@@ -178,6 +178,17 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        /*
+         * Simpan identitas guard lain sebelum proses attempt(). Laravel memang
+         * memakai key session berbeda per guard, tetapi snapshot ini membuat
+         * perilaku multi-login FINUS eksplisit dan aman terhadap perubahan
+         * session-id ketika guard baru berhasil masuk.
+         */
+        $siblingSessions = $this->snapshotSiblingGuardSessions(
+            $request,
+            $guard
+        );
+
         $authenticated = Auth::guard($guard)->attempt(
             $credentials + ['role' => $role],
             $request->boolean('remember')
@@ -197,6 +208,15 @@ class LoginController extends Controller
          */
         $request->session()->regenerate();
 
+        /*
+         * Pastikan login role yang sudah aktif tidak ikut hilang saat role
+         * kedua login pada browser/session cookie yang sama.
+         */
+        $this->restoreSiblingGuardSessions(
+            $request,
+            $siblingSessions
+        );
+
         $request->session()->put(
             "last_activity_at.{$guard}",
             now()->timestamp
@@ -211,8 +231,9 @@ class LoginController extends Controller
         if (Auth::guard('web')->check()) {
             Auth::guard('web')->logout();
 
+            // Jangan hapus last_activity_at.* milik guard role lain.
             $request->session()->forget(
-                'last_activity_at'
+                'last_activity_at.web'
             );
         }
 
@@ -225,6 +246,40 @@ class LoginController extends Controller
         }
 
         return redirect()->route($route);
+    }
+
+    /**
+     * Ambil key autentikasi guard lain yang sedang login. Key ini berbeda
+     * untuk setiap guard (login_admin_..., login_pegawai_..., dst.).
+     */
+    private function snapshotSiblingGuardSessions(
+        Request $request,
+        string $currentGuard
+    ): array {
+        $snapshot = [];
+
+        foreach (self::ALLOWED_GUARDS as $guard) {
+            if ($guard === $currentGuard) {
+                continue;
+            }
+
+            $sessionKey = Auth::guard($guard)->getName();
+
+            if ($request->session()->has($sessionKey)) {
+                $snapshot[$sessionKey] = $request->session()->get($sessionKey);
+            }
+        }
+
+        return $snapshot;
+    }
+
+    private function restoreSiblingGuardSessions(
+        Request $request,
+        array $snapshot
+    ): void {
+        foreach ($snapshot as $sessionKey => $userId) {
+            $request->session()->put($sessionKey, $userId);
+        }
     }
 
     private function logoutGuard(
