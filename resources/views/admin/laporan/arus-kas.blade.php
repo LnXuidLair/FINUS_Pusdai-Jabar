@@ -396,12 +396,15 @@
         font-size: 10.5px;
         padding: 8px 12px;
         border-bottom: 1px solid #cbd5e1;
+        text-align: left;
+        text-transform: uppercase;
     }
 
     .lk-subtable td {
         padding: 8px 12px;
         border-bottom: 1px solid #f1f5f9;
         color: #334155;
+        text-align: left;
     }
 
     .lk-btn-expand {
@@ -662,7 +665,7 @@
         }
 
         /* Mode cetak audit subtable */
-        .lk-subtable-row.print-show {
+        .lk-subtable-row {
             display: table-row !important;
         }
 
