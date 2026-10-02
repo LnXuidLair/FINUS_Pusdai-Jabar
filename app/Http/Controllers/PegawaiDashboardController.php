@@ -9,6 +9,7 @@ use App\Models\Presensi;
 use App\Models\ZiswafPenerimaan;
 use App\Services\PenggajianService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -36,6 +37,15 @@ class PegawaiDashboardController extends Controller
             ]);
         }
 
+        $validated = $request->validate([
+            'tahun' => [
+                'nullable',
+                'integer',
+                'min:2000',
+                'max:'.now()->year,
+            ],
+        ]);
+        $tahunGrafik = (int) ($validated['tahun'] ?? now()->year);
         $periode = now()->format('Y-m');
 
         // Siapkan/sinkronkan gaji bulan berjalan. Presensi pending tidak dihitung.
@@ -66,7 +76,11 @@ class PegawaiDashboardController extends Controller
             ->orderByDesc('periode')
             ->first();
 
-        $financeDashboard = $this->financeDashboardData($pegawai, $periode);
+        $financeDashboard = $this->financeDashboardData(
+            $pegawai,
+            $periode,
+            $tahunGrafik
+        );
 
         return view('dashboard.pegawai.dynamic', [
             'pegawai' => $pegawai,
@@ -76,6 +90,8 @@ class PegawaiDashboardController extends Controller
             'presensiMenunggu' => $presensiMenunggu,
             'penggajianTerakhir' => $penggajianTerakhir,
             'financeDashboard' => $financeDashboard,
+            'tahunGrafik' => $tahunGrafik,
+            'tahunGrafikTersedia' => $this->dashboardYears($tahunGrafik),
         ]);
     }
 
@@ -164,13 +180,14 @@ class PegawaiDashboardController extends Controller
         $nama = Str::slug($pegawai->nama_pegawai);
 
         return $pdf->download(
-            'slip-gaji-' . $nama . '-' . $penggajian->periode . '.pdf'
+            'slip-gaji-'.$nama.'-'.$penggajian->periode.'.pdf'
         );
     }
 
     private function financeDashboardData(
         Pegawai $pegawai,
-        string $periode
+        string $periode,
+        int $tahunGrafik
     ): array {
         if (! $pegawai->hasAksesRole(
             Pegawai::AKSES_DKM,
@@ -227,13 +244,11 @@ class PegawaiDashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $monthlyTrend = $this->monthlyFinanceTrend();
-        $statusPenggajian = [
-            'sudah_dibayar' => (clone $penggajianPeriode)
-                ->where('status_penggajian', 'sudah_dibayar')
-                ->count(),
-            'belum_dibayar' => $penggajianBelumDibayar,
-        ];
+        $monthlyTrend = $this->monthlyFinanceTrend($tahunGrafik);
+        $trendMonthCount = $tahunGrafik === now()->year ? now()->month : 12;
+        $trendValues = collect($monthlyTrend)
+            ->except('labels')
+            ->map(fn (array $values): array => array_slice($values, 0, $trendMonthCount));
 
         return [
             'pemasukan_bulan_ini' => $pemasukanBulanIni,
@@ -251,16 +266,14 @@ class PegawaiDashboardController extends Controller
                 'labels' => $monthlyTrend['labels'],
                 'pemasukan' => $monthlyTrend['pemasukan'],
                 'pengeluaran' => $monthlyTrend['pengeluaran'],
+                'penggajian' => $monthlyTrend['penggajian'],
                 'saldo' => $monthlyTrend['saldo'],
-                'status_penggajian' => [
-                    $statusPenggajian['sudah_dibayar'],
-                    $statusPenggajian['belum_dibayar'],
-                ],
             ],
             'trend' => [
-                'pemasukan' => $this->trendLabel($monthlyTrend['pemasukan']),
-                'pengeluaran' => $this->trendLabel($monthlyTrend['pengeluaran']),
-                'saldo' => $this->trendLabel($monthlyTrend['saldo']),
+                'pemasukan' => $this->trendLabel($trendValues['pemasukan']),
+                'pengeluaran' => $this->trendLabel($trendValues['pengeluaran']),
+                'penggajian' => $this->trendLabel($trendValues['penggajian']),
+                'saldo' => $this->trendLabel($trendValues['saldo']),
             ],
         ];
     }
@@ -289,11 +302,12 @@ class PegawaiDashboardController extends Controller
             });
     }
 
-    private function monthlyFinanceTrend(int $months = 6): array
+    private function monthlyFinanceTrend(int $year): array
     {
         $labels = [];
         $pemasukan = [];
         $pengeluaran = [];
+        $penggajian = [];
         $saldo = [];
 
         $monthNames = [
@@ -311,8 +325,8 @@ class PegawaiDashboardController extends Controller
             12 => 'Des',
         ];
 
-        for ($index = $months - 1; $index >= 0; $index--) {
-            $date = now()->startOfMonth()->subMonths($index);
+        for ($month = 1; $month <= 12; $month++) {
+            $date = Carbon::create($year, $month, 1)->startOfMonth();
             $start = $date->copy()->startOfMonth()->toDateString();
             $end = $date->copy()->endOfMonth()->toDateString();
 
@@ -332,10 +346,14 @@ class PegawaiDashboardController extends Controller
                 ->sum('total_gaji');
 
             $expense = $operationalExpense + $payrollExpense;
+            $payrollByPeriod = (int) Penggajian::query()
+                ->where('periode', $date->format('Y-m'))
+                ->sum('total_gaji');
 
-            $labels[] = $monthNames[(int) $date->month] . ' ' . $date->format('y');
+            $labels[] = $monthNames[$month];
             $pemasukan[] = $income;
             $pengeluaran[] = $expense;
+            $penggajian[] = $payrollByPeriod;
             $saldo[] = $income - $expense;
         }
 
@@ -343,8 +361,26 @@ class PegawaiDashboardController extends Controller
             'labels' => $labels,
             'pemasukan' => $pemasukan,
             'pengeluaran' => $pengeluaran,
+            'penggajian' => $penggajian,
             'saldo' => $saldo,
         ];
+    }
+
+    private function dashboardYears(int $selectedYear): array
+    {
+        $years = collect([
+            ZiswafPenerimaan::query()->min('tanggal'),
+            Pengeluaran::query()->min('tanggal'),
+            Penggajian::query()->min('tanggal'),
+            Penggajian::query()->min('periode'),
+        ])
+            ->filter()
+            ->map(fn ($value): int => (int) substr((string) $value, 0, 4))
+            ->filter(fn (int $year): bool => $year >= 2000 && $year <= now()->year)
+            ->push(now()->year)
+            ->push($selectedYear);
+
+        return range(now()->year, (int) $years->min());
     }
 
     private function trendLabel(array $values): array
@@ -362,7 +398,7 @@ class PegawaiDashboardController extends Controller
 
         if ($previous === 0) {
             return [
-                'label' => ($difference > 0 ? 'Naik' : 'Turun') . ' dari Rp0',
+                'label' => ($difference > 0 ? 'Naik' : 'Turun').' dari Rp0',
                 'direction' => $difference > 0 ? 'up' : 'down',
             ];
         }
@@ -371,8 +407,8 @@ class PegawaiDashboardController extends Controller
 
         return [
             'label' => ($difference > 0 ? 'Naik ' : 'Turun ')
-                . number_format($percentage, 1, ',', '.')
-                . '% dari bulan lalu',
+                .number_format($percentage, 1, ',', '.')
+                .'% dari bulan lalu',
             'direction' => $difference > 0 ? 'up' : 'down',
         ];
     }
