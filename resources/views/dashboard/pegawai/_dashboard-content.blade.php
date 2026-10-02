@@ -92,45 +92,6 @@
         color: #ffffff !important;
     }
 
-    .finance-list {
-        display: grid;
-        gap: 10px;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    .finance-list-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 12px 14px;
-        border: 1px solid #dcfce7;
-        border-radius: 8px;
-        background: #f7fdf9;
-    }
-
-    .finance-list-title {
-        display: block;
-        color: #065f22;
-        font-weight: 800;
-        line-height: 1.35;
-    }
-
-    .finance-list-meta {
-        display: block;
-        margin-top: 3px;
-        color: #64748b;
-        font-size: 12px;
-    }
-
-    .finance-list-value {
-        color: #047857;
-        font-weight: 900;
-        white-space: nowrap;
-    }
-
     .finance-chart-card {
         height: 100%;
     }
@@ -181,6 +142,257 @@
         min-height: 250px;
     }
 
+    .finance-dashboard-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(300px, .85fr);
+        align-items: start;
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .finance-chart-stack,
+    .finance-side-stack {
+        display: grid;
+        gap: 18px;
+        min-width: 0;
+    }
+
+    .finance-activity-card {
+        overflow: hidden;
+    }
+
+    .finance-activity-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 22px 0;
+    }
+
+    .finance-activity-head h4 {
+        margin: 0;
+    }
+
+    .finance-activity-head small {
+        display: block;
+        margin-top: 4px;
+    }
+
+    .finance-activity-tabs {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid #DDE8E0;
+        border-radius: 8px;
+        background: #F3F8F5;
+    }
+
+    .finance-activity-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 34px;
+        padding: 0 11px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .finance-activity-tab.is-active {
+        background: #ffffff;
+        color: #047857;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
+    }
+
+    .finance-activity-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #DCFCE7;
+        color: #166534;
+        font-size: 10px;
+        font-weight: 900;
+    }
+
+    .finance-activity-panel[hidden] {
+        display: none;
+    }
+
+    .finance-table-scroll {
+        overflow-x: auto;
+        margin-top: 18px;
+        border-top: 1px solid #E4ECE6;
+    }
+
+    .finance-activity-table {
+        width: 100%;
+        min-width: 720px;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .finance-activity-table th,
+    .finance-activity-table td {
+        padding: 13px 16px;
+        border-bottom: 1px solid #E8EFEB;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .finance-activity-table th {
+        background: #F7FAF8;
+        color: #52645A;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .finance-activity-table td {
+        color: #334155;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .finance-activity-table tbody tr:hover {
+        background: #FAFDFC;
+    }
+
+    .finance-activity-table .is-strong {
+        color: #14532d;
+        font-weight: 800;
+    }
+
+    .finance-activity-table .is-amount {
+        color: #047857;
+        font-weight: 900;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .finance-activity-table th.is-amount {
+        color: #52645A;
+    }
+
+    .finance-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        background: #DCFCE7;
+        color: #166534;
+        font-size: 10px;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .finance-status.is-waiting {
+        background: #FFF7ED;
+        color: #C2410C;
+    }
+
+    .finance-table-empty {
+        padding: 28px 16px !important;
+        color: #64748b !important;
+        text-align: center !important;
+    }
+
+    .finance-table-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: 13px 16px 16px;
+    }
+
+    .finance-table-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #047857;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .finance-table-link:hover {
+        color: #065f46;
+        text-decoration: none;
+    }
+
+    .finance-chart-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 14px;
+    }
+
+    .finance-year-filter {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+        padding: 7px 9px 7px 13px;
+        border: 1px solid #DDE8E0;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, .05);
+    }
+
+    .finance-year-filter label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .finance-year-filter select {
+        min-width: 96px;
+        height: 32px;
+        padding: 0 30px 0 10px;
+        border: 1px solid #D8E3DC;
+        border-radius: 6px;
+        background-color: #F8FBF9;
+        color: #14532d;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .finance-side-stack .personal-strip {
+        grid-template-columns: 1fr;
+    }
+
+    @media (max-width: 991.98px) {
+        .finance-dashboard-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .finance-activity-head {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .finance-activity-tabs {
+            width: 100%;
+        }
+
+        .finance-activity-tab {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+
     .personal-strip {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -221,6 +433,8 @@
     $isDkm = $pegawai->hasAksesRole(\App\Models\Pegawai::AKSES_DKM);
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
     $financeDashboard = $financeDashboard ?? [];
+    $tahunGrafik = $tahunGrafik ?? now()->year;
+    $tahunGrafikTersedia = $tahunGrafikTersedia ?? [$tahunGrafik];
     $trendClass = fn ($direction) => match ($direction ?? 'flat') {
         'up' => 'is-up',
         'down' => 'is-down',
@@ -288,14 +502,37 @@
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-xl-8 mb-3">
+    <div class="finance-chart-toolbar">
+        <form
+            method="GET"
+            action="{{ route('pegawai.dashboard', ['jabatan' => $dashboardProfile['slug']]) }}"
+            class="finance-year-filter"
+        >
+            <label for="keuangan-chart-year">
+                <i class="far fa-calendar-alt"></i>
+                Tahun Grafik
+            </label>
+            <select id="keuangan-chart-year" name="tahun" onchange="this.form.submit()">
+                @foreach($tahunGrafikTersedia as $tahun)
+                    <option value="{{ $tahun }}" @selected($tahun === $tahunGrafik)>
+                        {{ $tahun }}
+                    </option>
+                @endforeach
+            </select>
+            <noscript>
+                <button type="submit" class="btn btn-sm btn-primary">Terapkan</button>
+            </noscript>
+        </form>
+    </div>
+
+    <div class="finance-dashboard-layout">
+        <div class="finance-chart-stack">
             <div class="card finance-chart-card">
                 <div class="card-body">
                     <div class="finance-chart-head">
                         <div>
                             <h4>Pemasukan vs Pengeluaran</h4>
-                            <small class="text-muted">Perbandingan arus masuk dan keluar selama 6 bulan terakhir.</small>
+                            <small class="text-muted">Perbandingan arus masuk dan keluar Januari-Desember {{ $tahunGrafik }}.</small>
                         </div>
                         <span class="trend-badge {{ $trendClass($financeDashboard['trend']['saldo']['direction'] ?? 'flat') }}">
                             {{ $financeDashboard['trend']['saldo']['label'] ?? 'Stabil dari bulan lalu' }}
@@ -306,73 +543,167 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-xl-4 mb-3">
             <div class="card finance-chart-card">
                 <div class="card-body">
                     <div class="finance-chart-head">
                         <div>
-                            <h4>Status Penggajian</h4>
-                            <small class="text-muted">Periode {{ $financeDashboard['periode'] ?? now()->format('Y-m') }}.</small>
+                            <h4>Penggajian per Bulan</h4>
+                            <small class="text-muted">Total gaji berdasarkan periode Januari-Desember {{ $tahunGrafik }}.</small>
                         </div>
+                        <span class="trend-badge {{ $trendClass($financeDashboard['trend']['penggajian']['direction'] ?? 'flat') }}">
+                            {{ $financeDashboard['trend']['penggajian']['label'] ?? 'Stabil dari bulan lalu' }}
+                        </span>
                     </div>
-                    <div class="finance-chart-wrap is-compact">
+                    <div class="finance-chart-wrap">
                         <canvas id="keuanganPayrollChart"></canvas>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="row">
-        <div class="col-xl-4 col-lg-6 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="mb-3">Pengeluaran Terbaru</h4>
-                    <ul class="finance-list">
-                        @forelse($financeDashboard['pengeluaran_terbaru'] ?? [] as $pengeluaran)
-                            <li class="finance-list-item">
-                                <span>
-                                    <span class="finance-list-title">{{ $pengeluaran->kategori ?? 'Pengeluaran' }}</span>
-                                    <span class="finance-list-meta">{{ $pengeluaran->tanggal }} · {{ $pengeluaran->deskripsi ?? $pengeluaran->keterangan }}</span>
-                                </span>
-                                <span class="finance-list-value">{{ $rupiah($pengeluaran->nominal ?: $pengeluaran->jumlah) }}</span>
-                            </li>
-                        @empty
-                            <li class="finance-list-item">
-                                <span class="finance-list-title">Belum ada pengeluaran operasional.</span>
-                            </li>
-                        @endforelse
-                    </ul>
+            <div class="card finance-activity-card">
+                <div class="finance-activity-head">
+                    <div>
+                        <h4>Aktivitas Keuangan Terbaru</h4>
+                        <small class="text-muted">Ringkasan lima data terbaru untuk pemeriksaan cepat.</small>
+                    </div>
+
+                    <div class="finance-activity-tabs" role="tablist" aria-label="Aktivitas keuangan terbaru">
+                        <button
+                            type="button"
+                            id="finance-tab-expense"
+                            class="finance-activity-tab is-active"
+                            role="tab"
+                            aria-selected="true"
+                            aria-controls="finance-panel-expense"
+                            data-finance-tab="expense"
+                        >
+                            Riwayat Pengeluaran
+                            <span class="finance-activity-count">{{ count($financeDashboard['pengeluaran_terbaru'] ?? []) }}</span>
+                        </button>
+                        <button
+                            type="button"
+                            id="finance-tab-payroll"
+                            class="finance-activity-tab"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="finance-panel-payroll"
+                            data-finance-tab="payroll"
+                        >
+                            Gaji Menunggu
+                            <span class="finance-activity-count">{{ count($financeDashboard['penggajian_menunggu'] ?? []) }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div
+                    id="finance-panel-expense"
+                    class="finance-activity-panel"
+                    role="tabpanel"
+                    aria-labelledby="finance-tab-expense"
+                    data-finance-panel="expense"
+                >
+                    <div class="finance-table-scroll">
+                        <table class="finance-activity-table">
+                            <colgroup>
+                                <col style="width: 15%">
+                                <col style="width: 22%">
+                                <col style="width: 33%">
+                                <col style="width: 17%">
+                                <col style="width: 13%">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Kategori</th>
+                                    <th>Keterangan</th>
+                                    <th class="is-amount">Nominal</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($financeDashboard['pengeluaran_terbaru'] ?? [] as $pengeluaran)
+                                    <tr>
+                                        <td>{{ $pengeluaran->tanggal ? \Carbon\Carbon::parse($pengeluaran->tanggal)->format('d/m/Y') : '-' }}</td>
+                                        <td class="is-strong">{{ $pengeluaran->kategori ?? 'Pengeluaran' }}</td>
+                                        <td>{{ $pengeluaran->deskripsi ?? $pengeluaran->keterangan ?? '-' }}</td>
+                                        <td class="is-amount">{{ $rupiah($pengeluaran->nominal ?: $pengeluaran->jumlah) }}</td>
+                                        <td>
+                                            <span class="finance-status">
+                                                {{ ucfirst(str_replace('_', ' ', $pengeluaran->status_verifikasi ?: 'tercatat')) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="finance-table-empty">Belum ada pengeluaran operasional.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="finance-table-footer">
+                        <a href="{{ route('pegawai.keuangan.pengeluaran.index') }}" class="finance-table-link">
+                            Lihat Semua Pengeluaran
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div
+                    id="finance-panel-payroll"
+                    class="finance-activity-panel"
+                    role="tabpanel"
+                    aria-labelledby="finance-tab-payroll"
+                    data-finance-panel="payroll"
+                    hidden
+                >
+                    <div class="finance-table-scroll">
+                        <table class="finance-activity-table">
+                            <colgroup>
+                                <col style="width: 17%">
+                                <col style="width: 29%">
+                                <col style="width: 17%">
+                                <col style="width: 22%">
+                                <col style="width: 15%">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>Periode</th>
+                                    <th>Pegawai</th>
+                                    <th>Kehadiran</th>
+                                    <th class="is-amount">Total Gaji</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($financeDashboard['penggajian_menunggu'] ?? [] as $gaji)
+                                    <tr>
+                                        <td>{{ $gaji->periode }}</td>
+                                        <td class="is-strong">{{ $gaji->pegawai?->nama_pegawai ?? 'Pegawai' }}</td>
+                                        <td>{{ number_format((int) $gaji->jumlah_kehadiran) }} hari</td>
+                                        <td class="is-amount">{{ $rupiah($gaji->total_gaji) }}</td>
+                                        <td><span class="finance-status is-waiting">Menunggu</span></td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="finance-table-empty">Tidak ada gaji yang menunggu pembayaran.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="finance-table-footer">
+                        <a href="{{ route('pegawai.keuangan.penggajian.index') }}" class="finance-table-link">
+                            Kelola Semua Penggajian
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-4 col-lg-6 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="mb-3">Penggajian Menunggu</h4>
-                    <ul class="finance-list">
-                        @forelse($financeDashboard['penggajian_menunggu'] ?? [] as $gaji)
-                            <li class="finance-list-item">
-                                <span>
-                                    <span class="finance-list-title">{{ $gaji->pegawai?->nama_pegawai ?? 'Pegawai' }}</span>
-                                    <span class="finance-list-meta">{{ $gaji->jumlah_kehadiran }} hari hadir · {{ $gaji->periode }}</span>
-                                </span>
-                                <span class="finance-list-value">{{ $rupiah($gaji->total_gaji) }}</span>
-                            </li>
-                        @empty
-                            <li class="finance-list-item">
-                                <span class="finance-list-title">Tidak ada gaji yang menunggu pembayaran.</span>
-                            </li>
-                        @endforelse
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-4 mb-3">
+        <div class="finance-side-stack">
             <div class="card">
                 <div class="card-body">
                     <h4 class="mb-3">Aksi Cepat</h4>
@@ -439,14 +770,37 @@
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-xl-7 mb-3">
+    <div class="finance-chart-toolbar">
+        <form
+            method="GET"
+            action="{{ route('pegawai.dashboard', ['jabatan' => $dashboardProfile['slug']]) }}"
+            class="finance-year-filter"
+        >
+            <label for="dkm-chart-year">
+                <i class="far fa-calendar-alt"></i>
+                Tahun Grafik
+            </label>
+            <select id="dkm-chart-year" name="tahun" onchange="this.form.submit()">
+                @foreach($tahunGrafikTersedia as $tahun)
+                    <option value="{{ $tahun }}" @selected($tahun === $tahunGrafik)>
+                        {{ $tahun }}
+                    </option>
+                @endforeach
+            </select>
+            <noscript>
+                <button type="submit" class="btn btn-sm btn-primary">Terapkan</button>
+            </noscript>
+        </form>
+    </div>
+
+    <div class="finance-dashboard-layout">
+        <div class="finance-chart-stack">
             <div class="card finance-chart-card">
                 <div class="card-body">
                     <div class="finance-chart-head">
                         <div>
                             <h4>Pemasukan vs Pengeluaran</h4>
-                            <small class="text-muted">Perbandingan arus masuk dan keluar selama 6 bulan terakhir.</small>
+                            <small class="text-muted">Perbandingan arus masuk dan keluar Januari-Desember {{ $tahunGrafik }}.</small>
                         </div>
                         <span class="trend-badge {{ $trendClass($financeDashboard['trend']['pemasukan']['direction'] ?? 'flat') }}">
                             {{ $financeDashboard['trend']['pemasukan']['label'] ?? 'Stabil dari bulan lalu' }}
@@ -457,30 +811,26 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-xl-5 mb-3">
             <div class="card finance-chart-card">
                 <div class="card-body">
                     <div class="finance-chart-head">
                         <div>
-                            <h4>Saldo Bersih</h4>
-                            <small class="text-muted">Perkembangan surplus atau defisit bulanan.</small>
+                            <h4>Penggajian per Bulan</h4>
+                            <small class="text-muted">Total gaji berdasarkan periode Januari-Desember {{ $tahunGrafik }}.</small>
                         </div>
-                        <span class="trend-badge {{ $trendClass($financeDashboard['trend']['saldo']['direction'] ?? 'flat') }}">
-                            {{ $financeDashboard['trend']['saldo']['label'] ?? 'Stabil dari bulan lalu' }}
+                        <span class="trend-badge {{ $trendClass($financeDashboard['trend']['penggajian']['direction'] ?? 'flat') }}">
+                            {{ $financeDashboard['trend']['penggajian']['label'] ?? 'Stabil dari bulan lalu' }}
                         </span>
                     </div>
                     <div class="finance-chart-wrap">
-                        <canvas id="dkmBalanceChart"></canvas>
+                        <canvas id="dkmPayrollChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="row">
-        <div class="col-lg-7 mb-3">
+        <div class="finance-side-stack">
             <div class="card">
                 <div class="card-body" style="--role-color:#16a34a">
                     <h4 class="mb-3">Fokus DKM</h4>
@@ -489,12 +839,10 @@
                     @endforeach
                 </div>
             </div>
-        </div>
 
-        <div class="col-lg-5 mb-3">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="mb-3">Laporan</h4>
+                    <h4 class="mb-3">Akses Cepat</h4>
                     <a href="{{ route('pegawai.laporan-keuangan.jurnal-umum') }}" class="btn btn-outline-secondary btn-block mb-2">
                         Jurnal Umum
                     </a>
@@ -578,6 +926,39 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             (() => {
+                const activityTabs = document.querySelectorAll('[data-finance-tab]');
+                const activityPanels = document.querySelectorAll('[data-finance-panel]');
+
+                activityTabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const selectedTab = tab.dataset.financeTab;
+
+                        activityTabs.forEach(item => {
+                            const isActive = item.dataset.financeTab === selectedTab;
+                            item.classList.toggle('is-active', isActive);
+                            item.setAttribute('aria-selected', String(isActive));
+                        });
+
+                        activityPanels.forEach(panel => {
+                            panel.hidden = panel.dataset.financePanel !== selectedTab;
+                        });
+                    });
+
+                    tab.addEventListener('keydown', event => {
+                        if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        const tabs = Array.from(activityTabs);
+                        const direction = event.key === 'ArrowRight' ? 1 : -1;
+                        const targetIndex = (tabs.indexOf(tab) + direction + tabs.length) % tabs.length;
+
+                        tabs[targetIndex].focus();
+                        tabs[targetIndex].click();
+                    });
+                });
+
                 if (typeof Chart === 'undefined') {
                     return;
                 }
@@ -659,7 +1040,7 @@
                         }
                     }
                 };
-                const createBarGradient = (context, colorStart, colorEnd) => {
+                const createAreaGradient = (context, colorStart, colorEnd) => {
                     const gradient = context.createLinearGradient(0, 0, 0, 300);
                     gradient.addColorStop(0, colorStart);
                     gradient.addColorStop(1, colorEnd);
@@ -670,37 +1051,45 @@
                 if (cashControlCanvas) {
                     const context = cashControlCanvas.getContext('2d');
                     new Chart(context, {
-                        type: 'bar',
+                        type: 'line',
                         data: {
                             labels,
                             datasets: [
                                 {
                                     label: 'Pemasukan',
                                     data: chartData.pemasukan || [],
-                                    backgroundColor: createBarGradient(
+                                    backgroundColor: createAreaGradient(
                                         context,
-                                        'rgba(22, 163, 74, .90)',
-                                        'rgba(22, 163, 74, .36)'
+                                        'rgba(22, 163, 74, .30)',
+                                        'rgba(22, 163, 74, .03)'
                                     ),
                                     borderColor: '#16a34a',
-                                    borderWidth: 1,
-                                    borderRadius: 8,
-                                    borderSkipped: false,
-                                    maxBarThickness: 32
+                                    borderWidth: 3,
+                                    pointRadius: 3,
+                                    pointHoverRadius: 6,
+                                    pointBackgroundColor: '#ffffff',
+                                    pointBorderColor: '#16a34a',
+                                    pointBorderWidth: 2,
+                                    fill: true,
+                                    tension: .42
                                 },
                                 {
                                     label: 'Pengeluaran',
                                     data: chartData.pengeluaran || [],
-                                    backgroundColor: createBarGradient(
+                                    backgroundColor: createAreaGradient(
                                         context,
-                                        'rgba(249, 115, 22, .86)',
-                                        'rgba(249, 115, 22, .34)'
+                                        'rgba(249, 115, 22, .24)',
+                                        'rgba(249, 115, 22, .02)'
                                     ),
                                     borderColor: '#f97316',
-                                    borderWidth: 1,
-                                    borderRadius: 8,
-                                    borderSkipped: false,
-                                    maxBarThickness: 32
+                                    borderWidth: 3,
+                                    pointRadius: 3,
+                                    pointHoverRadius: 6,
+                                    pointBackgroundColor: '#ffffff',
+                                    pointBorderColor: '#f97316',
+                                    pointBorderWidth: 2,
+                                    fill: true,
+                                    tension: .42
                                 }
                             ]
                         },
@@ -710,82 +1099,29 @@
 
                 const payrollCanvas = document.getElementById('keuanganPayrollChart');
                 if (payrollCanvas) {
-                    new Chart(payrollCanvas.getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Sudah Dibayar', 'Belum Dibayar'],
-                            datasets: [
-                                {
-                                    data: chartData.status_penggajian || [0, 0],
-                                    backgroundColor: ['#16a34a', '#f97316'],
-                                    borderColor: '#ffffff',
-                                    borderWidth: 4,
-                                    hoverOffset: 5
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            cutout: '68%',
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        usePointStyle: true,
-                                        color: '#14532d',
-                                        font: {
-                                            weight: '700'
-                                        }
-                                    }
-                                },
-                                tooltip: {
-                                    backgroundColor: '#172033',
-                                    titleColor: '#ffffff',
-                                    bodyColor: '#e2e8f0',
-                                    padding: 12,
-                                    cornerRadius: 10
-                                }
-                            }
-                        }
-                    });
-                }
-
-                const cashCompareCanvas = document.getElementById('dkmCashCompareChart');
-                if (cashCompareCanvas) {
-                    const context = cashCompareCanvas.getContext('2d');
+                    const context = payrollCanvas.getContext('2d');
                     new Chart(context, {
-                        type: 'bar',
+                        type: 'line',
                         data: {
                             labels,
                             datasets: [
                                 {
-                                    label: 'Pemasukan',
-                                    data: chartData.pemasukan || [],
-                                    backgroundColor: createBarGradient(
+                                    label: 'Penggajian',
+                                    data: chartData.penggajian || [],
+                                    backgroundColor: createAreaGradient(
                                         context,
-                                        'rgba(22, 163, 74, .90)',
-                                        'rgba(22, 163, 74, .36)'
+                                        'rgba(37, 99, 235, .28)',
+                                        'rgba(96, 165, 250, .03)'
                                     ),
-                                    borderColor: '#16a34a',
-                                    borderWidth: 1,
-                                    borderRadius: 8,
-                                    borderSkipped: false,
-                                    maxBarThickness: 32
-                                },
-                                {
-                                    label: 'Pengeluaran',
-                                    data: chartData.pengeluaran || [],
-                                    backgroundColor: createBarGradient(
-                                        context,
-                                        'rgba(249, 115, 22, .86)',
-                                        'rgba(249, 115, 22, .34)'
-                                    ),
-                                    borderColor: '#f97316',
-                                    borderWidth: 1,
-                                    borderRadius: 8,
-                                    borderSkipped: false,
-                                    maxBarThickness: 32
+                                    borderColor: '#2563eb',
+                                    borderWidth: 3,
+                                    pointRadius: 3,
+                                    pointHoverRadius: 6,
+                                    pointBackgroundColor: '#ffffff',
+                                    pointBorderColor: '#2563eb',
+                                    pointBorderWidth: 2,
+                                    fill: true,
+                                    tension: .42
                                 }
                             ]
                         },
@@ -793,26 +1129,81 @@
                     });
                 }
 
-                const balanceCanvas = document.getElementById('dkmBalanceChart');
-                if (balanceCanvas) {
-                    new Chart(balanceCanvas.getContext('2d'), {
+                const cashCompareCanvas = document.getElementById('dkmCashCompareChart');
+                if (cashCompareCanvas) {
+                    const context = cashCompareCanvas.getContext('2d');
+                    new Chart(context, {
                         type: 'line',
                         data: {
                             labels,
                             datasets: [
                                 {
-                                    label: 'Saldo Bersih',
-                                    data: chartData.saldo || [],
-                                    borderColor: '#047857',
-                                    backgroundColor: 'rgba(22, 163, 74, .12)',
+                                    label: 'Pemasukan',
+                                    data: chartData.pemasukan || [],
+                                    backgroundColor: createAreaGradient(
+                                        context,
+                                        'rgba(22, 163, 74, .30)',
+                                        'rgba(22, 163, 74, .03)'
+                                    ),
+                                    borderColor: '#16a34a',
                                     borderWidth: 3,
-                                    pointRadius: 4,
+                                    pointRadius: 3,
                                     pointHoverRadius: 6,
                                     pointBackgroundColor: '#ffffff',
-                                    pointBorderColor: '#047857',
+                                    pointBorderColor: '#16a34a',
                                     pointBorderWidth: 2,
                                     fill: true,
-                                    tension: .35
+                                    tension: .42
+                                },
+                                {
+                                    label: 'Pengeluaran',
+                                    data: chartData.pengeluaran || [],
+                                    backgroundColor: createAreaGradient(
+                                        context,
+                                        'rgba(249, 115, 22, .24)',
+                                        'rgba(249, 115, 22, .02)'
+                                    ),
+                                    borderColor: '#f97316',
+                                    borderWidth: 3,
+                                    pointRadius: 3,
+                                    pointHoverRadius: 6,
+                                    pointBackgroundColor: '#ffffff',
+                                    pointBorderColor: '#f97316',
+                                    pointBorderWidth: 2,
+                                    fill: true,
+                                    tension: .42
+                                }
+                            ]
+                        },
+                        options: baseOptions
+                    });
+                }
+
+                const dkmPayrollCanvas = document.getElementById('dkmPayrollChart');
+                if (dkmPayrollCanvas) {
+                    const context = dkmPayrollCanvas.getContext('2d');
+                    new Chart(context, {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets: [
+                                {
+                                    label: 'Penggajian',
+                                    data: chartData.penggajian || [],
+                                    backgroundColor: createAreaGradient(
+                                        context,
+                                        'rgba(37, 99, 235, .28)',
+                                        'rgba(96, 165, 250, .03)'
+                                    ),
+                                    borderColor: '#2563eb',
+                                    borderWidth: 3,
+                                    pointRadius: 3,
+                                    pointHoverRadius: 6,
+                                    pointBackgroundColor: '#ffffff',
+                                    pointBorderColor: '#2563eb',
+                                    pointBorderWidth: 2,
+                                    fill: true,
+                                    tension: .42
                                 }
                             ]
                         },
@@ -829,12 +1220,24 @@
 <style data-finus-dark-local="dashboard/pegawai/_dashboard-content.blade.php">
 html[data-finus-theme="dark"] body .metric-card { border-color:#293D31 !important; background:#111A15 !important; box-shadow:0 12px 28px rgba(0,0,0,.18) !important; }
 html[data-finus-theme="dark"] body .metric-card .card-body { background:#111A15 !important; color:#F1F6F3 !important; }
-html[data-finus-theme="dark"] body :where(.finance-chart-card,.finance-list-item,.focus-item,.personal-strip-item) { border-color:#293D31 !important; background:#111B15 !important; color:#F1F6F3 !important; }
-html[data-finus-theme="dark"] body :where(.finance-list-title,.finance-list-value) { color:#F1F6F3 !important; }
-html[data-finus-theme="dark"] body :where(.finance-list-meta,.text-muted) { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body :where(.finance-chart-card,.finance-activity-card,.focus-item,.personal-strip-item) { border-color:#293D31 !important; background:#111B15 !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .text-muted { color:#9EAEA4 !important; }
 html[data-finus-theme="dark"] body .trend-badge { border-color:#2D6140 !important; background:#15331E !important; color:#A9F0B9 !important; }
 html[data-finus-theme="dark"] body .trend-badge.is-down { border-color:#704044 !important; background:#371E22 !important; color:#F5B1B5 !important; }
 html[data-finus-theme="dark"] body .trend-badge.is-flat { border-color:#4B554E !important; background:#1B241E !important; color:#B8C4BB !important; }
+html[data-finus-theme="dark"] body .finance-year-filter { border-color:#293D31 !important; background:#111B15 !important; }
+html[data-finus-theme="dark"] body .finance-year-filter label { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .finance-year-filter select { border-color:#365141 !important; background:#16241B !important; color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .finance-activity-tabs { border-color:#365141 !important; background:#16241B !important; }
+html[data-finus-theme="dark"] body .finance-activity-tab { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .finance-activity-tab.is-active { background:#223329 !important; color:#A9F0B9 !important; }
+html[data-finus-theme="dark"] body .finance-table-scroll { border-color:#293D31 !important; }
+html[data-finus-theme="dark"] body .finance-activity-table th { background:#16241B !important; color:#AFC0B5 !important; }
+html[data-finus-theme="dark"] body .finance-activity-table td { border-color:#293D31 !important; color:#DCE7E0 !important; }
+html[data-finus-theme="dark"] body .finance-activity-table tbody tr:hover { background:#15231B !important; }
+html[data-finus-theme="dark"] body .finance-activity-table :where(.is-strong,.is-amount) { color:#F1F6F3 !important; }
+html[data-finus-theme="dark"] body .finance-table-empty { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .finance-table-link { color:#A9F0B9 !important; }
 </style>
 @endpush
 

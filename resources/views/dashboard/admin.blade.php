@@ -347,7 +347,55 @@
     .finus-content-row {
         display: grid;
         grid-template-columns: minmax(0, 2fr) minmax(280px, .8fr);
+        align-items: start;
         gap: 18px;
+    }
+
+    .finus-chart-stack {
+        display: grid;
+        gap: 18px;
+        min-width: 0;
+    }
+
+    .finus-chart-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 14px;
+    }
+
+    .finus-year-filter {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+        padding: 7px 9px 7px 13px;
+        border: 1px solid var(--finus-border);
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, .05);
+    }
+
+    .finus-year-filter label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0;
+        color: var(--finus-muted);
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .finus-year-filter select {
+        min-width: 96px;
+        height: 32px;
+        padding: 0 30px 0 10px;
+        border: 1px solid #D8E3DC;
+        border-radius: 6px;
+        background-color: #F8FBF9;
+        color: var(--finus-text);
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
     }
 
     .finus-content-card {
@@ -450,7 +498,7 @@
         background: #E5484D;
     }
 
-    .finus-legend-payroll {
+    .finus-legend-income {
         background: #179B40;
     }
 
@@ -642,6 +690,7 @@
         .finus-content-row {
             grid-template-columns: minmax(0, 1.6fr) minmax(260px, .8fr);
         }
+
     }
 
     @media (max-width: 991px) {
@@ -742,12 +791,6 @@
     }
 </style>
 
-@php
-    $totalOperasionalBulanIni =
-        (float) $pengeluaranBulanIni +
-        (float) $gajiBulanIni;
-@endphp
-
 <div class="finus-dashboard">
 
     {{-- Header Dashboard --}}
@@ -781,10 +824,36 @@
     {{-- Kartu Ringkasan --}}
     <div class="finus-summary">
 
+        <div class="finus-summary-card finus-card-green">
+            <div class="finus-summary-top">
+                <div class="finus-summary-icon">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                </div>
+
+                <div class="finus-summary-indicator">
+                    Bulan ini
+                </div>
+            </div>
+
+            <div class="finus-summary-content">
+                <p class="finus-summary-label">
+                    Total Pemasukan
+                </p>
+
+                <h4 class="finus-summary-value">
+                    Rp {{ number_format($pemasukanBulanIni, 0, ',', '.') }}
+                </h4>
+
+                <div class="finus-summary-note">
+                    Penerimaan terverifikasi pada bulan berjalan.
+                </div>
+            </div>
+        </div>
+
         <div class="finus-summary-card finus-card-red">
             <div class="finus-summary-top">
                 <div class="finus-summary-icon">
-                    <i class="fa-solid fa-receipt"></i>
+                    <i class="fa-solid fa-arrow-trend-down"></i>
                 </div>
 
                 <div class="finus-summary-indicator">
@@ -802,12 +871,12 @@
                 </h4>
 
                 <div class="finus-summary-note">
-                    Pengeluaran operasional yang telah dicatat.
+                    Operasional dan gaji yang telah dibayar.
                 </div>
             </div>
         </div>
 
-        <div class="finus-summary-card finus-card-green">
+        <div class="finus-summary-card finus-card-orange">
             <div class="finus-summary-top">
                 <div class="finus-summary-icon">
                     <i class="fa-solid fa-wallet"></i>
@@ -828,7 +897,7 @@
                 </h4>
 
                 <div class="finus-summary-note">
-                    Gaji pegawai yang tercatat pada periode ini.
+                    Total hak gaji untuk periode {{ now()->format('m/Y') }}.
                 </div>
             </div>
         </div>
@@ -859,7 +928,7 @@
             </div>
         </div>
 
-        <div class="finus-summary-card finus-card-orange">
+        <div class="finus-summary-card finus-card-cyan">
             <div class="finus-summary-top">
                 <div class="finus-summary-icon">
                     <i class="fa-solid fa-users"></i>
@@ -911,36 +980,30 @@
             </div>
         </div>
 
-        <div class="finus-summary-card finus-card-cyan">
-            <div class="finus-summary-top">
-                <div class="finus-summary-icon">
-                    <i class="fa-solid fa-calendar-check"></i>
-                </div>
-
-                <div class="finus-summary-indicator">
-                    Hari ini
-                </div>
-            </div>
-
-            <div class="finus-summary-content">
-                <p class="finus-summary-label">
-                    Presensi Pegawai
-                </p>
-
-                <h4 class="finus-summary-value">
-                    {{ number_format($presensiHariIni, 0, ',', '.') }} catatan
-                </h4>
-
-                <div class="finus-summary-note">
-                    Presensi pegawai yang tercatat hari ini.
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    {{-- Grafik dan Menu Cepat --}}
+    {{-- Grafik Keuangan --}}
+    <div class="finus-chart-toolbar">
+        <form method="GET" action="{{ route('dashboard') }}" class="finus-year-filter">
+            <label for="admin-chart-year">
+                <i class="fa-regular fa-calendar"></i>
+                Tahun Grafik
+            </label>
+            <select id="admin-chart-year" name="tahun" onchange="this.form.submit()">
+                @foreach($tahunGrafikTersedia as $tahun)
+                    <option value="{{ $tahun }}" @selected($tahun === $tahunGrafik)>
+                        {{ $tahun }}
+                    </option>
+                @endforeach
+            </select>
+            <noscript>
+                <button type="submit" class="btn btn-sm btn-success">Terapkan</button>
+            </noscript>
+        </form>
+    </div>
+
     <div class="finus-content-row">
+        <div class="finus-chart-stack">
 
         {{-- Grafik --}}
         <div class="finus-content-card">
@@ -952,57 +1015,81 @@
 
                     <div>
                         <h5 class="finus-content-title">
-                            Operasional Tahunan
+                            Pemasukan dan Pengeluaran
                         </h5>
 
                         <p class="finus-content-description">
-                            Perbandingan pengeluaran dan penggajian tahun
-                            {{ now()->year }}.
+                            Perbandingan arus kas masuk dan keluar Januari-Desember
+                            {{ $tahunGrafik }}.
                         </p>
                     </div>
                 </div>
 
                 <div class="finus-chart-legend">
                     <div class="finus-legend-item">
-                        <span class="finus-legend-dot finus-legend-expense"></span>
-                        Pengeluaran
+                        <span class="finus-legend-dot finus-legend-income"></span>
+                        Pemasukan
                     </div>
 
                     <div class="finus-legend-item">
-                        <span class="finus-legend-dot finus-legend-payroll"></span>
-                        Penggajian
+                        <span class="finus-legend-dot finus-legend-expense"></span>
+                        Pengeluaran
                     </div>
                 </div>
             </div>
 
             <div class="finus-chart-body">
                 <div class="finus-chart">
-                    <canvas id="operasionalChart"></canvas>
+                    <canvas id="cashflowChart"></canvas>
                 </div>
             </div>
         </div>
 
-        {{-- Akses Cepat --}}
-        <div class="finus-content-card">
+            {{-- Grafik Penggajian --}}
+            <div class="finus-content-card">
             <div class="finus-content-header">
                 <div class="finus-content-heading">
                     <div class="finus-content-icon">
-                        <i class="fa-solid fa-bolt"></i>
+                        <i class="fa-solid fa-chart-line"></i>
                     </div>
 
                     <div>
                         <h5 class="finus-content-title">
-                            Akses Cepat
+                            Penggajian per Bulan
                         </h5>
 
                         <p class="finus-content-description">
-                            Buka menu pengelolaan utama.
+                            Total gaji berdasarkan periode Januari-Desember {{ $tahunGrafik }}.
                         </p>
                     </div>
                 </div>
             </div>
 
-            <div class="finus-quick-body">
+            <div class="finus-chart-body">
+                <div class="finus-chart">
+                    <canvas id="payrollChart"></canvas>
+                </div>
+            </div>
+            </div>
+
+        </div>
+
+    {{-- Akses Cepat --}}
+    <div class="finus-content-card finus-quick-dashboard">
+        <div class="finus-content-header">
+            <div class="finus-content-heading">
+                <div class="finus-content-icon">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+
+                <div>
+                    <h5 class="finus-content-title">Akses Cepat</h5>
+                    <p class="finus-content-description">Buka menu pengelolaan utama.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="finus-quick-body">
 
                 <a
                     href="{{ route('admin.pengeluaran.index') }}"
@@ -1090,22 +1177,21 @@
 
                 <div class="finus-operation-summary">
                     <div class="finus-operation-summary-label">
-                        Total operasional bulan ini
+                        Saldo arus kas bulan ini
                     </div>
 
                     <div class="finus-operation-summary-value">
-                        Rp {{ number_format($totalOperasionalBulanIni, 0, ',', '.') }}
+                        Rp {{ number_format($pemasukanBulanIni - $pengeluaranBulanIni, 0, ',', '.') }}
                     </div>
 
                     <div class="finus-operation-summary-note">
-                        Pengeluaran dan penggajian bulan berjalan.
+                        Pemasukan dikurangi pengeluaran yang telah dibayar.
                     </div>
                 </div>
 
-            </div>
         </div>
-
     </div>
+</div>
 </div>
 @endsection
 
@@ -1114,9 +1200,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const chartCanvas = document.getElementById('operasionalChart');
-
-    if (!chartCanvas) {
+    if (typeof Chart === 'undefined') {
         return;
     }
 
@@ -1144,194 +1228,160 @@ document.addEventListener('DOMContentLoaded', function () {
         );
     };
 
-    const pengeluaranData = fillMonths(
-        @json($pengeluaranBulanan)
-    );
-
-    const penggajianData = fillMonths(
-        @json($penggajianBulanan)
-    );
-
-    const context = chartCanvas.getContext('2d');
-
-    const expenseGradient = context.createLinearGradient(
-        0,
-        0,
-        0,
-        350
-    );
-
-    expenseGradient.addColorStop(
-        0,
-        'rgba(229, 72, 77, 0.88)'
-    );
-
-    expenseGradient.addColorStop(
-        1,
-        'rgba(229, 72, 77, 0.42)'
-    );
-
-    const payrollGradient = context.createLinearGradient(
-        0,
-        0,
-        0,
-        350
-    );
-
-    payrollGradient.addColorStop(
-        0,
-        'rgba(23, 155, 64, 0.92)'
-    );
-
-    payrollGradient.addColorStop(
-        1,
-        'rgba(34, 186, 81, 0.43)'
-    );
-
-    new Chart(context, {
-        type: 'bar',
-
-        data: {
-            labels: months,
-
-            datasets: [
-                {
-                    label: 'Pengeluaran',
-                    data: pengeluaranData,
-                    backgroundColor: expenseGradient,
-                    borderColor: '#E5484D',
-                    borderWidth: 1,
-                    borderRadius: 7,
-                    borderSkipped: false,
-                    maxBarThickness: 30,
-                    categoryPercentage: 0.72,
-                    barPercentage: 0.78
-                },
-                {
-                    label: 'Penggajian',
-                    data: penggajianData,
-                    backgroundColor: payrollGradient,
-                    borderColor: '#179B40',
-                    borderWidth: 1,
-                    borderRadius: 7,
-                    borderSkipped: false,
-                    maxBarThickness: 30,
-                    categoryPercentage: 0.72,
-                    barPercentage: 0.78
-                }
-            ]
+    const pemasukanData = fillMonths(@json($pemasukanBulanan));
+    const pengeluaranData = fillMonths(@json($pengeluaranBulanan));
+    const penggajianData = fillMonths(@json($penggajianBulanan));
+    const createGradient = function (context, start, end) {
+        const gradient = context.createLinearGradient(0, 0, 0, 350);
+        gradient.addColorStop(0, start);
+        gradient.addColorStop(1, end);
+        return gradient;
+    };
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false
         },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            interaction: {
-                mode: 'index',
-                intersect: false
+        animation: {
+            duration: 750
+        },
+        plugins: {
+            legend: {
+                display: false
             },
-
-            animation: {
-                duration: 750
-            },
-
-            plugins: {
-                legend: {
+            tooltip: {
+                backgroundColor: '#172033',
+                titleColor: '#FFFFFF',
+                bodyColor: '#E2E8F0',
+                padding: 12,
+                cornerRadius: 10,
+                displayColors: true,
+                callbacks: {
+                    label: function (context) {
+                        const value = Number(context.parsed.y || 0);
+                        return context.dataset.label + ': Rp ' + value.toLocaleString('id-ID');
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: {
                     display: false
                 },
-
-                tooltip: {
-                    backgroundColor: '#172033',
-                    titleColor: '#FFFFFF',
-                    bodyColor: '#E2E8F0',
-                    padding: 12,
-                    cornerRadius: 10,
-                    displayColors: true,
-
-                    callbacks: {
-                        label: function (context) {
-                            const value = Number(
-                                context.parsed.y || 0
-                            );
-
-                            return context.dataset.label +
-                                ': Rp ' +
-                                value.toLocaleString('id-ID');
-                        }
+                border: {
+                    display: false
+                },
+                ticks: {
+                    color: '#64748B',
+                    font: {
+                        size: 11,
+                        weight: '600'
                     }
                 }
             },
-
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    },
-
-                    border: {
-                        display: false
-                    },
-
-                    ticks: {
-                        color: '#64748B',
-                        font: {
-                            size: 11,
-                            weight: '600'
-                        }
-                    }
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(148, 163, 184, 0.15)',
+                    drawTicks: false
                 },
-
-                y: {
-                    beginAtZero: true,
-
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.15)',
-                        drawTicks: false
+                border: {
+                    display: false
+                },
+                ticks: {
+                    color: '#64748B',
+                    padding: 10,
+                    font: {
+                        size: 10
                     },
-
-                    border: {
-                        display: false
-                    },
-
-                    ticks: {
-                        color: '#64748B',
-                        padding: 10,
-                        font: {
-                            size: 10
-                        },
-
-                        callback: function (value) {
-                            const number = Number(value);
-
-                            if (number >= 1000000000) {
-                                return 'Rp ' +
-                                    (number / 1000000000)
-                                        .toLocaleString('id-ID') +
-                                    ' M';
-                            }
-
-                            if (number >= 1000000) {
-                                return 'Rp ' +
-                                    (number / 1000000)
-                                        .toLocaleString('id-ID') +
-                                    ' jt';
-                            }
-
-                            if (number >= 1000) {
-                                return 'Rp ' +
-                                    (number / 1000)
-                                        .toLocaleString('id-ID') +
-                                    ' rb';
-                            }
-
-                            return 'Rp ' +
-                                number.toLocaleString('id-ID');
+                    callback: function (value) {
+                        const number = Number(value);
+                        if (number >= 1000000000) {
+                            return 'Rp ' + (number / 1000000000).toLocaleString('id-ID') + ' M';
                         }
+                        if (number >= 1000000) {
+                            return 'Rp ' + (number / 1000000).toLocaleString('id-ID') + ' jt';
+                        }
+                        if (number >= 1000) {
+                            return 'Rp ' + (number / 1000).toLocaleString('id-ID') + ' rb';
+                        }
+                        return 'Rp ' + number.toLocaleString('id-ID');
                     }
                 }
             }
         }
-    });
+    };
+
+    const cashflowCanvas = document.getElementById('cashflowChart');
+    if (cashflowCanvas) {
+        const context = cashflowCanvas.getContext('2d');
+        new Chart(context, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [
+                    {
+                        label: 'Pemasukan',
+                        data: pemasukanData,
+                        backgroundColor: createGradient(context, 'rgba(23, 155, 64, .30)', 'rgba(34, 186, 81, .03)'),
+                        borderColor: '#179B40',
+                        borderWidth: 3,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#FFFFFF',
+                        pointBorderColor: '#179B40',
+                        pointBorderWidth: 2,
+                        fill: true,
+                        tension: .42
+                    },
+                    {
+                        label: 'Pengeluaran',
+                        data: pengeluaranData,
+                        backgroundColor: createGradient(context, 'rgba(229, 72, 77, .24)', 'rgba(229, 72, 77, .02)'),
+                        borderColor: '#E5484D',
+                        borderWidth: 3,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#FFFFFF',
+                        pointBorderColor: '#E5484D',
+                        pointBorderWidth: 2,
+                        fill: true,
+                        tension: .42
+                    }
+                ]
+            },
+            options
+        });
+    }
+
+    const payrollCanvas = document.getElementById('payrollChart');
+    if (payrollCanvas) {
+        const context = payrollCanvas.getContext('2d');
+        new Chart(context, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Penggajian',
+                    data: penggajianData,
+                    backgroundColor: createGradient(context, 'rgba(37, 99, 235, .28)', 'rgba(96, 165, 250, .03)'),
+                    borderColor: '#2563EB',
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#FFFFFF',
+                    pointBorderColor: '#2563EB',
+                    pointBorderWidth: 2,
+                    fill: true,
+                    tension: .42
+                }]
+            },
+            options
+        });
+    }
 });
 </script>
 @endpush
@@ -1348,6 +1398,9 @@ html[data-finus-theme="dark"] body .finus-dashboard .finus-content-header { bord
 html[data-finus-theme="dark"] body .finus-dashboard :where(.finus-content-title,.finus-quick-title,.finus-operation-summary-value) { color:#F1F6F3 !important; }
 html[data-finus-theme="dark"] body .finus-dashboard .finus-quick-link { border-color:#293D31 !important; background:#121F18 !important; color:#F1F6F3 !important; }
 html[data-finus-theme="dark"] body .finus-dashboard .finus-quick-link:hover { border-color:#365141 !important; background:#192A20 !important; }
+html[data-finus-theme="dark"] body .finus-dashboard .finus-year-filter { border-color:#293D31 !important; background:#111B15 !important; }
+html[data-finus-theme="dark"] body .finus-dashboard .finus-year-filter label { color:#9EAEA4 !important; }
+html[data-finus-theme="dark"] body .finus-dashboard .finus-year-filter select { border-color:#365141 !important; background:#16241B !important; color:#F1F6F3 !important; }
 </style>
 @endpush
 
