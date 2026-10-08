@@ -26,7 +26,7 @@ class PengeluaranController extends Controller
          * dikecualikan agar tidak tampil dua kali dengan data penggajian.
          */
         $pengeluaranManual = Pengeluaran::query()
-            ->with(['zakatPenyaluran', 'periodePenyaluranZakat'])
+            ->with(['zakatPenyaluran', 'periodePenyaluranZakat', 'coaDebit'])
             ->whereNull('id_penggajian')
             ->whereNull('referensi_penggajian_id')
             ->where(function ($query): void {

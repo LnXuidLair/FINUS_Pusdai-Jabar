@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -42,7 +43,11 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $fillable = [
         'name',
+        'organization_id',
+        'nama_masjid',
         'email',
+        'no_telp',
+        'alamat',
         'email_verified_at',
         'password',
         'recovery_code',
@@ -68,6 +73,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function pegawai()
     {
         return $this->hasOne(Pegawai::class, 'email', 'email');
+    }
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class, 'organization_id');
     }
 
     public function hasRole(string ...$roles): bool
@@ -103,6 +113,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function setEmailAttribute(?string $value): void
     {
         $this->attributes['email'] = strtolower(trim((string) $value));
+    }
+
+    public function setNoTelpAttribute(?string $value): void
+    {
+        $this->attributes['no_telp'] = PhoneNumber::normalize($value);
     }
 
     /**

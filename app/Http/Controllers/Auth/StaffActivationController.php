@@ -143,6 +143,7 @@ class StaffActivationController extends Controller
             if (! $user) {
                 $user = new User([
                     'name' => $pegawai->nama_pegawai,
+                    'organization_id' => $pegawai->organization_id,
                     'email' => $email,
                     'password' => Hash::make(Str::random(64)),
                     'role' => User::ROLE_PEGAWAI,
@@ -156,6 +157,7 @@ class StaffActivationController extends Controller
 
             $user->forceFill([
                 'name' => $pegawai->nama_pegawai,
+                'organization_id' => $pegawai->organization_id,
                 'email_verified_at' => now(),
                 'password' => Hash::make($validated['password']),
                 'password_changed_at' => now(),
@@ -209,7 +211,7 @@ class StaffActivationController extends Controller
 
     private function staffEmailFor(Pegawai $pegawai): string
     {
-        $staffDomain = $this->staffDomain();
+        $staffDomain = $this->staffDomain($pegawai);
         $currentEmail = strtolower(trim((string) $pegawai->email));
 
         if ($currentEmail !== '' && str_ends_with($currentEmail, '@'.$staffDomain)) {
@@ -231,10 +233,14 @@ class StaffActivationController extends Controller
         return $email;
     }
 
-    private function staffDomain(): string
+    private function staffDomain(Pegawai $pegawai): string
     {
         $admin = User::query()
             ->where('role', User::ROLE_ADMIN)
+            ->when(
+                $pegawai->organization_id,
+                fn ($query) => $query->where('organization_id', $pegawai->organization_id)
+            )
             ->firstOrFail();
 
         $adminEmail = strtolower(trim((string) $admin->email));

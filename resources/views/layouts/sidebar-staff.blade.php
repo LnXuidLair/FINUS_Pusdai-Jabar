@@ -151,6 +151,20 @@
         font-weight: 500;
         letter-spacing: .4px;
     }
+
+    .finus-mosque-name {
+        display: -webkit-box;
+        width: min(190px, calc(100% - 24px));
+        max-width: 190px;
+        margin: 5px auto 0 !important;
+        overflow: hidden;
+        line-height: 1.35 !important;
+        text-align: center;
+        overflow-wrap: anywhere;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
     .sidebar.staff-sidebar ul {
         margin: 0 !important;
         padding: 17px 13px 35px !important;
@@ -774,9 +788,9 @@ html[data-finus-theme="dark"] {
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <span class="finus-mobile-logo-mask" aria-hidden="true"></span>
-                <img src="{{ asset('assets/images/pusdai_dashboard.png') }}" alt="FINUS" style="max-width:130px" onerror="this.style.display='none'">
+                <img src="{{ !empty($finusOrganization?->logo_path) ? asset('storage/' . $finusOrganization->logo_path) : asset('assets/images/pusdai_dashboard.png') }}" alt="FINUS" style="max-width:130px" onerror="this.style.display='none'">
                 <div class="logo-title">Pegawai FINUS</div>
-                <div class="logo-sub-title">Jabatan: {{ $profileSidebar['jabatan'] }}</div>
+                <div class="logo-sub-title finus-mosque-name" title="{{ $finusMosqueName }}">{{ $finusMosqueName }}</div>
                 <div class="finus-sidebar-role-chip">{{ $pegawaiSidebar?->akses_role_label ?? $profileSidebar['jabatan'] }}</div>
             </div>
             <ul>
@@ -794,13 +808,6 @@ html[data-finus-theme="dark"] {
                         class="{{ request()->routeIs('pegawai.presensi.index') ? 'active' : '' }}">
                         <i class="ti-calendar"></i>
                         <span>Presensi Saya</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('pegawai.presensi.create') }}"
-                        class="{{ request()->routeIs('pegawai.presensi.create') ? 'active' : '' }}">
-                        <i class="ti-check-box"></i>
-                        <span>Isi Presensi</span>
                     </a>
                 </li>
                 <li>

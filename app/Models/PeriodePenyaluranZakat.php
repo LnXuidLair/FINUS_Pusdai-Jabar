@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PeriodePenyaluranZakat extends Model
 {
+    use BelongsToOrganization;
     public const STATUS_AKTIF = 'aktif';
 
     public const STATUS_DITUTUP = 'ditutup';
@@ -15,6 +17,7 @@ class PeriodePenyaluranZakat extends Model
     protected $table = 'periode_penyaluran_zakat';
 
     protected $fillable = [
+        'organization_id',
         'periode',
         'tanggal_mulai',
         'tanggal_selesai',

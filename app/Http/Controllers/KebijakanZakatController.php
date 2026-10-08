@@ -7,6 +7,7 @@ use App\Models\Coa;
 use App\Models\HargaBarangZakat;
 use App\Models\KetentuanPokokZakat;
 use App\Models\MasterAsnaf;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -89,7 +90,7 @@ class KebijakanZakatController extends Controller
         }
 
         $validated['aktif'] = $request->boolean('aktif');
-        $validated['updated_by'] = $request->user()->id;
+        $validated['updated_by'] = $request->user(User::ROLE_ADMIN)->id;
 
         $ketentuan->update($validated);
 
@@ -100,7 +101,7 @@ class KebijakanZakatController extends Controller
     {
         $ketentuan->update([
             'terkunci' => ! $ketentuan->terkunci,
-            'updated_by' => $request->user()->id,
+            'updated_by' => $request->user(User::ROLE_ADMIN)->id,
         ]);
 
         $status = $ketentuan->terkunci ? 'dikunci' : 'dibuka kuncinya';
@@ -111,8 +112,8 @@ class KebijakanZakatController extends Controller
     public function storeBarang(Request $request)
     {
         $validated = $request->validate([
-            'kode' => ['required', 'string', 'max:30', 'unique:barang_zakat,kode'],
-            'nama' => ['required', 'string', 'max:100', 'unique:barang_zakat,nama'],
+            'kode' => ['required', 'string', 'max:30', Rule::unique('barang_zakat', 'kode')],
+            'nama' => ['required', 'string', 'max:100', Rule::unique('barang_zakat', 'nama')],
             'kategori' => ['required', 'string'],
             'satuan_dasar' => ['required', 'string', 'max:20'],
             'metode_penilaian' => ['required', 'string'],
@@ -122,7 +123,7 @@ class KebijakanZakatController extends Controller
         ]);
 
         $validated['aktif'] = $request->boolean('aktif', true);
-        $validated['created_by'] = $request->user()->id;
+        $validated['created_by'] = $request->user(User::ROLE_ADMIN)->id;
 
         BarangZakat::create($validated);
 
@@ -132,8 +133,8 @@ class KebijakanZakatController extends Controller
     public function updateBarang(Request $request, BarangZakat $barang)
     {
         $validated = $request->validate([
-            'kode' => ['required', 'string', 'max:30', Rule::unique('barang_zakat')->ignore($barang->id)],
-            'nama' => ['required', 'string', 'max:100', Rule::unique('barang_zakat')->ignore($barang->id)],
+            'kode' => ['required', 'string', 'max:30', Rule::unique('barang_zakat', 'kode')->ignore($barang->id)],
+            'nama' => ['required', 'string', 'max:100', Rule::unique('barang_zakat', 'nama')->ignore($barang->id)],
             'kategori' => ['required', 'string'],
             'satuan_dasar' => ['required', 'string', 'max:20'],
             'metode_penilaian' => ['required', 'string'],
@@ -143,7 +144,7 @@ class KebijakanZakatController extends Controller
         ]);
 
         $validated['aktif'] = $request->boolean('aktif', false);
-        $validated['updated_by'] = $request->user()->id;
+        $validated['updated_by'] = $request->user(User::ROLE_ADMIN)->id;
 
         $barang->update($validated);
 
@@ -162,9 +163,9 @@ class KebijakanZakatController extends Controller
             'status' => ['required', 'string', 'in:draft,disetujui'],
         ]);
 
-        $validated['created_by'] = $request->user()->id;
+        $validated['created_by'] = $request->user(User::ROLE_ADMIN)->id;
         if ($validated['status'] === 'disetujui') {
-            $validated['approved_by'] = $request->user()->id;
+            $validated['approved_by'] = $request->user(User::ROLE_ADMIN)->id;
             $validated['approved_at'] = now();
         }
 
@@ -185,9 +186,9 @@ class KebijakanZakatController extends Controller
             'status' => ['required', 'string', 'in:draft,disetujui'],
         ]);
 
-        $validated['updated_by'] = $request->user()->id;
+        $validated['updated_by'] = $request->user(User::ROLE_ADMIN)->id;
         if ($validated['status'] === 'disetujui' && $harga->status !== 'disetujui') {
-            $validated['approved_by'] = $request->user()->id;
+            $validated['approved_by'] = $request->user(User::ROLE_ADMIN)->id;
             $validated['approved_at'] = now();
         } elseif ($validated['status'] === 'draft') {
             $validated['approved_by'] = null;
@@ -205,4 +206,5 @@ class KebijakanZakatController extends Controller
 
         return back()->with('success', 'Harga barang berhasil dihapus.');
     }
+
 }

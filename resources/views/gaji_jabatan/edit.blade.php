@@ -167,7 +167,7 @@
                         </div>
 
                         <div class="finus-help">
-                            Nama jabatan tidak boleh sama dengan data yang sudah ada.
+                            Nama jabatan tidak boleh sama dengan jabatan lain di masjid ini.
                         </div>
 
                         @error('jabatan')
@@ -251,4 +251,3 @@ html[data-finus-theme="dark"] body .finus-btn-secondary { border-color:#385442 !
 html[data-finus-theme="dark"] body .finus-alert { border:1px solid #704044 !important; background:#321D21 !important; color:#FFC2C5 !important; }
 </style>
 @endpush
-

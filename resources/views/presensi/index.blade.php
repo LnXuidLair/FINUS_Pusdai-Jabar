@@ -9,10 +9,10 @@
         : collect($presensis);
 
     $totalData = $presensiItems->count();
-    $totalHadir = $presensiItems
-        ->filter(fn ($item) => mb_strtolower(trim((string) $item->status)) === 'hadir')
+    $totalLengkap = $presensiItems->filter(fn ($item) => $item->isComplete())->count();
+    $totalMenunggu = $presensiItems
+        ->filter(fn ($item) => ! $item->is_approved && $item->isComplete())
         ->count();
-    $totalTidakHadir = max(0, $totalData - $totalHadir);
 @endphp
 
 @push('styles')
@@ -738,16 +738,154 @@
     .finus-data-empty::before { display: none; }
 }
 
+
+/* POPUP BUKTI PRESENSI ADMIN */
+button.finus-data-edit { cursor: pointer; }
+body.finus-proof-modal-open { overflow: hidden !important; }
+.finus-proof-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.finus-proof-modal.is-open { display: flex; }
+.finus-proof-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(3,20,9,.68);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+}
+.finus-proof-modal__dialog {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(820px, 100%);
+    max-height: min(90vh, 920px);
+    overflow: hidden;
+    border: 1px solid #DDE8E0;
+    border-radius: 19px;
+    background: #fff;
+    box-shadow: 0 28px 80px rgba(0,0,0,.30);
+}
+.finus-proof-modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 17px 18px;
+    border-bottom: 1px solid #E6EEE8;
+    background: linear-gradient(180deg,#fff,#FAFCFA);
+}
+.finus-proof-modal__header h3 {
+    margin: 0;
+    color: #123D20;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+.finus-proof-modal__header p {
+    margin: 4px 0 0;
+    color: #64748B;
+    font-size: 12px;
+    line-height: 1.45;
+}
+.finus-proof-modal__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid #DCE7DF;
+    border-radius: 11px;
+    background: #F5FAF6;
+    color: #385244;
+    font-size: 25px;
+    line-height: 1;
+    cursor: pointer;
+    transition: .18s ease;
+}
+.finus-proof-modal__close:hover {
+    border-color: #BFD8C6;
+    background: #EAF8EE;
+    color: #0E5423;
+}
+.finus-proof-modal__body {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+    padding: 18px;
+    overflow: auto;
+    background: #F3F7F4;
+}
+.finus-proof-modal__body img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: calc(90vh - 120px);
+    border-radius: 12px;
+    object-fit: contain;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15,23,42,.14);
+}
+.finus-proof-modal__loading,
+.finus-proof-modal__error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 220px;
+    color: #64748B;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+}
+.finus-proof-modal__error { color: #B91C1C; }
+html[data-finus-theme="dark"] body .finus-proof-modal__dialog {
+    border-color: #293D31;
+    background: #111A15;
+    box-shadow: 0 28px 80px rgba(0,0,0,.48);
+}
+html[data-finus-theme="dark"] body .finus-proof-modal__header {
+    border-bottom-color: #293D31;
+    background: linear-gradient(180deg,#17251D,#121D17);
+}
+html[data-finus-theme="dark"] body .finus-proof-modal__header h3 { color: #F1F6F3; }
+html[data-finus-theme="dark"] body .finus-proof-modal__header p { color: #9EAEA4; }
+html[data-finus-theme="dark"] body .finus-proof-modal__close {
+    border-color: #31493A;
+    background: #18271E;
+    color: #DCE7E0;
+}
+html[data-finus-theme="dark"] body .finus-proof-modal__body { background: #0D1611; }
+html[data-finus-theme="dark"] body .finus-proof-modal__body img { background: #111A15; }
+html[data-finus-theme="dark"] body .finus-proof-modal__loading { color: #AAB9AF; }
+html[data-finus-theme="dark"] body .finus-proof-modal__error { color: #F5B1B5; }
+@media (max-width: 767.98px) {
+    .finus-proof-modal { padding: 11px; }
+    .finus-proof-modal__dialog { max-height: 94vh; border-radius: 16px; }
+    .finus-proof-modal__header { padding: 14px; }
+    .finus-proof-modal__header h3 { font-size: 16px; }
+    .finus-proof-modal__body { min-height: 220px; padding: 10px; }
+    .finus-proof-modal__body img { max-height: calc(94vh - 105px); }
+}
+
 </style>
 @endpush
 
+
 @section('content')
 @include('layouts.partials.finus-ui')
-@php
-    $totalData = $presensis->count();
-    $totalDisetujui = $presensis->where('is_approved', true)->count();
-    $totalMenunggu = $presensis->where('is_approved', false)->count();
-@endphp
+
 <div class="finus-data-page" data-finus-data-page>
     <section class="finus-data-hero">
         <div class="finus-data-hero-left">
@@ -755,13 +893,13 @@
             <div>
                 <h1 class="finus-data-hero-title">Presensi</h1>
                 <p class="finus-data-hero-subtitle" data-record-subtitle data-label="catatan presensi">
-                    Kelola {{ number_format($totalData) }} catatan presensi dan approval pegawai.
+                    Kelola {{ number_format($totalData) }} catatan presensi datang–pulang dan approval pegawai.
                 </p>
             </div>
         </div>
         <div class="finus-data-hero-actions">
             <a href="{{ route('admin.presensi.create') }}" class="finus-data-add">
-                <i class="fa-solid fa-plus"></i>Tambah Presensi
+                <i class="fa-solid fa-plus"></i>Input / Lengkapi Presensi
             </a>
         </div>
     </section>
@@ -785,7 +923,7 @@
         </article>
         <article class="finus-data-stat finus-stat-green">
             <div class="finus-data-stat-icon"><i class="fa-solid fa-circle-check"></i></div>
-            <div><span class="finus-data-stat-label">Sudah Di-ACC</span><strong class="finus-data-stat-value">{{ number_format($totalDisetujui) }}</strong></div>
+            <div><span class="finus-data-stat-label">Data Lengkap</span><strong class="finus-data-stat-value">{{ number_format($totalLengkap) }}</strong></div>
         </article>
         <article class="finus-data-stat finus-stat-amber">
             <div class="finus-data-stat-icon"><i class="fa-solid fa-clock"></i></div>
@@ -793,13 +931,19 @@
         </article>
     </section>
 
+    <div class="alert alert-info" style="border-radius:14px;font-size:13px">
+        <i class="fa-solid fa-circle-info"></i>
+        Presensi <strong>Hadir</strong> baru dapat di-ACC setelah bukti Datang dan Pulang lengkap.
+        Untuk Pegawai yang lupa presensi, gunakan <strong>Input / Lengkapi Presensi</strong> dan lampirkan bukti serta alasan koreksi.
+    </div>
+
     <section class="finus-data-card">
         <header class="finus-data-card-head">
             <div class="finus-data-card-title-wrap">
                 <div class="finus-data-card-icon"><i class="fa-solid fa-list-check"></i></div>
                 <div>
                     <h2 class="finus-data-card-title">Daftar Presensi</h2>
-                    <p class="finus-data-card-description">Presensi pegawai harus di-ACC sebelum dihitung ke penggajian.</p>
+                    <p class="finus-data-card-description">Satu Pegawai hanya memiliki satu catatan per tanggal; Datang dan Pulang tersimpan pada catatan yang sama.</p>
                 </div>
             </div>
             <div class="finus-data-visible"><i class="fa-solid fa-database"></i><span data-visible-count>{{ $totalData }}</span> data ditampilkan</div>
@@ -808,7 +952,7 @@
         <div class="finus-data-toolbar" style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap">
             <div class="finus-data-search-wrap">
                 <i class="fa-solid fa-magnifying-glass finus-data-search-icon"></i>
-                <input type="search" class="finus-data-search" data-finus-search placeholder="Ketik dari awal tanggal, pegawai, status, atau approval..." autocomplete="off">
+                <input type="search" class="finus-data-search" data-finus-search placeholder="Ketik dari awal tanggal, pegawai, status, kondisi, atau approval..." autocomplete="off">
                 <button type="button" class="finus-data-clear" data-finus-clear aria-label="Hapus pencarian"><i class="fa-solid fa-xmark"></i></button>
                 <p class="finus-data-search-help"><i class="fa-solid fa-circle-info"></i>Pencarian dimulai dari karakter pertama setiap data.</p>
             </div>
@@ -823,19 +967,22 @@
         </div>
 
         <div class="finus-data-table-area">
-            <div class="finus-data-table-wrap">
-                <table class="finus-data-table">
+            <div class="finus-data-table-wrap" style="overflow-x:auto">
+                <table class="finus-data-table" style="min-width:1320px">
                     <thead>
                         <tr>
-                            <th width="45"><input type="checkbox" id="selectAllPresensi" aria-label="Pilih semua presensi yang terlihat"></th>
+                            <th width="45"><input type="checkbox" id="selectAllPresensi" aria-label="Pilih semua presensi lengkap yang terlihat"></th>
                             <th width="65">No.</th>
-                            <th width="150">Tanggal</th>
+                            <th width="145">Tanggal</th>
                             <th>Pegawai</th>
-                            <th width="135">Status</th>
-                            <th>Keterangan</th>
-                            <th width="110">Bukti</th>
-                            <th width="145">Approval</th>
-                            <th width="205">Aksi</th>
+                            <th width="120">Status</th>
+                            <th width="125">Kondisi</th>
+                            <th width="105">Datang</th>
+                            <th width="105">Pulang</th>
+                            <th width="220">Bukti</th>
+                            <th width="135">Kelengkapan</th>
+                            <th width="135">Approval</th>
+                            <th width="165">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -845,50 +992,83 @@
                                 $statusText = trim((string) $item->status);
                                 $statusLower = mb_strtolower($statusText);
                                 $approved = (bool) $item->is_approved;
-                                $approvalText = $approved ? 'Disetujui' : 'Menunggu';
+                                $complete = $item->isComplete();
+                                $approvalText = $approved ? 'Disetujui' : ($complete ? 'Menunggu' : 'Belum Lengkap');
+                                $conditionText = $statusLower === 'hadir' ? $item->kondisiLabel() : '-';
                                 $statusClass = match ($statusLower) {
                                     'hadir' => 'finus-status-success',
                                     'izin' => 'finus-status-info',
                                     'sakit' => 'finus-status-warning',
-                                    'lembur' => 'finus-status-neutral',
                                     default => 'finus-status-danger',
                                 };
                             @endphp
-                            <tr data-search-row data-search-start="{{ $item->tanggal }}|{{ $pegawaiNama }}|{{ $statusText }}|{{ $approvalText }}|{{ $item->keterangan ?? '' }}">
+                            <tr data-search-row data-search-start="{{ $item->tanggal?->format('Y-m-d') }}|{{ $pegawaiNama }}|{{ $statusText }}|{{ $conditionText }}|{{ $approvalText }}|{{ $item->keterangan ?? '' }}">
                                 <td data-label="Pilih">
-                                    @if(! $approved)
+                                    @if(! $approved && $complete)
                                         <input type="checkbox" class="presensi-checkbox" name="presensi_ids[]" value="{{ $item->id }}" form="bulkApproveForm">
-                                    @else
+                                    @elseif($approved)
                                         <i class="fa-solid fa-check" style="color:#179B40"></i>
+                                    @else
+                                        <i class="fa-solid fa-minus" style="color:#94A3B8"></i>
                                     @endif
                                 </td>
                                 <td data-label="Nomor"><span class="finus-data-number" data-row-number>{{ $loop->iteration }}</span></td>
-                                <td data-label="Tanggal"><span class="finus-data-chip blue"><i class="fa-solid fa-calendar-day"></i>{{ $item->tanggal }}</span></td>
+                                <td data-label="Tanggal"><span class="finus-data-chip blue"><i class="fa-solid fa-calendar-day"></i>{{ $item->tanggal?->translatedFormat('d M Y') ?? '-' }}</span></td>
                                 <td data-label="Pegawai">
                                     <span class="finus-data-primary"><span class="finus-data-primary-icon"><i class="fa-solid fa-user"></i></span>{{ $pegawaiNama }}</span>
                                 </td>
                                 <td data-label="Status"><span class="finus-data-status {{ $statusClass }}">{{ $statusText ?: 'Belum ditentukan' }}</span></td>
-                                <td data-label="Keterangan">{{ $item->keterangan ?: '-' }}</td>
-                                <td data-label="Bukti">
-                                    @if($item->bukti_kehadiran)
-                                        <a href="{{ asset('storage/' . $item->bukti_kehadiran) }}" target="_blank" rel="noopener" class="finus-data-edit"><i class="fa-solid fa-eye"></i>Lihat</a>
+                                <td data-label="Kondisi"><span class="finus-data-chip">{{ $conditionText }}</span></td>
+                                <td data-label="Datang">
+                                    @if($statusLower === 'hadir')
+                                        <strong>{{ $item->jam_datang ? substr($item->jam_datang,0,5) : '-' }}</strong>
+                                        @if($item->input_datang_role)<br><small>{{ ucfirst($item->input_datang_role) }}</small>@endif
                                     @else
-                                        <span class="text-muted">-</span>
+                                        -
                                     @endif
                                 </td>
+                                <td data-label="Pulang">
+                                    @if($statusLower === 'hadir')
+                                        <strong>{{ $item->jam_pulang ? substr($item->jam_pulang,0,5) : '-' }}</strong>
+                                        @if($item->input_pulang_role)<br><small>{{ ucfirst($item->input_pulang_role) }}</small>@endif
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td data-label="Bukti">
+                                    <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap">
+                                        @if($item->bukti_datang)
+                                            <button type="button" class="finus-data-edit" data-proof-preview data-proof-url="{{ route('admin.presensi.bukti', [$item,'datang']) }}" data-proof-title="Bukti Datang - {{ $pegawaiNama }}"><i class="fa-solid fa-eye"></i>Datang</button>
+                                        @endif
+                                        @if($item->bukti_pulang)
+                                            <button type="button" class="finus-data-edit" data-proof-preview data-proof-url="{{ route('admin.presensi.bukti', [$item,'pulang']) }}" data-proof-title="Bukti Pulang - {{ $pegawaiNama }}"><i class="fa-solid fa-eye"></i>Pulang</button>
+                                        @endif
+                                        @if($item->bukti_status)
+                                            <button type="button" class="finus-data-edit" data-proof-preview data-proof-url="{{ route('admin.presensi.bukti', [$item,'status']) }}" data-proof-title="Bukti {{ ucfirst($statusText) }} - {{ $pegawaiNama }}"><i class="fa-solid fa-eye"></i>Bukti</button>
+                                        @endif
+                                        @if($item->bukti_kehadiran && !$item->bukti_datang && !$item->bukti_pulang && !$item->bukti_status)
+                                            <button type="button" class="finus-data-edit" data-proof-preview data-proof-url="{{ route('admin.presensi.bukti', [$item,'status']) }}" data-proof-title="Bukti Presensi Lama - {{ $pegawaiNama }}"><i class="fa-solid fa-clock-rotate-left"></i>Lama</button>
+                                        @endif
+                                        @if(!$item->bukti_datang && !$item->bukti_pulang && !$item->bukti_status && !$item->bukti_kehadiran)
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td data-label="Kelengkapan">
+                                    <span class="finus-data-status {{ $complete ? 'finus-status-success' : 'finus-status-warning' }}">{{ $complete ? 'Lengkap' : 'Belum Lengkap' }}</span>
+                                </td>
                                 <td data-label="Approval">
-                                    <span class="finus-data-status {{ $approved ? 'finus-status-success' : 'finus-status-warning' }}">{{ $approvalText }}</span>
+                                    <span class="finus-data-status {{ $approved ? 'finus-status-success' : ($complete ? 'finus-status-warning' : 'finus-status-neutral') }}">{{ $approvalText }}</span>
                                 </td>
                                 <td data-label="Aksi">
                                     <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap">
-                                        @if(! $approved)
+                                        @if(! $approved && $complete)
                                             <form method="POST" action="{{ route('admin.presensi.approve', $item) }}">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="finus-data-edit" style="border-color:#BDE5C7;background:#EFFAF2;color:#166534!important"><i class="fa-solid fa-check"></i>ACC</button>
                                             </form>
                                         @endif
-                                        <a href="{{ route('admin.presensi.edit', $item) }}" class="finus-data-edit"><i class="fa-solid fa-pen"></i>Edit</a>
                                         <form method="POST" action="{{ route('admin.presensi.destroy', $item) }}" onsubmit="return confirm('Hapus presensi ini?')">
                                             @csrf
                                             @method('DELETE')
@@ -897,12 +1077,20 @@
                                     </div>
                                 </td>
                             </tr>
+                            @if($item->keterangan)
+                                <tr>
+                                    <td></td>
+                                    <td colspan="11" style="text-align:left!important;background:#FBFDFC">
+                                        <small><strong>Keterangan:</strong> {!! nl2br(e($item->keterangan)) !!}</small>
+                                    </td>
+                                </tr>
+                            @endif
                         @empty
-                            <tr><td colspan="9" class="finus-data-empty"><div class="finus-data-empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div><div class="finus-data-empty-title">Belum ada data presensi</div></td></tr>
+                            <tr><td colspan="12" class="finus-data-empty"><div class="finus-data-empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div><div class="finus-data-empty-title">Belum ada data presensi</div></td></tr>
                         @endforelse
 
                         <tr data-empty-search-row style="display:none;">
-                            <td colspan="9" class="finus-data-empty"><div class="finus-data-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div><div class="finus-data-empty-title">Presensi tidak ditemukan</div></td>
+                            <td colspan="12" class="finus-data-empty"><div class="finus-data-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div><div class="finus-data-empty-title">Presensi tidak ditemukan</div></td>
                         </tr>
                     </tbody>
                 </table>
@@ -910,6 +1098,29 @@
         </div>
     </section>
 </div>
+
+<div id="adminProofModal" class="finus-proof-modal" aria-hidden="true">
+    <div class="finus-proof-modal__backdrop" data-proof-close></div>
+    <div class="finus-proof-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="adminProofModalTitle">
+        <div class="finus-proof-modal__header">
+            <div>
+                <h3 id="adminProofModalTitle">Bukti Presensi</h3>
+                <p>Pratinjau bukti presensi tanpa meninggalkan halaman Admin.</p>
+            </div>
+            <button type="button" class="finus-proof-modal__close" data-proof-close aria-label="Tutup pratinjau">&times;</button>
+        </div>
+        <div class="finus-proof-modal__body">
+            <div id="adminProofLoading" class="finus-proof-modal__loading">
+                <i class="fa-solid fa-spinner fa-spin"></i> Memuat bukti...
+            </div>
+            <img id="adminProofImage" src="" alt="Bukti presensi" hidden>
+            <div id="adminProofError" class="finus-proof-modal__error" hidden>
+                <i class="fa-solid fa-triangle-exclamation"></i> Bukti tidak dapat ditampilkan.
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -969,7 +1180,11 @@
     };
 
     input?.addEventListener('input', filterRows);
-    clearButton?.addEventListener('click', () => { input.value = ''; input.focus(); filterRows(); });
+    clearButton?.addEventListener('click', () => {
+        input.value = '';
+        input.focus();
+        filterRows();
+    });
 
     selectAll?.addEventListener('change', () => {
         visiblePendingCheckboxes().forEach(cb => cb.checked = selectAll.checked);
@@ -980,6 +1195,68 @@
     document.getElementById('bulkApproveForm')?.addEventListener('submit', event => {
         const selected = checkboxes.filter(cb => cb.checked).length;
         if (!selected || !confirm(`ACC ${selected} presensi sekaligus?`)) event.preventDefault();
+    });
+
+
+    const proofModal = document.getElementById('adminProofModal');
+    const proofImage = document.getElementById('adminProofImage');
+    const proofLoading = document.getElementById('adminProofLoading');
+    const proofError = document.getElementById('adminProofError');
+    const proofTitle = document.getElementById('adminProofModalTitle');
+    let lastProofTrigger = null;
+
+    const closeProofModal = () => {
+        if (!proofModal) return;
+        proofModal.classList.remove('is-open');
+        proofModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('finus-proof-modal-open');
+        if (proofImage) {
+            proofImage.removeAttribute('src');
+            proofImage.hidden = true;
+        }
+        if (proofLoading) proofLoading.hidden = false;
+        if (proofError) proofError.hidden = true;
+        lastProofTrigger?.focus?.();
+    };
+
+    const openProofModal = trigger => {
+        if (!proofModal || !proofImage) return;
+        const url = trigger.dataset.proofUrl;
+        if (!url) return;
+
+        lastProofTrigger = trigger;
+        if (proofTitle) proofTitle.textContent = trigger.dataset.proofTitle || 'Bukti Presensi';
+        proofLoading.hidden = false;
+        proofError.hidden = true;
+        proofImage.hidden = true;
+
+        proofModal.classList.add('is-open');
+        proofModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('finus-proof-modal-open');
+
+        proofImage.onload = () => {
+            proofLoading.hidden = true;
+            proofError.hidden = true;
+            proofImage.hidden = false;
+        };
+        proofImage.onerror = () => {
+            proofLoading.hidden = true;
+            proofImage.hidden = true;
+            proofError.hidden = false;
+        };
+        proofImage.src = url;
+    };
+
+    document.querySelectorAll('[data-proof-preview]').forEach(trigger => {
+        trigger.addEventListener('click', () => openProofModal(trigger));
+    });
+    document.querySelectorAll('[data-proof-close]').forEach(trigger => {
+        trigger.addEventListener('click', closeProofModal);
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && proofModal?.classList.contains('is-open')) {
+            closeProofModal();
+        }
     });
 
     filterRows();
@@ -1050,4 +1327,3 @@ html[data-finus-theme="dark"] body .finus-data-page :where(.finus-data-empty-tit
 html[data-finus-theme="dark"] body .finus-data-page .finus-data-empty-text { color:#9EAEA4 !important; }
 </style>
 @endpush
-

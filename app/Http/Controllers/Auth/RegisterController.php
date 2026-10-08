@@ -4,14 +4,18 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Mail\VerifyCodeJamaah;
+use App\Models\Organization;
+use App\Models\OrganizationSetting;
 use App\Models\User;
 use App\Rules\PublicEmailDomain;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -45,6 +49,7 @@ class RegisterController extends Controller
                 ' ',
                 trim((string) $request->input('nama_masjid'))
             ),
+            'alamat_masjid' => trim((string) $request->input('alamat_masjid')),
             'recovery_code' => User::normalizeRecoveryCode(
                 (string) $request->input('recovery_code')
             ),
@@ -52,6 +57,7 @@ class RegisterController extends Controller
 
         $validated = $request->validate([
             'nama_masjid' => ['required', 'string', 'max:255'],
+            'alamat_masjid' => ['required', 'string', 'max:1000'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'recovery_code' => [
                 'required',
@@ -68,6 +74,8 @@ class RegisterController extends Controller
             'nama_masjid.required' => 'Nama masjid wajib diisi.',
             'nama_masjid.string' => 'Nama masjid harus berupa teks.',
             'nama_masjid.max' => 'Nama masjid maksimal 255 karakter.',
+            'alamat_masjid.required' => 'Alamat masjid wajib diisi.',
+            'alamat_masjid.max' => 'Alamat masjid maksimal 1000 karakter.',
             'recovery_code.required' => 'Recovery Code Admin wajib dibuat sebelum akun disimpan.',
             'recovery_code.min' => 'Recovery Code Admin minimal ' . self::ADMIN_RECOVERY_MIN_LENGTH . ' karakter.',
             'recovery_code.max' => 'Recovery Code Admin maksimal ' . self::ADMIN_RECOVERY_MAX_LENGTH . ' karakter.',
@@ -97,29 +105,68 @@ class RegisterController extends Controller
 
         Cache::lock('finus-register-admin', 10)->block(
             5,
-            function () use ($name, $email, $recoveryCode, $validated): void {
-                // Tetap satu Admin selama FINUS masih berfokus pada PUSDAI.
-                if (User::where('role', User::ROLE_ADMIN)->exists()) {
-                    throw ValidationException::withMessages([
-                        'nama_masjid' => 'Akun admin sudah tersedia. FINUS hanya mengizinkan satu admin.',
-                    ]);
-                }
+            function () use ($name, $email, $recoveryCode, $validated, $namaMasjid): void {
+                DB::transaction(function () use ($name, $email, $recoveryCode, $validated, $namaMasjid): void {
+                    // Fase Tugas Akhir masih memakai satu Admin/organization utama.
+                    // Struktur organizations disiapkan agar nanti Superadmin dapat
+                    // menambah banyak masjid tanpa mengikat akun Jamaah.
+                    if (User::where('role', User::ROLE_ADMIN)->exists()) {
+                        throw ValidationException::withMessages([
+                            'nama_masjid' => 'Akun admin sudah tersedia untuk organization studi kasus ini.',
+                        ]);
+                    }
 
-                if (User::where('email', $email)->exists()) {
-                    throw ValidationException::withMessages([
-                        'nama_masjid' => 'Email admin FINUS sudah digunakan.',
-                    ]);
-                }
+                    if (User::where('email', $email)->exists()) {
+                        throw ValidationException::withMessages([
+                            'nama_masjid' => 'Email admin FINUS sudah digunakan.',
+                        ]);
+                    }
 
-                User::create([
-                    'name' => $name,
-                    'email' => $email,
-                    'email_verified_at' => now(),
-                    'password' => Hash::make($validated['password']),
-                    // Disimpan terenkripsi oleh cast User::recovery_code.
-                    'recovery_code' => $recoveryCode,
-                    'role' => User::ROLE_ADMIN,
-                ]);
+                    $slugBase = Str::slug($namaMasjid) ?: 'masjid';
+                    $slug = $slugBase;
+                    $suffix = 2;
+
+                    while (Organization::query()->where('slug', $slug)->exists()) {
+                        $slug = $slugBase . '-' . $suffix++;
+                    }
+
+                    $organization = Organization::create([
+                        'public_id' => (string) Str::ulid(),
+                        'name' => $namaMasjid,
+                        'slug' => $slug,
+                        'address' => $validated['alamat_masjid'],
+                        'country_code' => 'ID',
+                        'is_active' => true,
+                    ]);
+
+                    OrganizationSetting::create([
+                        'organization_id' => $organization->id,
+                        'timezone' => 'Asia/Jakarta',
+                        'currency' => 'IDR',
+                        'zakat_enabled' => true,
+                        'infaq_enabled' => true,
+                        'wakaf_enabled' => true,
+                    ]);
+
+                    // migrate:fresh --seed dapat membuat master data sebelum
+                    // akun Admin dibuat. Dalam fase satu-organization PUSDAI,
+                    // semua data seed yang belum memiliki pemilik dipasangkan
+                    // ke organization pertama ini.
+                    $this->attachUnassignedDataToOrganization($organization->id);
+
+                    User::create([
+                        'name' => $name,
+                        'organization_id' => $organization->id,
+                        // Kolom legacy sementara dipertahankan agar database lama
+                        // tetap kompatibel; sumber identitas resmi adalah organizations.
+                        'nama_masjid' => $namaMasjid,
+                        'email' => $email,
+                        'email_verified_at' => now(),
+                        'password' => Hash::make($validated['password']),
+                        'recovery_code' => $recoveryCode,
+                        'role' => User::ROLE_ADMIN,
+                    ]);
+                });
             }
         );
 
@@ -129,6 +176,33 @@ class RegisterController extends Controller
                 'success' => 'Akun admin berhasil dibuat.',
                 'admin_email' => $email,
             ]);
+    }
+
+    private function attachUnassignedDataToOrganization(int $organizationId): void
+    {
+        $tables = [
+            'pegawai',
+            'gaji_jabatan',
+            'gaji_jabatan_riwayat',
+            'coa',
+            'jurnal_umum',
+            'presensi',
+            'penggajian',
+            'pengeluaran',
+            'ziswaf_penerimaan',
+            'ziswaf_penyaluran',
+            'agenda_kegiatan',
+            'parkir_sesi',
+            'periode_penyaluran_zakat',
+        ];
+
+        foreach ($tables as $tableName) {
+            if (Schema::hasTable($tableName) && Schema::hasColumn($tableName, 'organization_id')) {
+                DB::table($tableName)
+                    ->whereNull('organization_id')
+                    ->update(['organization_id' => $organizationId]);
+            }
+        }
     }
 
     public function registerJamaah(Request $request)

@@ -11,9 +11,14 @@
     $totalData = $pengeluaranItems->count();
     $totalNominal = (float) $pengeluaranItems->sum('jumlah');
     $totalKategori = $pengeluaranItems->pluck('kategori')->filter()->unique()->count();
+    $totalOperasional = $pengeluaranItems->filter(fn ($item) => !($item->is_gaji ?? false))->count();
+    $totalPenggajian = $pengeluaranItems->filter(fn ($item) => (bool) ($item->is_gaji ?? false))->count();
     $pengeluaranCreateRoute = request()->routeIs('pegawai.keuangan.*')
         ? 'pegawai.keuangan.pengeluaran.create'
         : 'admin.pengeluaran.create';
+    $pengeluaranDestroyRoute = request()->routeIs('pegawai.keuangan.*')
+        ? 'pegawai.keuangan.pengeluaran.destroy'
+        : 'admin.pengeluaran.destroy';
 @endphp
 
 @push('styles')
@@ -185,7 +190,7 @@
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 17px;
 }
@@ -517,6 +522,24 @@
     color: #1D4ED8;
 }
 
+.finus-data-chip.red {
+    border-color: #F5CDD0;
+    background: var(--fd-red-soft);
+    color: #B91C1C;
+}
+
+.finus-data-chip.amber {
+    border-color: #F3DEB5;
+    background: var(--fd-amber-soft);
+    color: #B45309;
+}
+
+.finus-data-chip.purple {
+    border-color: #DDD2FA;
+    background: var(--fd-purple-soft);
+    color: #6D28D9;
+}
+
 .finus-data-money {
     border-color: #CDE8D5;
     background: #EFFAF2;
@@ -739,6 +762,9 @@
     .finus-data-empty::before { display: none; }
 }
 
+
+.expense-scope-note{display:flex;gap:12px;align-items:flex-start;margin:-2px 0 17px;padding:14px 16px;border:1px solid #D8E8DD;border-radius:15px;background:#F5FBF7;color:#466052;box-shadow:0 8px 20px rgba(15,23,42,.035)}
+.expense-scope-icon{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;min-width:34px;border-radius:10px;background:#E3F7E9;color:#179B40}.expense-scope-note strong{display:block;margin-bottom:3px;color:#173B24;font-size:12.5px}.expense-scope-note p{margin:0;font-size:11.5px;line-height:1.6}.expense-row-actions{display:flex;align-items:center;gap:7px}.expense-action-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid #DDE7E0;border-radius:9px;background:#fff;color:#179B40;text-decoration:none;cursor:pointer}.expense-action-btn:hover{background:#F2FAF4;color:#0E5423}.expense-action-danger{color:#DC2626}.expense-action-danger:hover{background:#FFF1F2;color:#B91C1C}.expense-auto-label{display:inline-flex;align-items:center;padding:6px 8px;border-radius:999px;background:#F5F0FF;color:#7C3AED;font-size:10px;font-weight:800}
 </style>
 @endpush
 
@@ -766,6 +792,14 @@
         </div>
     </section>
 
+    <div class="expense-scope-note">
+        <span class="expense-scope-icon"><i class="fa-solid fa-circle-info"></i></span>
+        <div>
+            <strong>Pengeluaran FINUS tidak hanya penggajian.</strong>
+            <p>Catat biaya administrasi/ATK, dakwah, pemeliharaan, konsumsi, bank, utilitas, kebersihan, kegiatan, perlengkapan, transportasi, jasa, pengeluaran lain, serta penyaluran dana melalui tombol <b>Tambah Pengeluaran</b>. Penggajian yang sudah dibayar masuk ke riwayat ini secara otomatis.</p>
+        </div>
+    </div>
+
     <section class="finus-data-summary">
         <article class="finus-data-stat finus-stat-blue">
             <div class="finus-data-stat-icon"><i class="fa-solid fa-receipt"></i></div>
@@ -784,10 +818,18 @@
         </article>
 
         <article class="finus-data-stat finus-stat-amber">
-            <div class="finus-data-stat-icon"><i class="fa-solid fa-tags"></i></div>
+            <div class="finus-data-stat-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
             <div>
-                <span class="finus-data-stat-label">Kategori Tercatat</span>
-                <strong class="finus-data-stat-value">{{ number_format($totalKategori) }}</strong>
+                <span class="finus-data-stat-label">Operasional / Penyaluran</span>
+                <strong class="finus-data-stat-value">{{ number_format($totalOperasional) }}</strong>
+            </div>
+        </article>
+
+        <article class="finus-data-stat finus-stat-purple">
+            <div class="finus-data-stat-icon"><i class="fa-solid fa-wallet"></i></div>
+            <div>
+                <span class="finus-data-stat-label">Penggajian Dibayar</span>
+                <strong class="finus-data-stat-value">{{ number_format($totalPenggajian) }}</strong>
             </div>
         </article>
     </section>
@@ -838,9 +880,11 @@
                         <tr>
                             <th width="70">No.</th>
                             <th width="150">Tanggal</th>
+                            <th width="145">Jenis</th>
                             <th width="190">Kategori</th>
                             <th>Deskripsi</th>
-                            <th width="190">Jumlah</th>
+                            <th width="175">Jumlah</th>
+                            <th width="155">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -848,11 +892,27 @@
                             @php
                                 $jumlahFormatted = 'Rp ' . number_format($item->jumlah, 0, ',', '.');
                                 $jumlahRaw = preg_replace('/\D+/', '', (string) $item->jumlah);
+                                $isGaji = (bool) ($item->is_gaji ?? false);
+                                $group = $isGaji ? 'gaji' : ($item->coaDebit?->kelompok_pengeluaran ?? 'operasional');
+                                $jenisLabel = match($group) {
+                                    'gaji' => 'Penggajian',
+                                    'zakat' => 'Penyaluran Zakat',
+                                    'sosial' => 'Penyaluran Sosial',
+                                    'wakaf' => 'Wakaf',
+                                    default => 'Operasional',
+                                };
+                                $jenisChip = match($group) {
+                                    'gaji' => 'purple',
+                                    'zakat' => 'green',
+                                    'sosial' => 'blue',
+                                    'wakaf' => 'amber',
+                                    default => 'red',
+                                };
                             @endphp
 
                             <tr
                                 data-search-row
-                                data-search-start="{{ $item->tanggal }}|{{ $item->kategori }}|{{ $item->deskripsi }}|{{ $jumlahFormatted }}|{{ $jumlahRaw }}"
+                                data-search-start="{{ $item->tanggal }}|{{ $jenisLabel }}|{{ $item->kategori }}|{{ $item->deskripsi }}|{{ $jumlahFormatted }}|{{ $jumlahRaw }}"
                             >
                                 <td data-label="Nomor">
                                     <span class="finus-data-number" data-row-number>{{ $loop->iteration }}</span>
@@ -861,6 +921,12 @@
                                     <span class="finus-data-chip blue">
                                         <i class="fa-solid fa-calendar-day"></i>
                                         {{ $item->tanggal }}
+                                    </span>
+                                </td>
+                                <td data-label="Jenis">
+                                    <span class="finus-data-chip {{ $jenisChip }}">
+                                        <i class="fa-solid {{ $isGaji ? 'fa-wallet' : 'fa-receipt' }}"></i>
+                                        {{ $jenisLabel }}
                                     </span>
                                 </td>
                                 <td data-label="Kategori">
@@ -892,10 +958,33 @@
                                         {{ $jumlahFormatted }}
                                     </span>
                                 </td>
+                                <td data-label="Aksi">
+                                    <div class="expense-row-actions">
+                                        @if($item->bukti_pembayaran)
+                                            <a href="{{ asset('storage/'.$item->bukti_pembayaran) }}" target="_blank" rel="noopener" class="expense-action-btn" title="Lihat bukti pembayaran">
+                                                <i class="fa-solid fa-file-arrow-up"></i>
+                                            </a>
+                                        @endif
+                                        @if(!$isGaji)
+                                            <button
+                                                type="button"
+                                                class="expense-action-btn expense-action-danger"
+                                                data-expense-delete
+                                                data-delete-url="{{ route($pengeluaranDestroyRoute, $item->id) }}"
+                                                data-delete-label="{{ $item->kategori }} - {{ $jumlahFormatted }}"
+                                                title="Hapus pengeluaran"
+                                            >
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        @else
+                                            <span class="expense-auto-label" title="Kelola statusnya dari menu Penggajian">Otomatis</span>
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="finus-data-empty">
+                                <td colspan="7" class="finus-data-empty">
                                     <div class="finus-data-empty-icon">
                                         <i class="fa-solid fa-receipt"></i>
                                     </div>
@@ -908,7 +997,7 @@
                         @endforelse
 
                         <tr data-empty-search-row style="display:none;">
-                            <td colspan="5" class="finus-data-empty">
+                            <td colspan="7" class="finus-data-empty">
                                 <div class="finus-data-empty-icon">
                                     <i class="fa-solid fa-magnifying-glass"></i>
                                 </div>
@@ -1002,6 +1091,36 @@
 })();
 
 </script>
+<script>
+document.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-expense-delete]');
+    if (!button) return;
+
+    const label = button.dataset.deleteLabel || 'pengeluaran ini';
+    if (!window.confirm(`Hapus ${label}? Jurnal terkait akan dibalik agar laporan tetap konsisten.`)) return;
+
+    button.disabled = true;
+    try {
+        const response = await fetch(button.dataset.deleteUrl, {
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': @json(csrf_token()),
+            },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.success === false) {
+            throw new Error(data.message || 'Pengeluaran tidak dapat dihapus.');
+        }
+        window.location.reload();
+    } catch (error) {
+        window.alert(error.message || 'Pengeluaran tidak dapat dihapus.');
+        button.disabled = false;
+    }
+});
+</script>
 @endpush
 
 {{-- FINUS DARK MODE LOCAL: pengeluaran/index.blade.php --}}
@@ -1065,6 +1184,8 @@ html[data-finus-theme="dark"] body .finus-data-page .finus-data-primary { color:
 html[data-finus-theme="dark"] body .finus-data-page .finus-data-empty { border-color:#293D31 !important; background:#111B15 !important; color:#F1F6F3 !important; }
 html[data-finus-theme="dark"] body .finus-data-page :where(.finus-data-empty-title,.finus-file-picker-name) { color:#F1F6F3 !important; }
 html[data-finus-theme="dark"] body .finus-data-page .finus-data-empty-text { color:#9EAEA4 !important; }
+
+html[data-finus-theme="dark"] body .finus-data-page .expense-scope-note{border-color:#2A4435;background:#101F16;color:#A9BAAF}html[data-finus-theme="dark"] body .finus-data-page .expense-scope-note strong{color:#EEF7F1}html[data-finus-theme="dark"] body .finus-data-page .expense-scope-icon{background:#123B20;color:#67E487}html[data-finus-theme="dark"] body .finus-data-page .expense-action-btn{border-color:#30483A;background:#111D16;color:#70E58B}html[data-finus-theme="dark"] body .finus-data-page .expense-action-danger{color:#FF9096}html[data-finus-theme="dark"] body .finus-data-page .expense-auto-label{background:#302442;color:#C4B5FD}
+html[data-finus-theme="dark"] body .finus-data-page .finus-data-chip.red{border-color:#63343A;background:var(--fd-red-soft);color:#FF9BA1}html[data-finus-theme="dark"] body .finus-data-page .finus-data-chip.amber{border-color:#5B4523;background:var(--fd-amber-soft);color:#F4C16C}html[data-finus-theme="dark"] body .finus-data-page .finus-data-chip.purple{border-color:#4B3B73;background:var(--fd-purple-soft);color:#C6B6FF}
 </style>
 @endpush
-

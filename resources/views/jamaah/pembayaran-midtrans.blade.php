@@ -645,7 +645,7 @@
                         </div>
                         <div class="pay-guarantee-item">
                             <i class="fa-solid fa-hand-holding-dollar"></i>
-                            <span>Dana tersalurkan langsung ke Pusdai Jabar</span>
+                            <span>Dana tersalurkan ke masjid tujuan transaksi</span>
                         </div>
                     </div>
 
@@ -842,4 +842,3 @@ html[data-finus-theme="dark"] body .pay-page :where(.pay-back,.pay-btn-cancel,.p
 html[data-finus-theme="dark"] body .pay-page .pay-sandbox-badge { border-color:#5B4A76 !important; background:#2A223B !important; color:#CEBDFF !important; }
 </style>
 @endpush
-

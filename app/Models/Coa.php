@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 
 class Coa extends Model
 {
+    use BelongsToOrganization;
     protected $table = 'coa';
 
     protected $fillable = [
+        'organization_id',
         'kode_akun',
         'nama_akun',
         'header_akun',

@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Pengeluaran extends Model
 {
+    use BelongsToOrganization;
     use HasFactory;
 
     protected $table = 'pengeluaran';
 
     protected $fillable = [
+        'organization_id',
         'id_penggajian',
         'kategori',
         'restriction_type',

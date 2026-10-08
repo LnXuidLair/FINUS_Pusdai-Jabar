@@ -7,8 +7,8 @@
 @section('panel-eyebrow', 'Penyiapan Sistem')
 @section('panel-title', 'Buat Akun Admin')
 @section('panel-copy', 'Akun admin hanya dapat dibuat satu kali.')
-@section('hero-title', 'Admin FINUS PUSDAI')
-@section('hero-copy', 'Buat akun pengelola masjid sebelum menyiapkan data pegawai, jabatan, gaji, dan laporan.')
+@section('hero-title', 'Admin FINUS')
+@section('hero-copy', 'Buat organization masjid dan akun pengelolanya sebelum menyiapkan data pegawai, jabatan, gaji, dan laporan.')
 
 @section('content')
 <form method="POST" action="{{ route('register.admin.post') }}" class="auth-form" data-loading-title="Membuat akun admin...">
@@ -29,6 +29,16 @@
                autocomplete="organization" required autofocus
                @error('nama_masjid') aria-invalid="true" aria-describedby="name-error" @enderror>
         @error('nama_masjid')<p class="auth-error" id="name-error" role="alert">{{ $message }}</p>@enderror
+    </div>
+
+    <div class="auth-field-group">
+        <label for="admin-address" class="auth-label"><span class="auth-label-icon" aria-hidden="true">⌂</span>Alamat Masjid <span class="auth-required">*</span></label>
+        <textarea id="admin-address" name="alamat_masjid" class="auth-field"
+                  rows="3" placeholder="Alamat lengkap masjid"
+                  autocomplete="street-address" required
+                  @error('alamat_masjid') aria-invalid="true" aria-describedby="address-error" @enderror>{{ old('alamat_masjid') }}</textarea>
+        @error('alamat_masjid')<p class="auth-error" id="address-error" role="alert">{{ $message }}</p>@enderror
+        <p class="auth-help"><b>i</b>Alamat disimpan pada organization masjid, bukan pada akun Jamaah.</p>
     </div>
 
     <div class="auth-field-group">

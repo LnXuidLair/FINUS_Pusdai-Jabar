@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 
 class JurnalUmum extends Model
 {
+    use BelongsToOrganization;
     protected $table = 'jurnal_umum';
 
     protected $guarded = [];

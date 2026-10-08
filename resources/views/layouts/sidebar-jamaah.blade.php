@@ -120,6 +120,20 @@
         letter-spacing: .4px;
     }
 
+
+    .finus-mosque-name {
+        display: -webkit-box;
+        width: min(190px, calc(100% - 24px));
+        max-width: 190px;
+        margin: 5px auto 0 !important;
+        overflow: hidden;
+        line-height: 1.35 !important;
+        text-align: center;
+        overflow-wrap: anywhere;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
     .jamaah-sidebar ul {
         margin: 0 !important;
         padding: 17px 13px 35px !important;
@@ -910,12 +924,12 @@ html[data-finus-theme="dark"] {
                     aria-hidden="true"
                 ></span>
                 <img
-                    src="{{ asset('assets/images/pusdai_dashboard.png') }}"
+                    src="{{ asset('assets/images/FINUS_logo.png') }}"
                     alt="FINUS"
                     onerror="this.style.display='none'"
                 >
                 <div class="logo-title">JAMAAH FINUS</div>
-                <div class="logo-sub-title">Layanan Jamaah</div>
+                <div class="logo-sub-title">Portal Publik • Semua Masjid</div>
                 <div class="finus-sidebar-role-chip">Akun Jamaah</div>
             </div>
 

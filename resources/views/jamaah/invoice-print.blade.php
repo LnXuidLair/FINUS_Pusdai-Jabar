@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice #{{ $referensi }} — FINUS Pusdai Jabar</title>
+    <title>Invoice #{{ $referensi }} — FINUS {{ $transaksi->organization?->name ?? 'Masjid' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -401,7 +401,7 @@
                 <div class="inv-lembaga">
                     <div class="inv-lembaga-icon">🕌</div>
                     <div>
-                        <div class="inv-lembaga-name">Pusdai Jawa Barat</div>
+                        <div class="inv-lembaga-name">{{ $transaksi->organization?->name ?? 'Masjid' }}</div>
                         <div class="inv-lembaga-sub">FINUS &mdash; Sistem Informasi Keuangan Masjid</div>
                     </div>
                 </div>
@@ -491,7 +491,7 @@
 
         <div class="inv-footer">
             <div class="inv-footer-left">
-                <strong>Pusdai Jawa Barat</strong>
+                <strong>{{ $transaksi->organization?->name ?? 'Masjid' }}</strong>
                 Dokumen ini merupakan bukti resmi penerimaan pembayaran ZISWAF yang sah dan telah diverifikasi.
             </div>
             <div class="inv-footer-right">

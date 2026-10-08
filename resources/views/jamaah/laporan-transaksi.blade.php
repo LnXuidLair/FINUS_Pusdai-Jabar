@@ -52,10 +52,10 @@
     <div class="jt-print-header">
         <div class="jt-print-header-top">
             <div class="jt-print-logo-container">
-                <img src="{{ asset('assets/images/pusdai_icon.png') }}" alt="Logo Pusdai" class="jt-print-logo">
+                <img src="{{ asset('assets/images/pusdai_icon.png') }}" alt="Logo FINUS" class="jt-print-logo">
             </div>
             <div class="jt-print-title-container">
-                <h1 class="jt-print-org">MASJID PUSDAI JAWA BARAT</h1>
+                <h1 class="jt-print-org">FINUS — LAPORAN TRANSAKSI JAMAAH</h1>
                 <p class="jt-print-tagline">Layanan Integrasi Keuangan Umat - FINUS</p>
                 <p class="jt-print-address">Jl. Diponegoro No.63, Kota Bandung, Jawa Barat 40122</p>
             </div>
@@ -324,6 +324,7 @@
                     <tr>
                         <th>Referensi</th>
                         <th>Tanggal</th>
+                        <th>Masjid</th>
                         <th>Jenis</th>
                         <th>Metode</th>
                         <th>Status</th>
@@ -342,6 +343,8 @@
                             <td class="jt-reference">{{ $item->order_id ?: 'ZSF-' . $item->id }}</td>
 
                             <td>{{ $item->tanggal?->format('d/m/Y') }}</td>
+
+                            <td>{{ $item->organization?->name ?? 'Masjid' }}</td>
 
                             <td>
                                 <span class="jt-type">
@@ -366,7 +369,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="jt-empty">
+                            <td colspan="8" class="jt-empty">
                                 Tidak ada transaksi dalam periode laporan.
                             </td>
                         </tr>
@@ -376,7 +379,7 @@
                 @if($transaksiLaporan->isNotEmpty())
                     <tfoot>
                         <tr>
-                            <th colspan="6" class="text-right">Total</th>
+                            <th colspan="7" class="text-right">Total</th>
                             <th class="text-right jt-money">{{ $rupiah($summary['total']) }}</th>
                         </tr>
                     </tfoot>
@@ -396,11 +399,11 @@
             <p class="jt-print-date">Bandung, {{ now()->translatedFormat('d F Y') }}</p>
             <div class="jt-print-verify-badge">
                 <i class="fa-solid fa-circle-check"></i>
-                Telah Diverifikasi oleh Administrasi Masjid Pusdai Jabar
+                Telah diverifikasi oleh administrasi masjid tujuan masing-masing transaksi
             </div>
         </div>
         <div class="jt-print-footer-bottom">
-            <p>Laporan ini sah dan diterbitkan secara elektronik oleh sistem FINUS (Financial Integration and Information System) Masjid Pusdai Jawa Barat.</p>
+            <p>Laporan ini diterbitkan secara elektronik oleh FINUS dan dapat memuat transaksi ke lebih dari satu masjid.</p>
         </div>
     </div>
 </div>
@@ -1233,4 +1236,3 @@ html[data-finus-theme="dark"] body .jt-page .jt-type { border-color:#35557A !imp
 @media print { html[data-finus-theme="dark"] body .jt-page, html[data-finus-theme="dark"] body .jt-page * { color:#111827 !important; } }
 </style>
 @endpush
-

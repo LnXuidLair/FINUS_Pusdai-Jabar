@@ -498,6 +498,48 @@
                         <!-- Left Column -->
                         <div class="col-lg-6 border-right pr-lg-4">
                             <div class="form-group">
+                                <label for="organization_id">Masjid Tujuan</label>
+
+                                @if(($organizations ?? collect())->count() === 1)
+                                    @php($selectedOrganization = $organizations->first())
+                                    <input type="hidden" name="organization_id" id="organization_id" value="{{ $selectedOrganization->id }}">
+                                    <div class="info-box">
+                                        <div class="d-flex align-items-start">
+                                            <div class="mr-3" style="font-size: 22px; color: var(--primary);">
+                                                <i class="fa-solid fa-mosque"></i>
+                                            </div>
+                                            <div>
+                                                <strong class="d-block text-dark">{{ $selectedOrganization->name }}</strong>
+                                                <small class="small-muted">
+                                                    {{ $selectedOrganization->address ?: collect([$selectedOrganization->city, $selectedOrganization->province])->filter()->implode(', ') ?: 'Alamat organization belum dilengkapi.' }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @else
+                                    <select name="organization_id"
+                                            id="organization_id"
+                                            class="form-control @error('organization_id') is-invalid @enderror"
+                                            required>
+                                        <option value="">Pilih masjid tujuan</option>
+                                        @foreach(($organizations ?? collect()) as $organization)
+                                            <option value="{{ $organization->id }}" @selected((string) old('organization_id', $selectedOrganizationId ?? '') === (string) $organization->id)>
+                                                {{ $organization->name }}
+                                                @if($organization->city || $organization->province)
+                                                    — {{ collect([$organization->city, $organization->province])->filter()->implode(', ') }}
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <small class="small-muted d-block mt-2">Akun Jamaah bersifat global. Pilih masjid yang akan menerima zakat, infak, atau wakaf ini.</small>
+                                @endif
+
+                                @error('organization_id')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
                                 <label>Jenis Transaksi</label>
 
                                 @if(count($jenisOptions) === 1)
@@ -1341,6 +1383,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const zakatPolicies = @json($zakatPolicies);
+    const transactionCategory = @json($jenis);
+    const organizationSelect = document.getElementById('organization_id');
     const zakatPenghasilanTerbayar = @json($zakatPenghasilanTerbayar);
     const hargaBerasPerKg = {{ $hargaBerasPerKg }};
     const hargaEmasPerGram = {{ $hargaEmasPerGram }};
@@ -2062,6 +2106,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Saat FINUS memiliki lebih dari satu masjid, ketentuan dan harga zakat
+    // dimuat ulang sesuai organization yang dipilih Jamaah.
+    if (organizationSelect && organizationSelect.tagName === 'SELECT' && transactionCategory === 'zakat') {
+        organizationSelect.addEventListener('change', function () {
+            if (! this.value) {
+                return;
+            }
+
+            const url = new URL(window.location.href);
+            url.searchParams.set('organization_id', this.value);
+            window.location.href = url.toString();
+        });
+    }
+
     // ============================================================
     //  Event Listeners — Kalkulator
     // ============================================================
@@ -2259,4 +2317,3 @@ html[data-finus-theme="dark"] body .finus-card .file-name-badge { border-color:#
 html[data-finus-theme="dark"] body .finus-card .btn-light { border-color:#334B3B !important; background:#14211A !important; color:#D0DDD4 !important; }
 </style>
 @endpush
-

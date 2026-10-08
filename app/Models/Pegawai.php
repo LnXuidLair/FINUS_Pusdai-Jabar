@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
+use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Model;
 
 class Pegawai extends Model
 {
+    use BelongsToOrganization;
     protected $table = 'pegawai';
 
     protected $fillable = [
+        'organization_id',
         'nip',
         'nama_pegawai',
         'jabatan',
@@ -17,6 +21,7 @@ class Pegawai extends Model
         'is_verified',
         'gender',
         'no_telp',
+        'createdby',
     ];
 
     protected $casts = [
@@ -53,9 +58,19 @@ class Pegawai extends Model
         $this->attributes['email'] = strtolower(trim((string) $value));
     }
 
+    public function setNoTelpAttribute(?string $value): void
+    {
+        $this->attributes['no_telp'] = PhoneNumber::normalize($value);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'email', 'email');
+    }
+
+    public function createdByAdmin()
+    {
+        return $this->belongsTo(User::class, 'createdby');
     }
 
     public function gajiJabatan()
