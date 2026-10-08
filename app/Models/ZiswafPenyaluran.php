@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 
 class ZiswafPenyaluran extends Model
 {
+    use BelongsToOrganization;
     protected $table = 'ziswaf_penyaluran';
 
     protected $fillable = [
+        'organization_id',
         'tanggal',
         'kategori_program',
         'penerima_manfaat',

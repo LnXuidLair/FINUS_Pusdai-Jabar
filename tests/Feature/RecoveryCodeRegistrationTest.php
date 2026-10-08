@@ -33,6 +33,7 @@ class RecoveryCodeRegistrationTest extends TestCase
 
         $admin = User::query()->where('role', User::ROLE_ADMIN)->firstOrFail();
 
+        $this->assertSame('Pusdai Jabar', $admin->nama_masjid);
         $this->assertSame($recoveryCode, $admin->recovery_code);
         $this->assertNotSame($recoveryCode, $admin->getRawOriginal('recovery_code'));
     }

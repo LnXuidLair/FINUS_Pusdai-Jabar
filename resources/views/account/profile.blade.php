@@ -15,6 +15,8 @@
         \App\Models\User::ROLE_JAMAAH => 'Jamaah',
         default => ucfirst((string) $user->role),
     };
+    $contactPhone = $pegawai?->no_telp ?? $user->no_telp ?? '';
+    $contactAddress = $pegawai?->alamat ?? $user->alamat ?? '';
     $displayEmail = in_array($user->role, [
         \App\Models\User::ROLE_ADMIN,
         \App\Models\User::ROLE_PEGAWAI,
@@ -165,24 +167,26 @@
                         </div>
 
                         <div class="fmu-field">
-                            <label class="fmu-label">Nomor Telepon</label>
-                            <div class="fmu-input-icon-wrap">
-                                <i class="fa-solid fa-phone"></i>
-                                <input class="fmu-control" value="{{ $pegawai->no_telp ?: '-' }}" readonly>
-                            </div>
-                        </div>
-
-                        <div class="fmu-field">
                             <label class="fmu-label">Jenis Kelamin</label>
                             <div class="fmu-input-icon-wrap">
                                 <i class="fa-solid fa-venus-mars"></i>
                                 <input class="fmu-control" value="{{ $pegawai->gender_label }}" readonly>
                             </div>
                         </div>
+                    @endif
+
+                    @if($user->isPegawai() || $user->isJamaah())
+                        <div class="fmu-field">
+                            <label class="fmu-label">Nomor Telepon</label>
+                            <div class="fmu-input-icon-wrap">
+                                <i class="fa-solid fa-phone"></i>
+                                <input class="fmu-control" value="{{ $contactPhone ?: '-' }}" readonly>
+                            </div>
+                        </div>
 
                         <div class="fmu-field account-profile-full">
                             <label class="fmu-label">Alamat</label>
-                            <textarea class="fmu-textarea" readonly>{{ $pegawai->alamat ?: '-' }}</textarea>
+                            <textarea class="fmu-textarea" readonly>{{ $contactAddress ?: '-' }}</textarea>
                         </div>
                     @endif
                 </div>
@@ -196,6 +200,14 @@
                     </button>
                 </div>
                 </form>
+            @endif
+            @if($user->isPegawai() || $user->isJamaah())
+                <div class="account-profile-actions">
+                    <a href="{{ route($settingsRoute) }}" class="fmu-btn fmu-btn-primary">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        Ubah Nomor Telepon & Alamat
+                    </a>
+                </div>
             @endif
         </section>
     </div>

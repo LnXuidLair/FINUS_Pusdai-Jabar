@@ -1142,6 +1142,7 @@
                             <th width="80">No.</th>
                             <th>Nama Jabatan</th>
                             <th width="250">Gaji per Hari</th>
+                            <th width="220">Dibuat Oleh</th>
                             <th width="140">Aksi</th>
                         </tr>
                     </thead>
@@ -1165,7 +1166,7 @@
 
                             <tr
                                 data-search-row
-                                data-search-start="{{ $item->jabatan }}|{{ $gajiFormatted }}|{{ $gajiRaw }}"
+                                data-search-start="{{ $item->jabatan }}|{{ $gajiFormatted }}|{{ $gajiRaw }}|{{ $item->createdBy?->name ?? 'Sistem / data lama' }}"
                             >
                                 <td data-label="Nomor">
                                     <span
@@ -1201,6 +1202,15 @@
                                     </span>
                                 </td>
 
+                                <td data-label="Dibuat Oleh">
+                                    <div class="gj-position-name">
+                                        {{ $item->createdBy?->name ?? 'Sistem / data lama' }}
+                                    </div>
+                                    <div class="gj-position-note">
+                                        {{ $item->created_at?->format('d/m/Y H:i') ?? '-' }}
+                                    </div>
+                                </td>
+
                                 <td data-label="Aksi">
                                     <a
                                         href="{{ route('admin.gaji-jabatan.edit', $item) }}"
@@ -1214,7 +1224,7 @@
                         @empty
                             <tr>
                                 <td
-                                    colspan="4"
+                                    colspan="5"
                                     class="gj-empty-state"
                                 >
                                     <div class="gj-empty-icon">
@@ -1430,4 +1440,3 @@ html[data-finus-theme="dark"] body .gj-page .gj-empty-description { color:#9EAEA
 }
 </style>
 @endpush
-

@@ -19,6 +19,8 @@
         : 'Belum tercatat';
     $adminRecoveryCode = '';
     $initial = mb_strtoupper(mb_substr(trim($displayName ?: 'U'), 0, 1));
+    $contactPhone = $pegawai?->no_telp ?? $user->no_telp ?? '';
+    $contactAddress = $pegawai?->alamat ?? $user->alamat ?? '';
 
     if ($user->isAdmin()) {
         try {
@@ -35,7 +37,7 @@
             <span class="fmu-hero-icon"><i class="fa-solid fa-gear"></i></span>
             <div>
                 <h1>Pengaturan Akun</h1>
-                <p>Kelola password, Recovery Code, dan keamanan akun {{ $portalLabel }} Anda.</p>
+                <p>Kelola data kontak, password, dan keamanan akun {{ $portalLabel }} Anda.</p>
             </div>
         </div>
     </section>
@@ -50,19 +52,167 @@
         </div>
     @endif
 
+    @if(session('status') === 'contact-updated')
+        <div class="account-success-alert" role="status">
+            <span class="account-success-icon"><i class="fa-solid fa-circle-check"></i></span>
+            <div>
+                <strong>Data kontak berhasil diperbarui</strong>
+                <p>Nomor telepon dan alamat terbaru sudah tersimpan pada profil Anda.</p>
+            </div>
+        </div>
+    @endif
+
+    @if(session('status') === 'organization-updated')
+        <div class="account-success-alert" role="status">
+            <span class="account-success-icon"><i class="fa-solid fa-circle-check"></i></span>
+            <div>
+                <strong>Data organization berhasil diperbarui</strong>
+                <p>Nama dan alamat masjid terbaru sudah digunakan sebagai identitas portal Admin/Pegawai.</p>
+            </div>
+        </div>
+    @endif
+
+    @if($user->isAdmin() && $organization)
+        <section class="fmu-card mb-4">
+            <div class="fmu-card-head">
+                <div class="fmu-card-head-main">
+                    <span class="fmu-card-icon"><i class="fa-solid fa-mosque"></i></span>
+                    <div>
+                        <h2>Organization Masjid</h2>
+                        <p>Identitas masjid disimpan terpisah dari akun Admin dan akan menjadi pemilik data keuangan FINUS.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="fmu-card-body">
+                <form method="POST" action="{{ route('admin.organization.update') }}">
+                    @csrf
+                    @method('PATCH')
+
+                    <div class="account-contact-grid">
+                        <div class="fmu-field">
+                            <label class="fmu-label" for="organization_name">Nama Masjid <span class="fmu-required">*</span></label>
+                            <input id="organization_name"
+                                   name="name"
+                                   type="text"
+                                   class="fmu-control @error('name') is-invalid @enderror"
+                                   value="{{ old('name', $organization->name) }}"
+                                   maxlength="255"
+                                   required>
+                            @error('name')<span class="fmu-error">{{ $message }}</span>@enderror
+                        </div>
+
+                        <div class="fmu-field">
+                            <label class="fmu-label" for="organization_email">Email Organization</label>
+                            <input id="organization_email"
+                                   name="email"
+                                   type="email"
+                                   class="fmu-control @error('email') is-invalid @enderror"
+                                   value="{{ old('email', $organization->email) }}"
+                                   maxlength="255"
+                                   placeholder="contoh@masjid.org">
+                            @error('email')<span class="fmu-error">{{ $message }}</span>@enderror
+                        </div>
+
+                        <div class="fmu-field account-contact-address" style="grid-column: 1 / -1;">
+                            <label class="fmu-label" for="organization_address">Alamat Masjid <span class="fmu-required">*</span></label>
+                            <textarea id="organization_address"
+                                      name="address"
+                                      class="fmu-textarea @error('address') is-invalid @enderror"
+                                      maxlength="1000"
+                                      rows="3"
+                                      placeholder="Alamat lengkap masjid"
+                                      required>{{ old('address', $organization->address) }}</textarea>
+                            @error('address')<span class="fmu-error">{{ $message }}</span>@enderror
+                        </div>
+                    </div>
+
+                    <div class="account-form-actions">
+                        <button type="submit" class="fmu-btn fmu-btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Simpan Organization
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    @endif
+
     <div class="account-settings-grid">
         <section class="fmu-card account-main-card">
             <div class="fmu-card-head">
                 <div class="fmu-card-head-main">
                     <span class="fmu-card-icon"><i class="fa-solid fa-shield-halved"></i></span>
                     <div>
-                        <h2>Keamanan Akun</h2>
-                        <p>Atur akses masuk dan metode pemulihan akun FINUS.</p>
+                        <h2>Akun & Keamanan</h2>
+                        <p>Atur informasi kontak, akses masuk, dan metode pemulihan akun FINUS.</p>
                     </div>
                 </div>
             </div>
 
             <div class="fmu-card-body account-security-list">
+                @if($user->isPegawai() || $user->isJamaah())
+                    <article class="account-security-item account-contact-item">
+                        <div class="account-contact-heading">
+                            <span class="account-security-icon"><i class="fa-solid fa-address-book"></i></span>
+                            <div class="account-security-copy">
+                                <h3>Data Kontak</h3>
+                                <p>Nomor telepon dan alamat dapat diperbarui kapan saja dari pengaturan akun.</p>
+                            </div>
+                        </div>
+
+                        <form method="POST" action="{{ route($contactUpdateRoute) }}" class="account-contact-form">
+                            @csrf
+                            @method('PATCH')
+
+                            <div class="account-contact-grid">
+                                <div class="fmu-field account-contact-phone">
+                                    <label class="fmu-label" for="contact_phone_display">Nomor Telepon</label>
+                                    <input
+                                        id="contact_phone_display"
+                                        type="tel"
+                                        class="fmu-control @error('no_telp') is-invalid @enderror"
+                                        placeholder="812 3456 7890"
+                                        autocomplete="tel"
+                                    >
+                                    <input
+                                        id="contact_phone_value"
+                                        type="hidden"
+                                        name="no_telp"
+                                        value="{{ old('no_telp', $contactPhone) }}"
+                                    >
+                                    @if($user->isPegawai())
+                                        <span class="fmu-help">Pilih kode negara yang sesuai. Nomor Pegawai wajib berbeda dari seluruh pegawai lain.</span>
+                                    @else
+                                        <span class="fmu-help">Pilih kode negara yang sesuai; nomor akan disimpan dalam format internasional.</span>
+                                    @endif
+                                    @error('no_telp')<span class="fmu-error">{{ $message }}</span>@enderror
+                                </div>
+
+                                <div class="fmu-field account-contact-address">
+                                    <label class="fmu-label" for="alamat">Alamat</label>
+                                    <textarea
+                                        id="alamat"
+                                        name="alamat"
+                                        class="fmu-textarea @error('alamat') is-invalid @enderror"
+                                        maxlength="500"
+                                        rows="3"
+                                        placeholder="Masukkan alamat lengkap"
+                                        autocomplete="street-address"
+                                    >{{ old('alamat', $contactAddress) }}</textarea>
+                                    @error('alamat')<span class="fmu-error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+
+                            <div class="account-form-actions account-contact-actions">
+                                <button type="submit" class="fmu-btn fmu-btn-primary">
+                                    <i class="fa-solid fa-floppy-disk"></i>
+                                    Simpan Data Kontak
+                                </button>
+                            </div>
+                        </form>
+                    </article>
+                @endif
+
                 <article class="account-security-item account-password-item">
                     <span class="account-security-icon"><i class="fa-solid fa-key"></i></span>
                     <div class="account-security-copy">
@@ -238,6 +388,16 @@
                         <strong>{{ $displayEmail }}</strong>
                     </div>
                 </div>
+                @if($user->isPegawai() || $user->isJamaah())
+                    <div class="account-summary-row">
+                        <span class="account-summary-row-icon"><i class="fa-solid fa-phone"></i></span>
+                        <div>
+                            <small>Nomor Telepon</small>
+                            <strong>{{ $contactPhone ?: 'Belum diisi' }}</strong>
+                        </div>
+                    </div>
+                @endif
+
                 <div class="account-summary-row">
                     <span class="account-summary-row-icon"><i class="fa-solid fa-shield-halved"></i></span>
                     <div>
@@ -255,6 +415,48 @@
     </div>
 </div>
 @endsection
+
+@if($user->isPegawai() || $user->isJamaah())
+    @push('scripts')
+    <script>
+    (() => {
+        const phoneInput = document.getElementById('contact_phone_display');
+        const phoneValue = document.getElementById('contact_phone_value');
+        if (!phoneInput || !phoneValue) return;
+
+        let iti = null;
+        if (window.intlTelInput) {
+            iti = window.intlTelInput(phoneInput, {
+                initialCountry: 'id',
+                separateDialCode: true,
+                preferredCountries: ['id', 'my', 'sg'],
+                utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/js/utils.js'
+            });
+        }
+
+        const initialNumber = phoneValue.value.trim();
+        if (initialNumber) {
+            if (iti) iti.setNumber(initialNumber);
+            else phoneInput.value = initialNumber;
+        }
+
+        const syncPhone = () => {
+            const raw = phoneInput.value.trim();
+            if (!raw) {
+                phoneValue.value = '';
+                return;
+            }
+
+            phoneValue.value = iti ? (iti.getNumber() || raw) : raw;
+        };
+
+        phoneInput.addEventListener('blur', syncPhone);
+        phoneInput.addEventListener('countrychange', syncPhone);
+        phoneInput.closest('form')?.addEventListener('submit', syncPhone);
+    })();
+    </script>
+    @endpush
+@endif
 
 @if($user->isAdmin())
     @push('scripts')
@@ -351,6 +553,7 @@
 .account-settings-grid{display:grid;grid-template-columns:minmax(0,1.48fr) minmax(285px,.52fr);gap:18px;align-items:start}
 .account-main-card,.account-summary-card{box-shadow:0 16px 38px rgba(15,23,42,.065)}
 .account-security-list{display:grid;gap:16px}
+.account-contact-item{display:grid;gap:18px}.account-contact-phone .iti{width:100%}.account-contact-heading{display:flex;gap:14px;align-items:flex-start}.account-contact-form{display:grid;gap:16px}.account-contact-grid{display:grid;grid-template-columns:minmax(220px,.75fr) minmax(0,1.25fr);gap:16px}.account-contact-address{min-width:0}.account-contact-actions{padding-top:0}
 .account-security-item{border:1px solid #DDE9E1;border-radius:17px;background:#FBFDFC;padding:18px}
 .account-password-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center}
 .account-security-icon{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:14px;background:#EAF8EE;color:#0E5423;font-size:17px;flex:0 0 auto}
@@ -394,7 +597,7 @@
 .account-summary-tip i{margin-top:2px;color:#179B40}
 .account-summary-tip p{margin:0;font-size:10.8px;line-height:1.55}
 @media(max-width:991.98px){.account-settings-grid{grid-template-columns:1fr}.account-summary-card{position:static}.account-password-item{grid-template-columns:auto minmax(0,1fr)}.account-item-action{grid-column:1/-1;width:100%}}
-@media(max-width:767.98px){.account-section-title-row{flex-direction:column}.account-control-row{flex-wrap:wrap}.account-control-grow{flex-basis:calc(100% - 54px)}.account-generate-btn{width:100%}.account-security-item{padding:16px}.account-recovery-item{padding:17px}.account-password-item{grid-template-columns:1fr}.account-security-icon{width:44px;height:44px}.account-form-actions .fmu-btn{width:100%}}
+@media(max-width:767.98px){.account-contact-grid{grid-template-columns:1fr}.account-section-title-row{flex-direction:column}.account-control-row{flex-wrap:wrap}.account-control-grow{flex-basis:calc(100% - 54px)}.account-generate-btn{width:100%}.account-security-item{padding:16px}.account-recovery-item{padding:17px}.account-password-item{grid-template-columns:1fr}.account-security-icon{width:44px;height:44px}.account-form-actions .fmu-btn{width:100%}}
 </style>
 @endpush
 

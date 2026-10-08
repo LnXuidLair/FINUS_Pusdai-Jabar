@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\PhoneNumber;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
@@ -23,8 +25,8 @@ class AccountController extends Controller
     }
 
     /**
-     * Nama Admin boleh diubah dari Profil, tetapi email Admin tetap
-     * admin@pusdai.finus.id dan tidak ikut berubah.
+     * Nama pribadi Admin boleh diubah dari Profil. Identitas masjid dikelola
+     * melalui Organization, sedangkan email login Admin tetap dipertahankan.
      */
     public function updateAdminProfile(Request $request): RedirectResponse
     {
@@ -44,17 +46,59 @@ class AccountController extends Controller
 
         $user->forceFill([
             'name' => $validated['name'],
-            'email' => 'admin@pusdai.finus.id',
         ])->save();
 
         return redirect()
             ->route('admin.profile')
-            ->with('success', 'Nama Admin berhasil diperbarui. Email login tetap admin@pusdai.finus.id.');
+            ->with('success', 'Nama Admin berhasil diperbarui. Identitas masjid tetap dikelola terpisah melalui Organization.');
     }
 
     public function adminSettings(): View
     {
         return $this->settings(User::ROLE_ADMIN);
+    }
+
+    public function updateAdminOrganization(Request $request): RedirectResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::guard(User::ROLE_ADMIN)->user();
+        abort_unless($user && $user->isAdmin(), 403);
+
+        $organization = $user->organization;
+        abort_unless($organization, 404, 'Organization masjid belum tersedia.');
+
+        $request->merge([
+            'name' => preg_replace('/\s+/u', ' ', trim((string) $request->input('name'))),
+            'address' => trim((string) $request->input('address')),
+            'email' => strtolower(trim((string) $request->input('email'))),
+        ]);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string', 'max:1000'],
+            'email' => ['nullable', 'email:rfc', 'max:255'],
+        ], [
+            'name.required' => 'Nama masjid wajib diisi.',
+            'address.required' => 'Alamat masjid wajib diisi.',
+            'address.max' => 'Alamat masjid maksimal 1000 karakter.',
+            'email.email' => 'Email organization tidak valid.',
+        ]);
+
+        $organization->forceFill([
+            'name' => $validated['name'],
+            'address' => $validated['address'],
+            'email' => $validated['email'] ?: null,
+        ])->save();
+
+        // Kolom legacy hanya disinkronkan untuk kompatibilitas kode lama.
+        if (array_key_exists('nama_masjid', $user->getAttributes())) {
+            $user->forceFill(['nama_masjid' => $validated['name']])->save();
+        }
+
+        return redirect()
+            ->route('admin.settings')
+            ->with('status', 'organization-updated')
+            ->with('success', 'Data organization masjid berhasil diperbarui.');
     }
 
     public function pegawaiProfile(): View
@@ -67,6 +111,39 @@ class AccountController extends Controller
         return $this->settings(User::ROLE_PEGAWAI);
     }
 
+    public function updatePegawaiContact(Request $request): RedirectResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::guard(User::ROLE_PEGAWAI)->user();
+        abort_unless($user && $user->isPegawai(), 403);
+
+        $pegawai = $user->pegawai;
+        abort_unless($pegawai, 404, 'Data pegawai tidak ditemukan.');
+
+        $request->merge([
+            'no_telp' => PhoneNumber::normalize($request->input('no_telp')),
+            'alamat' => ($alamat = trim((string) $request->input('alamat'))) !== '' ? $alamat : null,
+        ]);
+
+        $validated = $request->validate([
+            'no_telp' => [
+                'nullable',
+                'string',
+                'max:16',
+                'regex:/^\+[1-9][0-9]{7,14}$/',
+                Rule::unique('pegawai', 'no_telp')->ignore($pegawai->id),
+            ],
+            'alamat' => ['nullable', 'string', 'max:500'],
+        ], $this->contactValidationMessages());
+
+        $pegawai->update($validated);
+
+        return redirect()
+            ->route('pegawai.settings')
+            ->with('status', 'contact-updated')
+            ->with('success', 'Nomor telepon dan alamat berhasil diperbarui.');
+    }
+
     public function jamaahProfile(): View
     {
         return $this->profile(User::ROLE_JAMAAH);
@@ -75,6 +152,35 @@ class AccountController extends Controller
     public function jamaahSettings(): View
     {
         return $this->settings(User::ROLE_JAMAAH);
+    }
+
+    public function updateJamaahContact(Request $request): RedirectResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::guard(User::ROLE_JAMAAH)->user();
+        abort_unless($user && $user->isJamaah(), 403);
+
+        $request->merge([
+            'no_telp' => PhoneNumber::normalize($request->input('no_telp')),
+            'alamat' => ($alamat = trim((string) $request->input('alamat'))) !== '' ? $alamat : null,
+        ]);
+
+        $validated = $request->validate([
+            'no_telp' => [
+                'nullable',
+                'string',
+                'max:16',
+                'regex:/^\+[1-9][0-9]{7,14}$/',
+            ],
+            'alamat' => ['nullable', 'string', 'max:500'],
+        ], $this->contactValidationMessages());
+
+        $user->forceFill($validated)->save();
+
+        return redirect()
+            ->route('jamaah.settings')
+            ->with('status', 'contact-updated')
+            ->with('success', 'Nomor telepon dan alamat berhasil diperbarui.');
     }
 
     /**
@@ -186,13 +292,28 @@ class AccountController extends Controller
             ? $user->pegawai
             : null;
 
+        $organization = $guard === User::ROLE_ADMIN
+            ? $user->organization
+            : null;
+
         return view('account.settings', [
             'user' => $user,
             'pegawai' => $pegawai,
+            'organization' => $organization,
             'adminRecoveryMinLength' => self::ADMIN_RECOVERY_MIN_LENGTH,
             'adminRecoveryMaxLength' => self::ADMIN_RECOVERY_MAX_LENGTH,
             ...$this->navigationFor($guard),
         ]);
+    }
+
+    private function contactValidationMessages(): array
+    {
+        return [
+                        'no_telp.max' => 'Nomor telepon melebihi panjang maksimal format internasional.',
+            'no_telp.regex' => 'Pilih kode negara lalu masukkan nomor telepon yang valid.',
+            'no_telp.unique' => 'Nomor telepon tersebut sudah digunakan oleh pegawai lain.',
+            'alamat.max' => 'Alamat maksimal 500 karakter.',
+        ];
     }
 
     private function navigationFor(string $guard): array
@@ -203,6 +324,7 @@ class AccountController extends Controller
                 'profileRoute' => 'admin.profile',
                 'settingsRoute' => 'admin.settings',
                 'passwordRoute' => 'admin.password.edit',
+                'contactUpdateRoute' => null,
                 'dashboardRoute' => 'dashboard',
             ],
             User::ROLE_PEGAWAI => [
@@ -210,6 +332,7 @@ class AccountController extends Controller
                 'profileRoute' => 'pegawai.profile',
                 'settingsRoute' => 'pegawai.settings',
                 'passwordRoute' => 'pegawai.password.edit',
+                'contactUpdateRoute' => 'pegawai.contact.update',
                 'dashboardRoute' => 'pegawai.dashboard',
             ],
             User::ROLE_JAMAAH => [
@@ -217,6 +340,7 @@ class AccountController extends Controller
                 'profileRoute' => 'jamaah.profile',
                 'settingsRoute' => 'jamaah.settings',
                 'passwordRoute' => 'jamaah.password.edit',
+                'contactUpdateRoute' => 'jamaah.contact.update',
                 'dashboardRoute' => 'jamaah.dashboard',
             ],
             default => abort(404),

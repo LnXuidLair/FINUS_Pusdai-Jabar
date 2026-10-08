@@ -1,5 +1,5 @@
 @extends('layouts.app')
-
+@section('title', 'Tambah Gaji & Jabatan')
 @section('content')
 @include('layouts.partials.finus-ui')
 <style>
@@ -595,7 +595,7 @@
                                 <i class="fa fa-circle-info"></i>
                                 <span>
                                     Gunakan nama jabatan yang jelas dan tidak sama
-                                    dengan data yang sudah tersedia.
+                                    dengan jabatan lain di masjid ini.
                                 </span>
                             </div>
 
@@ -759,4 +759,3 @@ html[data-finus-theme="dark"] body .finus-alert strong,
 html[data-finus-theme="dark"] body .finus-alert ul { color:#FFC2C5 !important; }
 </style>
 @endpush
-

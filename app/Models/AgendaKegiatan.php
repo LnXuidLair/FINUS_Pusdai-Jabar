@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class AgendaKegiatan extends Model
 {
+    use BelongsToOrganization;
     protected $table = 'agenda_kegiatan';
 
     protected $fillable = [
+        'organization_id',
         'judul',
         'kategori',
         'tipe_jadwal',

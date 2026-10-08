@@ -176,6 +176,20 @@
         letter-spacing: .4px;
     }
 
+
+    .finus-mosque-name {
+        display: -webkit-box;
+        width: min(190px, calc(100% - 24px));
+        max-width: 190px;
+        margin: 5px auto 0 !important;
+        overflow: hidden;
+        line-height: 1.35 !important;
+        text-align: center;
+        overflow-wrap: anywhere;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
     /* =====================================================
        DAFTAR MENU
     ===================================================== */
@@ -1075,13 +1089,13 @@ html[data-finus-theme="dark"] {
                     aria-hidden="true"
                 ></span>
                 <img
-                    src="{{ asset('assets/images/pusdai_dashboard.png') }}"
+                    src="{{ !empty($finusOrganization?->logo_path) ? asset('storage/' . $finusOrganization->logo_path) : asset('assets/images/pusdai_dashboard.png') }}"
                     alt="FINUS"
                     onerror="this.style.display='none'"
                 >
 
                 <div class="logo-title">ADMIN FINUS</div>
-                <div class="logo-sub-title">Management FINUS</div>
+                <div class="logo-sub-title finus-mosque-name" title="{{ $finusMosqueName }}">{{ $finusMosqueName }}</div>
                 <div class="finus-sidebar-role-chip">Administrator</div>
             </div>
 

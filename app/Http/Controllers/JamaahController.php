@@ -7,6 +7,7 @@ use App\Models\BarangZakat;
 use App\Models\HargaBarangZakat;
 use App\Models\KetentuanPokokZakat;
 use App\Models\MasterAsnaf;
+use App\Models\Organization;
 use App\Models\User;
 use App\Models\ZiswafPenerimaan;
 use App\Services\ZakatCalculatorService;
@@ -78,7 +79,13 @@ class JamaahController extends Controller
             ->latest('id')
             ->limit(8)
             ->get();
-        $agendaKegiatan = AgendaKegiatan::aktif()
+        $organizations = Organization::query()
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'public_id', 'name', 'slug', 'address', 'city', 'province', 'logo_path']);
+
+        $agendaKegiatan = AgendaKegiatan::with('organization')
+            ->aktif()
             ->orderBy('urutan')
             ->orderBy('id')
             ->get()
@@ -89,6 +96,7 @@ class JamaahController extends Controller
                 'lokasi' => $item->lokasi,
                 'kategori' => $item->kategori_label,
                 'deskripsi' => $item->deskripsi,
+                'organization' => $item->organization?->name ?? 'Masjid',
             ]);
 
         return view('dashboard.jamaah', compact(
@@ -100,7 +108,8 @@ class JamaahController extends Controller
             'totalInfakSaya',
             'totalWakafSaya',
             'riwayatSaya',
-            'agendaKegiatan'
+            'agendaKegiatan',
+            'organizations'
         ));
     }
 
@@ -166,7 +175,7 @@ class JamaahController extends Controller
             403
         );
 
-        $transaksi->load('muzakki');
+        $transaksi->load(['muzakki', 'organization']);
         $jenisLabels = $this->jenisLabels();
         $metodeLabels = $this->metodeLabels();
 
@@ -174,6 +183,7 @@ class JamaahController extends Controller
             'referensi' => $transaksi->order_id ?: 'ZSF-'.$transaksi->id,
             'jamaah_nama' => $jamaah->name,
             'jamaah_email' => $jamaah->email ?? '-',
+            'organization' => $transaksi->organization?->name ?? 'Masjid',
             'jenis' => $jenisLabels[$transaksi->jenis_ziswaf] ?? $transaksi->jenis_ziswaf,
             'nominal' => $transaksi->nominal,
             'nominal_fmt' => 'Rp '.number_format($transaksi->nominal, 0, ',', '.'),
@@ -198,6 +208,7 @@ class JamaahController extends Controller
             403
         );
 
+        $transaksi->load('organization');
         $jenisLabels = $this->jenisLabels();
         $metodeLabels = $this->metodeLabels();
 
@@ -317,6 +328,7 @@ class JamaahController extends Controller
                 fputcsv($output, [
                     'Referensi',
                     'Tanggal',
+                    'Masjid Tujuan',
                     'Jenis ZISWAF',
                     'Metode Pembayaran',
                     'Nominal',
@@ -329,6 +341,7 @@ class JamaahController extends Controller
                     fputcsv($output, [
                         $item->order_id ?: 'ZSF-'.$item->id,
                         optional($item->tanggal)->format('d/m/Y'),
+                        $item->organization?->name ?? 'Masjid',
                         $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf,
                         $metodeLabels[$item->metode_pembayaran]
                             ?? strtoupper(str_replace('_', ' ', $item->metode_pembayaran)),
@@ -347,6 +360,22 @@ class JamaahController extends Controller
 
     public function createTransaksi(Request $request, string $jenis)
     {
+        $organizations = Organization::query()
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'public_id', 'name', 'address', 'city', 'province']);
+
+        abort_if(
+            $organizations->isEmpty(),
+            503,
+            'Belum ada masjid aktif yang dapat menerima transaksi.'
+        );
+
+        $requestedOrganizationId = (int) ($request->old('organization_id') ?: $request->query('organization_id', 0));
+        $selectedOrganizationId = $organizations->contains('id', $requestedOrganizationId)
+            ? $requestedOrganizationId
+            : (int) $organizations->first()->id;
+
         $config = $this->transaksiConfig($jenis);
         $paymentGatewayReady = $this->isPaymentGatewayReady();
 
@@ -384,21 +413,43 @@ class JamaahController extends Controller
             'hargaBeras',
             'hargaEmas',
             'hargaPertanian',
-            'zakatPenghasilanTerbayar'
+            'zakatPenghasilanTerbayar',
+            'organizations',
+            'selectedOrganizationId'
         ));
     }
 
     public function storeTransaksi(Request $request, string $jenis)
     {
+        $organizationId = (int) $request->input('organization_id', 0);
+        $targetOrganization = Organization::query()
+            ->active()
+            ->find($organizationId);
+
+        if (! $targetOrganization) {
+            throw ValidationException::withMessages([
+                'organization_id' => 'Masjid tujuan tidak tersedia atau sedang tidak aktif.',
+            ]);
+        }
+
         $config = $this->transaksiConfig($jenis);
         $paymentGatewayReady = $this->isPaymentGatewayReady();
         $minimalNominal = $paymentGatewayReady ? 10000 : 1000;
-        $ketentuanZakat = $this->zakatPolicyForTransaction((string) $request->input('jenis_ziswaf'));
+        $ketentuanZakat = $this->zakatPolicyForTransaction(
+            (string) $request->input('jenis_ziswaf')
+        );
         $calculationCategories = $this->zakatCalculationCategories();
         $allowedCalculationCategories = array_keys(
             $calculationCategories[(string) $request->input('jenis_ziswaf')] ?? []
         );
         $rules = [
+            'organization_id' => [
+                'required',
+                'integer',
+                Rule::exists('organizations', 'id')->where(
+                    fn ($query) => $query->where('is_active', true)
+                ),
+            ],
             'jenis_ziswaf' => [
                 'required',
                 Rule::in(array_keys($config['jenisOptions'])),
@@ -502,6 +553,8 @@ class JamaahController extends Controller
             ];
         }
         $messages = [
+            'organization_id.required' => 'Masjid tujuan wajib dipilih.',
+            'organization_id.exists' => 'Masjid tujuan tidak tersedia atau sedang tidak aktif.',
             'jenis_ziswaf.required' => 'Jenis transaksi wajib dipilih.',
             'jenis_ziswaf.in' => 'Jenis transaksi tidak valid.',
             'nominal.required' => 'Nominal wajib diisi.',
@@ -794,6 +847,7 @@ class JamaahController extends Controller
                 ->store('bukti-pembayaran-ziswaf', 'public');
         }
         $transaksi = ZiswafPenerimaan::create([
+            'organization_id' => (int) $validated['organization_id'],
             'order_id' => $orderId,
             'payment_gateway' => $paymentGatewayReady ? 'midtrans' : 'manual',
             'muzakki_id' => $user->id,
@@ -1387,6 +1441,7 @@ class JamaahController extends Controller
         array $filters
     ): Builder {
         $query = ZiswafPenerimaan::query()
+            ->with('organization')
             ->where('muzakki_id', $request->user()->id);
         if (! empty($filters['q'])) {
             $search = trim($filters['q']);

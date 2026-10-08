@@ -60,7 +60,7 @@
                         <label class="fmu-label" for="phone_display">Nomor Telepon</label>
                         <input type="tel" id="phone_display" class="fmu-control" placeholder="812 3456 7890">
                         <input type="hidden" name="no_telp" id="phone_value" value="{{ old('no_telp', $pegawai->no_telp) }}">
-                        <span class="fmu-help">Kosongkan apabila pegawai belum memiliki nomor aktif.</span>
+                        <span class="fmu-help">Kosongkan apabila belum ada. Nomor harus berbeda dari seluruh pegawai lain.</span>
                         @error('no_telp')<span class="fmu-error">{{ $message }}</span>@enderror
                     </div>
                     <div class="fmu-field fmu-field-full">
@@ -78,7 +78,7 @@
         <aside class="fmu-side-note">
             <h3><i class="fa-solid fa-shield-halved mr-2"></i>Panduan Data</h3>
             <p>Pastikan data cocok dengan identitas pegawai agar aktivasi akun dan laporan tidak keliru.</p>
-            <ul><li>NIP harus unik.</li><li>Jabatan menentukan profil dashboard dan hak akses otomatis.</li><li>Jabatan DKM/Keuangan membuka menu khusus.</li><li>Email akun dibuat otomatis.</li><li>Nomor telepon disimpan dalam format internasional.</li></ul>
+            <ul><li>NIP harus unik.</li><li>Jabatan menentukan profil dashboard dan hak akses otomatis.</li><li>Jabatan DKM/Keuangan membuka menu khusus.</li><li>Email akun dibuat otomatis.</li><li>Nomor telepon wajib unik dan disimpan bersama kode negara yang dipilih.</li></ul>
         </aside>
     </div>
 </div>

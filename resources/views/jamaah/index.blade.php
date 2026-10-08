@@ -800,7 +800,7 @@
 
         <div class="jm-hero-badge">
             <i class="fa-solid fa-mosque"></i>
-            Jamaah PUSDAI Jawa Barat
+            Jamaah FINUS
         </div>
     </section>
 
@@ -1189,4 +1189,3 @@ html[data-finus-theme="dark"] body .jm-page .jm-empty span { color:#9EAEA4 !impo
 }
 </style>
 @endpush
-

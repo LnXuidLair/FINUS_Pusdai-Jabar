@@ -212,6 +212,19 @@ class PenggajianService
             ->where('status', 'hadir')
             ->where('is_approved', true)
             ->whereNotNull('approved_at')
+            ->where(function ($query) {
+                // Presensi baru: wajib punya jam datang dan pulang.
+                $query->where(function ($baru) {
+                    $baru->whereNotNull('jam_datang')
+                        ->whereNotNull('jam_pulang');
+                })
+                // Presensi lama tetap dihitung agar data sebelum upgrade tidak berubah.
+                ->orWhere(function ($legacy) {
+                    $legacy->whereNull('jam_datang')
+                        ->whereNull('jam_pulang')
+                        ->whereNotNull('bukti_kehadiran');
+                });
+            })
             ->distinct()
             ->count('tanggal');
 

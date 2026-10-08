@@ -382,6 +382,7 @@
                         <th style="width:6px;padding:0;"></th>
                         <th>Referensi</th>
                         <th>Tanggal</th>
+                        <th>Masjid</th>
                         <th>Jenis</th>
                         <th>Nominal</th>
                         <th>Status</th>
@@ -440,6 +441,10 @@
 
                             <td style="white-space:nowrap;font-size:13px;">
                                 {{ $item->tanggal?->format('d/m/Y') }}
+                            </td>
+
+                            <td style="font-size:13px;">
+                                {{ $item->organization?->name ?? 'Masjid' }}
                             </td>
 
                             <td>
@@ -999,7 +1004,7 @@ function bukaInvoice(btn) {
             '<div class="inv-head">' +
                 '<div class="inv-head-top">' +
                     '<div>' +
-                        '<p class="inv-lembaga-name">&#x1F54C;&nbsp; Pusdai Jawa Barat</p>' +
+                        '<p class="inv-lembaga-name">&#x1F54C;&nbsp; ' + escapeHtml(data.organization || 'Masjid') + '</p>' +
                         '<p class="inv-lembaga-sub">FINUS &mdash; Sistem Informasi Keuangan Masjid</p>' +
                     '</div>' +
                     '<button class="inv-close-btn" onclick="tutupInvoice()" title="Tutup">' +
@@ -1111,4 +1116,3 @@ html[data-finus-theme="dark"] body .jt-page .status-pill-pending { border-color:
 html[data-finus-theme="dark"] body .jt-page :where(.status-pill-ditolak,.status-pill-dibatalkan) { border-color:#704044 !important; background:#371E22 !important; color:#F5B1B5 !important; }
 </style>
 @endpush
-

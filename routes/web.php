@@ -96,6 +96,8 @@ Route::middleware(['auth:admin', 'role:admin'])
             ->name('admin.profile.update');
         Route::get('/admin/pengaturan', [AccountController::class, 'adminSettings'])
             ->name('admin.settings');
+        Route::patch('/admin/pengaturan/organization', [AccountController::class, 'updateAdminOrganization'])
+            ->name('admin.organization.update');
         Route::post('/admin/pengaturan/recovery-code/generate', [AccountController::class, 'generateAdminRecoveryCode'])
             ->middleware('throttle:20,1')
             ->name('admin.recovery-code.generate');
@@ -156,10 +158,19 @@ Route::middleware(['auth:admin', 'role:admin'])
                     ->except(['show']);
                 Route::patch('presensi/approve-bulk', [PresensiController::class, 'approveBulk'])
                     ->name('presensi.approve-bulk');
+                Route::get('presensi', [PresensiController::class, 'index'])
+                    ->name('presensi.index');
+                Route::get('presensi/create', [PresensiController::class, 'create'])
+                    ->name('presensi.create');
+                Route::post('presensi', [PresensiController::class, 'store'])
+                    ->name('presensi.store');
                 Route::patch('presensi/{presensi}/approve', [PresensiController::class, 'approve'])
                     ->name('presensi.approve');
-                Route::resource('presensi', PresensiController::class)
-                    ->except(['show']);
+                Route::get('presensi/{presensi}/bukti/{jenis}', [PresensiController::class, 'adminBukti'])
+                    ->whereIn('jenis', ['datang', 'pulang', 'status'])
+                    ->name('presensi.bukti');
+                Route::delete('presensi/{presensi}', [PresensiController::class, 'destroy'])
+                    ->name('presensi.destroy');
                 Route::get('penggajian', [PenggajianController::class, 'index'])
                     ->name('penggajian.index');
                 Route::patch('penggajian/{penggajian}/status', [PenggajianController::class, 'updateStatus'])
@@ -201,6 +212,8 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
             ->name('profile');
         Route::get('/pengaturan', [AccountController::class, 'pegawaiSettings'])
             ->name('settings');
+        Route::patch('/pengaturan/kontak', [AccountController::class, 'updatePegawaiContact'])
+            ->name('contact.update');
         Route::get('/ubah-password', function () {
             return view('auth.change-password', [
                 'portal' => 'staff',
@@ -220,6 +233,9 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
             ->name('presensi.create');
         Route::post('/presensi', [PresensiController::class, 'pegawaiStore'])
             ->name('presensi.store');
+        Route::get('/presensi/{presensi}/bukti/{jenis}', [PresensiController::class, 'pegawaiBukti'])
+            ->whereIn('jenis', ['datang', 'pulang', 'status'])
+            ->name('presensi.bukti');
         Route::get('/laporan-gaji', [PegawaiDashboardController::class, 'laporanGaji'])
             ->name('laporan-gaji.index');
         Route::get('/laporan-gaji/{penggajian}/slip', [PegawaiDashboardController::class, 'downloadSlip'])
@@ -266,6 +282,8 @@ Route::middleware(['auth:jamaah', 'verified', 'role:jamaah',])
             ->name('profile');
         Route::get('/pengaturan', [AccountController::class, 'jamaahSettings'])
             ->name('settings');
+        Route::patch('/pengaturan/kontak', [AccountController::class, 'updateJamaahContact'])
+            ->name('contact.update');
         Route::get('/ubah-password', function () {
             return view('auth.change-password', [
                 'portal' => 'jamaah',

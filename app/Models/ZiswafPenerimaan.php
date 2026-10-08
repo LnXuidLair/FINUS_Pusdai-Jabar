@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 
 class ZiswafPenerimaan extends Model
 {
+    use BelongsToOrganization;
     protected $table = 'ziswaf_penerimaan';
 
     protected $fillable = [
+        'organization_id',
         'order_id',
         'snap_token',
         'payment_gateway',

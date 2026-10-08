@@ -7,12 +7,14 @@ use App\Models\Pegawai;
 use App\Models\Penggajian;
 use App\Models\Presensi;
 use App\Models\User;
+use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PegawaiController extends Controller
 {
@@ -43,17 +45,23 @@ class PegawaiController extends Controller
                 (string) $request->input('nip'),
                 $staffDomain
             ),
+            'no_telp' => PhoneNumber::normalize($request->input('no_telp')),
+            'alamat' => trim((string) $request->input('alamat')),
         ]);
 
-        $validated = $request->validate($this->rules());
+        $validated = $request->validate($this->rules(), $this->validationMessages());
+        $organizationId = (int) (Auth::guard(User::ROLE_ADMIN)->user()?->organization_id ?? 0);
+        abort_if($organizationId < 1, 422, 'Organization Admin belum tersedia. Jalankan migration organization terlebih dahulu.');
 
-        DB::transaction(function () use ($validated): void {
+        DB::transaction(function () use ($validated, $organizationId): void {
             $pegawai = new Pegawai($validated);
+            $pegawai->organization_id = $organizationId;
             $pegawai->createdby = Auth::guard(User::ROLE_ADMIN)->id();
             $pegawai->save();
 
             $user = new User([
                 'name' => $validated['nama_pegawai'],
+                'organization_id' => $organizationId,
                 'email' => strtolower($validated['email']),
                 // Email institusi Pegawai tidak melalui verifikasi email publik.
                 'email_verified_at' => now(),
@@ -124,9 +132,11 @@ class PegawaiController extends Controller
                 $pegawai->id,
                 $oldEmail
             ),
+            'no_telp' => PhoneNumber::normalize($request->input('no_telp')),
+            'alamat' => trim((string) $request->input('alamat')),
         ]);
 
-        $validated = $request->validate($this->rules($pegawai));
+        $validated = $request->validate($this->rules($pegawai), $this->validationMessages());
 
         DB::transaction(function () use ($pegawai, $oldEmail, $validated): void {
             $pegawai->update($validated);
@@ -139,6 +149,7 @@ class PegawaiController extends Controller
             if ($user) {
                 $user->forceFill([
                     'name' => $validated['nama_pegawai'],
+                    'organization_id' => $pegawai->organization_id,
                     'email' => strtolower($validated['email']),
                 ])->save();
 
@@ -149,6 +160,7 @@ class PegawaiController extends Controller
             // mekanisme User + Recovery Code diterapkan.
             $user = new User([
                 'name' => $validated['nama_pegawai'],
+                'organization_id' => $pegawai->organization_id,
                 'email' => strtolower($validated['email']),
                 'email_verified_at' => now(),
                 'password' => Hash::make(Str::random(64)),
@@ -220,7 +232,12 @@ class PegawaiController extends Controller
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('pegawai', 'nip')->ignore($pegawai?->id),
+                Rule::unique('pegawai', 'nip')
+                    ->where(fn ($query) => $query->where(
+                        'organization_id',
+                        (int) (Auth::guard(User::ROLE_ADMIN)->user()?->organization_id ?? $pegawai?->organization_id ?? 0)
+                    ))
+                    ->ignore($pegawai?->id),
             ],
             'nama_pegawai' => ['required', 'string', 'max:255'],
             'jabatan' => [
@@ -236,16 +253,30 @@ class PegawaiController extends Controller
                 'max:255',
                 Rule::unique('pegawai', 'email')->ignore($pegawai?->id),
             ],
-            'no_telp' => ['nullable', 'string', 'max:20'],
+            'no_telp' => [
+                'nullable',
+                'string',
+                'max:16',
+                'regex:/^\+[1-9][0-9]{7,14}$/',
+                Rule::unique('pegawai', 'no_telp')->ignore($pegawai?->id),
+            ],
             'alamat' => ['nullable', 'string', 'max:500'],
+        ];
+    }
+
+    private function validationMessages(): array
+    {
+        return [
+                        'no_telp.max' => 'Nomor telepon melebihi panjang maksimal format internasional.',
+            'no_telp.regex' => 'Pilih kode negara lalu masukkan nomor telepon yang valid.',
+            'no_telp.unique' => 'Nomor telepon tersebut sudah digunakan oleh pegawai lain.',
         ];
     }
 
     private function staffDomain(): string
     {
-        $admin = User::query()
-            ->where('role', User::ROLE_ADMIN)
-            ->firstOrFail();
+        $admin = Auth::guard(User::ROLE_ADMIN)->user();
+        abort_unless($admin && $admin->organization_id, 403);
 
         $adminEmail = strtolower(trim((string) $admin->email));
 
