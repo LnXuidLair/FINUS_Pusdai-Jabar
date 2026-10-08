@@ -4,6 +4,7 @@ namespace App\Models\Concerns;
 
 use App\Models\Organization;
 use App\Support\OrganizationContext;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 
 trait BelongsToOrganization
@@ -18,18 +19,30 @@ trait BelongsToOrganization
                     $builder->getModel()->qualifyColumn('organization_id'),
                     $organizationId
                 );
+            } elseif (OrganizationContext::requiresOrganization()) {
+                // Fail closed: portal Admin/Pegawai tanpa organisasi tidak boleh
+                // mendapatkan seluruh data dari berbagai masjid.
+                $builder->whereRaw('1 = 0');
             }
         });
 
         static::creating(function ($model): void {
+            $organizationId = OrganizationContext::currentOrganizationId();
+            $required = OrganizationContext::requiresOrganization();
+
             if (! empty($model->organization_id)) {
+                // Cegah pengisian organization_id masjid lain dari portal internal.
+                if ($required && (int) $model->organization_id !== $organizationId) {
+                    throw new AuthorizationException('Tidak dapat membuat data untuk organisasi lain.');
+                }
+
                 return;
             }
 
-            $organizationId = OrganizationContext::currentOrganizationId();
-
             if ($organizationId) {
                 $model->organization_id = $organizationId;
+            } elseif ($required) {
+                throw new AuthorizationException('Organisasi akun tidak tersedia. Data tidak dapat dibuat.');
             }
         });
     }

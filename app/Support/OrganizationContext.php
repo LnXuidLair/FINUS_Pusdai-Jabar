@@ -68,6 +68,26 @@ class OrganizationContext
         return $ids->count() === 1 ? (int) $ids->first() : null;
     }
 
+    /**
+     * Portal internal selalu membutuhkan organisasi yang valid.
+     * Route publik/Jamaah dan proses CLI tetap memakai perilaku lama.
+     */
+    public static function requiresOrganization(): bool
+    {
+        $route = request()->route();
+        if (! $route) {
+            return false;
+        }
+
+        $name = (string) $route->getName();
+        $middleware = $route->gatherMiddleware();
+
+        return in_array('auth:admin', $middleware, true)
+            || in_array('auth:pegawai', $middleware, true)
+            || str_starts_with($name, 'admin.')
+            || str_starts_with($name, 'pegawai.');
+    }
+
     public static function currentActor(): ?Authenticatable
     {
         $route = request()->route();

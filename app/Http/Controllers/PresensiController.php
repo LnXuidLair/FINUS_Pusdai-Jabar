@@ -17,9 +17,12 @@ class PresensiController extends Controller
     /**
      * Halaman presensi ADMIN.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $presensis = Presensi::with([
+        $organizationId = $this->adminOrganizationId($request);
+        $presensis = Presensi::forOrganization($organizationId)
+            ->whereHas('pegawai', fn ($query) => $query->forOrganization($organizationId))
+            ->with([
                 'pegawai',
                 'approver',
                 'inputDatangBy',
@@ -37,9 +40,10 @@ class PresensiController extends Controller
      * Admin dapat memasukkan / melengkapi presensi tanpa dibatasi jam saat ini.
      * Waktu yang dicatat tetap divalidasi agar masuk akal untuk jenis presensinya.
      */
-    public function create()
+    public function create(Request $request)
     {
-        $pegawais = Pegawai::orderBy('nama_pegawai')->get();
+        $organizationId = $this->adminOrganizationId($request);
+        $pegawais = Pegawai::forOrganization($organizationId)->orderBy('nama_pegawai')->get();
 
         return view('presensi.create', [
             'pegawais' => $pegawais,
@@ -53,7 +57,7 @@ class PresensiController extends Controller
      */
     public function store(Request $request, PenggajianService $penggajianService)
     {
-        $organizationId = (int) $request->user()->organization_id;
+        $organizationId = $this->adminOrganizationId($request);
 
         $base = $request->validate([
             'id_pegawai' => [
@@ -70,7 +74,8 @@ class PresensiController extends Controller
             'keterangan.required' => 'Alasan/keterangan input Admin wajib diisi untuk kebutuhan audit.',
         ]);
 
-        $pegawai = Pegawai::with('gajiJabatan')->findOrFail((int) $base['id_pegawai']);
+        $pegawai = Pegawai::forOrganization($organizationId)
+            ->with('gajiJabatan')->findOrFail((int) $base['id_pegawai']);
         $tanggal = Carbon::parse($base['tanggal'])->toDateString();
         $periode = Carbon::parse($tanggal)->format('Y-m');
 
@@ -80,7 +85,8 @@ class PresensiController extends Controller
             ])->withInput();
         }
 
-        $existing = Presensi::where('id_pegawai', $pegawai->id)
+        $existing = Presensi::forOrganization($organizationId)
+            ->where('id_pegawai', $pegawai->id)
             ->whereDate('tanggal', $tanggal)
             ->first();
 
@@ -132,6 +138,7 @@ class PresensiController extends Controller
                 }
 
                 $record ??= new Presensi([
+                    'organization_id' => $pegawai->organization_id,
                     'id_pegawai' => $pegawai->id,
                     'tanggal' => $tanggal,
                     'status' => Presensi::STATUS_HADIR,
@@ -278,10 +285,14 @@ class PresensiController extends Controller
             return back()->withErrors(['jam_pulang' => $timeError])->withInput();
         }
 
-        $pathDatang = $this->storeProof($request, 'bukti_datang', $pegawai, $tanggal, 'datang', 'admin');
-        $pathPulang = $this->storeProof($request, 'bukti_pulang', $pegawai, $tanggal, 'pulang_'.$validated['kondisi'], 'admin');
-
+        // Simpan keduanya di dalam try; jika upload kedua gagal, hapus
+        // upload pertama sehingga tidak meninggalkan file orphan di R2.
+        $pathDatang = null;
+        $pathPulang = null;
         try {
+            $pathDatang = $this->storeProof($request, 'bukti_datang', $pegawai, $tanggal, 'datang', 'admin');
+            $pathPulang = $this->storeProof($request, 'bukti_pulang', $pegawai, $tanggal, 'pulang_'.$validated['kondisi'], 'admin');
+
             DB::transaction(function () use ($request, $pegawai, $tanggal, $periode, $keterangan, $validated, $pathDatang, $pathPulang, $penggajianService): void {
                 $exists = Presensi::where('id_pegawai', $pegawai->id)
                     ->whereDate('tanggal', $tanggal)
@@ -293,6 +304,7 @@ class PresensiController extends Controller
                 }
 
                 Presensi::create([
+                    'organization_id' => $pegawai->organization_id,
                     'id_pegawai' => $pegawai->id,
                     'tanggal' => $tanggal,
                     'status' => Presensi::STATUS_HADIR,
@@ -314,7 +326,14 @@ class PresensiController extends Controller
                 $penggajianService->syncPegawai($pegawai, $periode);
             });
         } catch (\Throwable $exception) {
-            Storage::disk($this->attendanceDisk())->delete([$pathDatang, $pathPulang]);
+            $paths = array_values(array_filter([$pathDatang, $pathPulang]));
+            if ($paths) {
+                try {
+                    Storage::disk($this->attendanceDisk())->delete($paths);
+                } catch (\Throwable $cleanupException) {
+                    report($cleanupException);
+                }
+            }
 
             if ($exception instanceof \RuntimeException) {
                 return back()->withErrors(['presensi' => $exception->getMessage()])->withInput();
@@ -356,6 +375,7 @@ class PresensiController extends Controller
                 }
 
                 Presensi::create([
+                    'organization_id' => $pegawai->organization_id,
                     'id_pegawai' => $pegawai->id,
                     'tanggal' => $tanggal,
                     'status' => $status,
@@ -385,14 +405,16 @@ class PresensiController extends Controller
     }
 
     /** Bukti presensi untuk Admin. */
-    public function adminBukti(Presensi $presensi, string $jenis)
+    public function adminBukti(Request $request, Presensi $presensi, string $jenis)
     {
+        $this->assertAdminPresensi($request, $presensi);
         return $this->streamProof($presensi, $jenis);
     }
 
     /** ACC satu record yang sudah lengkap. */
     public function approve(Request $request, Presensi $presensi, PenggajianService $penggajianService)
     {
+        $this->assertAdminPresensi($request, $presensi);
         if ($presensi->is_approved) {
             return back()->with('success', 'Presensi tersebut sudah disetujui.');
         }
@@ -426,15 +448,19 @@ class PresensiController extends Controller
     /** ACC beberapa record lengkap sekaligus. */
     public function approveBulk(Request $request, PenggajianService $penggajianService)
     {
+        $organizationId = $this->adminOrganizationId($request);
         $validated = $request->validate([
             'presensi_ids' => ['required', 'array', 'min:1'],
-            'presensi_ids.*' => ['required', 'integer', 'exists:presensi,id'],
+            'presensi_ids.*' => ['required', 'integer', 'distinct',
+                Rule::exists('presensi', 'id')->where('organization_id', $organizationId)],
         ], [
             'presensi_ids.required' => 'Pilih minimal satu presensi.',
             'presensi_ids.min' => 'Pilih minimal satu presensi.',
         ]);
 
-        $presensis = Presensi::with('pegawai')
+        $presensis = Presensi::forOrganization($organizationId)
+            ->whereHas('pegawai', fn ($query) => $query->forOrganization($organizationId))
+            ->with('pegawai')
             ->whereIn('id', $validated['presensi_ids'])
             ->where('is_approved', false)
             ->get();
@@ -495,9 +521,12 @@ class PresensiController extends Controller
         return back()->with('success', $message);
     }
 
-    public function destroy($id, PenggajianService $penggajianService)
+    public function destroy(Request $request, $id, PenggajianService $penggajianService)
     {
-        $presensi = Presensi::with('pegawai')->findOrFail($id);
+        $organizationId = $this->adminOrganizationId($request);
+        $presensi = Presensi::forOrganization($organizationId)
+            ->with('pegawai')->findOrFail($id);
+        $this->assertAdminPresensi($request, $presensi);
         $periode = Carbon::parse($presensi->tanggal)->format('Y-m');
 
         if ($penggajianService->periodeSudahDibayar((int) $presensi->id_pegawai, $periode)) {
@@ -525,8 +554,7 @@ class PresensiController extends Controller
     /** Halaman presensi Pegawai. */
     public function pegawaiIndex(Request $request)
     {
-        $pegawai = $request->user()->pegawai;
-        abort_unless($pegawai, 404, 'Data pegawai belum terhubung dengan akun ini.');
+        $pegawai = $this->currentPegawai($request);
 
         $query = Presensi::where('id_pegawai', $pegawai->id);
         $totalPresensi = (clone $query)->count();
@@ -559,20 +587,28 @@ class PresensiController extends Controller
 
     public function pegawaiBukti(Request $request, Presensi $presensi, string $jenis)
     {
-        $pegawai = $request->user()->pegawai;
-        abort_unless($pegawai && (int) $presensi->id_pegawai === (int) $pegawai->id, 403, 'Anda tidak memiliki akses ke bukti presensi ini.');
+        $pegawai = $this->currentPegawai($request);
+        abort_unless(
+            (int) $presensi->organization_id === (int) $pegawai->organization_id
+                && (int) $presensi->id_pegawai === (int) $pegawai->id,
+            404,
+            'Bukti presensi tidak ditemukan.'
+        );
 
         return $this->streamProof($presensi, $jenis);
     }
 
     public function pegawaiCreate(Request $request)
     {
-        $pegawai = $request->user()->pegawai;
-        abort_unless($pegawai, 404, 'Data pegawai belum terhubung dengan akun ini.');
+        $pegawai = $this->currentPegawai($request);
 
         $todayPresensi = Presensi::where('id_pegawai', $pegawai->id)->whereDate('tanggal', now()->toDateString())->first();
         $available = $this->employeeAvailableActions($pegawai, $todayPresensi);
         $aksi = (string) $request->query('aksi', '');
+
+        if ($aksi === '') {
+            return redirect()->route('pegawai.presensi.index');
+        }
 
         if (! isset($available[$aksi])) {
             return redirect()->route('pegawai.presensi.index')
@@ -589,8 +625,7 @@ class PresensiController extends Controller
 
     public function pegawaiStore(Request $request, PenggajianService $penggajianService)
     {
-        $pegawai = $request->user()->pegawai;
-        abort_unless($pegawai, 404, 'Data pegawai belum terhubung dengan akun ini.');
+        $pegawai = $this->currentPegawai($request);
 
         $validated = $request->validate([
             'aksi' => ['required', 'in:datang,pulang,pulang_awal,tugas_dinas,lembur,izin,sakit'],
@@ -635,6 +670,7 @@ class PresensiController extends Controller
                     }
 
                     Presensi::create([
+                        'organization_id' => $pegawai->organization_id,
                         'id_pegawai' => $pegawai->id,
                         'tanggal' => $today,
                         'status' => Presensi::STATUS_HADIR,
@@ -651,6 +687,7 @@ class PresensiController extends Controller
                     }
 
                     Presensi::create([
+                        'organization_id' => $pegawai->organization_id,
                         'id_pegawai' => $pegawai->id,
                         'tanggal' => $today,
                         'status' => $aksi,
@@ -893,6 +930,43 @@ class PresensiController extends Controller
         abort_unless($path && Storage::disk($this->attendanceDisk())->exists($path), 404, 'File bukti presensi tidak ditemukan.');
 
         return Storage::disk($this->attendanceDisk())->response($path, basename($path), [], 'inline');
+    }
+
+    /** Organisasi Admin wajib tersedia sebelum membaca/mengubah data. */
+    private function adminOrganizationId(Request $request): int
+    {
+        $user = $request->user('admin');
+        $organizationId = (int) ($user?->organization_id ?? 0);
+        abort_unless($user && $user->role === 'admin' && $organizationId > 0, 403, 'Organisasi akun Admin belum tersedia.');
+
+        return $organizationId;
+    }
+
+    /** Guard tambahan selain global scope dan route model binding. */
+    private function assertAdminPresensi(Request $request, Presensi $presensi): void
+    {
+        $organizationId = $this->adminOrganizationId($request);
+        abort_unless(
+            (int) $presensi->organization_id === $organizationId
+                && Pegawai::forOrganization($organizationId)->whereKey($presensi->id_pegawai)->exists(),
+            404,
+            'Presensi tidak ditemukan untuk organisasi ini.'
+        );
+    }
+
+    /** Pastikan identitas Pegawai dan organisasi akun tetap sejalan. */
+    private function currentPegawai(Request $request): Pegawai
+    {
+        $user = $request->user('pegawai');
+        $organizationId = (int) ($user?->organization_id ?? 0);
+        abort_unless($user && $user->role === 'pegawai' && $organizationId > 0, 403, 'Organisasi akun Pegawai belum tersedia.');
+
+        $pegawai = Pegawai::forOrganization($organizationId)
+            ->where('email', $user->email)
+            ->first();
+        abort_unless($pegawai, 404, 'Data pegawai belum terhubung dengan organisasi akun ini.');
+
+        return $pegawai;
     }
 
     /** Disk penyimpanan bukti presensi sesuai environment. */
