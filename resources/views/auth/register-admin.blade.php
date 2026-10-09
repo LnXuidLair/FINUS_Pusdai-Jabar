@@ -138,6 +138,18 @@
 
 @push('styles')
 <style>
+    /* Panel kiri registrasi Admin tidak mengikuti tinggi form panjang. */
+    @media (min-width: 1181px) {
+        .auth-layout > .auth-hero {
+            position: sticky;
+            top: var(--auth-header-height);
+            align-self: start;
+            height: calc(100vh - var(--auth-header-height));
+            height: calc(100dvh - var(--auth-header-height));
+            min-height: 620px;
+        }
+    }
+
     .admin-recovery-row {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 52px;
