@@ -4,17 +4,36 @@ namespace Tests\Feature;
 
 use App\Models\Coa;
 use App\Models\KetentuanPokokZakat;
+use App\Models\Organization;
 use App\Models\Pengeluaran;
+use App\Models\TransactionCategory;
 use App\Models\ZiswafPenerimaan;
 use App\Services\Accounting\Psak109PostingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PsakZiswafPostingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_zakat_amil_share_uses_the_single_core_policy_table(): void
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $organization = Organization::create([
+            'public_id' => (string) str()->ulid(),
+            'name' => 'PUSDAI Uji Posting',
+            'slug' => 'pusdai-uji-posting',
+            'country_code' => 'ID',
+            'is_active' => true,
+        ]);
+        DB::table('coa')
+            ->whereNull('organization_id')
+            ->update(['organization_id' => $organization->id]);
+    }
+
+    public function test_zakat_is_kept_in_full_without_amil_allocation(): void
     {
         $ketentuan = KetentuanPokokZakat::untukJenis('maal');
         $ketentuan->update(['persentase_amil' => 11]);
@@ -27,17 +46,16 @@ class PsakZiswafPostingTest extends TestCase
         app(Psak109PostingService::class)->postPenerimaan($receipt);
         $receipt->refresh();
 
-        $this->assertSame(110_000, (int) $receipt->nominal_amil);
-        $this->assertSame($ketentuan->id, $receipt->snapshot_kebijakan['ketentuan_pokok_id']);
-        $this->assertSame(11.0, (float) $receipt->snapshot_kebijakan['persentase_amil']);
-        $this->assertDatabaseHas('jurnal_detail', [
+        $this->assertSame(0, (int) $receipt->nominal_amil);
+        $this->assertSame(0.0, (float) $ketentuan->fresh()->persentase_amil);
+        $this->assertDatabaseMissing('jurnal_detail', [
             'jurnal_id' => $receipt->jurnal_id,
-            'coa_id' => $this->account('4301')->id,
-            'credit' => 110_000,
+            'jenis_dana' => 'amil',
         ]);
+        $this->assertSame(1_000_000.0, app(Psak109PostingService::class)->getSaldoDana()['zakat']);
     }
 
-    public function test_restricted_infak_keeps_the_restriction_and_is_not_automatically_cut_for_amil(): void
+    public function test_infak_is_always_posted_as_general_fund(): void
     {
         $receipt = $this->receipt([
             'jenis_ziswaf' => 'infaq',
@@ -51,14 +69,36 @@ class PsakZiswafPostingTest extends TestCase
         $this->assertSame(0, (int) $receipt->nominal_amil);
         $this->assertDatabaseHas('jurnal_detail', [
             'jurnal_id' => $receipt->jurnal_id,
-            'restriction_type' => 'muqayyadah',
+            'jenis_dana' => 'operasional',
+            'restriction_type' => null,
             'psak_reference' => 'PSAK 109',
             'debit' => 1_000_000,
         ]);
         $this->assertDatabaseMissing('jurnal_detail', [
             'jurnal_id' => $receipt->jurnal_id,
-            'coa_id' => $this->account('4302')->id,
+            'jenis_dana' => 'amil',
         ]);
+        $this->assertSame(1_000_000.0, app(Psak109PostingService::class)->getSaldoDana()['operasional']);
+    }
+
+    public function test_posting_rejects_missing_master_account_without_creating_it(): void
+    {
+        $account = $this->account('4105');
+        $account->delete();
+        $receipt = $this->receipt([
+            'jenis_ziswaf' => 'zakat_maal',
+            'nominal' => 100_000,
+        ]);
+
+        try {
+            app(Psak109PostingService::class)->postPenerimaan($receipt);
+            $this->fail('Posting seharusnya ditolak ketika akun master tidak tersedia.');
+        } catch (\DomainException $exception) {
+            $this->assertStringContainsString('4105', $exception->getMessage());
+        }
+
+        $this->assertDatabaseMissing('coa', ['kode_akun' => '4105']);
+        $this->assertNull($receipt->fresh()->jurnal_id);
     }
 
     public function test_temporary_wakaf_is_recognized_as_a_liability(): void
@@ -140,8 +180,15 @@ class PsakZiswafPostingTest extends TestCase
 
     public function test_return_of_temporary_wakaf_principal_debits_the_liability(): void
     {
+        TransactionCategory::ensureDefaults();
+        $category = TransactionCategory::query()
+            ->where('code', 'PENGEMBALIAN-WAKAF')
+            ->firstOrFail();
+
         $expense = Pengeluaran::create([
+            'transaction_category_id' => $category->id,
             'kategori' => 'Liabilitas Wakaf Temporer',
+            'jenis_dana' => 'wakaf_temporer',
             'deskripsi' => 'Pengembalian pokok wakaf temporer',
             'jumlah' => 750_000,
             'nominal' => 750_000,

@@ -231,9 +231,6 @@
                                         <i class="fa-solid fa-users"></i> Dana Amil
                                     </span>
                                 @endif
-                                @if($debitKas?->restriction_type)
-                                    <div style="font-size:11px;color:#64748b;margin-top:4px;">{{ $debitKas->restriction_type === 'muqayyadah' ? 'Terikat (Muqayyadah)' : 'Tidak Terikat (Mutlaqah)' }}</div>
-                                @endif
                             </td>
                             <td>
                                 <div class="jct-account-list">

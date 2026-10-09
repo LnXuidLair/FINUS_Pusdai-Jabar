@@ -833,11 +833,7 @@
                                     <span class="pm-bdot" style="background:{{ $colors['dot'] }};"></span>
                                     {{ $golLabel }}
                                 </span>
-                                @if($item->jenis_ziswaf === 'infaq' && $item->restriction_type)
-                                    <div style="font-size:11px;color:#64748b;margin-top:5px;">
-                                        {{ $item->restriction_type === 'muqayyadah' ? 'Terikat (Muqayyadah)' : 'Tidak Terikat (Mutlaqah)' }}
-                                    </div>
-                                @elseif($item->jenis_ziswaf === 'wakaf' && $item->wakaf_type)
+                                @if($item->jenis_ziswaf === 'wakaf' && $item->wakaf_type)
                                     <div style="font-size:11px;color:#64748b;margin-top:5px;">
                                         {{ match($item->wakaf_type) {
                                             'temporer' => 'Wakaf Temporer',
@@ -1019,15 +1015,6 @@
                     </div>
                 </div>
 
-                <div class="pm-fgroup" id="pmRestrictionGroup" hidden>
-                    <label class="pm-flabel" for="pm_restriction_type">Sifat Infak/Sedekah <span>*</span></label>
-                    <select name="restriction_type" id="pm_restriction_type" class="pm-fselect" disabled>
-                        <option value="mutlaqah" @selected(old('restriction_type', 'mutlaqah') === 'mutlaqah')>Tidak Terikat (Mutlaqah)</option>
-                        <option value="muqayyadah" @selected(old('restriction_type') === 'muqayyadah')>Terikat (Muqayyadah)</option>
-                    </select>
-                    <div class="pm-fhint">Dana terikat harus digunakan sesuai amanah pemberi.</div>
-                </div>
-
                 <div class="pm-fgroup" id="pmWakafTypeGroup" hidden>
                     <label class="pm-flabel" for="pm_wakaf_type">Jenis Penerimaan Wakaf <span>*</span></label>
                     <select name="wakaf_type" id="pm_wakaf_type" class="pm-fselect" disabled>
@@ -1170,8 +1157,6 @@
     const pmKeterangan = document.getElementById('pm_ket');
     const pmBuktiLabel = document.getElementById('pmBuktiLabel');
     const pmBukti = document.getElementById('pm_bukti');
-    const pmRestrictionGroup = document.getElementById('pmRestrictionGroup');
-    const pmRestriction = document.getElementById('pm_restriction_type');
     const pmWakafTypeGroup = document.getElementById('pmWakafTypeGroup');
     const pmWakafType = document.getElementById('pm_wakaf_type');
     const pmWakafRules = document.getElementById('pmWakafRules');
@@ -1181,7 +1166,6 @@
     const pmNazhir = document.getElementById('pm_persentase_nazhir');
 
     function pmSyncPostingRules() {
-        const isInfak = pmGolongan.value === 'infaq';
         const isWakaf = pmGolongan.value === 'wakaf';
         const isParkir = pmGolongan.value === 'parkir';
         const isTemporary = isWakaf && pmWakafType.value === 'temporer';
@@ -1207,9 +1191,6 @@
             ? 'Bukti Laporan Parkir <span>*</span>'
             : 'Bukti Pembayaran';
 
-        pmRestrictionGroup.hidden = !isInfak;
-        pmRestriction.disabled = !isInfak;
-        pmRestriction.required = isInfak;
         pmWakafTypeGroup.hidden = !isWakaf;
         pmWakafType.disabled = !isWakaf;
         pmWakafType.required = isWakaf;

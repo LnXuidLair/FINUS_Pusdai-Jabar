@@ -1231,6 +1231,33 @@ document.addEventListener('DOMContentLoaded', function () {
     const pemasukanData = fillMonths(@json($pemasukanBulanan));
     const pengeluaranData = fillMonths(@json($pengeluaranBulanan));
     const penggajianData = fillMonths(@json($penggajianBulanan));
+    const rupiahFull = function (value) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            maximumFractionDigits: 0
+        }).format(Number(value || 0));
+    };
+    const rupiahCompact = function (value) {
+        const number = Number(value || 0);
+        const abs = Math.abs(number);
+        const fmt = function (n) {
+            return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(n);
+        };
+        let text;
+        if (abs >= 1000000000) {
+            text = fmt(abs / 1000000000) + ' M';
+        } else if (abs >= 1000000) {
+            text = fmt(abs / 1000000) + ' jt';
+        } else if (abs >= 1000) {
+            text = fmt(abs / 1000) + ' rb';
+        } else {
+            text = fmt(abs);
+        }
+        return (number < 0 ? '-' : '') + 'Rp ' + text;
+    };
+    const allData = pemasukanData.concat(pengeluaranData, penggajianData);
+    const hasData = allData.some(function (v) { return v !== 0; });
     const createGradient = function (context, start, end) {
         const gradient = context.createLinearGradient(0, 0, 0, 350);
         gradient.addColorStop(0, start);
@@ -1260,8 +1287,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 displayColors: true,
                 callbacks: {
                     label: function (context) {
-                        const value = Number(context.parsed.y || 0);
-                        return context.dataset.label + ': Rp ' + value.toLocaleString('id-ID');
+                        return ' ' + context.dataset.label + ': ' + rupiahFull(context.parsed.y);
                     }
                 }
             }
@@ -1284,6 +1310,10 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             y: {
                 beginAtZero: true,
+                suggestedMax: hasData ? undefined : 1000000,
+                afterFit: function (axis) {
+                    axis.width = Math.max(axis.width, 64);
+                },
                 grid: {
                     color: 'rgba(148, 163, 184, 0.15)',
                     drawTicks: false
@@ -1297,28 +1327,38 @@ document.addEventListener('DOMContentLoaded', function () {
                     font: {
                         size: 10
                     },
+                    maxTicksLimit: 6,
                     callback: function (value) {
-                        const number = Number(value);
-                        if (number >= 1000000000) {
-                            return 'Rp ' + (number / 1000000000).toLocaleString('id-ID') + ' M';
-                        }
-                        if (number >= 1000000) {
-                            return 'Rp ' + (number / 1000000).toLocaleString('id-ID') + ' jt';
-                        }
-                        if (number >= 1000) {
-                            return 'Rp ' + (number / 1000).toLocaleString('id-ID') + ' rb';
-                        }
-                        return 'Rp ' + number.toLocaleString('id-ID');
+                        return rupiahCompact(value);
                     }
                 }
             }
         }
     };
 
+    options.scales.y.grid.borderDash = [4, 4];
+    options.scales.y.border.dash = [4, 4];
+    options.datasets = { bar: { borderRadius: 4, borderSkipped: false } };
+    const makeChart = function (ctx, config) {
+        config.type = 'bar';
+        config.data.datasets = config.data.datasets.map(function (ds) {
+            return {
+                label: ds.label,
+                data: ds.data,
+                backgroundColor: ds.borderColor,
+                hoverBackgroundColor: ds.borderColor,
+                maxBarThickness: 26,
+                categoryPercentage: 0.7,
+                barPercentage: 0.9
+            };
+        });
+        return new Chart(ctx, config);
+    };
+
     const cashflowCanvas = document.getElementById('cashflowChart');
     if (cashflowCanvas) {
         const context = cashflowCanvas.getContext('2d');
-        new Chart(context, {
+        makeChart(context, {
             type: 'line',
             data: {
                 labels: months,
@@ -1360,7 +1400,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const payrollCanvas = document.getElementById('payrollChart');
     if (payrollCanvas) {
         const context = payrollCanvas.getContext('2d');
-        new Chart(context, {
+        makeChart(context, {
             type: 'line',
             data: {
                 labels: months,

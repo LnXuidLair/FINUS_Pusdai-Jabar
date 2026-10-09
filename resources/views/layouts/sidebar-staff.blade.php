@@ -814,7 +814,7 @@ html[data-finus-theme="dark"] {
                     <a href="{{ route('pegawai.laporan-gaji.index') }}"
                         class="{{ request()->routeIs('pegawai.laporan-gaji.*') ? 'active' : '' }}">
                         <i class="ti-receipt"></i>
-                        <span>Slip Gaji Saya</span>
+                        <span>Penghasilan Saya</span>
                     </a>
                 </li>
                 @if($canManageFinance)

@@ -189,11 +189,6 @@ class PemasukanController extends Controller
 
         $validated = $request->validate([
             'jenis_ziswaf'      => ['required', 'string', 'in:' . implode(',', array_keys(self::golonganLabels()))],
-            'restriction_type'  => [
-                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'infaq'),
-                'nullable',
-                Rule::in(['mutlaqah', 'muqayyadah']),
-            ],
             'wakaf_type'        => [
                 Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'wakaf'),
                 'nullable',
@@ -264,9 +259,7 @@ class PemasukanController extends Controller
                 $pemasukan = ZiswafPenerimaan::create([
                     'id_pegawai' => $isParkir ? $validated['id_pegawai'] : null,
                     'jenis_ziswaf' => $validated['jenis_ziswaf'],
-                    'restriction_type' => $validated['jenis_ziswaf'] === 'infaq'
-                        ? $validated['restriction_type']
-                        : null,
+                    'restriction_type' => null,
                     'wakaf_type' => $validated['jenis_ziswaf'] === 'wakaf'
                         ? $validated['wakaf_type']
                         : null,

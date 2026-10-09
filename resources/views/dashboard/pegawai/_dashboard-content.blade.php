@@ -973,10 +973,28 @@
                         maximumFractionDigits: 0
                     }
                 ).format(Number(value || 0));
+                const rupiahCompact = value => {
+                    const number = Number(value || 0);
+                    const abs = Math.abs(number);
+                    const fmt = n => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(n);
+                    let text;
+                    if (abs >= 1000000000) {
+                        text = `${fmt(abs / 1000000000)} M`;
+                    } else if (abs >= 1000000) {
+                        text = `${fmt(abs / 1000000)} jt`;
+                    } else if (abs >= 1000) {
+                        text = `${fmt(abs / 1000)} rb`;
+                    } else {
+                        text = fmt(abs);
+                    }
+                    return `${number < 0 ? '-' : ''}Rp ${text}`;
+                };
+                const hasData = [chartData.pemasukan, chartData.pengeluaran, chartData.penggajian]
+                    .some(series => (series || []).some(v => Number(v) !== 0));
                 const tooltipLabel = context => {
                     const label = context.dataset.label || context.label || '';
                     const value = context.parsed?.y ?? context.parsed ?? 0;
-                    return `${label}: ${rupiah(value)}`;
+                    return ` ${label}: ${rupiah(value)}`;
                 };
                 const baseOptions = {
                     responsive: true,
@@ -1021,21 +1039,17 @@
                         },
                         y: {
                             beginAtZero: true,
+                            suggestedMax: hasData ? undefined : 1000000,
+                            afterFit: axis => {
+                                axis.width = Math.max(axis.width, 64);
+                            },
                             grid: {
                                 color: 'rgba(20, 83, 45, .08)'
                             },
                             ticks: {
                                 color: '#64748b',
-                                callback: value => {
-                                    const number = Number(value || 0);
-                                    if (Math.abs(number) >= 1000000) {
-                                        return `${number / 1000000} jt`;
-                                    }
-                                    if (Math.abs(number) >= 1000) {
-                                        return `${number / 1000} rb`;
-                                    }
-                                    return number;
-                                }
+                                maxTicksLimit: 6,
+                                callback: value => rupiahCompact(value)
                             }
                         }
                     }
@@ -1047,10 +1061,27 @@
                     return gradient;
                 };
 
+                baseOptions.scales.y.grid.borderDash = [4, 4];
+                baseOptions.scales.y.border = { display: false, dash: [4, 4] };
+                baseOptions.datasets = { bar: { borderRadius: 4, borderSkipped: false } };
+                const makeChart = (ctx, config) => {
+                    config.type = 'bar';
+                    config.data.datasets = config.data.datasets.map(ds => ({
+                        label: ds.label,
+                        data: ds.data,
+                        backgroundColor: ds.borderColor,
+                        hoverBackgroundColor: ds.borderColor,
+                        maxBarThickness: 26,
+                        categoryPercentage: 0.7,
+                        barPercentage: 0.9
+                    }));
+                    return new Chart(ctx, config);
+                };
+
                 const cashControlCanvas = document.getElementById('keuanganExpenseChart');
                 if (cashControlCanvas) {
                     const context = cashControlCanvas.getContext('2d');
-                    new Chart(context, {
+                    makeChart(context, {
                         type: 'line',
                         data: {
                             labels,
@@ -1100,7 +1131,7 @@
                 const payrollCanvas = document.getElementById('keuanganPayrollChart');
                 if (payrollCanvas) {
                     const context = payrollCanvas.getContext('2d');
-                    new Chart(context, {
+                    makeChart(context, {
                         type: 'line',
                         data: {
                             labels,
@@ -1132,7 +1163,7 @@
                 const cashCompareCanvas = document.getElementById('dkmCashCompareChart');
                 if (cashCompareCanvas) {
                     const context = cashCompareCanvas.getContext('2d');
-                    new Chart(context, {
+                    makeChart(context, {
                         type: 'line',
                         data: {
                             labels,
@@ -1182,7 +1213,7 @@
                 const dkmPayrollCanvas = document.getElementById('dkmPayrollChart');
                 if (dkmPayrollCanvas) {
                     const context = dkmPayrollCanvas.getContext('2d');
-                    new Chart(context, {
+                    makeChart(context, {
                         type: 'line',
                         data: {
                             labels,

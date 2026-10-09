@@ -68,6 +68,13 @@ class KetentuanPokokZakat extends Model
         'aktif' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $ketentuan): void {
+            $ketentuan->persentase_amil = 0;
+        });
+    }
+
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
@@ -118,7 +125,7 @@ class KetentuanPokokZakat extends Model
             'haul' => $this->haul,
             'berat_fitrah_kg' => $this->berat_fitrah_kg ? (float) $this->berat_fitrah_kg : null,
             'berat_fitrah_liter' => $this->berat_fitrah_liter ? (float) $this->berat_fitrah_liter : null,
-            'persentase_amil' => (float) $this->persentase_amil,
+            'persentase_amil' => 0.0,
             'target_mustahik' => $this->target_mustahik ?? [],
         ];
     }

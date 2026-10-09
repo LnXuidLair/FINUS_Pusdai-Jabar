@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Slip Gaji Saya')
+@section('title', 'Penghasilan Saya')
 @section('hide-page-header', '1')
 @php
     $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
@@ -13,13 +13,14 @@
     <section class="fmu-hero">
         <div class="fmu-hero-main">
             <span class="fmu-hero-icon"><i class="fa-solid fa-file-invoice-dollar"></i></span>
-            <div><h1>Slip & Riwayat Gaji Saya</h1><p>Informasi penerimaan gaji pribadi {{ $pegawai->nama_pegawai ?? auth()->user()->name }} berdasarkan presensi yang telah disetujui.</p></div>
+            <div><h1>Penghasilan Saya</h1><p>Riwayat gaji berdasarkan presensi dan honorarium tugas {{ $pegawai->nama_pegawai ?? auth()->user()->name }}.</p></div>
         </div>
         <div class="fmu-hero-actions"><span class="fmu-hero-badge"><i class="fa-solid fa-briefcase"></i>{{ $pegawai->jabatan ?? 'Pegawai' }}</span></div>
     </section>
 
-    <section class="fmu-grid fmu-grid-3 mb-3">
+    <section class="fmu-grid fmu-grid-4 mb-3">
         <article class="fmu-stat" style="--fmu-stat-color:#2563EB;--fmu-stat-soft:#EEF4FF"><span class="fmu-stat-icon"><i class="fa-solid fa-wallet"></i></span><div class="fmu-stat-copy"><small>Total Gaji Sudah Dibayar</small><strong>{{ $rupiah($totalGaji ?? 0) }}</strong></div></article>
+        <article class="fmu-stat" style="--fmu-stat-color:#0F766E;--fmu-stat-soft:#EAF8F5"><span class="fmu-stat-icon"><i class="fa-solid fa-hand-holding-dollar"></i></span><div class="fmu-stat-copy"><small>Total Honorarium</small><strong>{{ $rupiah($totalHonorarium ?? 0) }}</strong></div></article>
         <article class="fmu-stat" style="--fmu-stat-color:#179B40;--fmu-stat-soft:#EAF8EE"><span class="fmu-stat-icon"><i class="fa-solid fa-money-bill-wave"></i></span><div class="fmu-stat-copy"><small>Gaji Harian Terakhir</small><strong>{{ $rupiah($gajiTerakhir?->gaji_perhari ?? 0) }}</strong></div></article>
         <article class="fmu-stat" style="--fmu-stat-color:#7C3AED;--fmu-stat-soft:#F5F0FF"><span class="fmu-stat-icon"><i class="fa-solid fa-calendar-check"></i></span><div class="fmu-stat-copy"><small>Kehadiran ACC Terakhir</small><strong>{{ number_format($gajiTerakhir?->jumlah_kehadiran ?? 0,0,',','.') }} hari</strong></div></article>
     </section>
@@ -32,7 +33,7 @@
         </form>
     </section>
 
-    <section class="fmu-card">
+    <section class="fmu-card mb-3">
         <div class="fmu-card-head"><div class="fmu-card-head-main"><span class="fmu-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></span><div><h2>Riwayat Penggajian</h2><p>Sebelum dibayar, yang ditampilkan hanya gaji harian dan kehadiran ACC. Slip tersedia setelah pembayaran.</p></div></div></div>
         <div class="fmu-table-wrap">
             <table class="fmu-table">
@@ -68,6 +69,34 @@
             </table>
         </div>
         @if(method_exists($laporanGaji, 'links'))<div class="fmu-card-body pt-3">{{ $laporanGaji->links() }}</div>@endif
+    </section>
+
+    <section class="fmu-card">
+        <div class="fmu-card-head"><div class="fmu-card-head-main"><span class="fmu-card-icon"><i class="fa-solid fa-hand-holding-dollar"></i></span><div><h2>Riwayat Honorarium</h2><p>Pembayaran tugas atau kegiatan yang dicatat oleh admin maupun keuangan.</p></div></div></div>
+        <div class="fmu-table-wrap">
+            <table class="fmu-table">
+                <thead><tr><th>Tanggal</th><th>Keterangan Tugas</th><th>Dibayar Dari</th><th>Nominal</th><th>Surat Tugas</th></tr></thead>
+                <tbody>
+                @forelse($honorariumItems ?? [] as $honorarium)
+                    <tr>
+                        <td class="font-weight-bold">{{ \Carbon\Carbon::parse($honorarium->tanggal)->translatedFormat('d F Y') }}</td>
+                        <td>{{ $honorarium->deskripsi ?: '-' }}</td>
+                        <td>{{ $honorarium->coaKredit?->nama_akun ?? '-' }}</td>
+                        <td><strong style="color:#179B40">{{ $rupiah($honorarium->jumlah ?? 0) }}</strong></td>
+                        <td>
+                            @if($honorarium->bukti_surat_tugas)
+                                <a href="{{ asset('storage/'.$honorarium->bukti_surat_tugas) }}" target="_blank" rel="noopener" class="fmu-btn" style="min-height:36px;padding-inline:11px"><i class="fa-solid fa-file-arrow-down"></i>Lihat Surat</a>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="fmu-empty"><i class="fa-regular fa-folder-open"></i>Belum ada honorarium untuk periode yang dipilih.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
     </section>
 </div>
 @endsection

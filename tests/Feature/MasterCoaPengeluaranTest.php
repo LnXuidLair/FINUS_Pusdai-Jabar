@@ -4,11 +4,17 @@ namespace Tests\Feature;
 
 use App\Models\Coa;
 use App\Models\JurnalDetail;
+use App\Models\Organization;
+use App\Models\Pegawai;
 use App\Models\Pengeluaran;
+use App\Models\TransactionCategory;
 use App\Models\User;
 use App\Models\ZiswafPenerimaan;
 use App\Services\Accounting\Psak109PostingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class MasterCoaPengeluaranTest extends TestCase
@@ -20,26 +26,126 @@ class MasterCoaPengeluaranTest extends TestCase
         $this->actingAs($this->admin(), 'admin')
             ->get(route('admin.pengeluaran.create'))
             ->assertOk()
-            ->assertSee('Beban Operasional')
+            ->assertSee('Dana Operasional')
             ->assertSee('Penyaluran Zakat kepada Mustahik')
-            ->assertSee('5108 - Beban Kebersihan')
-            ->assertSee('5210 - Penyaluran Zakat')
-            ->assertSee('5311 - Penyaluran Infak dan Sedekah')
-            ->assertSee('2201 - Liabilitas Wakaf Temporer')
+            ->assertSee('Peralatan dan Bahan Kebersihan')
+            ->assertSee('Pengembalian Pokok Wakaf Temporer')
+            ->assertSee('Sumber Dana')
+            ->assertSee('Ditentukan otomatis dari kode akun kategori.')
+            ->assertSee('Pratinjau Jurnal')
+            ->assertDontSee('Kategori (Akun COA)')
             ->assertSee('Rincian Penerima Zakat')
             ->assertSee('Jumlah Penerima')
             ->assertSee('Batch Akhir Periode')
             ->assertSee('Target Mustahik Per Asnaf')
-            ->assertSee('Sifat Infak/Sedekah');
+            ->assertDontSee('Penyaluran Infak dan Sedekah')
+            ->assertDontSee('Penyaluran Fidyah')
+            ->assertDontSee('Sifat Infak/Sedekah');
+    }
+
+    public function test_expense_form_exposes_employee_honorarium_and_payment_source(): void
+    {
+        $this->actingAs($this->admin(), 'admin')
+            ->get(route('admin.pengeluaran.create'))
+            ->assertOk()
+            ->assertSee('Honorarium Pegawai')
+            ->assertSee('Data Honorarium Pegawai')
+            ->assertSee('Pegawai Penerima')
+            ->assertSee('Bukti Surat Tugas')
+            ->assertSee('Sumber Pembayaran')
+            ->assertSee('Kas')
+            ->assertSee('Bank');
+    }
+
+    public function test_honorarium_is_linked_to_employee_and_credited_to_selected_bank(): void
+    {
+        Storage::fake('public');
+        $admin = $this->admin();
+        $organizationId = $admin->organization_id;
+        $category = $this->category($admin, 'HONORARIUM');
+
+        $pegawai = Pegawai::create([
+            'organization_id' => $organizationId,
+            'nip' => 'PGW-HON-001',
+            'nama_pegawai' => 'Pegawai Honorarium',
+            'jabatan' => 'Petugas Kegiatan',
+            'email' => 'pegawai-honorarium@finus.test',
+            'is_verified' => true,
+        ]);
+        $pegawaiUser = User::create([
+            'organization_id' => $organizationId,
+            'name' => $pegawai->nama_pegawai,
+            'email' => $pegawai->email,
+            'email_verified_at' => now(),
+            'password' => bcrypt('password123'),
+            'role' => User::ROLE_PEGAWAI,
+        ]);
+
+        $penerimaan = ZiswafPenerimaan::create([
+            'tanggal' => '2026-10-01',
+            'jenis_ziswaf' => 'parkir',
+            'nominal' => 1_000_000,
+            'metode_pembayaran' => 'transfer',
+            'status_verifikasi' => 'diterima',
+        ]);
+        app(Psak109PostingService::class)->postPenerimaan($penerimaan);
+
+        $account = $category->coa;
+        $bank = Coa::where('kode_akun', '1102')->firstOrFail();
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.pengeluaran.store'), [
+                'transaction_category_id' => $category->id,
+                'jenis_dana' => 'operasional',
+                'coa_kredit_id' => $bank->id,
+                'id_pegawai' => $pegawai->id,
+                'deskripsi' => 'Honorarium petugas kegiatan masjid',
+                'jumlah' => 250000,
+                'tanggal' => '2026-10-08',
+                'bukti_surat_tugas' => UploadedFile::fake()->create('surat-tugas.pdf', 100, 'application/pdf'),
+            ])
+            ->assertSessionHasNoErrors();
+
+        $expense = Pengeluaran::latest('id')->firstOrFail();
+
+        $this->assertSame($pegawai->id, $expense->id_pegawai);
+        $this->assertSame('Honorarium Pegawai', $expense->kategori);
+        $this->assertSame($account->id, $expense->coa_debit_id);
+        $this->assertSame($bank->id, $expense->coa_kredit_id);
+        Storage::disk('public')->assertExists($expense->bukti_surat_tugas);
+        $this->assertDatabaseHas('jurnal_detail', [
+            'jurnal_id' => $expense->jurnal_id,
+            'coa_id' => $bank->id,
+            'jenis_dana' => 'operasional',
+            'credit' => 250000,
+        ]);
+
+        $this->actingAs($pegawaiUser, 'pegawai')
+            ->get(route('pegawai.laporan-gaji.index'))
+            ->assertOk()
+            ->assertSee('Riwayat Honorarium')
+            ->assertSee('Honorarium petugas kegiatan masjid')
+            ->assertSee('Bank');
     }
 
     public function test_expense_is_saved_using_selected_coa_id(): void
     {
-        $account = Coa::where('kode_akun', '5108')->firstOrFail();
+        $admin = $this->admin();
+        $category = $this->category($admin, 'KEBERSIHAN');
+        $account = $category->coa;
+        $receipt = ZiswafPenerimaan::create([
+            'tanggal' => '2026-09-20',
+            'jenis_ziswaf' => 'parkir',
+            'nominal' => 500000,
+            'metode_pembayaran' => 'tunai',
+            'status_verifikasi' => 'diterima',
+        ]);
+        app(Psak109PostingService::class)->postPenerimaan($receipt);
 
-        $this->actingAs($this->admin(), 'admin')
+        $this->actingAs($admin, 'admin')
             ->post(route('admin.pengeluaran.store'), [
-                'coa_debit_id' => $account->id,
+                'transaction_category_id' => $category->id,
+                'jenis_dana' => 'operasional',
                 'deskripsi' => 'Pembelian alat kebersihan',
                 'jumlah' => 150000,
                 'tanggal' => '2026-09-21',
@@ -49,18 +155,20 @@ class MasterCoaPengeluaranTest extends TestCase
         $expense = Pengeluaran::latest('id')->firstOrFail();
 
         $this->assertSame($account->id, $expense->coa_debit_id);
-        $this->assertSame('Beban Kebersihan', $expense->kategori);
+        $this->assertSame('Peralatan dan Bahan Kebersihan', $expense->kategori);
         $this->assertDatabaseHas('jurnal_detail', [
             'jurnal_id' => $expense->jurnal_id,
             'coa_id' => $account->id,
-            'jenis_dana' => 'amil',
+            'jenis_dana' => 'operasional',
             'debit' => 150000,
         ]);
     }
 
     public function test_zakat_distribution_uses_zakat_fund_dimension(): void
     {
-        $account = Coa::where('kode_akun', '5210')->firstOrFail();
+        $admin = $this->admin();
+        $category = $this->category($admin, 'PENYALURAN-ZAKAT');
+        $account = $category->coa;
         $receipt = ZiswafPenerimaan::create([
             'tanggal' => '2026-09-15',
             'jenis_ziswaf' => 'zakat_maal',
@@ -70,9 +178,10 @@ class MasterCoaPengeluaranTest extends TestCase
         ]);
         app(Psak109PostingService::class)->postPenerimaan($receipt);
 
-        $this->actingAs($this->admin(), 'admin')
+        $this->actingAs($admin, 'admin')
             ->post(route('admin.pengeluaran.store'), [
-                'coa_debit_id' => $account->id,
+                'transaction_category_id' => $category->id,
+                'jenis_dana' => 'zakat',
                 'deskripsi' => 'Penyaluran kepada mustahik miskin',
                 'jumlah' => 500000,
                 'tanggal' => '2026-09-30',
@@ -119,11 +228,13 @@ class MasterCoaPengeluaranTest extends TestCase
 
     public function test_zakat_distribution_detail_must_match_expense_total(): void
     {
-        $account = Coa::where('kode_akun', '5210')->firstOrFail();
+        $admin = $this->admin();
+        $category = $this->category($admin, 'PENYALURAN-ZAKAT');
 
-        $this->actingAs($this->admin(), 'admin')
+        $this->actingAs($admin, 'admin')
             ->post(route('admin.pengeluaran.store'), [
-                'coa_debit_id' => $account->id,
+                'transaction_category_id' => $category->id,
+                'jenis_dana' => 'zakat',
                 'deskripsi' => 'Penyaluran zakat tidak seimbang',
                 'jumlah' => 100000,
                 'tanggal' => '2026-09-30',
@@ -154,6 +265,82 @@ class MasterCoaPengeluaranTest extends TestCase
             ->assertSee('Beban Kebersihan');
     }
 
+    public function test_category_account_code_overrides_submitted_fund_type(): void
+    {
+        $admin = $this->admin();
+        $category = $this->category($admin, 'KEBERSIHAN');
+        $receipt = ZiswafPenerimaan::create([
+            'tanggal' => '2026-10-01',
+            'jenis_ziswaf' => 'parkir',
+            'nominal' => 100000,
+            'metode_pembayaran' => 'tunai',
+            'status_verifikasi' => 'diterima',
+        ]);
+        app(Psak109PostingService::class)->postPenerimaan($receipt);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.pengeluaran.store'), [
+                'transaction_category_id' => $category->id,
+                'jenis_dana' => 'zakat',
+                'deskripsi' => 'Sumber dana mengikuti akun kebersihan',
+                'jumlah' => 1000,
+                'tanggal' => '2026-10-08',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('pengeluaran', [
+            'transaction_category_id' => $category->id,
+            'jenis_dana' => 'operasional',
+        ]);
+    }
+
+    public function test_admin_can_open_transaction_category_master(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.transaction-categories.index'))
+            ->assertOk()
+            ->assertSee('Kategori Transaksi')
+            ->assertSee('Honorarium Pegawai')
+            ->assertSee('Penyaluran Zakat kepada Mustahik')
+            ->assertSee('Beban Gaji dan Honorarium');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.transaction-categories.create'))
+            ->assertOk()
+            ->assertSee('Sumber dana ditentukan otomatis dari kode akun.')
+            ->assertDontSee('name="group"', false)
+            ->assertDontSee('name="default_fund_type"', false)
+            ->assertDontSee('name="allowed_fund_types[]"', false);
+    }
+
+    public function test_default_sync_preserves_a_category_disabled_by_admin(): void
+    {
+        $admin = $this->admin();
+        $category = $this->category($admin, 'KEBERSIHAN');
+        $category->update(['is_active' => false]);
+
+        TransactionCategory::ensureDefaults();
+
+        $this->assertFalse($category->fresh()->is_active);
+    }
+
+    public function test_retired_infak_and_fidyah_distribution_masters_are_not_recreated(): void
+    {
+        $this->admin();
+
+        TransactionCategory::ensureDefaults();
+
+        $this->assertDatabaseMissing('transaction_categories', ['code' => 'PENYALURAN-INFAK']);
+        $this->assertDatabaseMissing('transaction_categories', ['code' => 'PENYALURAN-FIDYAH']);
+        $this->assertDatabaseMissing('coa', ['kode_akun' => '4108']);
+        $this->assertDatabaseMissing('coa', ['kode_akun' => '4302']);
+        $this->assertDatabaseMissing('coa', ['kode_akun' => '5311']);
+        $this->assertDatabaseMissing('coa', ['kode_akun' => '5312']);
+        $this->assertDatabaseMissing('coa', ['kode_akun' => '5511']);
+    }
+
     public function test_psak_specific_receipt_fields_and_report_labels_are_visible(): void
     {
         $admin = $this->admin();
@@ -161,7 +348,7 @@ class MasterCoaPengeluaranTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.pemasukan.index'))
             ->assertOk()
-            ->assertSee('Sifat Infak/Sedekah')
+            ->assertDontSee('Sifat Infak/Sedekah')
             ->assertSee('Jenis Penerimaan Wakaf')
             ->assertSee('Tanggal Pengembalian Pokok')
             ->assertSee('Imbalan Nazhir');
@@ -192,12 +379,34 @@ class MasterCoaPengeluaranTest extends TestCase
 
     private function admin(): User
     {
+        $organization = Organization::query()->firstOrCreate(
+            ['slug' => 'pusdai-test'],
+            [
+                'public_id' => (string) str()->ulid(),
+                'name' => 'PUSDAI Test',
+                'country_code' => 'ID',
+                'is_active' => true,
+            ]
+        );
+        DB::table('coa')
+            ->whereNull('organization_id')
+            ->update(['organization_id' => $organization->id]);
+
         return User::create([
+            'organization_id' => $organization->id,
             'name' => 'Admin COA',
             'email' => 'admin-coa-'.uniqid().'@finus.test',
             'email_verified_at' => now(),
             'password' => bcrypt('password123'),
             'role' => User::ROLE_ADMIN,
         ]);
+    }
+
+    private function category(User $admin, string $code): TransactionCategory
+    {
+        $this->actingAs($admin, 'admin');
+        TransactionCategory::ensureDefaults();
+
+        return TransactionCategory::query()->with('coa')->where('code', $code)->firstOrFail();
     }
 }

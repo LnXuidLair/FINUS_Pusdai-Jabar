@@ -24,7 +24,7 @@
             <div>
                 <h1 class="fr-hero-title">Jurnal Pengeluaran</h1>
                 <p class="fr-hero-subtitle">
-                    Penyaluran ZIS, manfaat wakaf, operasional pengelola, dan pengembalian wakaf temporer dicatat menurut sumber dananya.
+                    Operasional masjid, penyaluran zakat, manfaat wakaf, dan pengembalian wakaf temporer dicatat menurut sumber dananya.
                 </p>
             </div>
         </div>
@@ -42,7 +42,7 @@
     </section>
 
     <!-- Ringkasan statistik pengeluaran -->
-    <section class="fr-summary" style="--summary-columns:5">
+    <section class="fr-summary" style="--summary-columns:4">
         <article class="fr-stat fr-stat-red fr-reveal">
             <span class="fr-stat-icon"><i class="fa-solid fa-money-bill-transfer"></i></span>
             <span class="fr-stat-copy">
@@ -61,21 +61,12 @@
             </span>
         </article>
 
-        <article class="fr-stat fr-stat-blue fr-reveal">
-            <span class="fr-stat-icon"><i class="fa-solid fa-hands-holding-child"></i></span>
-            <span class="fr-stat-copy">
-                <span class="fr-stat-label">Penyaluran Infak</span>
-                <strong class="fr-stat-value">{{ $rupiah($summary['total_penyaluran_infak']) }}</strong>
-                <span class="fr-stat-note">Beban Dana Infak (Dakwah/Sosial)</span>
-            </span>
-        </article>
-
         <article class="fr-stat fr-stat-amber fr-reveal">
             <span class="fr-stat-icon"><i class="fa-solid fa-briefcase"></i></span>
             <span class="fr-stat-copy">
-                <span class="fr-stat-label">Beban Amil & Gaji</span>
-                <strong class="fr-stat-value">{{ $rupiah($summary['total_beban_amil']) }}</strong>
-                <span class="fr-stat-note">Beban Dana Amil (Operasional DKM)</span>
+                <span class="fr-stat-label">Beban Operasional</span>
+                <strong class="fr-stat-value">{{ $rupiah($summary['total_beban_operasional']) }}</strong>
+                <span class="fr-stat-note">Kesejahteraan dan operasional masjid</span>
             </span>
         </article>
 
@@ -119,7 +110,6 @@
                     <select name="dana" style="width: 100%; height: 42px; padding: 0 10px; font-size: 13px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: #fff; color: #1e293b; outline: none; cursor: pointer; box-sizing: border-box;">
                         <option value="all" {{ $danaFilter === 'all' || !$danaFilter ? 'selected' : '' }}>Semua Dana</option>
                         <option value="zakat" {{ $danaFilter === 'zakat' ? 'selected' : '' }}>Dana Zakat</option>
-                        <option value="infak_sedekah" {{ in_array($danaFilter, ['infak', 'infak_sedekah']) ? 'selected' : '' }}>Dana Infak</option>
                         <option value="amil" {{ $danaFilter === 'amil' ? 'selected' : '' }}>Dana Amil</option>
                         <option value="wakaf" {{ $danaFilter === 'wakaf' ? 'selected' : '' }}>Dana Wakaf</option>
                         <option value="wakaf_temporer" {{ $danaFilter === 'wakaf_temporer' ? 'selected' : '' }}>Wakaf Temporer</option>
@@ -286,9 +276,6 @@
                                     <span class="fr-badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;">
                                         <i class="fa-solid fa-briefcase"></i> Beban Dana Amil
                                     </span>
-                                @endif
-                                @if($debitBeban?->restriction_type)
-                                    <div style="font-size:11px;color:#64748b;margin-top:4px;">{{ $debitBeban->restriction_type === 'muqayyadah' ? 'Terikat (Muqayyadah)' : 'Tidak Terikat (Mutlaqah)' }}</div>
                                 @endif
                             </td>
                             <td>

@@ -88,6 +88,12 @@ class Pegawai extends Model
         return $this->hasMany(Penggajian::class, 'id_pegawai');
     }
 
+    public function honorariums()
+    {
+        return $this->hasMany(Pengeluaran::class, 'id_pegawai')
+            ->whereHas('coaDebit', fn ($query) => $query->where('kode_akun', '5104'));
+    }
+
     public function hitungKehadiran($periode)
     {
         return $this->presensis()

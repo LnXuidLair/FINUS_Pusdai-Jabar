@@ -19,6 +19,7 @@ use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\PenggajianController;
 use App\Http\Controllers\PemasukanController;
 use App\Http\Controllers\PresensiController;
+use App\Http\Controllers\TransactionCategoryController;
 use App\Http\Controllers\ZiswafTransactionController;
 use App\Http\Middleware\EnsureManagementAccess;
 use App\Models\User;
@@ -155,6 +156,8 @@ Route::middleware(['auth:admin', 'role:admin'])
                 Route::post('coa/import', [CoaController::class, 'import'])
                     ->name('coa.import');
                 Route::resource('coa', CoaController::class)
+                    ->except(['show']);
+                Route::resource('transaction-categories', TransactionCategoryController::class)
                     ->except(['show']);
                 Route::patch('presensi/approve-bulk', [PresensiController::class, 'approveBulk'])
                     ->name('presensi.approve-bulk');

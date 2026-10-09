@@ -31,11 +31,8 @@ return [
         [4, '4105', 'Penerimaan Zakat'],
         [4, '4106', 'Penerimaan Infak dan Sedekah'],
         [4, '4107', 'Penerimaan Wakaf Permanen'],
-        [4, '4108', 'Penerimaan Fidyah'],
         [4, '4109', 'Hasil Pengelolaan dan Pengembangan Wakaf'],
         [4, '4199', 'Penerimaan Lain-lain'],
-        [4, '4301', 'Bagian Amil dari Zakat'],
-        [4, '4302', 'Bagian Amil dari Infak dan Sedekah'],
         [4, '4310', 'Bagian Nazhir dari Hasil Pengelolaan Wakaf'],
 
         [5, '5101', 'Beban Administrasi dan ATK'],
@@ -54,17 +51,13 @@ return [
 
         [5, '5210', 'Penyaluran Zakat'],
 
-        [5, '5311', 'Penyaluran Infak dan Sedekah'],
-        [5, '5312', 'Alokasi Infak dan Sedekah - Bagian Amil'],
         [5, '5411', 'Penyaluran Manfaat Wakaf'],
         [5, '5412', 'Imbalan Nazhir atas Hasil Pengelolaan Wakaf'],
-        [5, '5511', 'Penyaluran Fidyah'],
     ],
 
     'expense_groups' => [
         'operasional' => 'Beban Operasional',
         'zakat' => 'Penyaluran Zakat kepada Mustahik',
-        'sosial' => 'Penyaluran Dana Lainnya',
         'wakaf' => 'Transaksi Wakaf',
     ],
 
@@ -73,6 +66,7 @@ return [
             '5101' => 'Administrasi, surat-menyurat, dan alat tulis kantor',
             '5102' => 'Dakwah, kajian, imam, khatib, dan kegiatan keagamaan',
             '5103' => 'Perawatan bangunan, sarana, dan prasarana',
+            '5104' => 'Honorarium pegawai berdasarkan tugas atau kegiatan di luar penggajian rutin',
             '5105' => 'Konsumsi rapat, kegiatan, dan pelayanan',
             '5106' => 'Administrasi rekening, transfer, dan layanan bank',
             '5107' => 'Listrik, air, internet, telepon, dan utilitas lainnya',
@@ -86,15 +80,11 @@ return [
         'zakat' => [
             '5210' => 'Rincian golongan dan jumlah penerima diisi pada form penyaluran',
         ],
-        'sosial' => [
-            '5311' => 'Penyaluran infak dan sedekah sesuai program atau amanah',
-            '5511' => 'Penyaluran fidyah kepada penerima yang berhak',
-        ],
         'wakaf' => [
             '5411' => 'Penyaluran manfaat wakaf yang telah diterima mauquf alaih',
             '2201' => 'Pengembalian pokok wakaf temporer kepada wakif saat jatuh tempo',
         ],
     ],
 
-    'automatic_expense_accounts' => ['5104', '5312', '5412'],
+    'automatic_expense_accounts' => ['5104', '5412'],
 ];

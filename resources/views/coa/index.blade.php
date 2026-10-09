@@ -993,6 +993,10 @@
 @section('content')
 @include('layouts.partials.finus-ui')
 <div class="finus-data-page" data-finus-data-page>
+    <nav style="display:flex;gap:8px;margin-bottom:14px" aria-label="Master pencatatan">
+        <a href="{{ route('admin.coa.index') }}" class="finus-import-btn primary"><i class="fa-solid fa-book"></i>Daftar Akun</a>
+        <a href="{{ route('admin.transaction-categories.index') }}" class="finus-import-btn"><i class="fa-solid fa-tags"></i>Kategori Transaksi</a>
+    </nav>
     <section class="finus-data-hero">
         <div class="finus-data-hero-left">
             <div class="finus-data-hero-icon">

@@ -137,11 +137,35 @@ class PegawaiDashboardController extends Controller
             ->orderByDesc('periode')
             ->first();
 
+        $honorariumQuery = Pengeluaran::query()
+            ->with(['coaKredit'])
+            ->where('id_pegawai', $pegawai->id)
+            ->where('status_verifikasi', 'diterima')
+            ->whereHas('coaDebit', fn (Builder $query) => $query->where('kode_akun', '5104'))
+            ->orderByDesc('tanggal')
+            ->orderByDesc('created_at');
+
+        if ($bulan) {
+            [$tahun, $nomorBulan] = array_map('intval', explode('-', $bulan));
+            $honorariumQuery
+                ->whereYear('tanggal', $tahun)
+                ->whereMonth('tanggal', $nomorBulan);
+        }
+
+        $honorariumItems = $honorariumQuery->get();
+        $totalHonorarium = Pengeluaran::query()
+            ->where('id_pegawai', $pegawai->id)
+            ->where('status_verifikasi', 'diterima')
+            ->whereHas('coaDebit', fn (Builder $query) => $query->where('kode_akun', '5104'))
+            ->sum('jumlah');
+
         return view('pegawai.laporan-gaji.index', [
             'pegawai' => $pegawai,
             'laporanGaji' => $laporanGaji,
             'totalGaji' => $totalGaji,
             'gajiTerakhir' => $gajiTerakhir,
+            'honorariumItems' => $honorariumItems,
+            'totalHonorarium' => $totalHonorarium,
             'bulan' => $bulan,
         ]);
     }
