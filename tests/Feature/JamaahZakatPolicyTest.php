@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\BarangZakat;
 use App\Models\HargaBarangZakat;
 use App\Models\KetentuanPokokZakat;
+use App\Models\Organization;
 use App\Models\User;
 use App\Models\ZiswafPenerimaan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,6 +22,15 @@ class JamaahZakatPolicyTest extends TestCase
         parent::setUp();
 
         config(['services.midtrans.enabled' => false]);
+        Organization::query()->firstOrCreate(
+            ['slug' => 'pusdai-jamaah-test'],
+            [
+                'public_id' => (string) str()->ulid(),
+                'name' => 'PUSDAI Jamaah Test',
+                'country_code' => 'ID',
+                'is_active' => true,
+            ]
+        );
     }
 
     public function test_jamaah_zakat_page_uses_the_same_active_policy_as_admin(): void
@@ -217,10 +227,10 @@ class JamaahZakatPolicyTest extends TestCase
 
         $this->assertSame($policy->id, $transaction->snapshot_kebijakan['ketentuan_pokok_id']);
         $this->assertSame(3.25, (float) $transaction->snapshot_kebijakan['kadar_persentase']);
-        $this->assertSame(11.0, (float) $transaction->snapshot_kebijakan['persentase_amil']);
+        $this->assertSame(0.0, (float) $transaction->snapshot_kebijakan['persentase_amil']);
         $this->assertSame(102_000_000, (int) $transaction->nisab_digunakan);
         $this->assertSame(3.25, (float) $transaction->persentase_zakat);
-        $this->assertSame(11.0, (float) $transaction->persentase_amil);
+        $this->assertSame(0.0, (float) $transaction->persentase_amil);
         $this->assertTrue($transaction->rincian_perhitungan['memenuhi_haul']);
         $this->assertSame(
             now()->subMonths(7)->toDateString(),
@@ -441,6 +451,40 @@ class JamaahZakatPolicyTest extends TestCase
                 'zakat_fitrah',
                 $config['jenisOptions']
             ));
+    }
+
+    public function test_infak_form_has_no_restriction_and_ignores_submitted_restriction(): void
+    {
+        Storage::fake('public');
+        $jamaah = $this->jamaah();
+        $organization = Organization::query()->firstOrFail();
+
+        $this->actingAs($jamaah, User::ROLE_JAMAAH)
+            ->get(route('jamaah.transaksi.create', 'infak'))
+            ->assertOk()
+            ->assertDontSee('Sifat Infak/Sedekah')
+            ->assertDontSee('name="restriction_type"', false);
+
+        $this->actingAs($jamaah, User::ROLE_JAMAAH)
+            ->post(route('jamaah.transaksi.store', 'infak'), [
+                'organization_id' => $organization->id,
+                'jenis_ziswaf' => 'infaq',
+                'restriction_type' => 'muqayyadah',
+                'nominal' => 50000,
+                'metode_pembayaran' => 'manual_transfer',
+                'bukti_pembayaran' => UploadedFile::fake()->create(
+                    'bukti-infak.jpg',
+                    100,
+                    'image/jpeg'
+                ),
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('ziswaf_penerimaan', [
+            'muzakki_id' => $jamaah->id,
+            'jenis_ziswaf' => 'infaq',
+            'restriction_type' => null,
+        ]);
     }
 
     private function jamaah(): User

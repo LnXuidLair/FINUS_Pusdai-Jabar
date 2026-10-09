@@ -5,7 +5,6 @@ namespace App\Services\Accounting;
 use App\Models\Coa;
 use App\Models\JurnalDetail;
 use App\Models\JurnalUmum;
-use App\Models\KetentuanPokokZakat;
 use App\Models\Pengeluaran;
 use App\Models\Penggajian;
 use App\Models\ZiswafPenerimaan;
@@ -51,12 +50,16 @@ class Psak109PostingService
             if ($jenisDana === 'wakaf' && $penerimaan->wakaf_type === 'temporer') {
                 $jenisDana = 'wakaf_temporer';
             }
-            $restrictionType = $this->resolveRestrictionType($penerimaan, $jenisDana);
-            $psakReference = $this->resolvePsakReference($jenisDana);
+            $psakReference = $this->resolvePsakReferenceForReceipt($penerimaan, $jenisDana);
             $coaKas = $this->resolveCoaKas($penerimaan->metode_pembayaran);
             $coaPenerimaan = $this->resolveCoaPenerimaan($penerimaan);
 
             $nominal = (int) $penerimaan->nominal;
+
+            // Infak/sedekah adalah dana umum masjid dan tidak dipotong otomatis
+            // menjadi bagian amil. Zakat juga tetap disalurkan penuh kepada asnaf.
+            $penerimaan->persentase_amil = 0;
+            $penerimaan->nominal_amil = 0;
 
             // 1. Debit Kas/Bank (1 Rekening Utama dengan penanda jenis_dana)
             JurnalDetail::create([
@@ -66,7 +69,7 @@ class Psak109PostingService
                 'debit' => $nominal,
                 'credit' => 0,
                 'jenis_dana' => $jenisDana,
-                'restriction_type' => $restrictionType,
+                'restriction_type' => null,
                 'psak_reference' => $psakReference,
             ]);
 
@@ -78,14 +81,11 @@ class Psak109PostingService
                 'debit' => 0,
                 'credit' => $nominal,
                 'jenis_dana' => $jenisDana,
-                'restriction_type' => $restrictionType,
+                'restriction_type' => null,
                 'psak_reference' => $psakReference,
             ]);
 
-            // 3. Alokasi Bagian Amil (Jika berlaku dan persentase > 0)
-            $this->alokasiBagianAmil($jurnal, $penerimaan, $jenisDana, $nominal, $restrictionType);
-
-            // 4. PSAK 112: imbalan nazhir hanya dari hasil pengelolaan yang terealisasi.
+            // 3. PSAK 112: imbalan nazhir hanya dari hasil pengelolaan yang terealisasi.
             $this->alokasiBagianNazhir($jurnal, $penerimaan, $jenisDana, $nominal);
 
             // Simpan link balik jurnal_id
@@ -107,6 +107,40 @@ class Psak109PostingService
         }
 
         return DB::transaction(function () use ($pengeluaran, $nominal) {
+            $pengeluaran->loadMissing('transactionCategory.coa');
+            $transactionCategory = $pengeluaran->transactionCategory;
+
+            if (! $transactionCategory) {
+                throw new \DomainException(
+                    'Pengeluaran belum memiliki Kategori Transaksi. Lengkapi pemetaan kategori sebelum jurnal diposting.'
+                );
+            }
+
+            if (! $transactionCategory->is_active) {
+                throw new \DomainException(
+                    "Kategori transaksi \"{$transactionCategory->name}\" tidak aktif. Pilih kategori aktif sebelum jurnal diposting."
+                );
+            }
+
+            $coaDebit = $transactionCategory->coa;
+            if (! $coaDebit) {
+                throw new \DomainException(
+                    "Kategori \"{$transactionCategory->name}\" belum memiliki pemetaan akun debit. Hubungi administrator."
+                );
+            }
+
+            if ($pengeluaran->coa_debit_id && (int) $pengeluaran->coa_debit_id !== (int) $coaDebit->id) {
+                throw new \DomainException(
+                    "Akun debit pengeluaran tidak sesuai dengan pemetaan kategori \"{$transactionCategory->name}\"."
+                );
+            }
+
+            if (! $pengeluaran->jenis_dana || ! $transactionCategory->allowsFund($pengeluaran->jenis_dana)) {
+                throw new \DomainException(
+                    "Golongan dana pengeluaran tidak diizinkan untuk kategori \"{$transactionCategory->name}\"."
+                );
+            }
+
             if ($pengeluaran->jurnal_id) {
                 $existing = JurnalUmum::find($pengeluaran->jurnal_id);
                 if ($existing) {
@@ -129,19 +163,16 @@ class Psak109PostingService
                 ]);
             }
 
-            $coaDebit = $pengeluaran->coa_debit_id
-                ? Coa::find($pengeluaran->coa_debit_id)
-                : $this->resolveCoaBeban($pengeluaran->kategori);
-
             $coaKredit = $pengeluaran->coa_kredit_id
                 ? Coa::find($pengeluaran->coa_kredit_id)
                 : $this->resolveCoaKas('kas');
 
-            $jenisDana = $this->resolveJenisDanaPengeluaran($coaDebit, $pengeluaran->kategori);
+            if (! $coaKredit || ! in_array($coaKredit->kode_akun, ['1101', '1102'], true)) {
+                throw new \DomainException('Sumber pembayaran tidak valid. Pilih akun Kas atau Bank yang tersedia.');
+            }
+
+            $jenisDana = $pengeluaran->jenis_dana;
             $kategoriBidang = $this->resolveKategoriBidang($coaDebit);
-            $restrictionType = $jenisDana === 'infak_sedekah'
-                ? ($pengeluaran->restriction_type ?: 'mutlaqah')
-                : null;
             $psakReference = $this->resolvePsakReference($jenisDana);
 
             $zakatDetails = $coaDebit->kode_akun === '5210'
@@ -174,7 +205,7 @@ class Psak109PostingService
                     'debit' => $nominal,
                     'credit' => 0,
                     'jenis_dana' => $jenisDana,
-                    'restriction_type' => $restrictionType,
+                    'restriction_type' => null,
                     'psak_reference' => $psakReference,
                     'kategori_bidang' => $kategoriBidang,
                 ]);
@@ -188,7 +219,7 @@ class Psak109PostingService
                 'debit' => 0,
                 'credit' => $nominal,
                 'jenis_dana' => $jenisDana,
-                'restriction_type' => $restrictionType,
+                'restriction_type' => null,
                 'psak_reference' => $psakReference,
                 'kategori_bidang' => $kategoriBidang,
             ]);
@@ -288,90 +319,6 @@ class Psak109PostingService
     }
 
     /**
-     * Hitung alokasi hak amil dan catat jurnal transfer antar-dana.
-     */
-    protected function alokasiBagianAmil(
-        JurnalUmum $jurnal,
-        ZiswafPenerimaan $penerimaan,
-        string $jenisDana,
-        int $nominal,
-        ?string $restrictionType = null
-    ): void {
-        // Hanya dana Zakat dan Infak yang dialokasikan ke Amil
-        if (! in_array($jenisDana, ['zakat', 'infak_sedekah'])) {
-            return;
-        }
-
-        if ($jenisDana === 'infak_sedekah' && $restrictionType === 'muqayyadah') {
-            $penerimaan->persentase_amil = 0;
-            $penerimaan->nominal_amil = 0;
-            $penerimaan->saveQuietly();
-
-            return;
-        }
-
-        $ketentuan = $jenisDana === 'zakat'
-            ? KetentuanPokokZakat::untukJenis($this->resolveJenisKetentuanZakat($penerimaan->jenis_ziswaf))
-            : null;
-
-        $persentase = $jenisDana === 'zakat'
-            ? (float) ($penerimaan->snapshot_kebijakan['persentase_amil'] ?? $ketentuan?->persentase_amil ?? 12.50)
-            : 10.00;
-
-        if ($persentase <= 0) {
-            $penerimaan->persentase_amil = 0;
-            $penerimaan->nominal_amil = 0;
-            $penerimaan->saveQuietly();
-
-            return;
-        }
-
-        $nominalAmil = (int) round($nominal * ($persentase / 100));
-
-        // Simpan snapshot pada penerimaan
-        $penerimaan->persentase_amil = $persentase;
-        $penerimaan->nominal_amil = $nominalAmil;
-        if ($ketentuan && empty($penerimaan->snapshot_kebijakan)) {
-            $penerimaan->snapshot_kebijakan = $ketentuan->toSnapshot();
-        }
-        $penerimaan->saveQuietly();
-
-        // Cari atau siapkan akun alokasi amil
-        if ($jenisDana === 'zakat') {
-            $coaDebetAlokasi = $this->findOrCreateCoa('5210', 'Penyaluran Zakat', 5);
-            $coaKreditAlokasi = $this->findOrCreateCoa('4301', 'Bagian Amil dari Zakat', 4);
-        } else {
-            $coaDebetAlokasi = $this->findOrCreateCoa('5312', 'Alokasi Infak dan Sedekah - Bagian Amil', 5);
-            $coaKreditAlokasi = $this->findOrCreateCoa('4302', 'Bagian Amil dari Infak dan Sedekah', 4);
-        }
-
-        // Debit: Penyaluran Bagian Amil [Mengurangi Dana Zakat/Infak]
-        JurnalDetail::create([
-            'jurnal_id' => $jurnal->id,
-            'coa_id' => $coaDebetAlokasi->id,
-            'deskripsi' => 'Hak amil '.$persentase.'% dari '.$penerimaan->jenis_ziswaf,
-            'debit' => $nominalAmil,
-            'credit' => 0,
-            'jenis_dana' => $jenisDana,
-            'restriction_type' => $restrictionType,
-            'psak_reference' => 'PSAK 109',
-            'asnaf' => $jenisDana === 'zakat' ? 'amil' : null,
-        ]);
-
-        // Kredit: Penerimaan Bagian Amil [Menambah Dana Amil]
-        JurnalDetail::create([
-            'jurnal_id' => $jurnal->id,
-            'coa_id' => $coaKreditAlokasi->id,
-            'deskripsi' => 'Bagian amil '.$persentase.'% dari '.$penerimaan->jenis_ziswaf,
-            'debit' => 0,
-            'credit' => $nominalAmil,
-            'jenis_dana' => 'amil',
-            'restriction_type' => $restrictionType,
-            'psak_reference' => 'PSAK 109',
-        ]);
-    }
-
-    /**
      * PSAK 112 membatasi imbalan nazhir pada hasil neto pengelolaan wakaf
      * yang telah terealisasi dalam kas dan setara kas.
      */
@@ -400,8 +347,8 @@ class Psak109PostingService
             return;
         }
 
-        $bebanNazhir = $this->findOrCreateCoa('5412', 'Imbalan Nazhir atas Hasil Pengelolaan Wakaf', 5);
-        $bagianNazhir = $this->findOrCreateCoa('4310', 'Bagian Nazhir dari Hasil Pengelolaan Wakaf', 4);
+        $bebanNazhir = $this->requireCoa('5412', 'Imbalan Nazhir atas Hasil Pengelolaan Wakaf');
+        $bagianNazhir = $this->requireCoa('4310', 'Bagian Nazhir dari Hasil Pengelolaan Wakaf');
 
         JurnalDetail::create([
             'jurnal_id' => $jurnal->id,
@@ -442,6 +389,7 @@ class Psak109PostingService
         $saldoWakaf = 0;
         $saldoWakafTemporer = 0;
         $saldoNazhir = 0;
+        $saldoOperasional = 0;
         $totalBank = 0;
 
         foreach ($detailKas as $d) {
@@ -455,34 +403,38 @@ class Psak109PostingService
                 'wakaf' => $saldoWakaf += $mutasi,
                 'wakaf_temporer' => $saldoWakafTemporer += $mutasi,
                 'nazhir' => $saldoNazhir += $mutasi,
+                'operasional' => $saldoOperasional += $mutasi,
                 default => $saldoAmil += $mutasi,
             };
         }
 
-        // Hitung juga dampak transfer hak amil (yang tidak melalui mutasi kas)
+        // Pertahankan dampak jurnal alokasi lama tanpa membuat akun baru.
+        $legacyAccounts = Coa::query()
+            ->whereIn('kode_akun', ['4301', '4302', '5210', '5312', '4310', '5412'])
+            ->pluck('id', 'kode_akun');
         $detailAmilNonKas = JurnalDetail::with('jurnalUmum')
             ->whereNotIn('coa_id', $coaKasIds)
             ->get();
         foreach ($detailAmilNonKas as $d) {
-            if ($d->coa_id == $this->resolveCoaBagianAmilZakat()->id || $d->coa_id == $this->resolveCoaBagianAmilInfak()->id) {
+            if (in_array($d->coa_id, array_filter([$legacyAccounts['4301'] ?? null, $legacyAccounts['4302'] ?? null]), true)) {
                 // Kredit Bagian Amil menambah hak amil
                 $saldoAmil += (float) $d->credit;
             }
             if (
-                $d->coa_id == $this->resolveCoaPenyaluranBagianAmilZakat()->id
+                $d->coa_id == ($legacyAccounts['5210'] ?? null)
                 && $d->jurnalUmum?->sumber_tabel === 'ziswaf_penerimaan'
             ) {
                 // Alokasi hak amil tidak melalui kas, sehingga perlu mengurangi dana zakat di sini.
                 $saldoZakat -= (float) $d->debit;
             }
-            if ($d->coa_id == $this->resolveCoaPenyaluranBagianAmilInfak()->id) {
+            if ($d->coa_id == ($legacyAccounts['5312'] ?? null)) {
                 // Debit Penyaluran Infak ke Amil mengurangi hak infak
                 $saldoInfak -= (float) $d->debit;
             }
-            if ($d->coa_id == $this->resolveCoaBagianNazhirWakaf()->id) {
+            if ($d->coa_id == ($legacyAccounts['4310'] ?? null)) {
                 $saldoNazhir += (float) $d->credit;
             }
-            if ($d->coa_id == $this->resolveCoaImbalanNazhirWakaf()->id) {
+            if ($d->coa_id == ($legacyAccounts['5412'] ?? null)) {
                 $saldoWakaf -= (float) $d->debit;
             }
         }
@@ -494,8 +446,21 @@ class Psak109PostingService
             'wakaf' => $saldoWakaf,
             'wakaf_temporer' => $saldoWakafTemporer,
             'nazhir' => $saldoNazhir,
+            'operasional' => $saldoOperasional,
             'total_bank' => $totalBank,
         ];
+    }
+
+    public function getSaldoKasBank(Coa $coa): float
+    {
+        if (! in_array($coa->kode_akun, ['1101', '1102'], true)) {
+            return 0;
+        }
+
+        return (float) JurnalDetail::query()
+            ->where('coa_id', $coa->id)
+            ->selectRaw('COALESCE(SUM(debit - credit), 0) AS saldo')
+            ->value('saldo');
     }
 
     /**
@@ -508,7 +473,10 @@ class Psak109PostingService
         if (str_contains($jenis, 'zakat')) {
             return 'zakat';
         }
-        if (str_contains($jenis, 'infaq') || str_contains($jenis, 'infak') || str_contains($jenis, 'sedekah') || str_contains($jenis, 'fidyah')) {
+        if (str_contains($jenis, 'infaq') || str_contains($jenis, 'infak') || str_contains($jenis, 'sedekah')) {
+            return 'operasional';
+        }
+        if (str_contains($jenis, 'fidyah')) {
             return 'infak_sedekah';
         }
         if (str_contains($jenis, 'wakaf')) {
@@ -521,42 +489,15 @@ class Psak109PostingService
         return 'amil';
     }
 
-    protected function resolveJenisKetentuanZakat(?string $jenisZiswaf): string
-    {
-        $jenis = strtolower($jenisZiswaf ?? '');
-
-        return match (true) {
-            str_contains($jenis, 'penghasilan'), str_contains($jenis, 'profesi') => 'penghasilan',
-            str_contains($jenis, 'fitrah') => 'fitrah',
-            str_contains($jenis, 'pertanian_berbiaya') => 'pertanian_berbiaya',
-            str_contains($jenis, 'pertanian_alami') => 'pertanian_alami',
-            str_contains($jenis, 'peternakan') => 'peternakan',
-            default => 'maal',
-        };
-    }
-
     protected function resolveCoaKas(?string $metode): Coa
     {
         $metodeStr = strtolower($metode ?? '');
 
-        // Jika tunai -> Kas (1101)
         if ($metodeStr === 'tunai' || $metodeStr === 'kas') {
-            $coa = Coa::where('kode_akun', '1101')->first();
-            if ($coa) {
-                return $coa;
-            }
+            return $this->requireCoa('1101', 'Kas');
         }
 
-        // Lainnya (transfer, qris, gateway) -> Bank (1102)
-        $coa = Coa::where('kode_akun', '1102')->first();
-        if ($coa) {
-            return $coa;
-        }
-
-        return Coa::firstOrCreate(
-            ['kode_akun' => '1102'],
-            ['header_akun' => 1, 'nama_akun' => 'Bank']
-        );
+        return $this->requireCoa('1102', 'Bank');
     }
 
     protected function resolveCoaPenerimaan(ZiswafPenerimaan $penerimaan): Coa
@@ -566,9 +507,9 @@ class Psak109PostingService
         // Klasifikasi PSAK 112 harus mengalahkan pemetaan akun lama pada transaksi wakaf.
         if (str_contains($jenis, 'wakaf')) {
             return match ($penerimaan->wakaf_type) {
-                'temporer' => $this->findOrCreateCoa('2201', 'Liabilitas Wakaf Temporer', 2),
-                'hasil_pengelolaan' => $this->findOrCreateCoa('4109', 'Hasil Pengelolaan dan Pengembangan Wakaf', 4),
-                default => $this->findOrCreateCoa('4107', 'Penerimaan Wakaf Permanen', 4),
+                'temporer' => $this->requireCoa('2201', 'Liabilitas Wakaf Temporer'),
+                'hasil_pengelolaan' => $this->requireCoa('4109', 'Hasil Pengelolaan dan Pengembangan Wakaf'),
+                default => $this->requireCoa('4107', 'Penerimaan Wakaf Permanen'),
             };
         }
 
@@ -580,24 +521,24 @@ class Psak109PostingService
         }
 
         if (str_contains($jenis, 'zakat')) {
-            return $this->findOrCreateCoa('4105', 'Penerimaan Zakat', 4);
+            return $this->requireCoa('4105', 'Penerimaan Zakat');
         }
         if (str_contains($jenis, 'sedekah') || str_contains($jenis, 'shadaqah')) {
-            return $this->findOrCreateCoa('4106', 'Penerimaan Infak dan Sedekah', 4);
+            return $this->requireCoa('4106', 'Penerimaan Infak dan Sedekah');
         }
         if (str_contains($jenis, 'fidyah')) {
-            return $this->findOrCreateCoa('4108', 'Penerimaan Fidyah', 4);
+            return $this->requireCoa('4108', 'Penerimaan Fidyah');
         }
         if (str_contains($jenis, 'parkir')) {
-            return $this->findOrCreateCoa('4103', 'Penerimaan Parkir dan Kegiatan', 4);
+            return $this->requireCoa('4103', 'Penerimaan Parkir dan Kegiatan');
         }
 
         // Default infak
         if (str_contains($penerimaan->metode_pembayaran ?? '', 'qris')) {
-            return $this->findOrCreateCoa('4102', 'Infak Layanan QRIS', 4);
+            return $this->requireCoa('4102', 'Infak Layanan QRIS');
         }
 
-        return $this->findOrCreateCoa('4101', 'Infak Kotak Amal', 4);
+        return $this->requireCoa('4101', 'Infak Kotak Amal');
     }
 
     protected function resolveCoaBeban(?string $kategori): Coa
@@ -613,10 +554,10 @@ class Psak109PostingService
         }
 
         if (str_contains(strtolower($kat), 'honorarium') || str_contains(strtolower($kat), 'gaji')) {
-            return $this->findOrCreateCoa('5104', 'Beban Gaji dan Honorarium', 5);
+            return $this->requireCoa('5104', 'Beban Gaji dan Honorarium');
         }
 
-        return $this->findOrCreateCoa('5199', 'Beban Operasional Lain-lain', 5);
+        return $this->requireCoa('5199', 'Beban Operasional Lain-lain');
     }
 
     public function resolveJenisDanaPengeluaran(?Coa $coa, ?string $kategori): string
@@ -625,6 +566,9 @@ class Psak109PostingService
 
         if ($code === '2201') {
             return 'wakaf_temporer';
+        }
+        if (str_starts_with($code, '51')) {
+            return 'operasional';
         }
         if (str_starts_with($code, '52')) {
             return 'zakat';
@@ -650,17 +594,6 @@ class Psak109PostingService
         return 'amil';
     }
 
-    protected function resolveRestrictionType(ZiswafPenerimaan $penerimaan, string $jenisDana): ?string
-    {
-        if ($jenisDana !== 'infak_sedekah') {
-            return null;
-        }
-
-        return $penerimaan->restriction_type === 'muqayyadah'
-            ? 'muqayyadah'
-            : 'mutlaqah';
-    }
-
     protected function resolvePsakReference(string $jenisDana): ?string
     {
         return match ($jenisDana) {
@@ -668,6 +601,19 @@ class Psak109PostingService
             'wakaf', 'wakaf_temporer', 'nazhir' => 'PSAK 112',
             default => null,
         };
+    }
+
+    protected function resolvePsakReferenceForReceipt(
+        ZiswafPenerimaan $penerimaan,
+        string $jenisDana
+    ): ?string {
+        $jenis = strtolower($penerimaan->jenis_ziswaf ?? '');
+
+        if (str_contains($jenis, 'infaq') || str_contains($jenis, 'infak') || str_contains($jenis, 'sedekah')) {
+            return 'PSAK 109';
+        }
+
+        return $this->resolvePsakReference($jenisDana);
     }
 
     protected function resolveKategoriBidang(?Coa $coa): ?string
@@ -680,42 +626,34 @@ class Psak109PostingService
         };
     }
 
-    protected function findOrCreateCoa(string $kode, string $nama, int $header): Coa
+    protected function requireCoa(string $kode, string $nama): Coa
     {
-        return Coa::firstOrCreate(
-            ['kode_akun' => $kode],
-            ['header_akun' => $header, 'nama_akun' => $nama]
-        );
+        $coa = Coa::query()->where('kode_akun', $kode)->first();
+        if (! $coa) {
+            throw new \DomainException("Akun {$kode} - {$nama} belum tersedia pada Master COA.");
+        }
+
+        return $coa;
     }
 
     public function resolveCoaBagianAmilZakat(): Coa
     {
-        return $this->findOrCreateCoa('4301', 'Bagian Amil dari Zakat', 4);
-    }
-
-    public function resolveCoaBagianAmilInfak(): Coa
-    {
-        return $this->findOrCreateCoa('4302', 'Bagian Amil dari Infak dan Sedekah', 4);
+        return $this->requireCoa('4301', 'Bagian Amil dari Zakat');
     }
 
     public function resolveCoaPenyaluranBagianAmilZakat(): Coa
     {
-        return $this->findOrCreateCoa('5210', 'Penyaluran Zakat', 5);
-    }
-
-    public function resolveCoaPenyaluranBagianAmilInfak(): Coa
-    {
-        return $this->findOrCreateCoa('5312', 'Alokasi Infak dan Sedekah - Bagian Amil', 5);
+        return $this->requireCoa('5210', 'Penyaluran Zakat');
     }
 
     public function resolveCoaBagianNazhirWakaf(): Coa
     {
-        return $this->findOrCreateCoa('4310', 'Bagian Nazhir dari Hasil Pengelolaan Wakaf', 4);
+        return $this->requireCoa('4310', 'Bagian Nazhir dari Hasil Pengelolaan Wakaf');
     }
 
     public function resolveCoaImbalanNazhirWakaf(): Coa
     {
-        return $this->findOrCreateCoa('5412', 'Imbalan Nazhir atas Hasil Pengelolaan Wakaf', 5);
+        return $this->requireCoa('5412', 'Imbalan Nazhir atas Hasil Pengelolaan Wakaf');
     }
 
     protected function keteranganPenerimaan(ZiswafPenerimaan $item): string

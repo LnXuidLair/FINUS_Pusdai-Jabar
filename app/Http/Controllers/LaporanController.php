@@ -276,7 +276,7 @@ class LaporanController extends Controller
     }
 
     /**
-     * Jurnal Pengeluaran: penyaluran ZIS menurut PSAK 109 dan transaksi wakaf menurut PSAK 112.
+     * Jurnal Pengeluaran: operasional, penyaluran zakat, dan transaksi wakaf.
      */
     public function jurnalPengeluaran(Request $request)
     {
@@ -331,8 +331,7 @@ class LaporanController extends Controller
         $allPengeluaranJurnals = (clone $query)->get();
         $totalPengeluaranKas = 0;
         $totalPenyaluranZakat = 0;
-        $totalPenyaluranInfak = 0;
-        $totalBebanAmil = 0;
+        $totalBebanOperasional = 0;
         $totalPenyaluranWakaf = 0;
 
         foreach ($allPengeluaranJurnals as $j) {
@@ -348,10 +347,8 @@ class LaporanController extends Controller
                 if (! $isKasBank && (float) $d->debit > 0) {
                     if ($d->jenis_dana === 'zakat') {
                         $totalPenyaluranZakat += (float) $d->debit;
-                    } elseif (in_array($d->jenis_dana, ['infak', 'infak_sedekah'])) {
-                        $totalPenyaluranInfak += (float) $d->debit;
-                    } elseif ($d->jenis_dana === 'amil') {
-                        $totalBebanAmil += (float) $d->debit;
+                    } elseif (in_array($d->jenis_dana, ['operasional', 'amil'], true)) {
+                        $totalBebanOperasional += (float) $d->debit;
                     } elseif ($d->jenis_dana === 'wakaf') {
                         $totalPenyaluranWakaf += (float) $d->debit;
                     }
@@ -362,8 +359,7 @@ class LaporanController extends Controller
         $summary = [
             'total_pengeluaran' => $totalPengeluaranKas,
             'total_penyaluran_zakat' => $totalPenyaluranZakat,
-            'total_penyaluran_infak' => $totalPenyaluranInfak,
-            'total_beban_amil' => $totalBebanAmil,
+            'total_beban_operasional' => $totalBebanOperasional,
             'total_penyaluran_wakaf' => $totalPenyaluranWakaf,
             'saldo_dana' => $saldoDana,
         ];

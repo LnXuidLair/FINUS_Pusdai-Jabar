@@ -16,7 +16,10 @@ class Pengeluaran extends Model
     protected $fillable = [
         'organization_id',
         'id_penggajian',
+        'id_pegawai',
+        'transaction_category_id',
         'kategori',
+        'jenis_dana',
         'restriction_type',
         'periode_penyaluran_zakat_id',
         'nomor_batch',
@@ -24,6 +27,7 @@ class Pengeluaran extends Model
         'jumlah',
         'tanggal',
         'bukti_pembayaran',
+        'bukti_surat_tugas',
         'jenis',
         'referensi_penggajian_id',
         'coa_debit_id',
@@ -39,6 +43,16 @@ class Pengeluaran extends Model
     public function penggajian()
     {
         return $this->belongsTo(Penggajian::class, 'id_penggajian');
+    }
+
+    public function pegawai()
+    {
+        return $this->belongsTo(Pegawai::class, 'id_pegawai');
+    }
+
+    public function transactionCategory()
+    {
+        return $this->belongsTo(TransactionCategory::class, 'transaction_category_id');
     }
 
     public function coaDebit()

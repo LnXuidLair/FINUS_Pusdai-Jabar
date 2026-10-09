@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Coa;
 use App\Models\KetentuanPokokZakat;
 use App\Models\MasterAsnaf;
+use App\Models\Pegawai;
 use App\Models\Pengeluaran;
 use App\Models\Penggajian;
 use App\Models\PeriodePenyaluranZakat;
+use App\Models\TransactionCategory;
 use App\Services\Accounting\Psak109PostingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -26,7 +28,7 @@ class PengeluaranController extends Controller
          * dikecualikan agar tidak tampil dua kali dengan data penggajian.
          */
         $pengeluaranManual = Pengeluaran::query()
-            ->with(['zakatPenyaluran', 'periodePenyaluranZakat', 'coaDebit'])
+            ->with(['zakatPenyaluran', 'periodePenyaluranZakat', 'transactionCategory', 'coaDebit', 'coaKredit', 'pegawai'])
             ->whereNull('id_penggajian')
             ->whereNull('referensi_penggajian_id')
             ->where(function ($query): void {
@@ -89,28 +91,43 @@ class PengeluaranController extends Controller
 
     public function create()
     {
-        $coaBeban = Coa::pengeluaranManual()
+        TransactionCategory::ensureDefaults();
+        $transactionCategories = TransactionCategory::query()
+            ->expense()
+            ->active()
+            ->whereHas('coa', fn ($query) => $query->pengeluaranManual())
+            ->with('coa')
+            ->orderBy('name')
+            ->get()
+            ->filter(fn (TransactionCategory $category) => (bool) $category->resolvedFundType());
+        // Kelompokkan berdasarkan kode akun yang dipetakan, bukan kolom group yang bisa usang.
+        $transactionCategoriesGrouped = $transactionCategories
+            ->sortBy(fn (TransactionCategory $category) => ($category->coa?->kode_akun ?? '').' '.$category->name)
+            ->groupBy(fn (TransactionCategory $category) => $category->resolvedFundType());
+        $akunPembayaran = Coa::query()
+            ->whereIn('kode_akun', ['1101', '1102'])
             ->orderBy('kode_akun')
             ->get();
-
-        $coaBebanGrouped = $coaBeban->groupBy('kelompok_pengeluaran');
-        $kelompokPengeluaran = config('coa.expense_groups', []);
+        $pegawaiList = Pegawai::query()
+            ->orderBy('nama_pegawai')
+            ->get();
+        $fundTypeLabels = config('transaction_categories.fund_types', []);
         $asnafLabels = collect(MasterAsnaf::labels())->except('amil')->all();
         $saldoZakat = $this->saldoZakatTersedia();
         $ketentuanZakat = KetentuanPokokZakat::untukJenis('maal')
             ?? KetentuanPokokZakat::query()->aktif()->first();
-        $persentaseAmil = (float) ($ketentuanZakat?->persentase_amil ?? 0);
         $targetAsnaf = $this->normalizeTargetAsnaf(
             (array) ($ketentuanZakat?->target_mustahik ?? []),
             array_keys($asnafLabels)
         );
 
         return view('pengeluaran.create', compact(
-            'coaBebanGrouped',
-            'kelompokPengeluaran',
+            'transactionCategoriesGrouped',
+            'akunPembayaran',
+            'pegawaiList',
+            'fundTypeLabels',
             'asnafLabels',
             'saldoZakat',
-            'persentaseAmil',
             'targetAsnaf'
         ));
     }
@@ -118,20 +135,45 @@ class PengeluaranController extends Controller
     public function store(Request $request)
     {
         $asnafLabels = collect(MasterAsnaf::labels())->except('amil')->all();
+        $organizationId = (int) ($request->user('admin')?->organization_id
+            ?? $request->user('pegawai')?->organization_id);
 
         $validated = $request->validate([
-            'coa_debit_id' => [
+            'transaction_category_id' => [
                 'required',
                 'integer',
-                Rule::exists('coa', 'id')->where(function ($query): void {
-                    $query->whereIn('kode_akun', $this->manualExpenseCodes());
-                }),
+                Rule::exists('transaction_categories', 'id')->where(
+                    fn ($query) => $query
+                        ->where('organization_id', $organizationId)
+                        ->where('transaction_type', 'pengeluaran')
+                        ->where('is_active', true)
+                ),
             ],
-            'restriction_type' => ['nullable', Rule::in(['mutlaqah', 'muqayyadah'])],
+            'coa_kredit_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('coa', 'id')->where(
+                    fn ($query) => $query->whereIn('kode_akun', ['1101', '1102'])
+                        ->where('organization_id', $organizationId)
+                ),
+            ],
+            'id_pegawai' => [
+                'nullable',
+                'integer',
+                Rule::exists('pegawai', 'id')->where(
+                    fn ($query) => $query->where('organization_id', $organizationId)
+                ),
+            ],
             'deskripsi' => ['required', 'string', 'max:255'],
             'jumlah' => ['required', 'integer', 'min:1'],
             'tanggal' => ['required', 'date'],
             'bukti_pembayaran' => [
+                'nullable',
+                'file',
+                'mimes:jpeg,jpg,png,pdf',
+                'max:2048',
+            ],
+            'bukti_surat_tugas' => [
                 'nullable',
                 'file',
                 'mimes:jpeg,jpg,png,pdf',
@@ -150,21 +192,66 @@ class PengeluaranController extends Controller
             'zakat_details.*.nominal' => ['nullable', 'integer'],
         ]);
 
-        $coaDebit = Coa::pengeluaranManual()->findOrFail($validated['coa_debit_id']);
+        $transactionCategory = TransactionCategory::query()
+            ->expense()
+            ->active()
+            ->whereHas('coa', fn ($query) => $query->pengeluaranManual())
+            ->with('coa')
+            ->findOrFail($validated['transaction_category_id']);
+        $coaDebit = $transactionCategory->coa;
+        if (! $coaDebit) {
+            throw ValidationException::withMessages([
+                'transaction_category_id' => 'Kategori belum memiliki pemetaan akun debit. Hubungi administrator.',
+            ]);
+        }
+        $jenisDana = $transactionCategory->resolvedFundType();
+        if (! $jenisDana) {
+            throw ValidationException::withMessages([
+                'transaction_category_id' => 'Kode akun kategori belum memiliki aturan sumber dana.',
+            ]);
+        }
+        $validated['jenis_dana'] = $jenisDana;
+        $coaKredit = ! empty($validated['coa_kredit_id'])
+            ? Coa::query()
+                ->whereIn('kode_akun', ['1101', '1102'])
+                ->findOrFail($validated['coa_kredit_id'])
+            : Coa::query()->where('kode_akun', '1101')->firstOrFail();
+        $requiresEmployee = $transactionCategory->requires_employee
+            || $transactionCategory->form_type === 'honorarium';
+        $requiresAssignmentProof = $transactionCategory->requires_assignment_proof
+            || $transactionCategory->form_type === 'honorarium';
+        $pegawai = null;
+
+        if ($requiresEmployee || $requiresAssignmentProof) {
+            $honorariumValidated = $request->validate([
+                'id_pegawai' => [
+                    Rule::requiredIf($requiresEmployee),
+                    'nullable',
+                    'integer',
+                    Rule::exists('pegawai', 'id')->where(
+                        fn ($query) => $query->where('organization_id', $organizationId)
+                    ),
+                ],
+                'bukti_surat_tugas' => [
+                    Rule::requiredIf($requiresAssignmentProof),
+                    'nullable',
+                    'file',
+                    'mimes:jpeg,jpg,png,pdf',
+                    'max:2048',
+                ],
+            ]);
+            $validated = array_merge($validated, $honorariumValidated);
+            $pegawai = ! empty($validated['id_pegawai'])
+                ? Pegawai::query()->findOrFail($validated['id_pegawai'])
+                : null;
+        }
         $zakatDetails = [];
         $periodeStart = null;
         $periodeEnd = null;
         $targetAsnaf = [];
         $saldoZakat = 0;
-        $persentaseAmil = 0.0;
 
-        if ($coaDebit->kode_akun === '5311' && empty($validated['restriction_type'])) {
-            throw ValidationException::withMessages([
-                'restriction_type' => 'Pilih sifat infak/sedekah yang akan disalurkan.',
-            ]);
-        }
-
-        if ($coaDebit->kode_akun === '5210') {
+        if ($transactionCategory->requires_asnaf || $transactionCategory->form_type === 'zakat_distribution') {
             $zakatValidated = $request->validate([
                 'periode_zakat' => ['required', 'date_format:Y-m'],
                 'target_asnaf' => ['nullable', 'array'],
@@ -229,23 +316,29 @@ class PengeluaranController extends Controller
                 ]);
             }
 
-            $ketentuanZakat = KetentuanPokokZakat::untukJenis('maal')
-                ?? KetentuanPokokZakat::query()->aktif()->first();
-            $persentaseAmil = (float) ($ketentuanZakat?->persentase_amil ?? 0);
         } else {
-            $jenisDana = app(Psak109PostingService::class)->resolveJenisDanaPengeluaran($coaDebit, $coaDebit->nama_akun);
+            $jenisDana = $validated['jenis_dana'];
             $saldoDanaAll = app(Psak109PostingService::class)->getSaldoDana();
             $saldoTersedia = (int) round((float) ($saldoDanaAll[$jenisDana] ?? 0));
-            
+
             if ((int) $validated['jumlah'] > $saldoTersedia) {
                 $namaDana = ucwords(str_replace('_', ' ', $jenisDana));
                 throw ValidationException::withMessages([
-                    'jumlah' => "Jumlah pengeluaran melebihi saldo dana {$namaDana} yang tersedia (Rp " . number_format($saldoTersedia, 0, ',', '.') . ").",
+                    'jumlah' => "Jumlah pengeluaran melebihi saldo dana {$namaDana} yang tersedia (Rp ".number_format($saldoTersedia, 0, ',', '.').').',
                 ]);
             }
         }
 
+        $saldoAkunPembayaran = app(Psak109PostingService::class)->getSaldoKasBank($coaKredit);
+        if ((int) $validated['jumlah'] > (int) round($saldoAkunPembayaran)) {
+            throw ValidationException::withMessages([
+                'coa_kredit_id' => 'Saldo '.$coaKredit->nama_akun.' tidak mencukupi untuk pembayaran ini (tersedia Rp '
+                    .number_format($saldoAkunPembayaran, 0, ',', '.').').',
+            ]);
+        }
+
         $path = null;
+        $assignmentPath = null;
 
         if ($request->hasFile('bukti_pembayaran')) {
             $path = $request
@@ -253,21 +346,30 @@ class PengeluaranController extends Controller
                 ->store('bukti_pembayaran', 'public');
         }
 
+        if ($request->hasFile('bukti_surat_tugas')) {
+            $assignmentPath = $request
+                ->file('bukti_surat_tugas')
+                ->store('bukti_surat_tugas', 'public');
+        }
+
         try {
             DB::transaction(function () use (
                 $asnafLabels,
+                $assignmentPath,
                 $coaDebit,
+                $coaKredit,
                 $path,
+                $pegawai,
                 $periodeEnd,
                 $periodeStart,
-                $persentaseAmil,
                 $saldoZakat,
                 $targetAsnaf,
+                $transactionCategory,
                 $validated,
                 $zakatDetails
             ): void {
                 $periodeZakat = null;
-                if ($coaDebit->kode_akun === '5210') {
+                if ($transactionCategory->requires_asnaf || $transactionCategory->form_type === 'zakat_distribution') {
                     $periodeZakat = PeriodePenyaluranZakat::query()
                         ->where('periode', $validated['periode_zakat'])
                         ->lockForUpdate()
@@ -285,7 +387,7 @@ class PengeluaranController extends Controller
                         'periode' => $validated['periode_zakat'],
                         'tanggal_mulai' => $periodeStart,
                         'tanggal_selesai' => $periodeEnd,
-                        'persentase_amil' => $persentaseAmil,
+                        'persentase_amil' => 0,
                         'target_asnaf' => $targetAsnaf,
                         'saldo_sebelum_penyaluran' => $saldoZakat,
                         'status' => PeriodePenyaluranZakat::STATUS_AKTIF,
@@ -295,21 +397,19 @@ class PengeluaranController extends Controller
                 }
 
                 $pengeluaran = new Pengeluaran;
-                $pengeluaran->kategori = $coaDebit->nama_akun;
-                $pengeluaran->restriction_type = $coaDebit->kode_akun === '5311'
-                    ? $validated['restriction_type']
-                    : null;
+                $pengeluaran->transaction_category_id = $transactionCategory->id;
+                $pengeluaran->kategori = $transactionCategory->name;
+                $pengeluaran->jenis_dana = $validated['jenis_dana'];
+                $pengeluaran->id_pegawai = $pegawai?->id;
+                $pengeluaran->restriction_type = null;
                 $pengeluaran->periode_penyaluran_zakat_id = $periodeZakat?->id;
                 $pengeluaran->deskripsi = $validated['deskripsi'];
                 $pengeluaran->jumlah = (int) $validated['jumlah'];
                 $pengeluaran->tanggal = $validated['tanggal'];
                 $pengeluaran->bukti_pembayaran = $path;
+                $pengeluaran->bukti_surat_tugas = $assignmentPath;
                 $pengeluaran->coa_debit_id = $coaDebit->id;
-
-                $coaKas = Coa::where('kode_akun', '1101')->first();
-                if ($coaKas) {
-                    $pengeluaran->coa_kredit_id = $coaKas->id;
-                }
+                $pengeluaran->coa_kredit_id = $coaKredit->id;
 
                 $pengeluaran->jenis = 'operasional';
                 $pengeluaran->nominal = (int) $validated['jumlah'];
@@ -359,6 +459,9 @@ class PengeluaranController extends Controller
             if ($path) {
                 Storage::disk('public')->delete($path);
             }
+            if ($assignmentPath) {
+                Storage::disk('public')->delete($assignmentPath);
+            }
 
             throw $exception;
         }
@@ -367,7 +470,7 @@ class PengeluaranController extends Controller
             ->route($this->indexRoute($request))
             ->with(
                 'success',
-                $coaDebit->kode_akun === '5210'
+                $transactionCategory->form_type === 'zakat_distribution'
                     ? 'Batch penyaluran zakat akhir periode berhasil disalurkan, dijurnal, dan periodenya ditutup.'
                     : 'Data pengeluaran berhasil ditambahkan dan dijurnal.'
             );
@@ -389,6 +492,7 @@ class PengeluaranController extends Controller
 
         $pengeluaran = Pengeluaran::findOrFail($id);
         $buktiPembayaran = $pengeluaran->bukti_pembayaran;
+        $buktiSuratTugas = $pengeluaran->bukti_surat_tugas;
         $periodeZakat = $pengeluaran->periodePenyaluranZakat;
 
         if ($pengeluaran->jurnal_id) {
@@ -411,6 +515,9 @@ class PengeluaranController extends Controller
         if ($buktiPembayaran) {
             Storage::disk('public')->delete($buktiPembayaran);
         }
+        if ($buktiSuratTugas) {
+            Storage::disk('public')->delete($buktiSuratTugas);
+        }
 
         return response()->json([
             'success' => true,
@@ -422,14 +529,6 @@ class PengeluaranController extends Controller
         return $request->routeIs('pegawai.keuangan.*')
             ? 'pegawai.keuangan.pengeluaran.index'
             : 'admin.pengeluaran.index';
-    }
-
-    private function manualExpenseCodes(): array
-    {
-        return collect(config('coa.manual_expense_accounts', []))
-            ->flatMap(fn (array $accounts) => array_keys($accounts))
-            ->values()
-            ->all();
     }
 
     private function saldoZakatTersedia(): int

@@ -893,11 +893,15 @@
                                 $jumlahFormatted = 'Rp ' . number_format($item->jumlah, 0, ',', '.');
                                 $jumlahRaw = preg_replace('/\D+/', '', (string) $item->jumlah);
                                 $isGaji = (bool) ($item->is_gaji ?? false);
-                                $group = $isGaji ? 'gaji' : ($item->coaDebit?->kelompok_pengeluaran ?? 'operasional');
+                                $pegawaiHonorarium = $item instanceof \App\Models\Pengeluaran ? $item->pegawai : null;
+                                $akunPembayaran = $item instanceof \App\Models\Pengeluaran ? $item->coaKredit : null;
+                                $group = $isGaji ? 'gaji' : ($item->transactionCategory?->group ?? $item->jenis_dana ?? $item->coaDebit?->kelompok_pengeluaran ?? 'operasional');
                                 $jenisLabel = match($group) {
                                     'gaji' => 'Penggajian',
                                     'zakat' => 'Penyaluran Zakat',
                                     'sosial' => 'Penyaluran Sosial',
+                                    'infak_sedekah' => 'Infak/Sedekah',
+                                    'wakaf_temporer' => 'Wakaf Temporer',
                                     'wakaf' => 'Wakaf',
                                     default => 'Operasional',
                                 };
@@ -905,6 +909,8 @@
                                     'gaji' => 'purple',
                                     'zakat' => 'green',
                                     'sosial' => 'blue',
+                                    'infak_sedekah' => 'blue',
+                                    'wakaf_temporer' => 'amber',
                                     'wakaf' => 'amber',
                                     default => 'red',
                                 };
@@ -912,7 +918,7 @@
 
                             <tr
                                 data-search-row
-                                data-search-start="{{ $item->tanggal }}|{{ $jenisLabel }}|{{ $item->kategori }}|{{ $item->deskripsi }}|{{ $jumlahFormatted }}|{{ $jumlahRaw }}"
+                                data-search-start="{{ $item->tanggal }}|{{ $jenisLabel }}|{{ $item->kategori }}|{{ $item->deskripsi }}|{{ $pegawaiHonorarium?->nama_pegawai }}|{{ $akunPembayaran?->nama_akun }}|{{ $jumlahFormatted }}|{{ $jumlahRaw }}"
                             >
                                 <td data-label="Nomor">
                                     <span class="finus-data-number" data-row-number>{{ $loop->iteration }}</span>
@@ -943,6 +949,12 @@
                                             {{ $item->zakatPenyaluran->pluck('asnaf')->unique()->map(fn($asnaf) => $asnafLabels[$asnaf] ?? $asnaf)->join(', ') }}
                                         </small>
                                     @endif
+                                    @if($item instanceof \App\Models\Pengeluaran && $item->pegawai)
+                                        <small style="display:block;margin-top:7px;color:#64748b;line-height:1.5;">
+                                            <i class="fa-solid fa-user"></i> {{ $item->pegawai->nama_pegawai }}
+                                            @if($item->pegawai->jabatan) · {{ $item->pegawai->jabatan }} @endif
+                                        </small>
+                                    @endif
                                 </td>
                                 <td data-label="Deskripsi">
                                     <span class="finus-data-primary">
@@ -951,6 +963,11 @@
                                         </span>
                                         {{ $item->deskripsi }}
                                     </span>
+                                    @if($item instanceof \App\Models\Pengeluaran && $item->coaKredit)
+                                        <small style="display:block;margin-top:7px;color:#64748b;">
+                                            {{ config('transaction_categories.fund_types.'.$item->jenis_dana, 'Dana tidak diklasifikasikan') }} · Dibayar dari {{ $item->coaKredit->nama_akun }}
+                                        </small>
+                                    @endif
                                 </td>
                                 <td data-label="Jumlah">
                                     <span class="finus-data-money">
@@ -963,6 +980,11 @@
                                         @if($item->bukti_pembayaran)
                                             <a href="{{ asset('storage/'.$item->bukti_pembayaran) }}" target="_blank" rel="noopener" class="expense-action-btn" title="Lihat bukti pembayaran">
                                                 <i class="fa-solid fa-file-arrow-up"></i>
+                                            </a>
+                                        @endif
+                                        @if(!$isGaji && $item->bukti_surat_tugas)
+                                            <a href="{{ asset('storage/'.$item->bukti_surat_tugas) }}" target="_blank" rel="noopener" class="expense-action-btn" title="Lihat surat tugas">
+                                                <i class="fa-solid fa-file-signature"></i>
                                             </a>
                                         @endif
                                         @if(!$isGaji)

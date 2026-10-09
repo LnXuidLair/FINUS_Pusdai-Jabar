@@ -1115,10 +1115,10 @@ html[data-finus-theme="dark"] {
                 <li>
                     <a
                         href="{{ route('admin.coa.index') }}"
-                        class="{{ request()->routeIs('admin.coa.*') ? 'active' : '' }}"
+                        class="{{ request()->routeIs('admin.coa.*', 'admin.transaction-categories.*') ? 'active' : '' }}"
                     >
                         <i class="fa-solid fa-book"></i>
-                        <span>COA</span>
+                        <span>COA & Kategori</span>
                     </a>
                 </li>
                 <li>

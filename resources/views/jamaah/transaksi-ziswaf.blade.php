@@ -610,18 +610,6 @@
                                 @enderror
                             </div>
 
-                            @if($isInfakPage)
-                                <div class="form-group">
-                                    <label for="restriction_type">Sifat Infak/Sedekah</label>
-                                    <select name="restriction_type" id="restriction_type" class="form-control @error('restriction_type') is-invalid @enderror" required>
-                                        <option value="mutlaqah" @selected(old('restriction_type', 'mutlaqah') === 'mutlaqah')>Tidak Terikat (Mutlaqah)</option>
-                                        <option value="muqayyadah" @selected(old('restriction_type') === 'muqayyadah')>Terikat (Muqayyadah)</option>
-                                    </select>
-                                    <small class="small-muted d-block mt-2">Infak terikat akan digunakan sesuai amanah yang ditulis pada keterangan.</small>
-                                    @error('restriction_type')<small class="text-danger">{{ $message }}</small>@enderror
-                                </div>
-                            @endif
-
                             @if($isWakafPage)
                                 <div class="form-group">
                                     <label for="wakaf_type">Jenis Wakaf</label>

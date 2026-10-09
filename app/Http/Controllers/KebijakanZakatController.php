@@ -68,12 +68,10 @@ class KebijakanZakatController extends Controller
             'dasar_hukum' => ['nullable', 'string'],
             'dasar_regulasi' => ['nullable', 'string'],
             'aktif' => ['boolean'],
-            'persentase_amil' => ['nullable', 'numeric', 'min:0', 'max:12.5'],
             'target_mustahik' => ['nullable', 'array'],
             'target_mustahik.*' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
-        $amil = (float) ($validated['persentase_amil'] ?? 0);
         $totalMustahik = 0;
         if (isset($validated['target_mustahik'])) {
             foreach ($validated['target_mustahik'] as $key => $val) {
@@ -84,11 +82,11 @@ class KebijakanZakatController extends Controller
             }
         }
 
-        $totalSum = $amil + $totalMustahik;
-        if (abs($totalSum - 100.0) > 0.01) {
-            return back()->withInput()->withErrors(['target_mustahik' => 'Total persentase (Amil + Mustahik) harus pas 100%. Saat ini totalnya: '.$totalSum.'%']);
+        if (abs($totalMustahik - 100.0) > 0.01) {
+            return back()->withInput()->withErrors(['target_mustahik' => 'Total persentase seluruh asnaf harus tepat 100%. Saat ini totalnya: '.$totalMustahik.'%']);
         }
 
+        $validated['persentase_amil'] = 0;
         $validated['aktif'] = $request->boolean('aktif');
         $validated['updated_by'] = $request->user(User::ROLE_ADMIN)->id;
 

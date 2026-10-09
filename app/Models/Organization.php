@@ -70,6 +70,11 @@ class Organization extends Model
         return $this->hasMany(Coa::class, 'organization_id');
     }
 
+    public function transactionCategories(): HasMany
+    {
+        return $this->hasMany(TransactionCategory::class, 'organization_id');
+    }
+
     public function pengeluarans(): HasMany
     {
         return $this->hasMany(Pengeluaran::class, 'organization_id');

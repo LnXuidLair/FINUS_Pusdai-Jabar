@@ -664,7 +664,7 @@ html[data-finus-theme="dark"] body .kz-info-card-body p{color:#9EAEA4!important}
             <span class="kz-heading-icon"><i class="fa-solid fa-scale-balanced"></i></span>
             <div>
                 <h1>Kebijakan Zakat</h1>
-                <p>Barang, harga, perhitungan muzakki, hak amil, dan penyaluran mustahik</p>
+                <p>Barang, harga, perhitungan muzakki, dan penyaluran penuh kepada mustahik</p>
             </div>
         </div>
         <div class="kz-heading-actions" aria-label="Aksi kebijakan zakat">
@@ -782,14 +782,9 @@ html[data-finus-theme="dark"] body .kz-info-card-body p{color:#9EAEA4!important}
                             <hr style="grid-column: 1 / -1; margin: 10px 0; border: 0; border-top: 1px dashed #DCE6DF;">
                             <h3 style="grid-column: 1 / -1; margin-bottom: 5px; font-size: 14px;">Nilai Acuan & Kebijakan Operasional</h3>
 
-                            <div class="kz-field">
-                                <label for="kp_persentase_amil">Hak Amil (%) - Maks 12.5%</label>
-                                <input id="kp_persentase_amil" name="persentase_amil" type="number" min="0" max="12.5" step="0.01"
-                                       value="{{ old('persentase_amil', $editKetentuanPokok->persentase_amil) }}">
-                            </div>
                             <div class="kz-field kz-field-full">
                                 <label>Target Prioritas Mustahik & Persentase Penyaluran (%)</label>
-                                <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Total persentase Amil + Asnaf harus sama dengan 100%.</p>
+                                <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Seluruh dana zakat dibagikan kepada asnaf. Total target harus sama dengan 100%.</p>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 5px;">
                                     @php $selectedMustahik = old('target_mustahik', $editKetentuanPokok->target_mustahik ?? []); @endphp
                                     @foreach ($masterAsnaf as $asnaf)
@@ -830,7 +825,7 @@ html[data-finus-theme="dark"] body .kz-info-card-body p{color:#9EAEA4!important}
                     <span class="kz-badge kz-badge-scheduled" style="font-size:11px;margin-right:4px">📅 Nilai Acuan</span>
                     Harga beras dan harga emas diperbarui melalui Barang & Harga; nisab rupiah dihitung otomatis dari ketentuan pokok.<br>
                     <span class="kz-badge kz-badge-draft" style="font-size:11px;margin-right:4px">⚙️ Kebijakan Operasional</span>
-                    Hak amil, prioritas mustahik, target alokasi — diatur per versi oleh pengurus.
+                    Prioritas mustahik dan target alokasi antarasnaf diatur oleh pengurus tanpa memotong dana zakat.
                 </p>
             </div>
         </div>
@@ -1733,18 +1728,15 @@ html[data-finus-theme="dark"] body .kz-info-card-body p{color:#9EAEA4!important}
     const ketentuanForms = document.querySelectorAll('form[action*="ketentuan-pokok"]');
     ketentuanForms.forEach(form => {
         form.addEventListener('submit', function(e) {
-            const amilInput = form.querySelector('input[name="persentase_amil"]');
-            if (amilInput) {
-                let total = parseFloat(amilInput.value) || 0;
-                const asnafInputs = form.querySelectorAll('input[name^="target_mustahik["]');
-                asnafInputs.forEach(input => {
-                    total += parseFloat(input.value) || 0;
-                });
+            let total = 0;
+            const asnafInputs = form.querySelectorAll('input[name^="target_mustahik["]');
+            asnafInputs.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
 
-                if (Math.abs(total - 100) > 0.01) {
-                    e.preventDefault();
-                    alert(`Total persentase pembagian (Amil + Asnaf Lainnya) harus pas 100%.\nSaat ini totalnya: ${total.toFixed(2)}%`);
-                }
+            if (Math.abs(total - 100) > 0.01) {
+                e.preventDefault();
+                alert(`Total persentase seluruh asnaf harus pas 100%.\nSaat ini totalnya: ${total.toFixed(2)}%`);
             }
         });
     });

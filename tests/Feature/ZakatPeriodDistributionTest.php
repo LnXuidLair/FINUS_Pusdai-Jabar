@@ -4,17 +4,52 @@ namespace Tests\Feature;
 
 use App\Models\Coa;
 use App\Models\JurnalDetail;
+use App\Models\Organization;
 use App\Models\Pengeluaran;
 use App\Models\PeriodePenyaluranZakat;
+use App\Models\TransactionCategory;
 use App\Models\User;
 use App\Models\ZiswafPenerimaan;
 use App\Services\Accounting\Psak109PostingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ZakatPeriodDistributionTest extends TestCase
 {
     use RefreshDatabase;
+
+    private Organization $organization;
+
+    private TransactionCategory $zakatCategory;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->organization = Organization::create([
+            'public_id' => (string) str()->ulid(),
+            'name' => 'PUSDAI Uji Penyaluran',
+            'slug' => 'pusdai-uji-penyaluran',
+            'country_code' => 'ID',
+            'is_active' => true,
+        ]);
+        DB::table('coa')->whereNull('organization_id')->update(['organization_id' => $this->organization->id]);
+        $coa = Coa::query()->where('kode_akun', '5210')->firstOrFail();
+        $this->zakatCategory = TransactionCategory::create([
+            'organization_id' => $this->organization->id,
+            'code' => 'PENYALURAN-ZAKAT',
+            'name' => 'Penyaluran Zakat kepada Mustahik',
+            'transaction_type' => 'pengeluaran',
+            'group' => 'zakat',
+            'coa_id' => $coa->id,
+            'default_fund_type' => 'zakat',
+            'allowed_fund_types' => ['zakat'],
+            'form_type' => 'zakat_distribution',
+            'requires_asnaf' => true,
+            'is_active' => true,
+        ]);
+    }
 
     public function test_end_of_month_batch_supports_a_single_mustahik_and_closes_the_period(): void
     {
@@ -29,9 +64,9 @@ class ZakatPeriodDistributionTest extends TestCase
         $expense = Pengeluaran::where('periode_penyaluran_zakat_id', $period->id)->firstOrFail();
 
         $this->assertSame(PeriodePenyaluranZakat::STATUS_DITUTUP, $period->status);
-        $this->assertSame(875_000, $period->saldo_sebelum_penyaluran);
+        $this->assertSame(1_000_000, $period->saldo_sebelum_penyaluran);
         $this->assertSame(500_000, $period->total_disalurkan);
-        $this->assertSame(375_000, $period->saldo_akhir);
+        $this->assertSame(500_000, $period->saldo_akhir);
         $this->assertStringStartsWith('ZKT-202609-', $expense->nomor_batch);
         $this->assertDatabaseHas('ziswaf_penyaluran', [
             'id_pengeluaran' => $expense->id,
@@ -115,7 +150,8 @@ class ZakatPeriodDistributionTest extends TestCase
     private function batchPayload(array $overrides = []): array
     {
         return array_replace_recursive([
-            'coa_debit_id' => Coa::where('kode_akun', '5210')->firstOrFail()->id,
+            'transaction_category_id' => $this->zakatCategory->id,
+            'jenis_dana' => 'zakat',
             'deskripsi' => 'Batch penyaluran zakat September 2026',
             'jumlah' => 500_000,
             'tanggal' => '2026-09-30',
@@ -136,6 +172,7 @@ class ZakatPeriodDistributionTest extends TestCase
     private function postZakatReceipt(int $nominal): void
     {
         $receipt = ZiswafPenerimaan::create([
+            'organization_id' => $this->organization->id,
             'tanggal' => '2026-09-15',
             'jenis_ziswaf' => 'zakat_maal',
             'nominal' => $nominal,
@@ -149,6 +186,7 @@ class ZakatPeriodDistributionTest extends TestCase
     private function admin(): User
     {
         return User::create([
+            'organization_id' => $this->organization->id,
             'name' => 'Admin Penyaluran Zakat',
             'email' => 'admin-zakat-period-'.uniqid().'@finus.test',
             'email_verified_at' => now(),

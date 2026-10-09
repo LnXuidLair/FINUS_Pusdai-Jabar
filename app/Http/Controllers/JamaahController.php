@@ -422,6 +422,13 @@ class JamaahController extends Controller
     public function storeTransaksi(Request $request, string $jenis)
     {
         $organizationId = (int) $request->input('organization_id', 0);
+        if (! $organizationId) {
+            $activeOrganizations = Organization::query()->active()->limit(2)->get(['id']);
+            if ($activeOrganizations->count() === 1) {
+                $organizationId = (int) $activeOrganizations->first()->id;
+                $request->merge(['organization_id' => $organizationId]);
+            }
+        }
         $targetOrganization = Organization::query()
             ->active()
             ->find($organizationId);
@@ -526,11 +533,6 @@ class JamaahController extends Controller
                 'numeric',
                 'min:0.01',
                 'max:999999999',
-            ],
-            'restriction_type' => [
-                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'infaq'),
-                'nullable',
-                Rule::in(['mutlaqah', 'muqayyadah']),
             ],
             'wakaf_type' => [
                 Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'wakaf'),
@@ -853,9 +855,7 @@ class JamaahController extends Controller
             'muzakki_id' => $user->id,
             'tanggal' => now()->toDateString(),
             'jenis_ziswaf' => $validated['jenis_ziswaf'],
-            'restriction_type' => $validated['jenis_ziswaf'] === 'infaq'
-                ? $validated['restriction_type']
-                : null,
+            'restriction_type' => null,
             'wakaf_type' => $validated['jenis_ziswaf'] === 'wakaf'
                 ? $validated['wakaf_type']
                 : null,
@@ -1873,4 +1873,5 @@ class JamaahController extends Controller
             'dana' => 'DANA',
         ];
     }
+
 }
