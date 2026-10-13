@@ -2,44 +2,58 @@
 
 namespace Tests\Feature;
 
+use App\Mail\VerifyCodeJamaah;
 use App\Models\User;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class AuthenticationPolicyTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_jamaah_must_register_with_gmail_and_verify_email(): void
+    /**
+     * Bypass CSRF only in this feature test; production web routes retain
+     * the normal VerifyCsrfToken middleware.
+     */
+    protected function setUp(): void
     {
-        Notification::fake();
+        parent::setUp();
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+    }
 
-        $this->post(route('register.jamaah.post'), [
+    public function test_jamaah_must_use_allowed_public_email_and_receive_otp(): void
+    {
+        Mail::fake();
+
+        $response = $this->post(route('register.jamaah.post'), [
             'name' => 'Jamaah FINUS',
             'email' => 'jamaah@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-        ])->assertSessionHasErrors('email');
+        ]);
+        $response->assertSessionHasErrors('email');
 
-        $response = $this->post(route('register.jamaah.post'), [
+        $this->assertDatabaseMissing('users', ['email' => 'jamaah@example.com']);
+
+        $this->post(route('register.jamaah.post'), [
             'name' => 'Jamaah FINUS',
             'email' => 'jamaah@gmail.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-        ]);
-
-        $response->assertRedirect(route('verification.notice'));
+        ])->assertRedirect(route('verification.notice'));
 
         $jamaah = User::where('email', 'jamaah@gmail.com')->firstOrFail();
-
         $this->assertSame(User::ROLE_JAMAAH, $jamaah->role);
         $this->assertFalse($jamaah->hasVerifiedEmail());
-        Notification::assertSentTo($jamaah, VerifyEmail::class);
+        $this->assertNotEmpty($jamaah->email_verification_code);
+
+        Mail::assertSent(VerifyCodeJamaah::class, function (VerifyCodeJamaah $mail) use ($jamaah): bool {
+            return $mail->hasTo($jamaah->email);
+        });
     }
 
-    public function test_only_one_admin_can_be_registered(): void
+    public function test_registration_rejects_second_admin_in_current_one_admin_phase(): void
     {
         User::create([
             'name' => 'Admin',
@@ -49,11 +63,16 @@ class AuthenticationPolicyTest extends TestCase
             'role' => User::ROLE_ADMIN,
         ]);
 
-        $this->post(route('register.admin.post'), [
-            'email' => 'admin2@finus.test',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ])->assertSessionHasErrors('email');
+        $response = $this->withSession([
+            'management_access.admin_verified_at' => now()->timestamp,
+        ])->post(route('register.admin.post'), [
+            'nama_masjid' => 'Masjid Pengujian Kedua',
+            'alamat_masjid' => 'Bandung',
+            'password' => 'StrongPass!123',
+            'password_confirmation' => 'StrongPass!123',
+            'recovery_code' => User::generateRecoveryCode(),
+        ]);
+        $response->assertSessionHasErrors('nama_masjid');
 
         $this->assertSame(1, User::where('role', User::ROLE_ADMIN)->count());
     }
@@ -67,12 +86,12 @@ class AuthenticationPolicyTest extends TestCase
             'role' => User::ROLE_JAMAAH,
         ]);
 
-        $this->actingAs($jamaah)
+        $this->actingAs($jamaah, User::ROLE_JAMAAH)
             ->get(route('jamaah.dashboard'))
             ->assertRedirect(route('verification.notice'));
     }
 
-    public function test_authenticated_user_is_logged_out_after_fifteen_minutes_idle(): void
+    public function test_admin_is_logged_out_after_fifteen_minutes_idle(): void
     {
         $admin = User::create([
             'name' => 'Admin',
@@ -82,11 +101,13 @@ class AuthenticationPolicyTest extends TestCase
             'role' => User::ROLE_ADMIN,
         ]);
 
-        $this->actingAs($admin)
-            ->withSession(['last_activity_at' => now()->subMinutes(16)->timestamp])
+        $this->actingAs($admin, User::ROLE_ADMIN)
+            ->withSession([
+                'last_activity_at.admin' => now()->subMinutes(16)->timestamp,
+            ])
             ->get(route('dashboard'))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('management.access'));
 
-        $this->assertGuest();
+        $this->assertGuest(User::ROLE_ADMIN);
     }
 }

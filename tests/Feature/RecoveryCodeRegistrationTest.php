@@ -12,6 +12,12 @@ class RecoveryCodeRegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+    }
+
     public function test_admin_registration_displays_and_stores_recovery_code(): void
     {
         $recoveryCode = 'AdminRecovery!2026';
@@ -25,6 +31,7 @@ class RecoveryCodeRegistrationTest extends TestCase
         $this->withSession($this->managementAccessSession('admin'))
             ->post(route('register.admin.post'), [
                 'nama_masjid' => 'Pusdai Jabar',
+                'alamat_masjid' => 'Bandung, Jawa Barat',
                 'password' => 'StrongPass!123',
                 'password_confirmation' => 'StrongPass!123',
                 'recovery_code' => $recoveryCode,

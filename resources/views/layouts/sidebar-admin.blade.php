@@ -1158,6 +1158,7 @@ html[data-finus-theme="dark"] {
                     </a>
                 </li>
                 <li class="label">Transaksi</li>
+                <li><a href="{{ route('admin.ziswaf.transaksi.index') }}" class="{{ request()->routeIs('admin.ziswaf.*') ? 'active' : '' }}"><i class="fa-solid fa-hand-holding-heart"></i><span>Transaksi ZISWAF</span></a></li>
                 <li>
                     <a
                         href="{{ route('admin.pemasukan.index') }}"
@@ -1165,6 +1166,7 @@ html[data-finus-theme="dark"] {
                     >
                         <i class="fa-solid fa-hand-holding-dollar"></i>
                         <span>Pemasukan</span>
+                        
                     </a>
                 </li>
                 <li>
@@ -1174,6 +1176,7 @@ html[data-finus-theme="dark"] {
                     >
                         <i class="fa-solid fa-receipt"></i>
                         <span>Pengeluaran</span>
+                        
                     </a>
                 </li>
                 <li>
@@ -1195,6 +1198,7 @@ html[data-finus-theme="dark"] {
                     >
                         <i class="fa-solid fa-calendar-check"></i>
                         <span>Presensi</span>
+                        
                     </a>
                 </li>
                 <li>

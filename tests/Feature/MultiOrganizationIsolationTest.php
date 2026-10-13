@@ -122,9 +122,25 @@ class MultiOrganizationIsolationTest extends TestCase
             'nama_akun' => 'Kas',
         ]);
 
+        // Default master COA may contain unassigned/legacy rows, so do not
+        // assume that 1101 exists exactly twice across the entire database.
+        // Assert the organization boundary directly instead.
+        foreach ([$organizationA, $organizationB] as $organization) {
+            $this->assertSame(
+                1,
+                Coa::withoutGlobalScope('organization')
+                    ->where('organization_id', $organization->id)
+                    ->where('kode_akun', '1101')
+                    ->where('nama_akun', 'Kas')
+                    ->count()
+            );
+        }
         $this->assertSame(
             2,
-            Coa::withoutGlobalScope('organization')->where('kode_akun', '1101')->count()
+            Coa::withoutGlobalScope('organization')
+                ->whereIn('organization_id', [$organizationA->id, $organizationB->id])
+                ->where('kode_akun', '1101')
+                ->count()
         );
     }
 

@@ -3,6 +3,12 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Models\Presensi;
+use App\Models\Pengeluaran;
+use App\Models\ZiswafPenerimaan;
+use App\Observers\FinusPresensiObserver;
+use App\Observers\FinusPengeluaranObserver;
+use App\Observers\FinusZiswafObserver;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -19,6 +25,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Presensi::observe(FinusPresensiObserver::class);
+        Pengeluaran::observe(FinusPengeluaranObserver::class);
+        ZiswafPenerimaan::observe(FinusZiswafObserver::class);
+
         if (app()->environment('production')) {
             URL::forceScheme('https');
         }

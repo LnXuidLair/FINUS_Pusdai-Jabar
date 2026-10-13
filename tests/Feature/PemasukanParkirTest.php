@@ -3,11 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\Pegawai;
+use App\Models\Organization;
 use App\Models\User;
 use App\Models\ZiswafPenerimaan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -16,10 +19,17 @@ class PemasukanParkirTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+    }
+
     public function test_parking_position_is_a_general_employee_and_dedicated_parking_routes_are_removed(): void
     {
         $pegawai = $this->pegawai('PKR-001', 'parkir-role@finus.test', 'Petugas Parkir');
         User::create([
+            'organization_id' => $pegawai->organization_id,
             'name' => $pegawai->nama_pegawai,
             'email' => $pegawai->email,
             'email_verified_at' => now(),
@@ -118,7 +128,14 @@ class PemasukanParkirTest extends TestCase
 
     private function admin(): User
     {
+        $organization = $this->organization();
+        // Master COA from the core migration starts without an organization.
+        // Bind that fixture to this test mosque, as the registration flow does.
+        DB::table('coa')->whereNull('organization_id')
+            ->update(['organization_id' => $organization->id]);
+
         return User::create([
+            'organization_id' => $organization->id,
             'name' => 'Admin Pemasukan',
             'email' => 'admin-parkir-'.uniqid().'@finus.test',
             'email_verified_at' => now(),
@@ -130,6 +147,7 @@ class PemasukanParkirTest extends TestCase
     private function pegawai(string $nip, string $email, string $jabatan): Pegawai
     {
         return Pegawai::create([
+            'organization_id' => $this->organization()->id,
             'nip' => $nip,
             'nama_pegawai' => 'Petugas '.str_replace('-', ' ', $nip),
             'jabatan' => $jabatan,
@@ -137,4 +155,18 @@ class PemasukanParkirTest extends TestCase
             'is_verified' => true,
         ]);
     }
+
+    private function organization(): Organization
+    {
+        return Organization::firstOrCreate(
+            ['slug' => 'parkir-test'],
+            [
+                'public_id' => (string) Str::ulid(),
+                'name' => 'Masjid Parkir Test',
+                'country_code' => 'ID',
+                'is_active' => true,
+            ]
+        );
+    }
+
 }
