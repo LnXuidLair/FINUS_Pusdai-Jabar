@@ -339,4 +339,26 @@ Route::post('/session/heartbeat', function(){$hasActiveSession = collect(['admin
     abort_unless($hasActiveSession, 401);
     return response()->noContent();
 })->name('session.heartbeat');
+
+// Notifikasi FINUS: endpoint terpisah per guard agar sesi admin/pegawai/jamaah
+// dalam satu browser tidak saling mengakses inbox ataupun token push perangkat.
+foreach (['admin', 'pegawai', 'jamaah'] as $finusGuard) {
+    Route::middleware(['auth:'.$finusGuard, 'throttle:90,1'])
+        ->prefix($finusGuard.'/notifikasi')
+        ->name('finus.notifications.'.$finusGuard.'.')
+        ->group(function () use ($finusGuard): void {
+            Route::get('/', [\App\Http\Controllers\FinusNotificationController::class, 'index'])
+                ->defaults('finus_guard', $finusGuard)->name('index');
+            Route::get('/feed', [\App\Http\Controllers\FinusNotificationController::class, 'feed'])
+                ->defaults('finus_guard', $finusGuard)->name('feed');
+            Route::post('/read-all', [\App\Http\Controllers\FinusNotificationController::class, 'readAll'])
+                ->defaults('finus_guard', $finusGuard)->name('read-all');
+            Route::post('/read/{notification}', [\App\Http\Controllers\FinusNotificationController::class, 'read'])
+                ->whereNumber('notification')->defaults('finus_guard', $finusGuard)->name('read');
+            Route::post('/channel-auth', [\App\Http\Controllers\FinusNotificationController::class, 'channelAuth'])
+                ->defaults('finus_guard', $finusGuard)->name('channel-auth');
+            Route::get('/beams-token', [\App\Http\Controllers\FinusNotificationController::class, 'beamsToken'])
+                ->defaults('finus_guard', $finusGuard)->name('beams-token');
+        });
+}
 require __DIR__ . '/auth.php';

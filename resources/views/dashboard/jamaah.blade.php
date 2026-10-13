@@ -656,8 +656,13 @@
             <p class="mb-1 text-white-50">Assalamu'alaikum,</p>
             <h2 class="text-white font-weight-bold mb-2">{{ $jamaah->name }}</h2>
             <p class="mb-0 text-white-50 small">
-                Selamat datang di FINUS. Akun Jamaah bersifat publik sehingga Anda dapat memilih masjid tujuan,
-                memantau riwayat transaksi, melihat transparansi keuangan, dan mengikuti agenda dari masjid yang tersedia.
+                @if(config('finus.jamaah_pusdai_only'))
+                    Selamat datang di FINUS PUSDAI Jabar. Bayar zakat, infak, dan wakaf,
+                    pantau riwayat transaksi, lihat transparansi keuangan, dan ikuti agenda masjid.
+                @else
+                    Selamat datang di FINUS. Akun Jamaah bersifat publik sehingga Anda dapat memilih masjid tujuan,
+                    memantau riwayat transaksi, melihat transparansi keuangan, dan mengikuti agenda dari masjid yang tersedia.
+                @endif
             </p>
         </div>
         <div class="col-lg-5 mt-4 mt-lg-0">
@@ -679,6 +684,7 @@
     </div>
 </div>
 
+@unless(config('finus.jamaah_pusdai_only'))
 <div class="card finus-card mb-4">
     <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-start flex-wrap mb-3" style="gap: 12px;">
@@ -720,6 +726,8 @@
         </div>
     </div>
 </div>
+
+@endunless
 
 <div class="card prayer-card mb-4">
     <div class="card-body p-4">
@@ -849,7 +857,7 @@
                 <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
                         <h5 class="mb-1 font-weight-bold text-dark">Agenda & Kegiatan Masjid</h5>
-                        <p class="mb-0 text-muted small">Ikuti berbagai kegiatan kajian, sosial, dan ibadah dari masjid yang terdaftar di FINUS.</p>
+                        <p class="mb-0 text-muted small">{{ config('finus.jamaah_pusdai_only') ? 'Ikuti berbagai kegiatan kajian, sosial, dan ibadah di PUSDAI Jabar.' : 'Ikuti berbagai kegiatan kajian, sosial, dan ibadah dari masjid yang terdaftar di FINUS.' }}</p>
                     </div>
                     <span style="
                         background: linear-gradient(135deg, #059669, #10b981);

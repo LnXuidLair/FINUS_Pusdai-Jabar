@@ -79,12 +79,19 @@ class JamaahController extends Controller
             ->latest('id')
             ->limit(8)
             ->get();
-        $organizations = Organization::query()
-            ->active()
-            ->orderBy('name')
-            ->get(['id', 'public_id', 'name', 'slug', 'address', 'city', 'province', 'logo_path']);
+        // Portal Jamaah sementara fokus ke satu masjid, tanpa membuang arsitektur multi-organisasi.
+        $pusdaiOrganization = config('finus.jamaah_pusdai_only')
+            ? $this->jamaahPusdaiOrganization()
+            : null;
+        $organizations = $pusdaiOrganization
+            ? collect([$pusdaiOrganization])
+            : Organization::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'public_id', 'name', 'slug', 'address', 'city', 'province', 'logo_path']);
 
         $agendaKegiatan = AgendaKegiatan::with('organization')
+            ->when($pusdaiOrganization, fn ($query) => $query->where('organization_id', $pusdaiOrganization->id))
             ->aktif()
             ->orderBy('urutan')
             ->orderBy('id')
@@ -358,23 +365,53 @@ class JamaahController extends Controller
         );
     }
 
-    public function createTransaksi(Request $request, string $jenis)
+    /**
+     * Menentukan masjid penerima ketika portal Jamaah dikunci sementara ke PUSDAI.
+     * Tidak pernah memilih masjid lain secara diam-diam jika ada lebih dari satu masjid aktif.
+     */
+    private function jamaahPusdaiOrganization(): Organization
     {
-        $organizations = Organization::query()
-            ->active()
-            ->orderBy('name')
-            ->get(['id', 'public_id', 'name', 'address', 'city', 'province']);
+        $slug = (string) config('finus.jamaah_pusdai_slug', 'pusdai-jabar');
+        $pusdai = Organization::query()->active()->where('slug', $slug)->first();
+        if ($pusdai) {
+            return $pusdai;
+        }
 
-        abort_if(
-            $organizations->isEmpty(),
+        // Kompatibilitas pada fase satu masjid (contohnya database development/test).
+        $activeOrganizations = Organization::query()->active()->limit(2)->get();
+        abort_unless(
+            $activeOrganizations->count() === 1,
             503,
-            'Belum ada masjid aktif yang dapat menerima transaksi.'
+            'Organisasi PUSDAI belum ditemukan. Periksa JAMAAH_PUSDAI_SLUG.'
         );
 
-        $requestedOrganizationId = (int) ($request->old('organization_id') ?: $request->query('organization_id', 0));
-        $selectedOrganizationId = $organizations->contains('id', $requestedOrganizationId)
-            ? $requestedOrganizationId
-            : (int) $organizations->first()->id;
+        return $activeOrganizations->first();
+    }
+
+    public function createTransaksi(Request $request, string $jenis)
+    {
+        if (config('finus.jamaah_pusdai_only')) {
+            // Abaikan parameter organization_id dari query/old input pada fase PUSDAI.
+            $pusdaiOrganization = $this->jamaahPusdaiOrganization();
+            $organizations = collect([$pusdaiOrganization]);
+            $selectedOrganizationId = (int) $pusdaiOrganization->id;
+        } else {
+            $organizations = Organization::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'public_id', 'name', 'address', 'city', 'province']);
+
+            abort_if(
+                $organizations->isEmpty(),
+                503,
+                'Belum ada masjid aktif yang dapat menerima transaksi.'
+            );
+
+            $requestedOrganizationId = (int) ($request->old('organization_id') ?: $request->query('organization_id', 0));
+            $selectedOrganizationId = $organizations->contains('id', $requestedOrganizationId)
+                ? $requestedOrganizationId
+                : (int) $organizations->first()->id;
+        }
 
         $config = $this->transaksiConfig($jenis);
         $paymentGatewayReady = $this->isPaymentGatewayReady();
@@ -422,7 +459,11 @@ class JamaahController extends Controller
     public function storeTransaksi(Request $request, string $jenis)
     {
         $organizationId = (int) $request->input('organization_id', 0);
-        if (! $organizationId) {
+        if (config('finus.jamaah_pusdai_only')) {
+            // Tujuan ditetapkan dari database; hidden input pun tidak boleh bisa mengalihkannya.
+            $organizationId = (int) $this->jamaahPusdaiOrganization()->id;
+            $request->merge(['organization_id' => $organizationId]);
+        } elseif (! $organizationId) {
             $activeOrganizations = Organization::query()->active()->limit(2)->get(['id']);
             if ($activeOrganizations->count() === 1) {
                 $organizationId = (int) $activeOrganizations->first()->id;

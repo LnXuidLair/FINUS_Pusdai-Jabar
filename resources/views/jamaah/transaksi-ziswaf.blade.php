@@ -497,6 +497,10 @@
                     <div class="row">
                         <!-- Left Column -->
                         <div class="col-lg-6 border-right pr-lg-4">
+                            @if(config('finus.jamaah_pusdai_only'))
+                                {{-- Sementara seluruh transaksi Jamaah diarahkan otomatis ke PUSDAI. --}}
+                                <input type="hidden" name="organization_id" id="organization_id" value="{{ $selectedOrganizationId }}">
+                            @else
                             <div class="form-group">
                                 <label for="organization_id">Masjid Tujuan</label>
 
@@ -538,6 +542,8 @@
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
+
+                            @endif
 
                             <div class="form-group">
                                 <label>Jenis Transaksi</label>
@@ -1135,7 +1141,7 @@
                             </div>
                         </div>
 
-                        <div class="col-lg-6 pl-lg-4 mt-4 mt-lg-0 d-flex flex-column justify-content-between">
+                        <div class="col-lg-6 pl-lg-4 mt-4 mt-lg-0 d-flex flex-column">
                             <div class="form-group">
                                 <label>Metode Pembayaran</label>
 

@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>FINUS - Pusher Beams Test</title>
+</head>
+<body>
+    <h2>Pengujian Notifikasi FINUS</h2>
+
+    <button id="register">
+        Aktifkan Notifikasi
+    </button>
+
+    <p id="status">Belum terhubung</p>
+
+    <script src="https://js.pusher.com/beams/2.1.0/push-notifications-cdn.js"></script>
+
+    <script>
+        const button = document.getElementById('register');
+        const status = document.getElementById('status');
+
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+
+            const beamsClient =
+                new PusherPushNotifications.Client({
+                    instanceId: '55a4904e-2364-4dd6-9d4c-f5c3ef41c5e1'
+                });
+
+            try {
+                await beamsClient.start();
+                await beamsClient.addDeviceInterest('hello');
+
+                const interests =
+                    await beamsClient.getDeviceInterests();
+
+                status.textContent =
+                    'Successfully registered and subscribed!';
+
+                console.log(
+                    'Successfully registered and subscribed!'
+                );
+                console.log('Interests:', interests);
+
+            } catch (error) {
+                status.textContent =
+                    'Gagal: ' + error.message;
+
+                console.error(error);
+            } finally {
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

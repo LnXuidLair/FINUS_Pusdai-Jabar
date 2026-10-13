@@ -490,7 +490,36 @@ html[data-finus-theme="dark"] .header.finus-topbar {
                 <span class="finus-topbar-title">{{ $pageContext }}</span>
             </div>
         </div>
-        <div class="dropdown">
+        <div class="finus-header-actions">
+            @php
+                $finusNavUnread = app(\App\Services\FinusNotificationService::class)->unreadCounts($navUser)['total'] ?? 0;
+                $finusNotificationRoute = route('finus.notifications.'.$currentGuard.'.index');
+            @endphp
+            <div class="dropdown finus-topbar-notifications">
+                <button type="button" class="finus-topbar-bell" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false" aria-label="Notifikasi FINUS">
+                    <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                    <span class="finus-notification-badge finus-topbar-count" data-finus-badge="total"
+                          @if($finusNavUnread === 0) hidden @endif>{{ $finusNavUnread }}</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right finus-bell-menu">
+                    <div class="finus-bell-menu-title">
+                        <strong>Notifikasi</strong>
+                        <div class="finus-bell-push-control" title="Notifikasi perangkat untuk akun ini pada browser ini">
+                            <span data-finus-push-label class="finus-bell-push-label">Memeriksa…</span>
+                            <button type="button" class="finus-push-switch finus-bell-push-switch" data-finus-push-toggle
+                                    role="switch" aria-checked="false" aria-label="Aktifkan notifikasi perangkat" disabled>
+                                <span class="finus-push-switch-track" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="finus-bell-menu-items" data-finus-notification-items aria-live="polite">
+                        <p class="finus-bell-empty">Memuat notifikasi…</p>
+                    </div>
+                    <a href="{{ $finusNotificationRoute }}" class="finus-bell-menu-footer">Lihat semua <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                </div>
+            </div>
+            <div class="dropdown">
             <button type="button" class="finus-topbar-user dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <span class="finus-user-avatar" aria-hidden="true">{{ $initial }}</span>
                 <span class="finus-user-copy">
@@ -568,6 +597,7 @@ html[data-finus-theme="dark"] .header.finus-topbar {
                     </button>
                 </form>
             </div>
+        </div>
         </div>
     </div>
 </header>

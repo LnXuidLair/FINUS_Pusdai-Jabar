@@ -64,6 +64,26 @@ return new class extends Migration
             });
         }
 
+        // FINUS: Histori notifikasi di-scope per pengguna dan masjid.
+        // Digabung ke migration multi-organization karena proyek menggunakan migrate:fresh.
+        if (! Schema::hasTable('finus_notifications')) {
+            Schema::create('finus_notifications', function (Blueprint $table): void {
+                $table->id();
+                $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+                $table->foreignId('organization_id')->nullable()->constrained('organizations')->nullOnDelete();
+                $table->string('event_key', 120);
+                $table->string('category', 40);
+                $table->string('title', 160);
+                $table->text('message');
+                $table->string('url', 255)->nullable();
+                $table->timestamp('read_at')->nullable();
+                $table->timestamps();
+                $table->unique(['user_id', 'event_key'], 'finus_notification_unique_event');
+                $table->index(['user_id', 'read_at', 'created_at'], 'finus_notification_inbox_idx');
+                $table->index(['organization_id', 'category'], 'finus_notification_org_category_idx');
+            });
+        }
+
         $this->addOrganizationColumns();
         $organizationId = $this->ensureLegacyOrganization();
 
@@ -105,6 +125,7 @@ return new class extends Migration
             });
         }
 
+        Schema::dropIfExists('finus_notifications');
         Schema::dropIfExists('organization_payment_channels');
         Schema::dropIfExists('organization_settings');
         Schema::dropIfExists('organizations');

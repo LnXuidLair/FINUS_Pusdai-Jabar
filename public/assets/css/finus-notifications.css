@@ -1,0 +1,78 @@
+/* Isolated FINUS notification styles: no changes to sidebar theme/old pages. */
+.finus-notification-badge { margin-left:auto!important; min-width:19px; height:19px; line-height:19px; text-align:center; border-radius:999px; background:#e0283c; color:white!important; padding:0 6px; font-size:11px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; }
+.finus-notification-badge[hidden] { display:none!important; }
+.finus-notifications-page { max-width:970px; margin:16px auto; padding:20px; border-radius:16px; background:var(--finus-surface,#fff); box-shadow:0 10px 35px rgba(15,23,42,.07); color:var(--finus-text,#1e293b); }
+.finus-notifications-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:14px; margin-bottom:18px; }
+.finus-notifications-heading h1 {font-size:24px; font-weight:800; margin:0 0 4px;}
+.finus-notifications-heading p {margin:0; opacity:.75;}
+.finus-notification-item {display:flex; justify-content:space-between; gap:15px; padding:16px; border-bottom:1px solid rgba(111,139,120,.18); border-radius:8px;}
+.finus-notification-unread {background:rgba(22,163,74,.08); border-left:3px solid #16a34a;}
+.finus-notification-item strong {display:block; font-size:15px;}
+.finus-notification-item small {display:block; opacity:.7; font-size:12px; margin-top:4px;}
+.finus-notification-item p {margin:9px 0;}
+.finus-notification-action {cursor:pointer; border-radius:8px; border:1px solid #17a34a; padding:8px 12px; background:#fff; color:#12602b; font-weight:700; font-size:13px;}
+.finus-push-optin {border:1px solid rgba(255,255,255,.4); background:rgba(255,255,255,.12); color:#fff; border-radius:8px; margin:8px 14px; padding:9px; font-size:12px; font-weight:600; max-width:calc(100% - 28px); cursor:pointer; text-align:left;}
+.finus-push-optin[hidden]{display:none!important;}
+
+/* FIX 2026-10: standard notifications in topbar; device opt-in in settings. */
+.finus-header-actions {display:flex;align-items:center;gap:10px;min-width:0;}
+.finus-topbar-notifications {position:relative;}
+.finus-topbar-bell {width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;position:relative;border:1px solid rgba(255,255,255,.30);border-radius:12px;background:rgba(255,255,255,.96);color:#176c36;box-shadow:0 8px 20px rgba(0,57,18,.12);cursor:pointer;font-size:17px;}
+.finus-topbar-bell:hover,.finus-topbar-bell:focus-visible {background:#f0fff3;outline:2px solid rgba(255,255,255,.45);outline-offset:2px;}
+.finus-topbar-count {position:absolute;top:-6px;right:-7px;margin:0!important;min-width:18px;height:18px;padding:0 4px;font-size:10px;line-height:1;}
+.finus-bell-menu {width:min(355px,calc(100vw - 24px));max-height:min(70vh,500px);overflow:auto;padding:0;border-radius:15px;border:1px solid #dce9df;box-shadow:0 21px 50px rgba(12,47,24,.17);color:#1a3824;}
+.finus-bell-menu-title {padding:15px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #e9f0ea;}
+.finus-bell-menu-title strong{font-size:15px;}
+.finus-bell-menu-title a{color:#14853f;font-size:12px;font-weight:700;}
+.finus-bell-menu-items {max-height:320px;overflow-y:auto;}
+.finus-bell-empty{padding:24px 15px;margin:0;color:#668071;font-size:13px;text-align:center;}
+.finus-bell-item{display:grid;gap:5px;text-decoration:none!important;border-bottom:1px solid #edf1ef;padding:12px 15px;color:#244031!important;}
+.finus-bell-item:hover{background:#f0faf3;}
+.finus-bell-item.is-unread{border-left:3px solid #1db34d;background:#effaf2;}
+.finus-bell-item strong{font-size:12px;}.finus-bell-item small{font-size:11px;line-height:1.5;color:#607365;}
+.finus-bell-menu-footer{display:block;padding:12px 15px;text-align:center;font-size:12px;font-weight:750;color:#137835;background:#f8fcfa;text-decoration:none!important;}
+.finus-settings-push-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+.finus-settings-push-row strong{font-size:14px;}.finus-settings-push-row p{font-size:12px;line-height:1.5;margin:6px 0 0;color:var(--finus-muted,#64748b);}
+.finus-settings-push-actions{display:flex;flex-wrap:wrap;gap:8px;}
+.finus-settings-push-actions button[hidden]{display:none!important;}
+.finus-push-disable{background:#fff;border:1px solid #d9e8df;color:#216639;}
+.finus-settings-push-hint{display:block;margin-top:15px;color:var(--finus-muted,#64748b);}
+.finus-settings-notification-history{display:inline-block;margin-top:10px;color:#13843a;font-size:12px;font-weight:750;}
+html[data-finus-theme="dark"] .finus-topbar-bell{background:#142119;color:#b8f2c6;border-color:#395342;}
+html[data-finus-theme="dark"] .finus-bell-menu{background:#13221a;border-color:#365242;color:#edf7f0;}
+html[data-finus-theme="dark"] .finus-bell-menu-title{border-color:#365242;}
+html[data-finus-theme="dark"] .finus-bell-item{color:#e8f5ed!important;border-color:#314738;}
+html[data-finus-theme="dark"] .finus-bell-item:hover,html[data-finus-theme="dark"] .finus-bell-item.is-unread{background:#1e3727;}
+html[data-finus-theme="dark"] .finus-bell-item small{color:#aac3b0;}
+html[data-finus-theme="dark"] .finus-bell-menu-footer{background:#1b3223;color:#a5e5b4;}
+
+/* Accessible notification push switch, matching FINUS light/dark appearance. */
+.finus-push-switch{display:inline-flex;align-items:center;justify-content:center;border:0;padding:5px;background:transparent;border-radius:999px;cursor:pointer;touch-action:manipulation;}
+.finus-push-switch-track{position:relative;display:block;width:49px;height:28px;border-radius:999px;background:#d8e5dc;box-shadow:inset 0 0 0 1px rgba(14,84,35,.14);transition:background .2s ease;}
+.finus-push-switch-track::after{content:"";position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(15,23,42,.20);transition:transform .2s ease;}
+.finus-push-switch[aria-checked="true"] .finus-push-switch-track{background:#16a34a;}
+.finus-push-switch[aria-checked="true"] .finus-push-switch-track::after{transform:translateX(21px);}
+.finus-push-switch:focus-visible{outline:2px solid #169b45;outline-offset:2px;}
+.finus-push-switch:disabled{cursor:not-allowed;opacity:.55;}
+html[data-finus-theme="dark"] .finus-push-switch-track{background:#3b5846;}
+html[data-finus-theme="dark"] .finus-push-switch[aria-checked="true"] .finus-push-switch-track{background:#16a34a;}
+
+/* Filter ditempatkan di halaman riwayat, bukan pada dropdown lonceng. */
+.finus-notification-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding-bottom:14px;border-bottom:1px solid rgba(111,139,120,.18);}
+.finus-notification-filter{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:8px 15px;border:1px solid rgba(61,126,80,.22);border-radius:999px;color:var(--finus-text,#244031);background:transparent;font-size:13px;font-weight:750;line-height:1.25;text-decoration:none!important;transition:background .2s ease,border-color .2s ease,color .2s ease;}
+.finus-notification-filter:hover,.finus-notification-filter:focus-visible{background:rgba(22,163,74,.08);border-color:#16a34a;color:#13833a;outline:none;}
+.finus-notification-filter:focus-visible{outline:2px solid #16a34a;outline-offset:2px;}
+.finus-notification-filter.is-active,.finus-notification-filter[aria-current="page"]{background:#15803d;border-color:#15803d;color:#fff!important;}
+.finus-notifications-empty{padding:18px 8px;color:var(--finus-muted,#64748b);font-size:14px;}
+html[data-finus-theme="dark"] .finus-notification-filter{color:#d5ead9;border-color:#4b6e56;}
+html[data-finus-theme="dark"] .finus-notification-filter:hover{background:#234332;color:#ccf3d5;}
+html[data-finus-theme="dark"] .finus-notification-filter.is-active{background:#1d9a4c;border-color:#1d9a4c;color:#fff;}
+
+/* Ringkas: switch Beams perangkat di kanan judul dropdown, footer tetap ke pusat notifikasi. */
+.finus-bell-push-control{display:inline-flex;align-items:center;justify-content:flex-end;gap:6px;min-width:0;}
+.finus-bell-push-label{font-size:11px;font-weight:650;color:#54705c;white-space:nowrap;}
+.finus-bell-push-switch{flex:0 0 auto;padding:3px;}
+.finus-bell-push-switch .finus-push-switch-track{width:41px;height:24px;}
+.finus-bell-push-switch .finus-push-switch-track::after{width:18px;height:18px;top:3px;left:3px;}
+.finus-bell-push-switch[aria-checked="true"] .finus-push-switch-track::after{transform:translateX(17px);}
+html[data-finus-theme="dark"] .finus-bell-push-label{color:#b7d6bd;}

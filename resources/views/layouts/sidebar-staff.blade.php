@@ -808,6 +808,7 @@ html[data-finus-theme="dark"] {
                         class="{{ request()->routeIs('pegawai.presensi.index') ? 'active' : '' }}">
                         <i class="ti-calendar"></i>
                         <span>Presensi Saya</span>
+                        
                     </a>
                 </li>
                 <li>

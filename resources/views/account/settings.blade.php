@@ -42,6 +42,36 @@
         </div>
     </section>
 
+    {{-- Aktivasi push notification ditempatkan di Pengaturan, tidak di sidebar. --}}
+    <section class="fmu-card finus-settings-notifications mb-4" aria-labelledby="finusNotificationSettingsHeading">
+        <div class="fmu-card-head">
+            <div class="fmu-card-head-main">
+                <span class="fmu-card-icon"><i class="fa-solid fa-bell" aria-hidden="true"></i></span>
+                <div>
+                    <h2 id="finusNotificationSettingsHeading">Pengaturan Notifikasi</h2>
+                    <p>Atur notifikasi perangkat untuk akun {{ $portalLabel }}. Riwayat notifikasi tetap tersedia di dalam FINUS.</p>
+                </div>
+            </div>
+        </div>
+        <div class="fmu-card-body">
+            <div class="finus-settings-push-row">
+                <div>
+                    <strong>Notifikasi browser / perangkat</strong>
+                    <p id="finusPushStatus" data-finus-push-status role="status" aria-live="polite">Sedang memeriksa status perangkat…</p>
+                </div>
+                <div class="finus-settings-push-actions">
+                    <button type="button" class="finus-push-switch" data-finus-push-toggle
+                            role="switch" aria-checked="false" aria-label="Aktifkan notifikasi browser"
+                            aria-describedby="finusPushStatus" disabled>
+                        <span class="finus-push-switch-track" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+            <small class="finus-settings-push-hint">Status diperiksa ulang saat halaman dibuka. Notifikasi dalam aplikasi tetap aktif walaupun notifikasi perangkat dimatikan.</small>
+            <a href="{{ route('finus.notifications.'.($user->role === 'admin' ? 'admin' : ($user->role === 'pegawai' ? 'pegawai' : 'jamaah')).'.index') }}" class="finus-settings-notification-history">Lihat riwayat notifikasi &rarr;</a>
+        </div>
+    </section>
+
     @if(session('status') === 'password-updated')
         <div class="account-success-alert" role="status">
             <span class="account-success-icon"><i class="fa-solid fa-circle-check"></i></span>

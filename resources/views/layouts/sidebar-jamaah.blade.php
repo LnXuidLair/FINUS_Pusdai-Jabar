@@ -929,7 +929,9 @@ html[data-finus-theme="dark"] {
                     onerror="this.style.display='none'"
                 >
                 <div class="logo-title">JAMAAH FINUS</div>
-                <div class="logo-sub-title">Portal Publik • Semua Masjid</div>
+                @unless(config('finus.jamaah_pusdai_only'))
+                    <div class="logo-sub-title">Portal Publik • Semua Masjid</div>
+                @endunless
                 <div class="finus-sidebar-role-chip">Akun Jamaah</div>
             </div>
 

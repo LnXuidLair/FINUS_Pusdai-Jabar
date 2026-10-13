@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\GajiJabatan;
+use App\Models\Organization;
+use Illuminate\Support\Str;
 use App\Models\Pegawai;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,17 +14,20 @@ class ContactProfileTest extends TestCase
 {
     use RefreshDatabase;
 
+    // Testing-only CSRF bypass, identical to AuthenticationPolicyTest.
+    // The web middleware remains enabled for actual browser requests.
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+    }
+
     public function test_admin_cannot_assign_phone_number_used_by_another_employee(): void
     {
-        $admin = User::create([
-            'name' => 'Admin Pusdai',
-            'email' => 'admin@pusdai.finus.id',
-            'email_verified_at' => now(),
-            'password' => bcrypt('password123'),
-            'role' => User::ROLE_ADMIN,
-        ]);
+        $admin = $this->makeAdmin();
 
         GajiJabatan::create([
+            'organization_id' => $admin->organization_id,
             'jabatan' => 'Keuangan',
             'gaji_perhari' => 100000,
         ]);
@@ -104,7 +109,12 @@ class ContactProfileTest extends TestCase
 
     public function test_same_national_digits_with_different_country_codes_are_not_treated_as_same_employee_phone(): void
     {
-        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $admin = $this->makeAdmin();
+        GajiJabatan::create([
+            'organization_id' => $admin->organization_id,
+            'jabatan' => 'Keuangan',
+            'gaji_perhari' => 100000,
+        ]);
         $this->createEmployee('0001', 'Pegawai Indonesia', 'indonesia@staff.finus.id', '+6281234567890');
         $pegawaiMalaysia = $this->createEmployee('0002', 'Pegawai Malaysia', 'malaysia@staff.finus.id', '+601234567890');
 
@@ -129,6 +139,7 @@ class ContactProfileTest extends TestCase
         ?string $phone
     ): Pegawai {
         $pegawai = Pegawai::create([
+            'organization_id' => $this->organization()->id,
             'nip' => $nip,
             'nama_pegawai' => $name,
             'jabatan' => 'Keuangan',
@@ -140,6 +151,7 @@ class ContactProfileTest extends TestCase
         ]);
 
         User::create([
+            'organization_id' => $this->organization()->id,
             'name' => $name,
             'email' => $email,
             'email_verified_at' => now(),
@@ -149,4 +161,30 @@ class ContactProfileTest extends TestCase
 
         return $pegawai;
     }
+
+    private function organization(): Organization
+    {
+        return Organization::firstOrCreate(
+            ['slug' => 'contact-test'],
+            [
+                'public_id' => (string) Str::ulid(),
+                'name' => 'Masjid Contact Test',
+                'country_code' => 'ID',
+                'is_active' => true,
+            ]
+        );
+    }
+
+    private function makeAdmin(): User
+    {
+        return User::create([
+            'organization_id' => $this->organization()->id,
+            'name' => 'Admin Pusdai',
+            'email' => 'admin@pusdai.finus.id',
+            'email_verified_at' => now(),
+            'password' => bcrypt('password123'),
+            'role' => User::ROLE_ADMIN,
+        ]);
+    }
+
 }

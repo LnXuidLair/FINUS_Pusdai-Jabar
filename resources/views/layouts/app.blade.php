@@ -71,6 +71,7 @@ const themeColorMeta = document.querySelector(
     <link href="{{ asset('assets/css/lib/helper.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/custom-style.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('assets/css/finus-notifications.css') }}">
     {{-- CSS khusus dari halaman anak --}}
     @stack('styles')
     <style>
@@ -2401,6 +2402,18 @@ html[data-finus-theme="dark"] body.finus-layout ::selection {
             @include('layouts.sidebar-jamaah')
         @endif
         @include('layouts.navigation')
+        @if(in_array($currentGuard, ['admin', 'pegawai', 'jamaah'], true))
+            <div id="finus-notification-config"
+                 data-user-id="{{ $currentUser->id }}"
+                 data-portal="{{ $currentGuard }}"
+                 data-feed="{{ route('finus.notifications.'.$currentGuard.'.feed') }}"
+                 data-channel-auth="{{ route('finus.notifications.'.$currentGuard.'.channel-auth') }}"
+                 data-beams-auth="{{ route('finus.notifications.'.$currentGuard.'.beams-token') }}"
+                 data-beams-instance="{{ config('finus_notifications.beams.instance_id') }}"
+                 data-pusher-key="{{ config('broadcasting.connections.pusher.key') }}"
+                 data-pusher-cluster="{{ config('broadcasting.connections.pusher.options.cluster') }}"
+                 style="display:none"></div>
+        @endif
         <div class="finus-sidebar-backdrop" id="finusSidebarBackdrop" aria-hidden="true"></div>
     @endif
     <div class="content-wrap">
@@ -2840,7 +2853,7 @@ html[data-finus-theme="dark"] body.finus-layout ::selection {
                         return;
                     }
                     loggingOut = true;
-                    logoutForm.submit();
+                    logoutForm.requestSubmit();
                 };
                 const checkIdle = () => {
                     const isIdle = Date.now() - getLastActivity() >= idleTimeout;
@@ -3069,9 +3082,12 @@ const themeColorMeta = document.querySelector(
         })();
     </script>
 
+    @if($currentUser && in_array($currentGuard, ['admin', 'pegawai', 'jamaah'], true))
+        @if(config('broadcasting.connections.pusher.key'))
+            <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+        @endif
+        @vite('resources/js/finus-notifications.js')
+    @endif
     @stack('scripts')
 </body>
 </html>
-
-
-
