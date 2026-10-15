@@ -8,6 +8,14 @@
     },
     "routes": [
         {
+            "src": "/service-worker\\.js",
+            "dest": "/public/service-worker.js",
+            "headers": {
+                "Content-Type": "application/javascript; charset=utf-8",
+                "Cache-Control": "no-cache"
+            }
+        },
+        {
             "src": "/build/(.*)",
             "dest": "/public/build/$1"
         },
