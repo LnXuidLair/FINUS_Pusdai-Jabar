@@ -1024,7 +1024,7 @@
 
                         <p class="finus-content-description">
                             Pemasukan, total pengeluaran, dan penggajian per bulan Januari-Desember
-                            {{ $tahunGrafik }}. Penggajian ditampilkan sebagai bagian dari total pengeluaran.
+                            {{ $tahunGrafik }}. Pemasukan dan pengeluaran berdasarkan arus kas; penggajian berdasarkan periode hak gaji (termasuk yang belum dibayar).
                         </p>
                     </div>
                 </div>
@@ -1042,7 +1042,7 @@
 
                     <div class="finus-legend-item">
                         <span class="finus-legend-dot finus-legend-payroll"></span>
-                        Penggajian (bagian pengeluaran)
+                        Penggajian (hak gaji)
                     </div>
                 </div>
             </div>
@@ -1212,7 +1212,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const pemasukanData = fillMonths(@json($pemasukanBulanan));
     const pengeluaranData = fillMonths(@json($pengeluaranBulanan));
-    const penggajianData = fillMonths(@json($penggajianDibayarBulanan ?? $penggajianBulanan));
+    const penggajianData = fillMonths(@json($penggajianBulanan));
     const rupiahFull = function (value) {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -1356,7 +1356,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         borderColor: '#E5B038'
                     },
                     {
-                        label: 'Penggajian (bagian pengeluaran)',
+                        label: 'Penggajian (hak gaji)',
                         data: penggajianData,
                         borderColor: '#6E44D8'
                     }
