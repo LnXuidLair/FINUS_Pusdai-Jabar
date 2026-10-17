@@ -495,11 +495,15 @@
     }
 
     .finus-legend-expense {
-        background: #E5484D;
+        background: #E5B038;
     }
 
     .finus-legend-income {
         background: #179B40;
+    }
+
+    .finus-legend-payroll {
+        background: #6E44D8;
     }
 
     .finus-chart-body {
@@ -1015,12 +1019,12 @@
 
                     <div>
                         <h5 class="finus-content-title">
-                            Pemasukan dan Pengeluaran
+                            Grafik Keuangan Masjid
                         </h5>
 
                         <p class="finus-content-description">
-                            Perbandingan arus kas masuk dan keluar Januari-Desember
-                            {{ $tahunGrafik }}.
+                            Pemasukan, total pengeluaran, dan penggajian per bulan Januari-Desember
+                            {{ $tahunGrafik }}. Penggajian ditampilkan sebagai bagian dari total pengeluaran.
                         </p>
                     </div>
                 </div>
@@ -1033,7 +1037,12 @@
 
                     <div class="finus-legend-item">
                         <span class="finus-legend-dot finus-legend-expense"></span>
-                        Pengeluaran
+                        Total Pengeluaran
+                    </div>
+
+                    <div class="finus-legend-item">
+                        <span class="finus-legend-dot finus-legend-payroll"></span>
+                        Penggajian (bagian pengeluaran)
                     </div>
                 </div>
             </div>
@@ -1044,33 +1053,6 @@
                 </div>
             </div>
         </div>
-
-            {{-- Grafik Penggajian --}}
-            <div class="finus-content-card">
-            <div class="finus-content-header">
-                <div class="finus-content-heading">
-                    <div class="finus-content-icon">
-                        <i class="fa-solid fa-chart-line"></i>
-                    </div>
-
-                    <div>
-                        <h5 class="finus-content-title">
-                            Penggajian per Bulan
-                        </h5>
-
-                        <p class="finus-content-description">
-                            Total gaji berdasarkan periode Januari-Desember {{ $tahunGrafik }}.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="finus-chart-body">
-                <div class="finus-chart">
-                    <canvas id="payrollChart"></canvas>
-                </div>
-            </div>
-            </div>
 
         </div>
 
@@ -1230,7 +1212,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const pemasukanData = fillMonths(@json($pemasukanBulanan));
     const pengeluaranData = fillMonths(@json($pengeluaranBulanan));
-    const penggajianData = fillMonths(@json($penggajianBulanan));
+    const penggajianData = fillMonths(@json($penggajianDibayarBulanan ?? $penggajianBulanan));
     const rupiahFull = function (value) {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -1366,58 +1348,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     {
                         label: 'Pemasukan',
                         data: pemasukanData,
-                        backgroundColor: createGradient(context, 'rgba(23, 155, 64, .30)', 'rgba(34, 186, 81, .03)'),
-                        borderColor: '#179B40',
-                        borderWidth: 3,
-                        pointRadius: 3,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: '#FFFFFF',
-                        pointBorderColor: '#179B40',
-                        pointBorderWidth: 2,
-                        fill: true,
-                        tension: .42
+                        borderColor: '#179B40'
                     },
                     {
-                        label: 'Pengeluaran',
+                        label: 'Total Pengeluaran',
                         data: pengeluaranData,
-                        backgroundColor: createGradient(context, 'rgba(229, 72, 77, .24)', 'rgba(229, 72, 77, .02)'),
-                        borderColor: '#E5484D',
-                        borderWidth: 3,
-                        pointRadius: 3,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: '#FFFFFF',
-                        pointBorderColor: '#E5484D',
-                        pointBorderWidth: 2,
-                        fill: true,
-                        tension: .42
+                        borderColor: '#E5B038'
+                    },
+                    {
+                        label: 'Penggajian (bagian pengeluaran)',
+                        data: penggajianData,
+                        borderColor: '#6E44D8'
                     }
                 ]
-            },
-            options
-        });
-    }
-
-    const payrollCanvas = document.getElementById('payrollChart');
-    if (payrollCanvas) {
-        const context = payrollCanvas.getContext('2d');
-        makeChart(context, {
-            type: 'line',
-            data: {
-                labels: months,
-                datasets: [{
-                    label: 'Penggajian',
-                    data: penggajianData,
-                    backgroundColor: createGradient(context, 'rgba(37, 99, 235, .28)', 'rgba(96, 165, 250, .03)'),
-                    borderColor: '#2563EB',
-                    borderWidth: 3,
-                    pointRadius: 3,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#FFFFFF',
-                    pointBorderColor: '#2563EB',
-                    pointBorderWidth: 2,
-                    fill: true,
-                    tension: .42
-                }]
             },
             options
         });
@@ -1443,4 +1386,3 @@ html[data-finus-theme="dark"] body .finus-dashboard .finus-year-filter label { c
 html[data-finus-theme="dark"] body .finus-dashboard .finus-year-filter select { border-color:#365141 !important; background:#16241B !important; color:#F1F6F3 !important; }
 </style>
 @endpush
-
