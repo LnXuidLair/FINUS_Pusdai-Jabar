@@ -93,13 +93,18 @@ class DashboardController extends Controller
             ->where('status_penggajian', 'sudah_dibayar')
             ->whereNotNull('tanggal');
 
-        $penggajianDibayarBulanan = (clone $penggajianResmi)
+        $penggajianDibayarPerBulan = (clone $penggajianResmi)
             ->selectRaw(
                 'MONTH(tanggal) AS bulan, COALESCE(SUM(total_gaji), 0) AS total'
             )
             ->whereYear('tanggal', $tahunGrafik)
             ->groupByRaw('MONTH(tanggal)')
             ->pluck('total', 'bulan');
+
+        $penggajianDibayarBulanan = collect(range(1, 12))
+            ->mapWithKeys(fn (int $month): array => [
+                $month => (int) ($penggajianDibayarPerBulan[$month] ?? 0),
+            ]);
 
         $gajiDibayarBulanIni = (int) (clone $penggajianResmi)
             ->whereMonth('tanggal', $bulan)
@@ -112,7 +117,7 @@ class DashboardController extends Controller
         $pengeluaranBulanan = collect(range(1, 12))
             ->mapWithKeys(fn (int $month): array => [
                 $month => (int) ($pengeluaranOperasionalBulanan[$month] ?? 0)
-                    + (int) ($penggajianDibayarBulanan[$month] ?? 0),
+                    + (int) ($penggajianDibayarPerBulan[$month] ?? 0),
             ]);
 
         /*
@@ -155,6 +160,7 @@ class DashboardController extends Controller
             'pemasukanBulanan' => $pemasukanBulanan,
             'pengeluaranBulanan' => $pengeluaranBulanan,
             'penggajianBulanan' => $penggajianBulanan,
+            'penggajianDibayarBulanan' => $penggajianDibayarBulanan,
             'tahunGrafik' => $tahunGrafik,
             'tahunGrafikTersedia' => $this->dashboardYears($tahunGrafik),
         ]);
