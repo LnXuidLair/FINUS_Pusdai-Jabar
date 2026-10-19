@@ -92,14 +92,22 @@
             <section class="honorarium-section" id="honorariumSection" hidden>
                 <div class="honorarium-heading">
                     <div>
-                        <h3>Data Honorarium Pegawai</h3>
-                        <p>Hubungkan transaksi ke pegawai dan lampirkan surat yang menjadi dasar pembayaran.</p>
+                        <h3 id="honorariumHeadingTitle">Data Honorarium</h3>
+                        <p id="honorariumHeadingHelp">Pilih penerima dan lampirkan dokumen pendukung jika tersedia. Surat pengantar magang, surat tugas, atau surat persetujuan dapat digunakan.</p>
                     </div>
                     <span><i class="fa-solid fa-user-check"></i> Penghasilan Tambahan</span>
                 </div>
                 <div class="fmu-form-grid">
-                    <div class="fmu-field">
-                        <label class="fmu-label" for="id_pegawai">Pegawai Penerima <span class="fmu-required">*</span></label>
+                    <div class="fmu-field" id="honorariumRecipientTypeField" hidden>
+                        <label class="fmu-label" for="jenis_penerima">Jenis Penerima <span class="fmu-required">*</span></label>
+                        <select id="jenis_penerima" name="jenis_penerima" class="fmu-control" disabled>
+                            <option value="pegawai" @selected(old('jenis_penerima', 'pegawai') === 'pegawai')>Pegawai PUSDAI</option>
+                            <option value="eksternal" @selected(old('jenis_penerima') === 'eksternal')>Pihak luar / mahasiswa magang / penceramah</option>
+                        </select>
+                        <span class="fmu-help">Nama penerima eksternal akan tercatat pada deskripsi pengeluaran.</span>
+                    </div>
+                    <div class="fmu-field" id="honorariumEmployeeField">
+                        <label class="fmu-label" for="id_pegawai">Pegawai Penerima <span class="fmu-required" id="employeeRequiredMark">*</span></label>
                         <div class="fmu-input-icon-wrap">
                             <i class="fa-solid fa-user"></i>
                             <select id="id_pegawai" name="id_pegawai" class="fmu-control @error('id_pegawai') is-invalid @enderror" disabled>
@@ -114,10 +122,17 @@
                         <span class="fmu-help">Honorarium akan tampil pada riwayat penghasilan pegawai ini.</span>
                         @error('id_pegawai')<span class="fmu-error">{{ $message }}</span>@enderror
                     </div>
+                    <div class="fmu-field" id="honorariumExternalField" hidden>
+                        <label class="fmu-label" for="nama_penerima_eksternal">Nama Penerima Eksternal <span class="fmu-required">*</span></label>
+                        <input id="nama_penerima_eksternal" name="nama_penerima_eksternal" type="text" maxlength="150" value="{{ old('nama_penerima_eksternal') }}" class="fmu-control @error('nama_penerima_eksternal') is-invalid @enderror" placeholder="Contoh: Ahmad, mahasiswa magang" disabled>
+                        <span class="fmu-help">Masukkan nama sesuai dokumen atau bukti pembayaran.</span>
+                        @error('nama_penerima_eksternal')<span class="fmu-error">{{ $message }}</span>@enderror
+                    </div>
                     <div class="fmu-field">
-                        <label class="fmu-label" for="bukti_surat_tugas">Bukti Surat Tugas <span class="fmu-required">*</span></label>
-                        <label class="fmu-upload" for="bukti_surat_tugas"><span><i class="fa-solid fa-file-signature"></i><strong>Pilih surat tugas</strong><span>JPG, JPEG, PNG, atau PDF. Maksimal 2 MB.</span><span class="fmu-file-name" id="assignmentFileName"></span></span></label>
+                        <label class="fmu-label" for="bukti_surat_tugas"><span id="assignmentDocumentLabel">Dokumen Pendukung Honorarium</span> <span id="assignmentRequiredMark" class="fmu-required" hidden>*</span></label>
+                        <label class="fmu-upload" for="bukti_surat_tugas"><span><i class="fa-solid fa-file-signature"></i><strong>Pilih dokumen pendukung</strong><span>Surat pengantar magang, surat tugas, persetujuan, atau dokumen terkait (JPG, PNG, PDF; maksimal 2 MB).</span><span class="fmu-file-name" id="assignmentFileName"></span></span></label>
                         <input type="file" id="bukti_surat_tugas" name="bukti_surat_tugas" accept=".jpg,.jpeg,.png,.pdf" class="d-none" disabled>
+                        <span class="fmu-help" id="assignmentDocumentHelp">Opsional. Dokumen diterbitkan oleh pihak berwenang; FINUS hanya menyimpannya.</span>
                         @error('bukti_surat_tugas')<span class="fmu-error">{{ $message }}</span>@enderror
                     </div>
                 </div>
@@ -233,6 +248,16 @@
     const input = document.getElementById('bukti_pembayaran'); const label = document.getElementById('expenseFileName');
     input?.addEventListener('change', () => { const file = input.files?.[0]; label.textContent = file?.name || ''; label.classList.toggle('is-visible', Boolean(file)); });
     const assignmentInput = document.getElementById('bukti_surat_tugas'); const assignmentLabel = document.getElementById('assignmentFileName');
+    const recipientType = document.getElementById('jenis_penerima');
+    const recipientTypeField = document.getElementById('honorariumRecipientTypeField');
+    const employeeField = document.getElementById('honorariumEmployeeField');
+    const externalField = document.getElementById('honorariumExternalField');
+    const externalInput = document.getElementById('nama_penerima_eksternal');
+    const employeeRequiredMark = document.getElementById('employeeRequiredMark');
+    const documentRequiredMark = document.getElementById('assignmentRequiredMark');
+    const documentLabel = document.getElementById('assignmentDocumentLabel');
+    const documentHelp = document.getElementById('assignmentDocumentHelp');
+    const honorariumHeadingTitle = document.getElementById('honorariumHeadingTitle');
     assignmentInput?.addEventListener('change', () => { const file = assignmentInput.files?.[0]; assignmentLabel.textContent = file?.name || ''; assignmentLabel.classList.toggle('is-visible', Boolean(file)); });
 
     const category = document.getElementById('kategori');
@@ -315,14 +340,29 @@
     const syncZakatVisibility = () => {
         const selected = category?.selectedOptions?.[0];
         const formType = selected?.dataset?.formType || '';
-        const requiresEmployee = selected?.dataset?.requiresEmployee === '1' || formType === 'honorarium';
-        const requiresAssignmentProof = selected?.dataset?.requiresAssignmentProof === '1' || formType === 'honorarium';
-        const showHonorarium = requiresEmployee || requiresAssignmentProof;
+        const isHonorarium = formType === 'honorarium';
+        const isExternal = isHonorarium && recipientType?.value === 'eksternal';
+        const requiresEmployee = isHonorarium ? !isExternal : selected?.dataset?.requiresEmployee === '1';
+        const requiresAssignmentProof = !isHonorarium && selected?.dataset?.requiresAssignmentProof === '1';
+        const showHonorarium = isHonorarium || requiresEmployee || requiresAssignmentProof;
         honorariumSection.hidden = !showHonorarium;
-        employeeInput.disabled = !showHonorarium;
+        recipientTypeField.hidden = !isHonorarium;
+        recipientType.disabled = !isHonorarium;
+        employeeField.hidden = !showHonorarium || isExternal || (!isHonorarium && !requiresEmployee);
+        employeeInput.disabled = !showHonorarium || isExternal || (!isHonorarium && !requiresEmployee);
         employeeInput.required = requiresEmployee;
+        employeeRequiredMark.hidden = !requiresEmployee;
+        externalField.hidden = !isExternal;
+        externalInput.disabled = !isExternal;
+        externalInput.required = isExternal;
         assignmentInput.disabled = !showHonorarium;
         assignmentInput.required = requiresAssignmentProof;
+        documentRequiredMark.hidden = !requiresAssignmentProof;
+        documentLabel.textContent = isHonorarium ? 'Dokumen Pendukung Honorarium' : 'Dokumen Pendukung Pengeluaran';
+        documentHelp.textContent = requiresAssignmentProof
+            ? 'Wajib untuk kategori pengeluaran ini.'
+            : 'Opsional. FINUS menerima dokumen dari instansi asal, PUSDAI, atau pihak berwenang lainnya.';
+        honorariumHeadingTitle.textContent = isHonorarium ? 'Data Honorarium' : 'Data Pendukung Pengeluaran';
         const visible = selected?.dataset?.requiresAsnaf === '1' || formType === 'zakat_distribution';
         section.hidden = !visible;
         section.querySelectorAll('input, select').forEach(field => { field.disabled = !visible; });
@@ -335,6 +375,8 @@
                 : 'Tanggal transaksi atau pembayaran.';
         syncZakatTotals();
     };
+
+    recipientType?.addEventListener('change', syncZakatVisibility);
 
     const syncCategoryMapping = () => {
         const selected = category?.selectedOptions?.[0];
@@ -371,6 +413,7 @@
 
 @push('styles')
 <style>
+#honorariumSection [hidden], #honorariumSection[hidden] { display: none !important; }
 .fmu-derived-value{display:flex;align-items:center;gap:10px;min-height:48px;padding:11px 14px;border:1px solid #dbe5de;border-radius:6px;background:#f4faf6;color:#176d35}.fmu-derived-value i{color:#169b43}.fmu-derived-value strong{font-size:14px}
 .journal-preview{margin-top:22px;padding:16px;border:1px solid #cfe2d5;border-radius:6px;background:#f8fcf9}.journal-preview-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}.journal-preview-head div strong,.journal-preview-head div span{display:block}.journal-preview-head div strong{color:#193925}.journal-preview-head div span{margin-top:2px;color:#64748b;font-size:12px}.journal-preview-badge{display:inline-flex;align-items:center;gap:6px;color:#08752f;font-size:11px;font-weight:800}.journal-preview-row{display:grid;grid-template-columns:60px minmax(0,1fr) 150px;gap:12px;padding:10px 0;border-top:1px solid #e2ece5}.journal-preview-row>span{color:#64748b;font-size:12px;text-transform:uppercase}.journal-preview-row>strong{color:#24352a}.journal-preview-row>b{text-align:right;color:#08752f}.honorarium-section,.zakat-detail-section{margin-top:28px;padding-top:24px;border-top:1px solid #dce7df}.honorarium-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px}.honorarium-heading h3{margin:0 0 4px;font-size:18px;color:#17233a}.honorarium-heading p{margin:0;color:#64748b}.honorarium-heading>span{padding:8px 11px;border-radius:6px;background:#eaf8ee;color:#08752f;font-size:12px;font-weight:700}.zakat-period-panel{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #dce7df}.zakat-period-heading,.zakat-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px}.zakat-period-heading h3,.zakat-detail-heading h3{margin:0 0 4px;font-size:18px;color:#17233a}.zakat-period-heading p,.zakat-detail-heading p{margin:0;color:#64748b}.zakat-balance{text-align:right}.zakat-balance span,.zakat-balance small{display:block;color:#64748b}.zakat-balance strong{display:block;margin:2px 0;color:#08752f;font-size:20px}.zakat-period-fields{display:grid;grid-template-columns:minmax(220px,.7fr) minmax(280px,1.3fr);gap:16px;align-items:end}.zakat-period-note{display:flex;align-items:center;gap:10px;min-height:46px;padding:10px 12px;border:1px solid #cfe2d5;border-radius:6px;background:#f6fbf7;color:#365443}.zakat-target-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:20px 0 10px}.zakat-target-heading div span{display:block;margin-top:3px;color:#64748b;font-size:12px}.zakat-target-heading>strong{color:#b45309}.zakat-target-heading>strong.is-balanced{color:#15803d}.zakat-target-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px}.zakat-target-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid #dce7df;border-radius:6px}.zakat-target-item>span:first-child{font-size:12px;font-weight:700;color:#475569}.zakat-target-control{display:flex;align-items:center;gap:4px}.zakat-target-control input{width:64px;border:0;background:transparent;text-align:right;color:#17233a}.zakat-detail-labels,.zakat-detail-row{display:grid;grid-template-columns:minmax(190px,1.15fr) minmax(150px,.9fr) minmax(100px,.55fr) minmax(170px,1fr) 44px;gap:14px;align-items:end}.zakat-detail-labels{padding:0 0 8px;color:#64748b;font-size:12px;font-weight:700}.zakat-detail-row{padding:14px 0;border-top:1px solid #edf2ee}.zakat-detail-row .fmu-label{display:none}.zakat-recipient-details{grid-column:1/-1}.zakat-recipient-details summary{cursor:pointer;color:#08752f;font-size:12px;font-weight:700}.zakat-recipient-details-grid{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:12px;margin-top:12px}.zakat-recipient-details-grid .fmu-label{display:block}.zakat-remove-row{width:44px;height:44px;border:1px solid #efc7c7;border-radius:6px;background:#fff;color:#c43f3f;cursor:pointer}.zakat-remove-row:disabled{opacity:.35;cursor:not-allowed}.zakat-detail-summary{display:flex;justify-content:flex-end;gap:24px;flex-wrap:wrap;margin-top:12px;padding-top:14px;border-top:1px solid #dce7df;color:#475569}.zakat-detail-summary .is-balanced{color:#15803d;font-weight:700}@media(max-width:980px){.zakat-target-grid{grid-template-columns:repeat(2,minmax(140px,1fr))}.zakat-detail-labels{display:none}.zakat-detail-row{grid-template-columns:1fr 1fr}.zakat-detail-row .fmu-label{display:block}.zakat-remove-row{justify-self:end}}@media(max-width:760px){.journal-preview-row{grid-template-columns:55px minmax(0,1fr)}.journal-preview-row>b{grid-column:2;text-align:left}.honorarium-heading,.zakat-period-heading,.zakat-detail-heading{align-items:flex-start;flex-direction:column}.zakat-balance{text-align:left}.zakat-period-fields,.zakat-target-grid,.zakat-detail-row,.zakat-recipient-details-grid{grid-template-columns:1fr}.zakat-remove-row{justify-self:end}.zakat-detail-summary{justify-content:flex-start;gap:10px 18px}}
 </style>
@@ -389,4 +432,3 @@ html[data-finus-theme="dark"] body .fmu-derived-value{background:#101B14 !import
 html[data-finus-theme="dark"] body .zakat-period-panel{border-color:#293D31 !important}html[data-finus-theme="dark"] body .zakat-period-heading h3{color:#F1F6F3 !important}html[data-finus-theme="dark"] body .zakat-period-note,html[data-finus-theme="dark"] body .zakat-target-item{background:#101B14 !important;border-color:#293D31 !important;color:#D7E7DC !important}html[data-finus-theme="dark"] body .zakat-target-item>span:first-child,html[data-finus-theme="dark"] body .zakat-target-control input{color:#D7E7DC !important}
 </style>
 @endpush
-

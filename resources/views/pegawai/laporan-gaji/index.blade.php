@@ -75,7 +75,7 @@
         <div class="fmu-card-head"><div class="fmu-card-head-main"><span class="fmu-card-icon"><i class="fa-solid fa-hand-holding-dollar"></i></span><div><h2>Riwayat Honorarium</h2><p>Pembayaran tugas atau kegiatan yang dicatat oleh admin maupun keuangan.</p></div></div></div>
         <div class="fmu-table-wrap">
             <table class="fmu-table">
-                <thead><tr><th>Tanggal</th><th>Keterangan Tugas</th><th>Dibayar Dari</th><th>Nominal</th><th>Surat Tugas</th></tr></thead>
+                <thead><tr><th>Tanggal</th><th>Keterangan Tugas</th><th>Dibayar Dari</th><th>Nominal</th><th>Dokumen Pendukung</th></tr></thead>
                 <tbody>
                 @forelse($honorariumItems ?? [] as $honorarium)
                     <tr>
@@ -85,7 +85,7 @@
                         <td><strong style="color:#179B40">{{ $rupiah($honorarium->jumlah ?? 0) }}</strong></td>
                         <td>
                             @if($honorarium->bukti_surat_tugas)
-                                <a href="{{ asset('storage/'.$honorarium->bukti_surat_tugas) }}" target="_blank" rel="noopener" class="fmu-btn" style="min-height:36px;padding-inline:11px"><i class="fa-solid fa-file-arrow-down"></i>Lihat Surat</a>
+                                <a href="{{ route('pegawai.laporan-gaji.dokumen-pendukung', $honorarium) }}" target="_blank" rel="noopener" class="fmu-btn" style="min-height:36px;padding-inline:11px"><i class="fa-solid fa-file-arrow-down"></i>Lihat Dokumen</a>
                             @else
                                 <span class="text-muted">-</span>
                             @endif
@@ -111,4 +111,3 @@ html[data-finus-theme="dark"] body :where(.fmu-page,.fr-page) :where(.fmu-hero-b
 html[data-finus-theme="dark"] body :where(.fmu-page,.fr-page) :where(.fmu-side-note,.fr-tip-item,.fr-breakdown-item) { border-color:#293D31 !important; background:#101B14 !important; }
 </style>
 @endpush
-

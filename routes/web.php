@@ -20,6 +20,7 @@ use App\Http\Controllers\PenggajianController;
 use App\Http\Controllers\PemasukanController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\TransactionCategoryController;
+use App\Http\Controllers\TransactionProofController;
 use App\Http\Controllers\ZiswafTransactionController;
 use App\Http\Middleware\EnsureManagementAccess;
 use App\Models\User;
@@ -178,6 +179,9 @@ Route::middleware(['auth:admin', 'role:admin'])
                     ->name('penggajian.index');
                 Route::patch('penggajian/{penggajian}/status', [PenggajianController::class, 'updateStatus'])
                     ->name('penggajian.status');
+                Route::get('pengeluaran/{pengeluaran}/bukti/{jenis}', [TransactionProofController::class, 'pengeluaran'])
+                    ->whereIn('jenis', ['pembayaran', 'surat-tugas', 'dokumen-pendukung'])
+                    ->name('pengeluaran.bukti');
                 Route::resource('pengeluaran', PengeluaranController::class)
                     ->only(['index', 'create', 'store', 'destroy',]);
                 Route::prefix('laporan')
@@ -197,6 +201,8 @@ Route::middleware(['auth:admin', 'role:admin'])
                 Route::patch('agenda-kegiatan/{agendaKegiatan}/toggle', [AgendaKegiatanController::class, 'toggleAktif'])
                     ->name('agenda-kegiatan.toggle');
 
+                Route::get('pemasukan/{pemasukan}/bukti', [TransactionProofController::class, 'pemasukan'])
+                    ->name('pemasukan.bukti');
                 Route::get('pemasukan', [PemasukanController::class, 'index'])
                     ->name('pemasukan.index');
                 Route::post('pemasukan', [PemasukanController::class, 'store'])
@@ -241,12 +247,22 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
             ->name('presensi.bukti');
         Route::get('/laporan-gaji', [PegawaiDashboardController::class, 'laporanGaji'])
             ->name('laporan-gaji.index');
+        Route::get('/laporan-gaji/honorarium/{pengeluaran}/dokumen-pendukung', [TransactionProofController::class, 'suratTugasSaya'])
+            ->name('laporan-gaji.dokumen-pendukung');
+        // Alias lama agar tautan laporan honorarium sebelumnya tetap berfungsi.
+        Route::get('/laporan-gaji/honorarium/{pengeluaran}/surat-tugas', [TransactionProofController::class, 'suratTugasSaya'])
+            ->name('laporan-gaji.surat-tugas');
         Route::get('/laporan-gaji/{penggajian}/slip', [PegawaiDashboardController::class, 'downloadSlip'])
             ->name('laporan-gaji.slip');
         Route::middleware('pegawai.access:dkm,keuangan')
             ->prefix('laporan-keuangan')
             ->name('laporan-keuangan.')
             ->group(function () {
+                Route::get('/pemasukan/{pemasukan}/bukti', [TransactionProofController::class, 'pemasukan'])
+                    ->name('pemasukan.bukti');
+                Route::get('/pengeluaran/{pengeluaran}/bukti/{jenis}', [TransactionProofController::class, 'pengeluaran'])
+                    ->whereIn('jenis', ['pembayaran', 'surat-tugas', 'dokumen-pendukung'])
+                    ->name('pengeluaran.bukti');
                 Route::get('/jurnal-umum', [LaporanController::class, 'jurnalUmum'])
                     ->name('jurnal-umum');
                 Route::get('/jurnal-pemasukan', [LaporanController::class, 'jurnalPemasukan'])
@@ -260,6 +276,8 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
             ->prefix('keuangan')
             ->name('keuangan.')
             ->group(function () {
+                Route::get('pemasukan/{pemasukan}/bukti', [TransactionProofController::class, 'pemasukan'])
+                    ->name('pemasukan.bukti');
                 Route::get('pemasukan', [PemasukanController::class, 'index'])
                     ->name('pemasukan.index');
                 Route::post('pemasukan', [PemasukanController::class, 'store'])
@@ -269,6 +287,9 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
                 Route::delete('pemasukan/{pemasukan}', [PemasukanController::class, 'destroy'])
                     ->name('pemasukan.destroy');
 
+                Route::get('pengeluaran/{pengeluaran}/bukti/{jenis}', [TransactionProofController::class, 'pengeluaran'])
+                    ->whereIn('jenis', ['pembayaran', 'surat-tugas', 'dokumen-pendukung'])
+                    ->name('pengeluaran.bukti');
                 Route::resource('pengeluaran', PengeluaranController::class)
                     ->only(['index', 'create', 'store', 'destroy']);
                 Route::get('penggajian', [PenggajianController::class, 'index'])
@@ -315,6 +336,8 @@ Route::middleware(['auth:jamaah', 'verified', 'role:jamaah',])
             ->name('pembayaran.poll-status');
         Route::get('/riwayat-transaksi', [JamaahController::class, 'riwayat'])
             ->name('riwayat.index');
+        Route::get('/riwayat-transaksi/{transaksi}/bukti', [TransactionProofController::class, 'jamaah'])
+            ->name('riwayat.bukti');
         Route::get('/riwayat-transaksi/{transaksi}/invoice', [JamaahController::class, 'invoice'])
             ->name('riwayat.invoice');
         Route::get('/riwayat-transaksi/{transaksi}/invoice/cetak', [JamaahController::class, 'invoicePrint'])

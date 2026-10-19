@@ -16,6 +16,9 @@
     $pengeluaranCreateRoute = request()->routeIs('pegawai.keuangan.*')
         ? 'pegawai.keuangan.pengeluaran.create'
         : 'admin.pengeluaran.create';
+    $pengeluaranProofRoute = request()->routeIs('pegawai.keuangan.*')
+        ? 'pegawai.keuangan.pengeluaran.bukti'
+        : 'admin.pengeluaran.bukti';
     $pengeluaranDestroyRoute = request()->routeIs('pegawai.keuangan.*')
         ? 'pegawai.keuangan.pengeluaran.destroy'
         : 'admin.pengeluaran.destroy';
@@ -978,12 +981,12 @@
                                 <td data-label="Aksi">
                                     <div class="expense-row-actions">
                                         @if($item->bukti_pembayaran)
-                                            <a href="{{ asset('storage/'.$item->bukti_pembayaran) }}" target="_blank" rel="noopener" class="expense-action-btn" title="Lihat bukti pembayaran">
+                                            <a href="{{ route($pengeluaranProofRoute, ['pengeluaran' => $item->id, 'jenis' => 'pembayaran']) }}" target="_blank" rel="noopener" class="expense-action-btn" title="Lihat bukti pembayaran">
                                                 <i class="fa-solid fa-file-arrow-up"></i>
                                             </a>
                                         @endif
                                         @if(!$isGaji && $item->bukti_surat_tugas)
-                                            <a href="{{ asset('storage/'.$item->bukti_surat_tugas) }}" target="_blank" rel="noopener" class="expense-action-btn" title="Lihat surat tugas">
+                                            <a href="{{ route($pengeluaranProofRoute, ['pengeluaran' => $item->id, 'jenis' => 'dokumen-pendukung']) }}" target="_blank" rel="noopener" class="expense-action-btn" title="Lihat dokumen pendukung pengeluaran">
                                                 <i class="fa-solid fa-file-signature"></i>
                                             </a>
                                         @endif

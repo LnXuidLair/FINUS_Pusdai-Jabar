@@ -33,7 +33,7 @@ return [
         ['code' => 'ADM-ATK', 'name' => 'Administrasi dan ATK', 'coa_code' => '5101'],
         ['code' => 'DAKWAH', 'name' => 'Program Dakwah dan Keagamaan', 'coa_code' => '5102'],
         ['code' => 'PEMELIHARAAN', 'name' => 'Pemeliharaan Sarana dan Bangunan', 'coa_code' => '5103'],
-        ['code' => 'HONORARIUM', 'name' => 'Honorarium Pegawai', 'coa_code' => '5104', 'form_type' => 'honorarium', 'requires_employee' => true, 'requires_assignment_proof' => true],
+        ['code' => 'HONORARIUM', 'name' => 'Honorarium Pegawai', 'coa_code' => '5104', 'form_type' => 'honorarium', 'requires_employee' => false, 'requires_assignment_proof' => false],
         ['code' => 'KONSUMSI', 'name' => 'Konsumsi', 'coa_code' => '5105'],
         ['code' => 'ADMIN-BANK', 'name' => 'Administrasi Bank', 'coa_code' => '5106'],
         ['code' => 'UTILITAS', 'name' => 'Listrik, Air, Internet, dan Utilitas', 'coa_code' => '5107'],
