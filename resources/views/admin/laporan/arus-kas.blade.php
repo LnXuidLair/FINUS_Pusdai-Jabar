@@ -916,7 +916,7 @@
                                                     </td>
                                                     <td style="text-align:center;">
                                                         @if($item->bukti_pembayaran)
-                                                            <a href="{{ Storage::url($item->bukti_pembayaran) }}" target="_blank" style="color:#2563eb;" title="Lihat bukti transaksi">
+                                                            <a href="{{ route(request()->routeIs('pegawai.*') ? 'pegawai.laporan-keuangan.pemasukan.bukti' : 'admin.pemasukan.bukti', $item) }}" target="_blank" style="color:#2563eb;" title="Lihat bukti transaksi">
                                                                 <i class="fa-solid fa-file-image"></i>
                                                             </a>
                                                         @else
@@ -1060,8 +1060,8 @@
                                                             {{ $rupiah($nomPeng) }}
                                                         </td>
                                                         <td style="text-align:center;">
-                                                            @if($peng->bukti_pengeluaran)
-                                                                <a href="{{ Storage::url($peng->bukti_pengeluaran) }}" target="_blank" style="color:#2563eb;" title="Lihat bukti nota">
+                                                            @if($peng->bukti_pembayaran)
+                                                                <a href="{{ route(request()->routeIs('pegawai.*') ? 'pegawai.laporan-keuangan.pengeluaran.bukti' : 'admin.pengeluaran.bukti', ['pengeluaran' => $peng->id, 'jenis' => 'pembayaran']) }}" target="_blank" style="color:#2563eb;" title="Lihat bukti nota">
                                                                     <i class="fa-solid fa-file-invoice"></i>
                                                                 </a>
                                                             @else
@@ -1262,4 +1262,3 @@ html[data-finus-theme="dark"] body .lk-page :where(.lk-kop-divider,.lk-kop-line-
 }
 </style>
 @endpush
-

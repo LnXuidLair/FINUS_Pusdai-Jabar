@@ -11,10 +11,10 @@ use App\Models\Penggajian;
 use App\Models\PeriodePenyaluranZakat;
 use App\Models\TransactionCategory;
 use App\Services\Accounting\Psak109PostingService;
+use App\Services\TransactionProofStorage;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -216,14 +216,33 @@ class PengeluaranController extends Controller
                 ->whereIn('kode_akun', ['1101', '1102'])
                 ->findOrFail($validated['coa_kredit_id'])
             : Coa::query()->where('kode_akun', '1101')->firstOrFail();
-        $requiresEmployee = $transactionCategory->requires_employee
-            || $transactionCategory->form_type === 'honorarium';
-        $requiresAssignmentProof = $transactionCategory->requires_assignment_proof
-            || $transactionCategory->form_type === 'honorarium';
+        // Honorarium menerima dokumen pendukung dari kampus, PUSDAI, atau pemberi tugas lain.
+        // Flag wajib surat tugas lama tidak lagi memaksa seluruh kategori honorarium,
+        // termasuk data kategori yang dibuat sebelum pembaruan ini.
+        $isHonorarium = $transactionCategory->form_type === 'honorarium';
+        $jenisPenerima = $isHonorarium
+            ? $request->input('jenis_penerima', 'pegawai')
+            : 'pegawai';
+        $isExternal = $isHonorarium && $jenisPenerima === 'eksternal';
+        $requiresEmployee = $isHonorarium
+            ? ! $isExternal
+            : (bool) $transactionCategory->requires_employee;
+        $requiresAssignmentProof = ! $isHonorarium
+            && (bool) $transactionCategory->requires_assignment_proof;
         $pegawai = null;
 
-        if ($requiresEmployee || $requiresAssignmentProof) {
+        if ($isHonorarium || $requiresEmployee || $requiresAssignmentProof) {
             $honorariumValidated = $request->validate([
+                'jenis_penerima' => [
+                    'nullable',
+                    Rule::in(['pegawai', 'eksternal']),
+                ],
+                'nama_penerima_eksternal' => [
+                    Rule::requiredIf($isExternal),
+                    'nullable',
+                    'string',
+                    'max:150',
+                ],
                 'id_pegawai' => [
                     Rule::requiredIf($requiresEmployee),
                     'nullable',
@@ -232,18 +251,31 @@ class PengeluaranController extends Controller
                         fn ($query) => $query->where('organization_id', $organizationId)
                     ),
                 ],
-                'bukti_surat_tugas' => [
-                    Rule::requiredIf($requiresAssignmentProof),
-                    'nullable',
-                    'file',
-                    'mimes:jpeg,jpg,png,pdf',
-                    'max:2048',
-                ],
             ]);
             $validated = array_merge($validated, $honorariumValidated);
-            $pegawai = ! empty($validated['id_pegawai'])
+            // Jangan terima ID pegawai tersembunyi untuk honorarium penerima eksternal.
+            $pegawai = ! $isExternal && ! empty($validated['id_pegawai'])
                 ? Pegawai::query()->findOrFail($validated['id_pegawai'])
                 : null;
+
+            if ($isExternal) {
+                // Tidak membuat tabel baru: nama penerima masuk ke deskripsi dan
+                // keterangan yang sudah ada, sehingga ikut tampil pada laporan.
+                $deskripsi = 'Honorarium '.trim($validated['nama_penerima_eksternal'])
+                    .' - '.$validated['deskripsi'];
+                if (mb_strlen($deskripsi) > 255) {
+                    throw ValidationException::withMessages([
+                        'deskripsi' => 'Deskripsi beserta nama penerima maksimal 255 karakter.',
+                    ]);
+                }
+                $validated['deskripsi'] = $deskripsi;
+            }
+        }
+
+        if ($requiresAssignmentProof && ! $request->hasFile('bukti_surat_tugas')) {
+            throw ValidationException::withMessages([
+                'bukti_surat_tugas' => 'Dokumen pendukung diwajibkan untuk kategori ini.',
+            ]);
         }
         $zakatDetails = [];
         $periodeStart = null;
@@ -340,22 +372,30 @@ class PengeluaranController extends Controller
         $path = null;
         $assignmentPath = null;
 
-        if ($request->hasFile('bukti_pembayaran')) {
-            $path = $request
-                ->file('bukti_pembayaran')
-                ->store('bukti_pembayaran', 'public');
-        }
-
-        if ($request->hasFile('bukti_surat_tugas')) {
-            $assignmentPath = $request
-                ->file('bukti_surat_tugas')
-                ->store('bukti_surat_tugas', 'public');
-        }
-
         try {
+            if ($request->hasFile('bukti_pembayaran')) {
+                $path = $request
+                    ->file('bukti_pembayaran')
+                    ->store('bukti_pembayaran', app(TransactionProofStorage::class)->disk());
+                if ($path === false) {
+                    throw new \RuntimeException('Gagal menyimpan bukti pembayaran. Transaksi dibatalkan.');
+                }
+            }
+
+            if ($request->hasFile('bukti_surat_tugas')) {
+                $assignmentPath = $request->file('bukti_surat_tugas')->store(
+                    $isHonorarium ? 'dokumen_pendukung_honorarium' : 'bukti_surat_tugas',
+                    app(TransactionProofStorage::class)->disk()
+                );
+                if ($assignmentPath === false) {
+                    throw new \RuntimeException('Gagal menyimpan dokumen pendukung. Transaksi dibatalkan.');
+                }
+            }
+
             DB::transaction(function () use (
                 $asnafLabels,
                 $assignmentPath,
+                $isExternal,
                 $coaDebit,
                 $coaKredit,
                 $path,
@@ -398,7 +438,7 @@ class PengeluaranController extends Controller
 
                 $pengeluaran = new Pengeluaran;
                 $pengeluaran->transaction_category_id = $transactionCategory->id;
-                $pengeluaran->kategori = $transactionCategory->name;
+                $pengeluaran->kategori = $isExternal ? 'Honorarium Kegiatan' : $transactionCategory->name;
                 $pengeluaran->jenis_dana = $validated['jenis_dana'];
                 $pengeluaran->id_pegawai = $pegawai?->id;
                 $pengeluaran->restriction_type = null;
@@ -457,10 +497,10 @@ class PengeluaranController extends Controller
             });
         } catch (\Throwable $exception) {
             if ($path) {
-                Storage::disk('public')->delete($path);
+                app(TransactionProofStorage::class)->delete($path);
             }
             if ($assignmentPath) {
-                Storage::disk('public')->delete($assignmentPath);
+                app(TransactionProofStorage::class)->delete($assignmentPath);
             }
 
             throw $exception;
@@ -513,10 +553,10 @@ class PengeluaranController extends Controller
         }
 
         if ($buktiPembayaran) {
-            Storage::disk('public')->delete($buktiPembayaran);
+            app(TransactionProofStorage::class)->delete($buktiPembayaran);
         }
         if ($buktiSuratTugas) {
-            Storage::disk('public')->delete($buktiSuratTugas);
+            app(TransactionProofStorage::class)->delete($buktiSuratTugas);
         }
 
         return response()->json([

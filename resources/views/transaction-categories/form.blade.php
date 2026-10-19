@@ -19,7 +19,7 @@
                 <div class="fmu-field"><label class="fmu-label" for="name">Nama Kategori <span class="fmu-required">*</span></label><input id="name" name="name" class="fmu-control" maxlength="150" value="{{ old('name', $category->name) }}" required>@error('name')<span class="fmu-error">{{ $message }}</span>@enderror</div>
                 <div class="fmu-field"><label class="fmu-label" for="coa_id">Akun Tujuan Pengeluaran <span class="fmu-required">*</span></label><select id="coa_id" name="coa_id" class="fmu-control" required><option value="">Pilih akun</option>@foreach($accounts as $account)@php($fundType = \App\Models\TransactionCategory::fundTypeForAccountCode($account->kode_akun))<option value="{{ $account->id }}" data-fund-label="{{ $fundLabels[$fundType] ?? 'Belum dipetakan' }}" @selected((string) old('coa_id', $category->coa_id) === (string) $account->id)>{{ $account->kode_akun }} - {{ $account->nama_akun }}</option>@endforeach</select><span class="fmu-help" id="derivedFundSource">Sumber dana akan mengikuti kode akun yang dipilih.</span>@error('coa_id')<span class="fmu-error">{{ $message }}</span>@enderror</div>
                 <div class="fmu-field"><label class="fmu-label" for="form_type">Tipe Form <span class="fmu-required">*</span></label><select id="form_type" name="form_type" class="fmu-control" required>@foreach($formLabels as $value => $label)<option value="{{ $value }}" @selected(old('form_type', $category->form_type ?? 'general') === $value)>{{ $label }}</option>@endforeach</select></div>
-                <div class="fmu-field fmu-field-full"><span class="fmu-label">Kebutuhan Data Khusus</span><div class="tc-check-grid"><label><input type="checkbox" name="requires_asnaf" value="1" @checked(old('requires_asnaf', $category->requires_asnaf))><span>Rincian asnaf</span></label><label><input type="checkbox" name="requires_employee" value="1" @checked(old('requires_employee', $category->requires_employee))><span>Pegawai penerima</span></label><label><input type="checkbox" name="requires_assignment_proof" value="1" @checked(old('requires_assignment_proof', $category->requires_assignment_proof))><span>Bukti surat tugas</span></label><label><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $category->exists ? $category->is_active : true))><span>Kategori aktif</span></label></div></div>
+                <div class="fmu-field fmu-field-full"><span class="fmu-label">Kebutuhan Data Khusus</span><span class="fmu-help">Untuk Honorarium, penerima bisa pegawai atau eksternal dan dokumen pendukung bersifat opsional.</span><div class="tc-check-grid"><label><input type="checkbox" name="requires_asnaf" value="1" @checked(old('requires_asnaf', $category->requires_asnaf))><span>Rincian asnaf</span></label><label><input type="checkbox" name="requires_employee" value="1" @checked(old('requires_employee', $category->requires_employee))><span>Pegawai penerima</span></label><label><input type="checkbox" name="requires_assignment_proof" value="1" @checked(old('requires_assignment_proof', $category->requires_assignment_proof))><span>Dokumen pendukung wajib (non-honorarium)</span></label><label><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $category->exists ? $category->is_active : true))><span>Kategori aktif</span></label></div></div>
             </div>
         </div>
         <div class="fmu-actions"><a href="{{ route('admin.transaction-categories.index') }}" class="fmu-btn"><i class="fa-solid fa-arrow-left"></i>Kembali</a><button class="fmu-btn fmu-btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i>Simpan Kategori</button></div>
@@ -40,6 +40,19 @@
     };
     account?.addEventListener('change', syncSource);
     syncSource();
+    const formType = document.getElementById('form_type');
+    const employeeCheckbox = document.querySelector('[name="requires_employee"]');
+    const proofCheckbox = document.querySelector('[name="requires_assignment_proof"]');
+    const syncHonorariumCategory = () => {
+        const honorarium = formType?.value === 'honorarium';
+        [employeeCheckbox, proofCheckbox].forEach(checkbox => {
+            if (!checkbox) return;
+            checkbox.disabled = honorarium;
+            if (honorarium) checkbox.checked = false;
+        });
+    };
+    formType?.addEventListener('change', syncHonorariumCategory);
+    syncHonorariumCategory();
 })();
 </script>
 @endpush

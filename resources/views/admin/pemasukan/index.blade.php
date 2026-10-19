@@ -4,6 +4,7 @@
     $isPegawai = request()->routeIs('pegawai.keuangan.*');
     $roleTitle = $isPegawai ? 'Keuangan' : 'Admin';
     $pemasukanIndexRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.index' : 'admin.pemasukan.index';
+    $pemasukanProofRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.bukti' : 'admin.pemasukan.bukti';
     $pemasukanStoreRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.store' : 'admin.pemasukan.store';
     $pemasukanVerifikasiRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.verifikasi' : 'admin.pemasukan.verifikasi';
     $pemasukanDestroyRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.destroy' : 'admin.pemasukan.destroy';
@@ -907,7 +908,7 @@
                                         @endif
 
                                         @if($item->bukti_pembayaran)
-                                            <a href="{{ Storage::url($item->bukti_pembayaran) }}" target="_blank" class="pm-abtn pm-abtn-bukti" title="Lihat bukti">
+                                            <a href="{{ route($pemasukanProofRoute, $item) }}" target="_blank" class="pm-abtn pm-abtn-bukti" title="Lihat bukti">
                                                 <i class="fa-solid fa-file-image"></i>
                                             </a>
                                         @endif
@@ -1338,4 +1339,3 @@ html[data-finus-theme="dark"] body .pm-tolak-overlay .pm-tolak-box h2 { color:#F
 html[data-finus-theme="dark"] body .pm-tolak-overlay .pm-tolak-box > p { color:#B7A3A6 !important; }
 </style>
 @endpush
-

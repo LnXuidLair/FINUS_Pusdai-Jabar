@@ -532,7 +532,14 @@
                                         </a>
                                     </div>
                                 @else
-                                    <span class="jt-action-none">&mdash;</span>
+                                    @unless($item->bukti_pembayaran)
+                                        <span class="jt-action-none">&mdash;</span>
+                                    @endunless
+                                @endif
+                                @if($item->bukti_pembayaran)
+                                    <a href="{{ route('jamaah.riwayat.bukti', $item) }}" target="_blank" rel="noopener" class="jt-btn jt-btn-print" title="Lihat bukti pembayaran">
+                                        <i class="fa-solid fa-file-image"></i> Bukti
+                                    </a>
                                 @endif
                             </td>
                         </tr>

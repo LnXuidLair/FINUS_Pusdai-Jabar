@@ -11,6 +11,7 @@ use App\Models\Organization;
 use App\Models\User;
 use App\Models\ZiswafPenerimaan;
 use App\Services\ZakatCalculatorService;
+use App\Services\TransactionProofStorage;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -887,48 +888,55 @@ class JamaahController extends Controller
         $buktiPembayaranPath = null;
         if (! $paymentGatewayReady && $request->hasFile('bukti_pembayaran')) {
             $buktiPembayaranPath = $request->file('bukti_pembayaran')
-                ->store('bukti-pembayaran-ziswaf', 'public');
+                ->store('bukti-pembayaran-ziswaf', app(TransactionProofStorage::class)->disk());
         }
-        $transaksi = ZiswafPenerimaan::create([
-            'organization_id' => (int) $validated['organization_id'],
-            'order_id' => $orderId,
-            'payment_gateway' => $paymentGatewayReady ? 'midtrans' : 'manual',
-            'muzakki_id' => $user->id,
-            'tanggal' => now()->toDateString(),
-            'jenis_ziswaf' => $validated['jenis_ziswaf'],
-            'restriction_type' => null,
-            'wakaf_type' => $validated['jenis_ziswaf'] === 'wakaf'
-                ? $validated['wakaf_type']
-                : null,
-            'wakaf_return_date' => ($validated['wakaf_type'] ?? null) === 'temporer'
-                ? $validated['wakaf_return_date']
-                : null,
-            'nominal' => $validated['nominal'],
-            'metode_pembayaran' => $validated['metode_pembayaran'],
-            'payment_status' => $paymentGatewayReady ? 'pending' : 'manual_pending',
-            'status_verifikasi' => 'pending',
-            'bukti_pembayaran' => $buktiPembayaranPath,
-            'keterangan' => $validated['keterangan'] ?? null,
-            'rincian_perhitungan' => array_merge([
-                'catatan' => $ketentuanZakat
-                    ? 'Ketentuan zakat aktif disimpan saat transaksi; nominal dikonfirmasi oleh jamaah.'
-                    : 'Nominal mengikuti input jamaah.',
-                'tanggal_mulai_kepemilikan' => $validated['tanggal_mulai_kepemilikan'] ?? null,
-                'batas_awal_haul' => $batasAwalHaul?->toDateString(),
-                'memenuhi_haul' => $ketentuanZakat?->jenis === 'maal' ? $memenuhiHaul : null,
-                'kategori_perhitungan' => $validated['kategori_perhitungan'] ?? null,
-                'kategori_perhitungan_label' => isset($validated['kategori_perhitungan'])
-                    ? ($calculationCategories[$validated['jenis_ziswaf']][$validated['kategori_perhitungan']] ?? null)
+        try {
+            $transaksi = ZiswafPenerimaan::create([
+                'organization_id' => (int) $validated['organization_id'],
+                'order_id' => $orderId,
+                'payment_gateway' => $paymentGatewayReady ? 'midtrans' : 'manual',
+                'muzakki_id' => $user->id,
+                'tanggal' => now()->toDateString(),
+                'jenis_ziswaf' => $validated['jenis_ziswaf'],
+                'restriction_type' => null,
+                'wakaf_type' => $validated['jenis_ziswaf'] === 'wakaf'
+                    ? $validated['wakaf_type']
                     : null,
-            ], $rincianPerhitunganKhusus),
-            'nisab_digunakan' => $rincianPerhitunganKhusus['nisab_emas_rupiah']
-                ?? $rincianPerhitunganKhusus['nisab_pertanian_rupiah']
-                ?? $rincianPerhitunganKhusus['nisab']
-                ?? $nisabRupiahAcuan,
-            'persentase_zakat' => $ketentuanZakat?->kadar_persentase,
-            'persentase_amil' => $ketentuanZakat?->persentase_amil ?? 0,
-            'snapshot_kebijakan' => $snapshotKebijakan,
-        ]);
+                'wakaf_return_date' => ($validated['wakaf_type'] ?? null) === 'temporer'
+                    ? $validated['wakaf_return_date']
+                    : null,
+                'nominal' => $validated['nominal'],
+                'metode_pembayaran' => $validated['metode_pembayaran'],
+                'payment_status' => $paymentGatewayReady ? 'pending' : 'manual_pending',
+                'status_verifikasi' => 'pending',
+                'bukti_pembayaran' => $buktiPembayaranPath,
+                'keterangan' => $validated['keterangan'] ?? null,
+                'rincian_perhitungan' => array_merge([
+                    'catatan' => $ketentuanZakat
+                        ? 'Ketentuan zakat aktif disimpan saat transaksi; nominal dikonfirmasi oleh jamaah.'
+                        : 'Nominal mengikuti input jamaah.',
+                    'tanggal_mulai_kepemilikan' => $validated['tanggal_mulai_kepemilikan'] ?? null,
+                    'batas_awal_haul' => $batasAwalHaul?->toDateString(),
+                    'memenuhi_haul' => $ketentuanZakat?->jenis === 'maal' ? $memenuhiHaul : null,
+                    'kategori_perhitungan' => $validated['kategori_perhitungan'] ?? null,
+                    'kategori_perhitungan_label' => isset($validated['kategori_perhitungan'])
+                        ? ($calculationCategories[$validated['jenis_ziswaf']][$validated['kategori_perhitungan']] ?? null)
+                        : null,
+                ], $rincianPerhitunganKhusus),
+                'nisab_digunakan' => $rincianPerhitunganKhusus['nisab_emas_rupiah']
+                    ?? $rincianPerhitunganKhusus['nisab_pertanian_rupiah']
+                    ?? $rincianPerhitunganKhusus['nisab']
+                    ?? $nisabRupiahAcuan,
+                'persentase_zakat' => $ketentuanZakat?->kadar_persentase,
+                'persentase_amil' => $ketentuanZakat?->persentase_amil ?? 0,
+                'snapshot_kebijakan' => $snapshotKebijakan,
+            ]);
+        } catch (Throwable $exception) {
+            if ($buktiPembayaranPath) {
+                app(TransactionProofStorage::class)->delete($buktiPembayaranPath);
+            }
+            throw $exception;
+        }
         if (! $paymentGatewayReady) {
             return redirect()
                 ->route('jamaah.riwayat.index')

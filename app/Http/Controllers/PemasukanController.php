@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Pegawai;
 use App\Models\ZiswafPenerimaan;
+use App\Services\TransactionProofStorage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Throwable;
 
@@ -225,7 +225,7 @@ class PemasukanController extends Controller
         $buktiPath = null;
         if ($request->hasFile('bukti_pembayaran')) {
             $buktiPath = $request->file('bukti_pembayaran')
-                ->store('bukti_pemasukan', 'public');
+                ->store('bukti_pemasukan', app(TransactionProofStorage::class)->disk());
         }
 
         try {
@@ -286,7 +286,7 @@ class PemasukanController extends Controller
             });
         } catch (Throwable $exception) {
             if ($buktiPath) {
-                Storage::disk('public')->delete($buktiPath);
+                app(TransactionProofStorage::class)->delete($buktiPath);
             }
 
             throw $exception;
@@ -357,15 +357,16 @@ class PemasukanController extends Controller
             ]);
         }
 
-        if ($pemasukan->bukti_pembayaran) {
-            Storage::disk('public')->delete($pemasukan->bukti_pembayaran);
-        }
+        $buktiPath = $pemasukan->bukti_pembayaran;
 
         if ($pemasukan->jurnal_id) {
             app(\App\Services\Accounting\Psak109PostingService::class)->reverseJurnal($pemasukan->jurnal_id, 'Pemasukan dihapus');
         }
 
         $pemasukan->delete();
+        if ($buktiPath) {
+            app(TransactionProofStorage::class)->delete($buktiPath);
+        }
 
         return back()->with('success', 'Pemasukan berhasil dihapus.');
     }

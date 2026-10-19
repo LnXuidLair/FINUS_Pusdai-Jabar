@@ -49,9 +49,10 @@ class MasterCoaPengeluaranTest extends TestCase
             ->get(route('admin.pengeluaran.create'))
             ->assertOk()
             ->assertSee('Honorarium Pegawai')
-            ->assertSee('Data Honorarium Pegawai')
+            ->assertSee('Data Honorarium')
+            ->assertSee('Jenis Penerima')
             ->assertSee('Pegawai Penerima')
-            ->assertSee('Bukti Surat Tugas')
+            ->assertSee('Dokumen Pendukung Honorarium')
             ->assertSee('Sumber Pembayaran')
             ->assertSee('Kas')
             ->assertSee('Bank');
@@ -126,6 +127,128 @@ class MasterCoaPengeluaranTest extends TestCase
             ->assertSee('Riwayat Honorarium')
             ->assertSee('Honorarium petugas kegiatan masjid')
             ->assertSee('Bank');
+    }
+
+    public function test_honorarium_can_be_paid_to_external_intern_without_assignment_letter(): void
+    {
+        Storage::fake('public');
+        config(['filesystems.attendance_disk' => 'public']);
+        $admin = $this->admin();
+        $category = $this->category($admin, 'HONORARIUM');
+        // Di database lama kedua flag ini bisa bernilai true.
+        // Tipe honorarium sekarang tetap menerima pihak eksternal dan lampiran opsional.
+        $category->update(['requires_employee' => true, 'requires_assignment_proof' => true]);
+
+        $receipt = ZiswafPenerimaan::create([
+            'tanggal' => '2026-10-01',
+            'jenis_ziswaf' => 'parkir',
+            'nominal' => 1_000_000,
+            'metode_pembayaran' => 'tunai',
+            'status_verifikasi' => 'diterima',
+        ]);
+        app(Psak109PostingService::class)->postPenerimaan($receipt);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.pengeluaran.store'), [
+                'transaction_category_id' => $category->id,
+                'jenis_penerima' => 'eksternal',
+                'nama_penerima_eksternal' => 'Mahasiswa Magang Telkom University',
+                'deskripsi' => 'Bantuan kegiatan Ramadhan',
+                'jumlah' => 200000,
+                'tanggal' => '2026-10-10',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $expense = Pengeluaran::query()->latest('id')->firstOrFail();
+        $this->assertNull($expense->id_pegawai);
+        $this->assertNull($expense->bukti_surat_tugas);
+        $this->assertSame('Honorarium Kegiatan', $expense->kategori);
+        $this->assertSame(
+            'Honorarium Mahasiswa Magang Telkom University - Bantuan kegiatan Ramadhan',
+            $expense->deskripsi
+        );
+        $this->assertNotNull($expense->jurnal_id);
+    }
+
+    public function test_external_honorarium_document_is_saved_in_separate_folder_and_accessible(): void
+    {
+        Storage::fake('public');
+        config(['filesystems.attendance_disk' => 'public']);
+        $admin = $this->admin();
+        $category = $this->category($admin, 'HONORARIUM');
+        $receipt = ZiswafPenerimaan::create([
+            'tanggal' => '2026-10-01',
+            'jenis_ziswaf' => 'parkir',
+            'nominal' => 1_000_000,
+            'metode_pembayaran' => 'tunai',
+            'status_verifikasi' => 'diterima',
+        ]);
+        app(Psak109PostingService::class)->postPenerimaan($receipt);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.pengeluaran.store'), [
+                'transaction_category_id' => $category->id,
+                'jenis_penerima' => 'eksternal',
+                'nama_penerima_eksternal' => 'Pemagang PUSDAI',
+                'deskripsi' => 'Honor kegiatan',
+                'jumlah' => 200000,
+                'tanggal' => '2026-10-10',
+                'bukti_surat_tugas' => UploadedFile::fake()->create(
+                    'surat-pengantar-magang.pdf', 100, 'application/pdf'
+                ),
+            ])
+            ->assertSessionHasNoErrors();
+
+        $expense = Pengeluaran::query()->latest('id')->firstOrFail();
+        $this->assertStringStartsWith('dokumen_pendukung_honorarium/', $expense->bukti_surat_tugas);
+        Storage::disk('public')->assertExists($expense->bukti_surat_tugas);
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.pengeluaran.bukti', [
+                'pengeluaran' => $expense->id,
+                'jenis' => 'dokumen-pendukung',
+            ]))
+            ->assertOk();
+        // URL lama masih bisa membaca file baru maupun dokumen lama.
+        $this->get(route('admin.pengeluaran.bukti', [
+            'pengeluaran' => $expense->id,
+            'jenis' => 'surat-tugas',
+        ]))->assertOk();
+    }
+
+    public function test_non_honorarium_category_can_still_require_supporting_document(): void
+    {
+        $admin = $this->admin();
+        $category = $this->category($admin, 'KEBERSIHAN');
+        $category->update(['requires_assignment_proof' => true]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.pengeluaran.store'), [
+                'transaction_category_id' => $category->id,
+                'deskripsi' => 'Pembelian kebutuhan operasional',
+                'jumlah' => 50000,
+                'tanggal' => '2026-10-10',
+            ])
+            ->assertSessionHasErrors('bukti_surat_tugas');
+    }
+
+    public function test_external_honorarium_rejects_document_with_unsupported_format(): void
+    {
+        Storage::fake('public');
+        config(['filesystems.attendance_disk' => 'public']);
+        $admin = $this->admin();
+        $category = $this->category($admin, 'HONORARIUM');
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.pengeluaran.store'), [
+                'transaction_category_id' => $category->id,
+                'jenis_penerima' => 'eksternal',
+                'nama_penerima_eksternal' => 'Mahasiswa Magang',
+                'deskripsi' => 'Honor kegiatan',
+                'jumlah' => 10000,
+                'tanggal' => '2026-10-10',
+                'bukti_surat_tugas' => UploadedFile::fake()->create('dokumen.exe', 20),
+            ])
+            ->assertSessionHasErrors('bukti_surat_tugas');
     }
 
     public function test_expense_is_saved_using_selected_coa_id(): void

@@ -127,8 +127,10 @@ class TransactionCategoryController extends Controller
             $validated['requires_asnaf'] = true;
         }
         if ($validated['form_type'] === 'honorarium') {
-            $validated['requires_employee'] = true;
-            $validated['requires_assignment_proof'] = true;
+            // Penerima dapat berupa pegawai internal atau pihak luar (misalnya pemagang).
+            // Dokumen pendukung honorarium bersifat opsional.
+            $validated['requires_employee'] = false;
+            $validated['requires_assignment_proof'] = false;
         }
         $validated['is_system'] = $category?->is_system ?? false;
 
