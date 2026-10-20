@@ -113,7 +113,15 @@ class PengeluaranController extends Controller
             ->get();
         $fundTypeLabels = config('transaction_categories.fund_types', []);
         $asnafLabels = collect(MasterAsnaf::labels())->except('amil')->all();
-        $saldoZakat = $this->saldoZakatTersedia();
+        $postingService = app(Psak109PostingService::class);
+        // Saldo yang benar-benar tercatat di jurnal (bukan sekadar transaksi pending).
+        $saldoDanaJurnal = $postingService->getSaldoDana();
+        $saldoKasBankJurnal = $akunPembayaran->mapWithKeys(
+            fn (Coa $akun): array => [
+                $akun->id => (int) round($postingService->getSaldoKasBank($akun)),
+            ]
+        )->all();
+        $saldoZakat = max(0, (int) round($saldoDanaJurnal['zakat'] ?? 0));
         $ketentuanZakat = KetentuanPokokZakat::untukJenis('maal')
             ?? KetentuanPokokZakat::query()->aktif()->first();
         $targetAsnaf = $this->normalizeTargetAsnaf(
@@ -128,6 +136,8 @@ class PengeluaranController extends Controller
             'fundTypeLabels',
             'asnafLabels',
             'saldoZakat',
+            'saldoDanaJurnal',
+            'saldoKasBankJurnal',
             'targetAsnaf'
         ));
     }
@@ -371,8 +381,10 @@ class PengeluaranController extends Controller
 
         $path = null;
         $assignmentPath = null;
+        $failureStep = 'simpan';
 
         try {
+            $failureStep = 'upload_bukti_pembayaran';
             if ($request->hasFile('bukti_pembayaran')) {
                 $path = $request
                     ->file('bukti_pembayaran')
@@ -382,6 +394,7 @@ class PengeluaranController extends Controller
                 }
             }
 
+            $failureStep = 'upload_dokumen_pendukung';
             if ($request->hasFile('bukti_surat_tugas')) {
                 $assignmentPath = $request->file('bukti_surat_tugas')->store(
                     $isHonorarium ? 'dokumen_pendukung_honorarium' : 'bukti_surat_tugas',
@@ -392,6 +405,7 @@ class PengeluaranController extends Controller
                 }
             }
 
+            $failureStep = 'pencatatan_jurnal';
             DB::transaction(function () use (
                 $asnafLabels,
                 $assignmentPath,
@@ -496,14 +510,35 @@ class PengeluaranController extends Controller
                 }
             });
         } catch (\Throwable $exception) {
-            if ($path) {
-                app(TransactionProofStorage::class)->delete($path);
-            }
-            if ($assignmentPath) {
-                app(TransactionProofStorage::class)->delete($assignmentPath);
+            // Operasi SQL sudah dibatalkan oleh DB::transaction; bersihkan hanya
+            // file yang BARU diunggah dalam request ini, bukan berkas lama.
+            foreach ([$path, $assignmentPath] as $uploadedPath) {
+                if (! $uploadedPath) {
+                    continue;
+                }
+                try {
+                    app(TransactionProofStorage::class)->delete($uploadedPath);
+                } catch (\Throwable $cleanupError) {
+                    report($cleanupError); // Jangan sampai menutupi penyebab asli.
+                }
             }
 
-            throw $exception;
+            if ($exception instanceof ValidationException) {
+                throw $exception;
+            }
+
+            report($exception); // Detail teknis dicatat pada log, bukan ditampilkan kepada pengguna.
+
+            $message = match (true) {
+                $exception instanceof \DomainException => $exception->getMessage(),
+                $failureStep === 'upload_bukti_pembayaran' => 'Bukti pembayaran gagal diunggah ke penyimpanan. Periksa disk penyimpanan/R2 dan coba lagi. Tidak ada transaksi yang disimpan.',
+                $failureStep === 'upload_dokumen_pendukung' => 'Dokumen pendukung gagal diunggah ke penyimpanan. Periksa disk penyimpanan/R2 dan coba lagi. Tidak ada transaksi yang disimpan.',
+                default => 'Pencatatan pengeluaran atau jurnal gagal diproses. Tidak ada transaksi yang disimpan. Hubungi administrator untuk memeriksa log Laravel (tahap: pencatatan_jurnal).',
+            };
+
+            return back()
+                ->withInput($request->except(['bukti_pembayaran', 'bukti_surat_tugas']))
+                ->withErrors(['pengeluaran' => $message]);
         }
 
         return redirect()
