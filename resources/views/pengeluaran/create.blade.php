@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Tambah Pengeluaran')
 @section('hide-page-header', '1')
+@section('hide-global-errors', '1')
 @php
     $pengeluaranStoreRoute = request()->routeIs('pegawai.keuangan.*')
         ? 'pegawai.keuangan.pengeluaran.store'
@@ -20,6 +21,14 @@
     <section class="fmu-hero"><div class="fmu-hero-main"><span class="fmu-hero-icon"><i class="fa-solid fa-receipt"></i></span><div><h1>Tambah Pengeluaran</h1><p>Catat pengeluaran masjid dan lampirkan bukti pembayaran bila tersedia.</p></div></div><div class="fmu-hero-actions"><span class="fmu-hero-badge"><i class="fa-solid fa-shield-halved"></i>Pencatatan Keuangan</span></div></section>
     <form method="POST" action="{{ route($pengeluaranStoreRoute) }}" enctype="multipart/form-data" class="fmu-card" id="expenseForm">
         @csrf
+        @if($errors->any())
+            <div id="expenseErrorSummary" role="alert" tabindex="-1" class="fmu-expense-error-summary">
+                <strong><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> Pengeluaran belum berhasil disimpan</strong>
+                <p>Periksa penyebab berikut, lalu perbaiki datanya dan coba kembali:</p>
+                <ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+            </div>
+        @endif
+        <div id="expenseClientError" role="alert" tabindex="-1" class="fmu-expense-error-summary" hidden></div>
         <div class="fmu-card-head"><div class="fmu-card-head-main"><span class="fmu-card-icon"><i class="fa-solid fa-pen-to-square"></i></span><div><h2>Data Pengeluaran</h2><p>Isi kategori, deskripsi, nominal, dan tanggal transaksi.</p></div></div></div>
         <div class="fmu-card-body">
             <div class="fmu-form-grid">
@@ -36,6 +45,7 @@
                                     @foreach($categories as $item)
                                         <option value="{{ $item->id }}"
                                             data-form-type="{{ $item->form_type }}"
+                                            data-fund-balance="{{ (int) round($saldoDanaJurnal[$item->resolvedFundType()] ?? 0) }}"
                                             data-fund-label="{{ $fundTypeLabels[$item->resolvedFundType()] ?? 'Belum dipetakan' }}"
                                             data-debit-code="{{ $item->coa?->kode_akun }}"
                                             data-debit-name="{{ $item->coa?->nama_akun }}"
@@ -60,7 +70,7 @@
                 <div class="fmu-field">
                     <span class="fmu-label">Sumber Dana</span>
                     <div class="fmu-derived-value"><i class="fa-solid fa-layer-group"></i><strong id="fundSourceLabel">Pilih kategori terlebih dahulu</strong></div>
-                    <span class="fmu-help">Ditentukan otomatis dari kode akun kategori.</span>
+                    <span class="fmu-help">Ditentukan otomatis dari kode akun kategori. Saldo dihitung dari jurnal yang sudah diposting.</span>
                 </div>
                 <div class="fmu-field">
                     <label class="fmu-label" for="coa_kredit_id">Sumber Pembayaran <span class="fmu-required">*</span></label>
@@ -69,7 +79,7 @@
                         <select id="coa_kredit_id" name="coa_kredit_id" class="fmu-control @error('coa_kredit_id') is-invalid @enderror" required>
                             <option value="">-- Pilih Kas atau Bank --</option>
                             @foreach($akunPembayaran ?? [] as $akun)
-                                <option value="{{ $akun->id }}" @selected((string) old('coa_kredit_id', $defaultPaymentAccountId) === (string) $akun->id)>
+                                <option value="{{ $akun->id }}" data-saldo="{{ (int) ($saldoKasBankJurnal[$akun->id] ?? 0) }}" @selected((string) old('coa_kredit_id', $defaultPaymentAccountId) === (string) $akun->id)>
                                     {{ $akun->nama_akun }}
                                 </option>
                             @endforeach
@@ -83,6 +93,10 @@
                 <div class="fmu-field"><label class="fmu-label" for="bukti_pembayaran">Bukti Pembayaran</label><label class="fmu-upload" for="bukti_pembayaran"><span><i class="fa-solid fa-cloud-arrow-up"></i><strong>Pilih bukti pembayaran</strong><span>JPG, JPEG, PNG, atau PDF. Maksimal 2 MB.</span><span class="fmu-file-name" id="expenseFileName"></span></span></label><input type="file" id="bukti_pembayaran" name="bukti_pembayaran" accept=".jpg,.jpeg,.png,.pdf" class="d-none">@error('bukti_pembayaran')<span class="fmu-error">{{ $message }}</span>@enderror</div>
             </div>
 
+            <div class="fmu-expense-balance-status" id="expenseBalanceStatus" role="status" aria-live="polite">
+                <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+                <span>Pilih kategori dan sumber pembayaran untuk melihat saldo dana serta Kas/Bank yang tersedia.</span>
+            </div>
             <section class="journal-preview" aria-live="polite">
                 <div class="journal-preview-head"><div><strong>Pratinjau Jurnal</strong><span>Akun ditentukan otomatis dari kategori dan sumber pembayaran.</span></div><span class="journal-preview-badge"><i class="fa-solid fa-lock"></i>Otomatis</span></div>
                 <div class="journal-preview-row"><span>Debit</span><strong id="journalDebitAccount">Pilih kategori pengeluaran</strong><b id="journalDebitAmount">Rp 0</b></div>
@@ -260,6 +274,9 @@
     const honorariumHeadingTitle = document.getElementById('honorariumHeadingTitle');
     assignmentInput?.addEventListener('change', () => { const file = assignmentInput.files?.[0]; assignmentLabel.textContent = file?.name || ''; assignmentLabel.classList.toggle('is-visible', Boolean(file)); });
 
+    const form = document.getElementById('expenseForm');
+    const clientError = document.getElementById('expenseClientError');
+    const balanceStatus = document.getElementById('expenseBalanceStatus');
     const category = document.getElementById('kategori');
     const fundSourceLabel = document.getElementById('fundSourceLabel');
     const paymentAccount = document.getElementById('coa_kredit_id');
@@ -283,6 +300,60 @@
     const targetTotal = document.getElementById('zakatTargetTotal');
     const initialDetails = @json($oldZakatDetails);
     const rupiah = value => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value || 0);
+
+    const syncBalanceStatus = () => {
+        const cat = category?.selectedOptions?.[0];
+        const bank = paymentAccount?.selectedOptions?.[0];
+        if (!cat?.value || !bank?.value) {
+            balanceStatus.textContent = 'Pilih kategori dan sumber pembayaran untuk melihat saldo yang tersedia.';
+            balanceStatus.classList.remove('is-insufficient');
+            return;
+        }
+        const dana = Number(cat.dataset.fundBalance || 0);
+        const kas = Number(bank.dataset.saldo || 0);
+        const nominal = Number(amount?.value || 0);
+        const lowFund = nominal > 0 && nominal > dana;
+        const lowCash = nominal > 0 && nominal > kas;
+        balanceStatus.textContent = `Saldo ${cat.dataset.fundLabel || 'dana'}: ${rupiah(dana)} · Saldo ${bank.textContent.trim()}: ${rupiah(kas)}.`
+            + (lowFund || lowCash ? ` Jumlah transaksi melebihi saldo ${[lowFund ? 'dana' : '', lowCash ? 'sumber pembayaran' : ''].filter(Boolean).join(' dan ')} yang tersedia. Pengeluaran akan ditolak.` : ' Saldo berasal dari jurnal yang sudah diposting.');
+        balanceStatus.classList.toggle('is-insufficient', lowFund || lowCash);
+    };
+
+    // Validasi HTML oleh browser bisa menghentikan submit SEBELUM Laravel menerima
+    // request. Tampilkan ringkasan sendiri agar pengguna tidak merasa tombol mati.
+    form?.addEventListener('invalid', event => {
+        const invalidField = event.target;
+        const fieldLabel = invalidField?.labels?.[0]?.textContent?.trim()
+            || invalidField?.getAttribute('name') || 'data pengeluaran';
+        clientError.textContent = `Periksa kolom "${fieldLabel}": ${invalidField.validationMessage || 'nilai belum valid'}.`;
+        clientError.hidden = false;
+        clientError.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, true);
+    form?.addEventListener('input', () => { clientError.hidden = true; });
+    form?.addEventListener('change', () => { clientError.hidden = true; });
+    for (const fileField of [input, assignmentInput]) {
+        fileField?.addEventListener('change', () => {
+            const file = fileField.files?.[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024 || !/\.(jpe?g|png|pdf)$/i.test(file.name)) {
+                fileField.value = '';
+                const fileLabel = fileField === input ? 'Bukti pembayaran' : 'Dokumen pendukung';
+                clientError.textContent = `${fileLabel} harus berupa JPG, JPEG, PNG, atau PDF dengan ukuran maksimal 2 MB. Pilih file lain.`;
+                clientError.hidden = false;
+                clientError.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
+        });
+    }
+    if (document.getElementById('expenseErrorSummary')) {
+        requestAnimationFrame(() => document.getElementById('expenseErrorSummary')?.scrollIntoView({ block: 'center' }));
+    }
+    form?.addEventListener('submit', () => {
+        const button = form.querySelector('button[type="submit"]');
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'Menyimpan pengeluaran...';
+        }
+    });
 
     const reindexRows = () => {
         const currentRows = [...rows.querySelectorAll('[data-zakat-detail-row]')];
@@ -387,6 +458,7 @@
             ? `${selected.dataset.debitCode || ''} ${selected.dataset.debitName || ''}`.trim()
             : 'Pilih kategori pengeluaran';
         syncZakatVisibility();
+        syncBalanceStatus();
     };
 
     const syncJournalPreview = () => {
@@ -397,6 +469,7 @@
         journalCreditAccount.textContent = selectedPayment?.value
             ? selectedPayment.textContent.trim()
             : 'Pilih sumber pembayaran';
+        syncBalanceStatus();
     };
 
     (initialDetails.length ? initialDetails : [{}]).forEach(addRow);
@@ -414,6 +487,10 @@
 @push('styles')
 <style>
 #honorariumSection [hidden], #honorariumSection[hidden] { display: none !important; }
+.fmu-expense-error-summary{margin:16px 20px;padding:15px 17px;border:1px solid #f0a5a5;border-left:5px solid #c93232;border-radius:6px;background:#fff3f3;color:#922020;font-size:14px}
+.fmu-expense-error-summary strong{display:block;font-size:15px}.fmu-expense-error-summary p{margin:7px 0}.fmu-expense-error-summary ul{margin:5px 0 0;padding-left:20px}.fmu-expense-error-summary[hidden]{display:none!important}
+.fmu-expense-balance-status{display:flex;align-items:center;gap:10px;margin-top:18px;padding:12px 14px;border:1px solid #cfe2d5;border-radius:6px;background:#f6fbf7;color:#1d6a37;font-size:13px}.fmu-expense-balance-status.is-insufficient{border-color:#e7ae60;background:#fff9ec;color:#944600}
+html[data-finus-theme="dark"] body .fmu-expense-error-summary{background:#321719;color:#ffcaca;border-color:#874343}html[data-finus-theme="dark"] body .fmu-expense-balance-status{background:#102c1c;color:#b0ebbe;border-color:#305a40}html[data-finus-theme="dark"] body .fmu-expense-balance-status.is-insufficient{background:#382816;color:#ffd399;border-color:#876030}
 .fmu-derived-value{display:flex;align-items:center;gap:10px;min-height:48px;padding:11px 14px;border:1px solid #dbe5de;border-radius:6px;background:#f4faf6;color:#176d35}.fmu-derived-value i{color:#169b43}.fmu-derived-value strong{font-size:14px}
 .journal-preview{margin-top:22px;padding:16px;border:1px solid #cfe2d5;border-radius:6px;background:#f8fcf9}.journal-preview-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}.journal-preview-head div strong,.journal-preview-head div span{display:block}.journal-preview-head div strong{color:#193925}.journal-preview-head div span{margin-top:2px;color:#64748b;font-size:12px}.journal-preview-badge{display:inline-flex;align-items:center;gap:6px;color:#08752f;font-size:11px;font-weight:800}.journal-preview-row{display:grid;grid-template-columns:60px minmax(0,1fr) 150px;gap:12px;padding:10px 0;border-top:1px solid #e2ece5}.journal-preview-row>span{color:#64748b;font-size:12px;text-transform:uppercase}.journal-preview-row>strong{color:#24352a}.journal-preview-row>b{text-align:right;color:#08752f}.honorarium-section,.zakat-detail-section{margin-top:28px;padding-top:24px;border-top:1px solid #dce7df}.honorarium-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px}.honorarium-heading h3{margin:0 0 4px;font-size:18px;color:#17233a}.honorarium-heading p{margin:0;color:#64748b}.honorarium-heading>span{padding:8px 11px;border-radius:6px;background:#eaf8ee;color:#08752f;font-size:12px;font-weight:700}.zakat-period-panel{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #dce7df}.zakat-period-heading,.zakat-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px}.zakat-period-heading h3,.zakat-detail-heading h3{margin:0 0 4px;font-size:18px;color:#17233a}.zakat-period-heading p,.zakat-detail-heading p{margin:0;color:#64748b}.zakat-balance{text-align:right}.zakat-balance span,.zakat-balance small{display:block;color:#64748b}.zakat-balance strong{display:block;margin:2px 0;color:#08752f;font-size:20px}.zakat-period-fields{display:grid;grid-template-columns:minmax(220px,.7fr) minmax(280px,1.3fr);gap:16px;align-items:end}.zakat-period-note{display:flex;align-items:center;gap:10px;min-height:46px;padding:10px 12px;border:1px solid #cfe2d5;border-radius:6px;background:#f6fbf7;color:#365443}.zakat-target-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:20px 0 10px}.zakat-target-heading div span{display:block;margin-top:3px;color:#64748b;font-size:12px}.zakat-target-heading>strong{color:#b45309}.zakat-target-heading>strong.is-balanced{color:#15803d}.zakat-target-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px}.zakat-target-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid #dce7df;border-radius:6px}.zakat-target-item>span:first-child{font-size:12px;font-weight:700;color:#475569}.zakat-target-control{display:flex;align-items:center;gap:4px}.zakat-target-control input{width:64px;border:0;background:transparent;text-align:right;color:#17233a}.zakat-detail-labels,.zakat-detail-row{display:grid;grid-template-columns:minmax(190px,1.15fr) minmax(150px,.9fr) minmax(100px,.55fr) minmax(170px,1fr) 44px;gap:14px;align-items:end}.zakat-detail-labels{padding:0 0 8px;color:#64748b;font-size:12px;font-weight:700}.zakat-detail-row{padding:14px 0;border-top:1px solid #edf2ee}.zakat-detail-row .fmu-label{display:none}.zakat-recipient-details{grid-column:1/-1}.zakat-recipient-details summary{cursor:pointer;color:#08752f;font-size:12px;font-weight:700}.zakat-recipient-details-grid{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:12px;margin-top:12px}.zakat-recipient-details-grid .fmu-label{display:block}.zakat-remove-row{width:44px;height:44px;border:1px solid #efc7c7;border-radius:6px;background:#fff;color:#c43f3f;cursor:pointer}.zakat-remove-row:disabled{opacity:.35;cursor:not-allowed}.zakat-detail-summary{display:flex;justify-content:flex-end;gap:24px;flex-wrap:wrap;margin-top:12px;padding-top:14px;border-top:1px solid #dce7df;color:#475569}.zakat-detail-summary .is-balanced{color:#15803d;font-weight:700}@media(max-width:980px){.zakat-target-grid{grid-template-columns:repeat(2,minmax(140px,1fr))}.zakat-detail-labels{display:none}.zakat-detail-row{grid-template-columns:1fr 1fr}.zakat-detail-row .fmu-label{display:block}.zakat-remove-row{justify-self:end}}@media(max-width:760px){.journal-preview-row{grid-template-columns:55px minmax(0,1fr)}.journal-preview-row>b{grid-column:2;text-align:left}.honorarium-heading,.zakat-period-heading,.zakat-detail-heading{align-items:flex-start;flex-direction:column}.zakat-balance{text-align:left}.zakat-period-fields,.zakat-target-grid,.zakat-detail-row,.zakat-recipient-details-grid{grid-template-columns:1fr}.zakat-remove-row{justify-self:end}.zakat-detail-summary{justify-content:flex-start;gap:10px 18px}}
 </style>

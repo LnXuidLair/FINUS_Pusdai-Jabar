@@ -500,6 +500,65 @@ class MasterCoaPengeluaranTest extends TestCase
             ->assertOk();
     }
 
+    public function test_expense_form_shows_posted_fund_and_payment_account_balances(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.pengeluaran.create'))
+            ->assertOk()
+            ->assertSee('expenseBalanceStatus')
+            ->assertSee('Saldo dihitung dari jurnal yang sudah diposting.')
+            ->assertSee('expenseClientError');
+    }
+
+    public function test_expense_is_rejected_with_clear_fund_balance_validation(): void
+    {
+        $admin = $this->admin();
+        $category = $this->category($admin, 'KEBERSIHAN');
+
+        // Belum ada kas operasional dari jurnal penerimaan; jangan membuat
+        // pengeluaran negatif atau memaksa data produksi berubah.
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.pengeluaran.store'), [
+                'transaction_category_id' => $category->id,
+                'deskripsi' => 'Beban tanpa saldo jurnal',
+                'jumlah' => 50000,
+                'tanggal' => '2026-10-20',
+            ])
+            ->assertSessionHasErrors('jumlah');
+
+        $this->assertDatabaseMissing('pengeluaran', [
+            'deskripsi' => 'Beban tanpa saldo jurnal',
+        ]);
+    }
+
+    public function test_expense_journal_exception_rolls_back_and_shows_user_message(): void
+    {
+        $admin = $this->admin();
+        $category = $this->category($admin, 'KEBERSIHAN');
+        $postingService = \Mockery::mock(Psak109PostingService::class)->makePartial();
+        $postingService->shouldReceive('getSaldoDana')
+            ->andReturn(['operasional' => 200000, 'zakat' => 0]);
+        $postingService->shouldReceive('getSaldoKasBank')->andReturn(200000);
+        $postingService->shouldReceive('postPengeluaran')
+            ->andThrow(new \DomainException('Pemetaan akun jurnal tidak valid.'));
+        app()->instance(Psak109PostingService::class, $postingService);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.pengeluaran.store'), [
+                'transaction_category_id' => $category->id,
+                'deskripsi' => 'Transaksi gagal saat penjurnalan',
+                'jumlah' => 50000,
+                'tanggal' => '2026-10-20',
+            ])
+            ->assertSessionHasErrors('pengeluaran');
+
+        $this->assertDatabaseMissing('pengeluaran', [
+            'deskripsi' => 'Transaksi gagal saat penjurnalan',
+        ]);
+    }
+
     private function admin(): User
     {
         $organization = Organization::query()->firstOrCreate(
