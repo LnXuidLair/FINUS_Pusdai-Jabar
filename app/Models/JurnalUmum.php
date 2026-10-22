@@ -29,7 +29,7 @@ class JurnalUmum extends Model
 
     public function scopePemasukan($query)
     {
-        return $query->where(function ($q) {
+        return $query->where(fn ($q) => $q->whereNull('sumber_tabel')->orWhereNotIn('sumber_tabel', ['kas_bank_transfer', 'kas_bank_reversal']))->where(function ($q) {
             $q->where('sumber_tabel', 'ziswaf_penerimaan')
               ->orWhereHas('detail', function ($dq) {
                   $dq->where('debit', '>', 0)
@@ -44,7 +44,7 @@ class JurnalUmum extends Model
 
     public function scopePengeluaran($query)
     {
-        return $query->where(function ($q) {
+        return $query->where(fn ($q) => $q->whereNull('sumber_tabel')->orWhereNotIn('sumber_tabel', ['kas_bank_transfer', 'kas_bank_reversal']))->where(function ($q) {
             $q->whereIn('sumber_tabel', ['pengeluaran', 'penggajian', 'ziswaf_penyaluran'])
               ->orWhereHas('detail', function ($dq) {
                   $dq->where('credit', '>', 0)

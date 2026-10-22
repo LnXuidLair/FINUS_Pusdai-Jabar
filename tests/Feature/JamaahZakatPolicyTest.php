@@ -219,8 +219,13 @@ class JamaahZakatPolicyTest extends TestCase
                     'image/jpeg'
                 ),
                 'keterangan' => 'Zakat maal jamaah',
+                // Hidden income calculator fields are still submitted for zakat maal.
+                'penghasilan_bersih' => 0,
+                'periode_penghasilan' => 'bulanan',
+                'tahun_penghasilan' => now()->year,
             ]);
 
+        $response->assertSessionHasNoErrors();
         $response->assertRedirect(route('jamaah.riwayat.index'));
 
         $transaction = ZiswafPenerimaan::query()->latest('id')->firstOrFail();

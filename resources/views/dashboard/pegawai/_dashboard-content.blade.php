@@ -92,6 +92,23 @@
         color: #ffffff !important;
     }
 
+    .finance-admin-chart {border:1px solid #e3ece6;border-radius:22px;overflow:hidden;box-shadow:0 12px 30px rgba(18,67,37,.05)}
+    .finance-admin-chart-head {padding:24px;display:flex;justify-content:space-between;align-items:flex-start;gap:24px;border-bottom:1px solid #edf2ee;background:linear-gradient(180deg,#fff,#f9fcfa)}
+    .finance-admin-chart-title {display:flex;align-items:flex-start;gap:14px;min-width:0}
+    .finance-admin-chart-title h4 {margin:0 0 8px;font-size:19px;font-weight:800;color:#173d28}
+    .finance-admin-chart-title p {margin:0;color:#718078;font-size:12px;line-height:1.8;max-width:620px}
+    .finance-admin-chart-icon {width:44px;height:44px;flex-shrink:0;display:grid;place-items:center;border-radius:14px;background:#eaf7ef;color:#179B40;font-size:19px}
+    .finance-admin-chart-legend {display:flex;gap:10px 16px;flex-wrap:wrap;min-width:170px;font-size:11px;color:#52685a}
+    .finance-admin-chart-legend span {display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+    .finance-admin-chart-legend i {width:8px;height:8px;display:inline-block;border-radius:50%}
+    .finance-admin-chart-body {padding:24px}
+    .finance-admin-chart .finance-chart-wrap {height:350px;min-height:350px}
+    html[data-finus-theme="dark"] .finance-admin-chart-head {background:#14231a;border-color:#293d31}
+    html[data-finus-theme="dark"] .finance-admin-chart-title h4 {color:#f1f6f3}
+    html[data-finus-theme="dark"] .finance-admin-chart-title p,html[data-finus-theme="dark"] .finance-admin-chart-legend {color:#9eaea4}
+    @media(max-width:1100px){.finance-admin-chart-head{flex-direction:column}.finance-admin-chart-legend{min-width:0}}
+    @media(max-width:600px){.finance-admin-chart-head,.finance-admin-chart-body{padding:18px}.finance-admin-chart .finance-chart-wrap{height:300px;min-height:300px}}
+
     .finance-chart-card {
         height: 100%;
     }
@@ -527,38 +544,12 @@
 
     <div class="finance-dashboard-layout">
         <div class="finance-chart-stack">
-            <div class="card finance-chart-card">
-                <div class="card-body">
-                    <div class="finance-chart-head">
-                        <div>
-                            <h4>Pemasukan vs Pengeluaran</h4>
-                            <small class="text-muted">Perbandingan arus masuk dan keluar Januari-Desember {{ $tahunGrafik }}.</small>
-                        </div>
-                        <span class="trend-badge {{ $trendClass($financeDashboard['trend']['saldo']['direction'] ?? 'flat') }}">
-                            {{ $financeDashboard['trend']['saldo']['label'] ?? 'Stabil dari bulan lalu' }}
-                        </span>
-                    </div>
-                    <div class="finance-chart-wrap">
-                        <canvas id="keuanganExpenseChart"></canvas>
-                    </div>
+            <div class="card finance-chart-card finance-admin-chart">
+                <div class="finance-admin-chart-head">
+                    <div class="finance-admin-chart-title"><span class="finance-admin-chart-icon"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></span><div><h4>Grafik Keuangan Masjid</h4><p>Pemasukan, total pengeluaran, dan penggajian per bulan Januari–Desember {{ $tahunGrafik }}. Pemasukan dan pengeluaran berdasarkan arus kas; penggajian berdasarkan periode hak gaji (termasuk yang belum dibayar).</p></div></div>
+                    <div class="finance-admin-chart-legend" aria-label="Keterangan grafik"><span><i style="background:#179B40"></i>Pemasukan</span><span><i style="background:#E5B038"></i>Total Pengeluaran</span><span><i style="background:#6E44D8"></i>Penggajian (hak gaji)</span></div>
                 </div>
-            </div>
-
-            <div class="card finance-chart-card">
-                <div class="card-body">
-                    <div class="finance-chart-head">
-                        <div>
-                            <h4>Penggajian per Bulan</h4>
-                            <small class="text-muted">Total gaji berdasarkan periode Januari-Desember {{ $tahunGrafik }}.</small>
-                        </div>
-                        <span class="trend-badge {{ $trendClass($financeDashboard['trend']['penggajian']['direction'] ?? 'flat') }}">
-                            {{ $financeDashboard['trend']['penggajian']['label'] ?? 'Stabil dari bulan lalu' }}
-                        </span>
-                    </div>
-                    <div class="finance-chart-wrap">
-                        <canvas id="keuanganPayrollChart"></canvas>
-                    </div>
-                </div>
+                <div class="finance-admin-chart-body"><div class="finance-chart-wrap"><canvas id="keuanganCashflowChart" role="img" aria-label="Grafik bulanan pemasukan, total pengeluaran, dan penggajian tahun {{ $tahunGrafik }}"></canvas></div></div>
             </div>
 
             <div class="card finance-activity-card">
@@ -1078,85 +1069,28 @@
                     return new Chart(ctx, config);
                 };
 
-                const cashControlCanvas = document.getElementById('keuanganExpenseChart');
-                if (cashControlCanvas) {
-                    const context = cashControlCanvas.getContext('2d');
-                    makeChart(context, {
-                        type: 'line',
+                const financeCanvas = document.getElementById('keuanganCashflowChart');
+                if (financeCanvas) {
+                    const financeOptions = {
+                        ...baseOptions,
+                        animation: { duration: 750 },
+                        plugins: { ...baseOptions.plugins, legend: { display: false } },
+                        scales: {
+                            ...baseOptions.scales,
+                            y: { ...baseOptions.scales.y, grid: { color: 'rgba(148, 163, 184, 0.15)', drawTicks: false }, border: { display: false, dash: [4, 4] } }
+                        }
+                    };
+                    makeChart(financeCanvas.getContext('2d'), {
+                        type: 'bar',
                         data: {
                             labels,
                             datasets: [
-                                {
-                                    label: 'Pemasukan',
-                                    data: chartData.pemasukan || [],
-                                    backgroundColor: createAreaGradient(
-                                        context,
-                                        'rgba(22, 163, 74, .30)',
-                                        'rgba(22, 163, 74, .03)'
-                                    ),
-                                    borderColor: '#16a34a',
-                                    borderWidth: 3,
-                                    pointRadius: 3,
-                                    pointHoverRadius: 6,
-                                    pointBackgroundColor: '#ffffff',
-                                    pointBorderColor: '#16a34a',
-                                    pointBorderWidth: 2,
-                                    fill: true,
-                                    tension: .42
-                                },
-                                {
-                                    label: 'Pengeluaran',
-                                    data: chartData.pengeluaran || [],
-                                    backgroundColor: createAreaGradient(
-                                        context,
-                                        'rgba(249, 115, 22, .24)',
-                                        'rgba(249, 115, 22, .02)'
-                                    ),
-                                    borderColor: '#f97316',
-                                    borderWidth: 3,
-                                    pointRadius: 3,
-                                    pointHoverRadius: 6,
-                                    pointBackgroundColor: '#ffffff',
-                                    pointBorderColor: '#f97316',
-                                    pointBorderWidth: 2,
-                                    fill: true,
-                                    tension: .42
-                                }
+                                { label: 'Pemasukan', data: chartData.pemasukan || [], borderColor: '#179B40' },
+                                { label: 'Total Pengeluaran', data: chartData.pengeluaran || [], borderColor: '#E5B038' },
+                                { label: 'Penggajian (hak gaji)', data: chartData.penggajian || [], borderColor: '#6E44D8' }
                             ]
                         },
-                        options: baseOptions
-                    });
-                }
-
-                const payrollCanvas = document.getElementById('keuanganPayrollChart');
-                if (payrollCanvas) {
-                    const context = payrollCanvas.getContext('2d');
-                    makeChart(context, {
-                        type: 'line',
-                        data: {
-                            labels,
-                            datasets: [
-                                {
-                                    label: 'Penggajian',
-                                    data: chartData.penggajian || [],
-                                    backgroundColor: createAreaGradient(
-                                        context,
-                                        'rgba(37, 99, 235, .28)',
-                                        'rgba(96, 165, 250, .03)'
-                                    ),
-                                    borderColor: '#2563eb',
-                                    borderWidth: 3,
-                                    pointRadius: 3,
-                                    pointHoverRadius: 6,
-                                    pointBackgroundColor: '#ffffff',
-                                    pointBorderColor: '#2563eb',
-                                    pointBorderWidth: 2,
-                                    fill: true,
-                                    tension: .42
-                                }
-                            ]
-                        },
-                        options: baseOptions
+                        options: financeOptions
                     });
                 }
 

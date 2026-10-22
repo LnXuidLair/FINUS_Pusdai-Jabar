@@ -801,6 +801,19 @@
         </form>
     </div>
 
+    <section id="cetak-buku-besar" class="lk-filter-card ledger-export-panel">
+        <h2 style="font-size:18px;margin:0 0 8px"><i class="fa-solid fa-book" aria-hidden="true"></i> Cetak Buku Besar per Akun</h2>
+        <p style="font-size:13px;color:#64748b;margin:0 0 18px">Pilih akun, periode, dan golongan dana. Cetakan memuat seluruh mutasi beserta saldo awal dan saldo akhir.</p>
+        <form method="GET" target="_blank" rel="noopener" action="{{ route(($isPegawai ? 'pegawai.laporan-keuangan' : 'admin.laporan').'.buku-besar.cetak') }}" class="lk-filter-form">
+            <div class="lk-fg"><label class="lk-fl" for="ledger_coa">Akun COA</label><select id="ledger_coa" name="coa_id" class="lk-fs" required>@foreach($ledgerAccounts as $coa)<option value="{{ $coa->id }}" @selected($coa->kode_akun === '1102')>{{ $coa->kode_akun }} — {{ $coa->nama_akun }}</option>@endforeach</select></div>
+            <div class="lk-fg"><label class="lk-fl" for="ledger_from">Tanggal Awal</label><input type="date" id="ledger_from" name="tanggal_dari" class="lk-fs" value="{{ $periode === 'tahunan' ? \Carbon\Carbon::create($tahun, 1, 1)->toDateString() : ($periode === 'bulanan' ? \Carbon\Carbon::create($tahun, $bulan, 1)->toDateString() : now()->startOfYear()->toDateString()) }}" required></div>
+            <div class="lk-fg"><label class="lk-fl" for="ledger_to">Tanggal Akhir</label><input type="date" id="ledger_to" name="tanggal_sampai" class="lk-fs" value="{{ $periode === 'tahunan' ? \Carbon\Carbon::create($tahun, 12, 31)->toDateString() : ($periode === 'bulanan' ? \Carbon\Carbon::create($tahun, $bulan, 1)->endOfMonth()->toDateString() : now()->toDateString()) }}" required></div>
+            <div class="lk-fg"><label class="lk-fl" for="ledger_fund">Golongan Dana</label><select id="ledger_fund" name="dana" class="lk-fs"><option value="">Semua golongan</option>@foreach($ledgerFunds as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
+            <div class="lk-fg"><button type="submit" class="lk-btn-submit"><i class="fa-solid fa-print"></i> Buka Cetakan</button></div>
+        </form>
+    </section>
+    <style>@media print{.ledger-export-panel{display:none!important}}</style>
+
     {{-- ====== 3 SUMMARY CARDS ====== --}}
     <div class="lk-stat-grid">
         <div class="lk-stat lk-stat-in">

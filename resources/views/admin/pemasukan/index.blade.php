@@ -670,7 +670,7 @@
     <div class="pm-hero">
         <div class="pm-hero-left">
             <h1><i class="fa-solid fa-hand-holding-dollar" style="margin-right:10px;opacity:.85;"></i>Pemasukan</h1>
-            <p>Kelola pemasukan masjid dari ZISWAF, kegiatan, dan setoran parkir per shift.</p>
+            <p>Seluruh penerimaan jamaah dan admin, verifikasi manual, serta riwayat pembayaran dalam satu tempat.</p>
         </div>
         <div class="pm-hero-actions">
             <button type="button" class="pm-btn-add is-primary" onclick="pmOpenTambah()">
@@ -714,9 +714,19 @@
         @endforeach
     </div>
 
+    <nav aria-label="Tampilan penerimaan" style="display:flex;flex-wrap:wrap;gap:10px;margin:20px 0;">
+        @foreach(['all' => 'Semua Penerimaan', 'pending' => 'Menunggu Verifikasi', 'history' => 'Riwayat Pembayaran'] as $tabKey => $tabLabel)
+            <a href="{{ route($pemasukanIndexRoute, array_merge(request()->except(['page', 'tab', 'status_verifikasi', 'payment_status']), ['tab' => $tabKey])) }}" class="pm-fbtn {{ $activeTab === $tabKey ? 'pm-fbtn-primary' : 'pm-fbtn-reset' }}" @if($activeTab === $tabKey) aria-current="page" @endif>
+                {{ $tabLabel }} @if($tabKey === 'pending') ({{ $summaryTotal['pending'] }}) @endif
+            </a>
+        @endforeach
+    </nav>
+    <p style="color:#64748b;margin-bottom:16px;">Pembayaran gateway dikonfirmasi otomatis. Tab Menunggu Verifikasi hanya berisi pembayaran manual. Riwayat menampilkan pembayaran yang telah selesai, ditolak, kedaluwarsa, atau dibatalkan.</p>
+
     {{-- ====== FILTER ====== --}}
     <div class="pm-filter">
         <form method="GET" action="{{ route($pemasukanIndexRoute) }}">
+            <input type="hidden" name="tab" value="{{ $activeTab }}">
             <div class="pm-filter-row">
 
                 <div class="pm-fg wide">
@@ -728,20 +738,22 @@
                     <label class="pm-fl">Golongan</label>
                     <select name="golongan" class="pm-fs">
                         <option value="">Semua Golongan</option>
-                        @foreach($golonganLabels as $val => $lbl)
+                        @foreach($receiptLabels as $val => $lbl)
                             <option value="{{ $val }}" {{ ($filters['golongan'] ?? '') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
                         @endforeach
                     </select>
                 </div>
 
 
+                <div class="pm-fg"><label class="pm-fl" for="pm-payment-status">Status pembayaran</label><select id="pm-payment-status" name="payment_status" class="pm-fs"><option value="">Semua Status</option>@foreach($paymentStatusLabels as $value => $label)<option value="{{ $value }}" @selected(($filters['payment_status'] ?? '') === $value)>{{ $label }}</option>@endforeach</select></div>
+                <div class="pm-fg"><label class="pm-fl" for="pm-verification-status">Status verifikasi</label><select id="pm-verification-status" name="status_verifikasi" class="pm-fs"><option value="">Semua Verifikasi</option>@foreach($statusLabels + ['dibatalkan' => 'Dibatalkan'] as $value => $label)<option value="{{ $value }}" @selected(($filters['status_verifikasi'] ?? '') === $value)>{{ $label }}</option>@endforeach</select></div>
                 <div class="pm-fg" style="flex:0;min-width:auto;">
                     <label class="pm-fl" style="opacity:0">.</label>
                     <div class="pm-filter-actions">
                         <button type="submit" class="pm-fbtn pm-fbtn-primary">
                             <i class="fa-solid fa-magnifying-glass"></i> Filter
                         </button>
-                        <a href="{{ route($pemasukanIndexRoute) }}" class="pm-fbtn pm-fbtn-reset">
+                        <a href="{{ route($pemasukanIndexRoute, ['tab' => $activeTab]) }}" class="pm-fbtn pm-fbtn-reset">
                             <i class="fa-solid fa-xmark"></i>
                         </a>
                     </div>
@@ -775,7 +787,8 @@
                         <th>Sumber</th>
                         <th>Golongan</th>
                         <th>Nominal</th>
-                        <th>Metode</th>
+                        <th>Metode / Akun</th>
+                        <th>Jurnal</th>
                         <th>Status</th>
                         <th style="text-align: center !important; width: 140px;">Aksi</th>
                     </tr>
@@ -785,7 +798,7 @@
                         @php
                             $isJamaah = $item->muzakki_id !== null;
                             $isParkir = in_array($item->jenis_ziswaf, ['parkir', 'hasil_parkir'], true);
-                            $golLabel = $golonganLabels[$item->jenis_ziswaf] ?? ($item->jenis_ziswaf === 'hasil_parkir' ? 'Parkir' : $item->jenis_ziswaf);
+                            $golLabel = $receiptLabels[$item->jenis_ziswaf] ?? ($item->jenis_ziswaf === 'hasil_parkir' ? 'Parkir' : $item->jenis_ziswaf);
                             $colors   = ($item->jenis_ziswaf === 'hasil_parkir')
                                 ? ['bg'=>'#ecfdf5','text'=>'#047857','border'=>'#a7f3d0','dot'=>'#10b981']
                                 : ($golonganColors[$item->jenis_ziswaf] ?? ['bg'=>'#f8fafc','text'=>'#475569','border'=>'#e2e8f0','dot'=>'#64748b']);
@@ -798,7 +811,7 @@
                             }
                             $namaSumber = $namaSumber ?? 'Hamba Allah';
 
-                            $hasAction = ($item->status_verifikasi === 'pending') || $item->bukti_pembayaran || (!$isJamaah);
+                            $hasAction = $item->can_verify_manually || $item->bukti_pembayaran || (!$isJamaah);
                         @endphp
                         <tr>
                             {{-- Nomor urut --}}
@@ -817,6 +830,7 @@
                             {{-- Sumber --}}
                             <td>
                                 <div style="font-weight:700;color:#0f172a;">{{ $namaSumber }}</div>
+                                <div style="font-size:11px;color:#64748b;">{{ $item->order_id }}</div>
                                 <div style="margin-top:2px;">
                                     @if($isParkir)
                                         <span class="pm-badge pm-src-admin"><i class="fa-solid fa-user-clock" style="font-size:9px;"></i> Penanggung Jawab Shift</span>
@@ -834,6 +848,7 @@
                                     <span class="pm-bdot" style="background:{{ $colors['dot'] }};"></span>
                                     {{ $golLabel }}
                                 </span>
+                                <div style="font-size:11px;color:#64748b;margin-top:5px;">{{ $fundTypeLabels[$item->jenis_ziswaf === 'wakaf' && $item->wakaf_type === 'temporer' ? 'wakaf_temporer' : app(\App\Services\Accounting\Psak109PostingService::class)->resolveJenisDana($item->jenis_ziswaf)] ?? 'Dana lainnya' }}</div>
                                 @if($item->jenis_ziswaf === 'wakaf' && $item->wakaf_type)
                                     <div style="font-size:11px;color:#64748b;margin-top:5px;">
                                         {{ match($item->wakaf_type) {
@@ -864,10 +879,13 @@
                             </td>
 
                             {{-- Metode --}}
-                            <td style="font-size:12px;color:#475569;">{{ $metLabel }}</td>
+                            <td style="font-size:12px;color:#475569;">{{ $metLabel }}<div style="margin-top:5px;">{{ $item->metode_pembayaran === 'qris_tunai' ? '1101 · Kas + 1102 · Bank' : (in_array($item->metode_pembayaran, ['tunai', 'kas'], true) ? '1101 · Kas' : '1102 · Bank') }}
+@if($item->metode_pembayaran === 'qris_tunai')<small>QRIS: Rp {{ number_format($item->rincian_perhitungan['pembagian_pembayaran']['qris'] ?? 0, 0, ',', '.') }}<br>Tunai: Rp {{ number_format($item->rincian_perhitungan['pembagian_pembayaran']['tunai'] ?? 0, 0, ',', '.') }}</small>@endif</div></td>
+                            <td style="font-size:12px;">{{ $item->jurnal?->no_referensi ?? 'Belum dijurnal' }}</td>
 
                             {{-- Status --}}
                             <td>
+                                <div style="font-size:11px;margin-bottom:6px;">{{ $paymentStatusLabels[$item->payment_status] ?? ($item->payment_status ?: 'Manual') }}</div>
                                 @if($item->status_verifikasi === 'diterima')
                                     <span class="pm-badge pm-s-diterima">
                                         <span class="pm-bdot" style="background:#16a34a;"></span> Diterima
@@ -892,7 +910,7 @@
                                 @if($hasAction)
                                     <div class="pm-actions">
 
-                                        @if($item->status_verifikasi === 'pending')
+                                        @if($item->can_verify_manually)
                                             {{-- Terima --}}
                                             <form method="POST" action="{{ route($pemasukanVerifikasiRoute, $item) }}" style="margin:0;" onsubmit="return confirm('Terima pemasukan ini?')">
                                                 @csrf @method('PATCH')
@@ -930,7 +948,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8">
+                            <td colspan="9">
                                 <div class="pm-empty">
                                     <i class="fa-solid fa-hand-holding-dollar"></i>
                                     <div class="pm-empty-h">Belum ada data pemasukan</div>
@@ -990,15 +1008,18 @@
                 <div id="pmParkingFields" hidden>
                     <div class="pm-frow">
                         <div class="pm-fgroup">
-                            <label class="pm-flabel" for="pm_parkir_pegawai">Penanggung Jawab Shift <span>*</span></label>
+                            <label class="pm-flabel" for="pm_parkir_pegawai">Penanggung Jawab Parkir <span>*</span></label>
                             <select name="id_pegawai" id="pm_parkir_pegawai" class="pm-fselect" disabled>
-                                <option value="">-- Pilih Pegawai --</option>
+                                <option value="">-- Pilih Petugas Parkir --</option>
                                 @foreach($pegawaiPenanggungJawab as $pegawaiItem)
                                     <option value="{{ $pegawaiItem->id }}" @selected((string) old('id_pegawai') === (string) $pegawaiItem->id)>
                                         {{ $pegawaiItem->nama_pegawai }} · {{ $pegawaiItem->jabatan ?: 'Pegawai Umum' }}
                                     </option>
                                 @endforeach
                             </select>
+                            @if($pegawaiPenanggungJawab->isEmpty())
+                                <small>Belum ada petugas parkir terverifikasi. Lengkapi data pegawai dengan jabatan Parkir terlebih dahulu.</small>
+                            @endif
                         </div>
                         <div class="pm-fgroup">
                             <label class="pm-flabel" for="pm_parkir_shift">Shift <span>*</span></label>
@@ -1062,9 +1083,18 @@
                     <select name="metode_pembayaran" id="pm_metode" class="pm-fselect" required>
                         <option value="">-- Pilih Metode --</option>
                         <option value="manual_transfer" {{ old('metode_pembayaran') === 'manual_transfer' ? 'selected' : '' }}>Transfer Bank</option>
-                        <option value="qris_manual"     {{ old('metode_pembayaran') === 'qris_manual'     ? 'selected' : '' }}>QRIS Manual</option>
+                        <option value="qris_manual"     {{ old('metode_pembayaran') === 'qris_manual'     ? 'selected' : '' }}>QRIS</option>
+                        <option value="qris_tunai" {{ old('metode_pembayaran') === 'qris_tunai' ? 'selected' : '' }}>QRIS + Tunai / Cash</option>
                         <option value="tunai"           {{ old('metode_pembayaran') === 'tunai'           ? 'selected' : '' }}>Tunai / Cash</option>
                     </select>
+                </div>
+
+                <div id="pmMixedPayments" hidden>
+                    <div class="pm-frow">
+                        <div class="pm-fgroup"><label class="pm-flabel" for="pm_nominal_qris">Nominal QRIS (Rp) <span>*</span></label><input type="number" name="nominal_qris" id="pm_nominal_qris" class="pm-finput" min="1" max="999999999999" step="1" value="{{ old('nominal_qris') }}" disabled><div class="pm-fhint">Dicatat ke Bank · 1102.</div></div>
+                        <div class="pm-fgroup"><label class="pm-flabel" for="pm_nominal_tunai">Nominal Tunai / Cash (Rp) <span>*</span></label><input type="number" name="nominal_tunai" id="pm_nominal_tunai" class="pm-finput" min="1" max="999999999999" step="1" value="{{ old('nominal_tunai') }}" disabled><div class="pm-fhint">Dicatat ke Kas · 1101.</div></div>
+                    </div>
+                    <p class="pm-fhint">Jumlah uang masuk dihitung otomatis dari nominal QRIS + tunai.</p>
                 </div>
 
                 {{-- Nama Donatur --}}
@@ -1169,6 +1199,26 @@
     function pmSyncPostingRules() {
         const isWakaf = pmGolongan.value === 'wakaf';
         const isParkir = pmGolongan.value === 'parkir';
+        const paymentMethod = document.getElementById('pm_metode');
+        const transferOption = paymentMethod?.querySelector('option[value="manual_transfer"]');
+        if (transferOption) {
+            transferOption.disabled = isParkir;
+            transferOption.hidden = isParkir;
+            if (isParkir && paymentMethod.value === 'manual_transfer') paymentMethod.value = '';
+        }
+        const mixedOption = paymentMethod.querySelector('option[value="qris_tunai"]');
+        mixedOption.disabled = !isParkir;
+        mixedOption.hidden = !isParkir;
+        if (!isParkir && paymentMethod.value === 'qris_tunai') paymentMethod.value = '';
+        const isMixed = isParkir && paymentMethod.value === 'qris_tunai';
+        document.getElementById('pmMixedPayments').hidden = !isMixed;
+        const qrisInput = document.getElementById('pm_nominal_qris');
+        const cashInput = document.getElementById('pm_nominal_tunai');
+        [qrisInput, cashInput].forEach(input => { input.disabled = !isMixed; input.required = isMixed; });
+        const totalInput = document.getElementById('pm_nominal');
+        if (totalInput.readOnly && !isMixed) totalInput.value = '';
+        totalInput.readOnly = isMixed;
+        if (isMixed) totalInput.value = Number(qrisInput.value || 0) + Number(cashInput.value || 0);
         const isTemporary = isWakaf && pmWakafType.value === 'temporer';
         const isManagementResult = isWakaf && pmWakafType.value === 'hasil_pengelolaan';
 
@@ -1204,6 +1254,8 @@
         pmNazhir.required = isManagementResult;
     }
 
+    document.getElementById('pm_metode').addEventListener('change', pmSyncPostingRules);
+    ['pm_nominal_qris', 'pm_nominal_tunai'].forEach(id => document.getElementById(id).addEventListener('input', pmSyncPostingRules));
     pmGolongan.addEventListener('change', pmSyncPostingRules);
     pmWakafType.addEventListener('change', pmSyncPostingRules);
     pmSyncPostingRules();

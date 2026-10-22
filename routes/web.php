@@ -187,7 +187,9 @@ Route::middleware(['auth:admin', 'role:admin'])
                 Route::prefix('laporan')
                     ->name('laporan.')
                     ->group(function (){
-                        Route::get('/jurnal-umum', [LaporanController::class, 'jurnalUmum'])
+                        Route::get('/buku-besar/cetak', [\App\Http\Controllers\BukuBesarController::class, 'index'])->name('buku-besar.cetak');
+                Route::get('/buku-besar', [\App\Http\Controllers\BukuBesarController::class, 'index'])->name('buku-besar');
+                Route::get('/jurnal-umum', [LaporanController::class, 'jurnalUmum'])
                             ->name('jurnal-umum');
                         Route::get('/jurnal-pemasukan', [LaporanController::class, 'jurnalPemasukan'])
                             ->name('jurnal-pemasukan');
@@ -263,6 +265,9 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
                 Route::get('/pengeluaran/{pengeluaran}/bukti/{jenis}', [TransactionProofController::class, 'pengeluaran'])
                     ->whereIn('jenis', ['pembayaran', 'surat-tugas', 'dokumen-pendukung'])
                     ->name('pengeluaran.bukti');
+                Route::get('/saldo-kas-bank', [\App\Http\Controllers\CashTransferController::class, 'balances'])->name('saldo-kas-bank');
+                Route::get('/buku-besar/cetak', [\App\Http\Controllers\BukuBesarController::class, 'index'])->name('buku-besar.cetak');
+                Route::get('/buku-besar', [\App\Http\Controllers\BukuBesarController::class, 'index'])->name('buku-besar');
                 Route::get('/jurnal-umum', [LaporanController::class, 'jurnalUmum'])
                     ->name('jurnal-umum');
                 Route::get('/jurnal-pemasukan', [LaporanController::class, 'jurnalPemasukan'])
@@ -292,6 +297,11 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
                     ->name('pengeluaran.bukti');
                 Route::resource('pengeluaran', PengeluaranController::class)
                     ->only(['index', 'create', 'store', 'destroy']);
+                Route::prefix('pemindahan-kas-bank')->name('cash-transfers.')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\CashTransferController::class, 'index'])->name('index');
+                    Route::post('/', [\App\Http\Controllers\CashTransferController::class, 'store'])->name('store');
+                    Route::delete('/{id}', [\App\Http\Controllers\CashTransferController::class, 'destroy'])->whereNumber('id')->name('destroy');
+                });
                 Route::get('penggajian', [PenggajianController::class, 'index'])
                     ->name('penggajian.index');
                 Route::patch('penggajian/{penggajian}/status', [PenggajianController::class, 'updateStatus'])
@@ -385,3 +395,10 @@ foreach (['admin', 'pegawai', 'jamaah'] as $finusGuard) {
         });
 }
 require __DIR__ . '/auth.php';
+
+// Fitur tambahan Kas–Bank: dapat dinonaktifkan tanpa menghapus data lama.
+Route::middleware(['auth:admin', 'role:admin'])->prefix('admin/pemindahan-kas-bank')->name('admin.cash-transfers.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\CashTransferController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\CashTransferController::class, 'store'])->name('store');
+    Route::delete('/{id}', [\App\Http\Controllers\CashTransferController::class, 'destroy'])->whereNumber('id')->name('destroy');
+});

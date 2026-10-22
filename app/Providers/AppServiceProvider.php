@@ -28,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         Presensi::observe(FinusPresensiObserver::class);
         Pengeluaran::observe(FinusPengeluaranObserver::class);
         ZiswafPenerimaan::observe(FinusZiswafObserver::class);
+        ZiswafPenerimaan::observe(\App\Observers\MidtransReceiptJournalObserver::class);
 
         if (app()->environment('production')) {
             URL::forceScheme('https');

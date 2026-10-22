@@ -33,6 +33,29 @@ class PsakZiswafPostingTest extends TestCase
             ->update(['organization_id' => $organization->id]);
     }
 
+    public function test_midtrans_confirmation_posts_once_and_pending_does_not_post(): void
+    {
+        $receipt = $this->receipt([
+            'jenis_ziswaf' => 'zakat_maal',
+            'nominal' => 7_500_000,
+            'payment_gateway' => 'midtrans',
+            'payment_status' => 'pending',
+            'status_verifikasi' => 'pending',
+        ]);
+        $this->assertNull($receipt->fresh()->jurnal_id);
+
+        $receipt->update(['payment_status' => 'settlement', 'status_verifikasi' => 'diterima']);
+        $journalId = $receipt->fresh()->jurnal_id;
+        $this->assertNotNull($journalId);
+        $this->assertSame($receipt->organization_id, $receipt->jurnal->organization_id);
+        $this->assertSame(7_500_000.0, app(Psak109PostingService::class)->getSaldoDana()['zakat']);
+
+        $receipt->update(['catatan_verifikasi' => 'Repeated confirmation']);
+        $this->assertSame($journalId, $receipt->fresh()->jurnal_id);
+        $this->assertSame(2, $receipt->jurnal->detail()->count());
+        $this->assertSame(7_500_000.0, app(Psak109PostingService::class)->getSaldoDana()['zakat']);
+    }
+
     public function test_zakat_is_kept_in_full_without_amil_allocation(): void
     {
         $ketentuan = KetentuanPokokZakat::untukJenis('maal');

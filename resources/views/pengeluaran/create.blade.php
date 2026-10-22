@@ -9,16 +9,23 @@
     $pengeluaranIndexRoute = request()->routeIs('pegawai.keuangan.*')
         ? 'pegawai.keuangan.pengeluaran.index'
         : 'admin.pengeluaran.index';
-    $oldZakatDetails = old('zakat_details', [
-        ['nama_penerima' => '', 'asnaf' => '', 'jumlah_penerima' => 1, 'nominal' => ''],
-    ]);
+    $submittedZakatDetails = collect(old('zakat_details', []))->keyBy('asnaf');
+    $oldZakatDetails = collect($asnafLabels ?? [])->map(fn ($label, $asnaf) => array_merge(
+        ['nama_penerima' => '', 'jumlah_penerima' => 0, 'nominal' => ''],
+        $submittedZakatDetails->get($asnaf, []),
+        ['asnaf' => $asnaf]
+    ))->values()->all();
     $oldTargetAsnaf = old('target_asnaf', $targetAsnaf ?? []);
+    $cashFundBalances = config('cash_transfers.enabled') ? app(\App\Services\Accounting\CashTransferService::class)->balances() : null;
     $defaultPaymentAccountId = ($akunPembayaran ?? collect())->firstWhere('kode_akun', '1101')?->id;
 @endphp
 @section('content')
 @include('layouts.partials.finus-ui')
 <div class="fmu-page">
     <section class="fmu-hero"><div class="fmu-hero-main"><span class="fmu-hero-icon"><i class="fa-solid fa-receipt"></i></span><div><h1>Tambah Pengeluaran</h1><p>Catat pengeluaran masjid dan lampirkan bukti pembayaran bila tersedia.</p></div></div><div class="fmu-hero-actions"><span class="fmu-hero-badge"><i class="fa-solid fa-shield-halved"></i>Pencatatan Keuangan</span></div></section>
+    @if(config('cash_transfers.enabled') && auth('admin')->check())
+    <p><a href="{{ route('admin.cash-transfers.index') }}">Lihat saldo golongan per Kas/Bank atau pindahkan saldo</a></p>
+    @endif
     <form method="POST" action="{{ route($pengeluaranStoreRoute) }}" enctype="multipart/form-data" class="fmu-card" id="expenseForm">
         @csrf
         @if($errors->any())
@@ -45,6 +52,7 @@
                                     @foreach($categories as $item)
                                         <option value="{{ $item->id }}"
                                             data-form-type="{{ $item->form_type }}"
+                                            data-fund="{{ $item->resolvedFundType() }}"
                                             data-fund-balance="{{ (int) round($saldoDanaJurnal[$item->resolvedFundType()] ?? 0) }}"
                                             data-fund-label="{{ $fundTypeLabels[$item->resolvedFundType()] ?? 'Belum dipetakan' }}"
                                             data-debit-code="{{ $item->coa?->kode_akun }}"
@@ -79,7 +87,7 @@
                         <select id="coa_kredit_id" name="coa_kredit_id" class="fmu-control @error('coa_kredit_id') is-invalid @enderror" required>
                             <option value="">-- Pilih Kas atau Bank --</option>
                             @foreach($akunPembayaran ?? [] as $akun)
-                                <option value="{{ $akun->id }}" data-saldo="{{ (int) ($saldoKasBankJurnal[$akun->id] ?? 0) }}" @selected((string) old('coa_kredit_id', $defaultPaymentAccountId) === (string) $akun->id)>
+                                <option value="{{ $akun->id }}" data-code="{{ $akun->kode_akun }}" data-saldo="{{ (int) ($saldoKasBankJurnal[$akun->id] ?? 0) }}" @selected((string) old('coa_kredit_id', $defaultPaymentAccountId) === (string) $akun->id)>
                                     {{ $akun->nama_akun }}
                                 </option>
                             @endforeach
@@ -175,7 +183,7 @@
                     </div>
 
                     <div class="zakat-target-heading">
-                        <div><strong>Target Mustahik Per Asnaf</strong><span>Opsional. Jika digunakan, total target harus 100% dari dana mustahik.</span></div>
+                        <div><strong>Persentase Penyaluran Per Asnaf</strong><span>Total persentase wajib 100%. Nominal tiap asnaf dihitung otomatis dari jumlah pengeluaran.</span></div>
                         <strong id="zakatTargetTotal">0%</strong>
                     </div>
                     <div class="zakat-target-grid">
@@ -193,18 +201,17 @@
                 <div class="zakat-detail-heading">
                     <div>
                         <h3>Rincian Penerima Zakat</h3>
-                        <p>Satu baris dapat digunakan untuk satu mustahik atau satu kelompok penerima.</p>
+                        <p>Isi penanggung jawab untuk setiap asnaf dengan persentase lebih dari 0%. Nominal dihitung otomatis; selisih pembulatan disesuaikan agar total tetap tepat.</p>
                     </div>
-                    <button type="button" class="fmu-btn" id="addZakatDetail"><i class="fa-solid fa-plus"></i>Tambah Penerima</button>
                 </div>
 
                 <div class="zakat-detail-labels" aria-hidden="true">
-                    <span>Nama / Program</span><span>Golongan Mustahik</span><span>Jumlah</span><span>Nominal</span><span></span>
+                    <span>Penanggung Jawab</span><span>Golongan Asnaf</span><span>Total Nominal Golongan</span>
                 </div>
                 <div id="zakatDetailRows"></div>
 
                 <div class="zakat-detail-summary">
-                    <span><strong id="zakatRecipientTotal">0</strong> penerima</span>
+                    <span><strong id="zakatRecipientTotal">0</strong> golongan disalurkan</span>
                     <span>Total rincian: <strong id="zakatNominalTotal">Rp 0</strong></span>
                     <span id="zakatDifference">Selisih: Rp 0</span>
                 </div>
@@ -223,29 +230,20 @@
 <template id="zakatDetailTemplate">
     <div class="zakat-detail-row" data-zakat-detail-row>
         <div class="fmu-field">
-            <label class="fmu-label">Nama / Program</label>
-            <input type="text" maxlength="150" class="fmu-control" data-zakat-field="nama_penerima" placeholder="Nama mustahik atau program">
+            <label class="fmu-label">Penanggung Jawab</label>
+            <input type="text" maxlength="150" class="fmu-control" data-zakat-field="nama_penerima" placeholder="Nama penanggung jawab asnaf">
         </div>
         <div class="fmu-field">
             <label class="fmu-label">Golongan</label>
-            <select class="fmu-control" data-zakat-field="asnaf">
-                <option value="">Pilih golongan</option>
-                @foreach($asnafLabels ?? [] as $value => $label)
-                    <option value="{{ $value }}">{{ $label }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="fmu-field">
-            <label class="fmu-label">Jumlah Penerima</label>
-            <input type="number" min="1" step="1" value="1" class="fmu-control" data-zakat-field="jumlah_penerima">
+            <input type="hidden" data-zakat-field="asnaf">
+            <span class="fmu-control" data-asnaf-label></span>
         </div>
         <div class="fmu-field">
             <label class="fmu-label">Nominal</label>
-            <div class="fmu-input-icon-wrap"><i class="fa-solid fa-rupiah-sign"></i><input type="number" min="1" step="1" class="fmu-control" data-zakat-field="nominal" placeholder="0"></div>
+            <div class="fmu-input-icon-wrap"><i class="fa-solid fa-rupiah-sign"></i><input type="number" min="0" step="1" class="fmu-control" data-zakat-field="nominal" placeholder="0" readonly></div>
         </div>
-        <button type="button" class="zakat-remove-row" data-remove-zakat-detail title="Hapus golongan" aria-label="Hapus golongan"><i class="fa-solid fa-trash-can"></i></button>
         <details class="zakat-recipient-details">
-            <summary>Identitas penerima (opsional)</summary>
+            <summary>Identitas penanggung jawab (opsional)</summary>
             <div class="zakat-recipient-details-grid">
                 <div class="fmu-field"><label class="fmu-label">NIK / Identitas</label><input type="text" maxlength="30" class="fmu-control" data-zakat-field="nik_penerima"></div>
                 <div class="fmu-field"><label class="fmu-label">No. HP</label><input type="text" maxlength="30" class="fmu-control" data-zakat-field="no_hp_penerima"></div>
@@ -290,7 +288,6 @@
     const section = document.getElementById('zakatDetailSection');
     const rows = document.getElementById('zakatDetailRows');
     const template = document.getElementById('zakatDetailTemplate');
-    const addButton = document.getElementById('addZakatDetail');
     const recipientTotal = document.getElementById('zakatRecipientTotal');
     const nominalTotal = document.getElementById('zakatNominalTotal');
     const difference = document.getElementById('zakatDifference');
@@ -301,6 +298,7 @@
     const initialDetails = @json($oldZakatDetails);
     const rupiah = value => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value || 0);
 
+    const cashFundBalances = @json($cashFundBalances);
     const syncBalanceStatus = () => {
         const cat = category?.selectedOptions?.[0];
         const bank = paymentAccount?.selectedOptions?.[0];
@@ -313,8 +311,9 @@
         const kas = Number(bank.dataset.saldo || 0);
         const nominal = Number(amount?.value || 0);
         const lowFund = nominal > 0 && nominal > dana;
-        const lowCash = nominal > 0 && nominal > kas;
-        balanceStatus.textContent = `Saldo ${cat.dataset.fundLabel || 'dana'}: ${rupiah(dana)} · Saldo ${bank.textContent.trim()}: ${rupiah(kas)}.`
+        const fundAtSource = cashFundBalances === null ? kas : Number(cashFundBalances[cat.dataset.fund]?.[bank.dataset.code] || 0);
+        const lowCash = nominal > 0 && nominal > Math.min(kas, fundAtSource);
+        balanceStatus.textContent = `Saldo ${cat.dataset.fundLabel || 'dana'}: ${rupiah(dana)} · Saldo ${bank.textContent.trim()}: ${rupiah(kas)}. Golongan pada sumber ini: ${rupiah(fundAtSource)}.`
             + (lowFund || lowCash ? ` Jumlah transaksi melebihi saldo ${[lowFund ? 'dana' : '', lowCash ? 'sumber pembayaran' : ''].filter(Boolean).join(' dan ')} yang tersedia. Pengeluaran akan ditolak.` : ' Saldo berasal dari jurnal yang sudah diposting.');
         balanceStatus.classList.toggle('is-insufficient', lowFund || lowCash);
     };
@@ -361,17 +360,26 @@
             row.querySelectorAll('[data-zakat-field]').forEach(field => {
                 field.name = `zakat_details[${index}][${field.dataset.zakatField}]`;
             });
-            row.querySelector('[data-remove-zakat-detail]').disabled = currentRows.length === 1;
         });
     };
 
     const syncZakatTotals = () => {
         let people = 0; let detailAmount = 0;
+        const mainAmount = Math.max(0, Math.floor(Number(amount?.value || 0)));
+        let cumulative = 0; let allocated = 0;
         rows.querySelectorAll('[data-zakat-detail-row]').forEach(row => {
-            people += Number(row.querySelector('[data-zakat-field="jumlah_penerima"]')?.value || 0);
-            detailAmount += Number(row.querySelector('[data-zakat-field="nominal"]')?.value || 0);
+            const asnaf = row.querySelector('[data-zakat-field="asnaf"]').value;
+            const target = targetInputs.find(input => input.name === `target_asnaf[${asnaf}]`);
+            const weight = Math.round(Number(target?.value || 0) * 100);
+            cumulative += weight;
+            const subtotal = Math.floor(mainAmount * cumulative / 10000);
+            const nominal = subtotal - allocated;
+            allocated = subtotal;
+            row.querySelector('[data-zakat-field="nominal"]').value = nominal;
+            row.querySelector('[data-zakat-field="nama_penerima"]').required = weight > 0 && !section.hidden;
+            if (weight > 0) people++;
+            detailAmount += nominal;
         });
-        const mainAmount = Number(amount?.value || 0);
         const delta = mainAmount - detailAmount;
         recipientTotal.textContent = new Intl.NumberFormat('id-ID').format(people);
         nominalTotal.textContent = rupiah(detailAmount);
@@ -383,14 +391,12 @@
         const row = template.content.firstElementChild.cloneNode(true);
         row.querySelector('[data-zakat-field="nama_penerima"]').value = data.nama_penerima || '';
         row.querySelector('[data-zakat-field="asnaf"]').value = data.asnaf || '';
-        row.querySelector('[data-zakat-field="jumlah_penerima"]').value = data.jumlah_penerima || 1;
+        const asnafLabels = @json($asnafLabels ?? []);
+        row.querySelector('[data-asnaf-label]').textContent = asnafLabels[data.asnaf] || '';
         row.querySelector('[data-zakat-field="nominal"]').value = data.nominal || '';
         row.querySelector('[data-zakat-field="nik_penerima"]').value = data.nik_penerima || '';
         row.querySelector('[data-zakat-field="no_hp_penerima"]').value = data.no_hp_penerima || '';
         row.querySelector('[data-zakat-field="alamat_penerima"]').value = data.alamat_penerima || '';
-        row.querySelector('[data-remove-zakat-detail]').addEventListener('click', () => {
-            row.remove(); reindexRows(); syncZakatTotals();
-        });
         row.querySelectorAll('input, select').forEach(field => field.addEventListener('input', syncZakatTotals));
         rows.appendChild(row); reindexRows(); syncZakatTotals();
     };
@@ -473,9 +479,8 @@
     };
 
     (initialDetails.length ? initialDetails : [{}]).forEach(addRow);
-    addButton?.addEventListener('click', () => addRow());
     period?.addEventListener('change', syncPeriodEnd);
-    targetInputs.forEach(field => field.addEventListener('input', syncTargetTotal));
+    targetInputs.forEach(field => field.addEventListener('input', () => { syncTargetTotal(); syncZakatTotals(); }));
     category?.addEventListener('change', syncCategoryMapping);
     paymentAccount?.addEventListener('change', syncJournalPreview);
     amount?.addEventListener('input', () => { syncZakatTotals(); syncJournalPreview(); });
@@ -492,7 +497,7 @@
 .fmu-expense-balance-status{display:flex;align-items:center;gap:10px;margin-top:18px;padding:12px 14px;border:1px solid #cfe2d5;border-radius:6px;background:#f6fbf7;color:#1d6a37;font-size:13px}.fmu-expense-balance-status.is-insufficient{border-color:#e7ae60;background:#fff9ec;color:#944600}
 html[data-finus-theme="dark"] body .fmu-expense-error-summary{background:#321719;color:#ffcaca;border-color:#874343}html[data-finus-theme="dark"] body .fmu-expense-balance-status{background:#102c1c;color:#b0ebbe;border-color:#305a40}html[data-finus-theme="dark"] body .fmu-expense-balance-status.is-insufficient{background:#382816;color:#ffd399;border-color:#876030}
 .fmu-derived-value{display:flex;align-items:center;gap:10px;min-height:48px;padding:11px 14px;border:1px solid #dbe5de;border-radius:6px;background:#f4faf6;color:#176d35}.fmu-derived-value i{color:#169b43}.fmu-derived-value strong{font-size:14px}
-.journal-preview{margin-top:22px;padding:16px;border:1px solid #cfe2d5;border-radius:6px;background:#f8fcf9}.journal-preview-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}.journal-preview-head div strong,.journal-preview-head div span{display:block}.journal-preview-head div strong{color:#193925}.journal-preview-head div span{margin-top:2px;color:#64748b;font-size:12px}.journal-preview-badge{display:inline-flex;align-items:center;gap:6px;color:#08752f;font-size:11px;font-weight:800}.journal-preview-row{display:grid;grid-template-columns:60px minmax(0,1fr) 150px;gap:12px;padding:10px 0;border-top:1px solid #e2ece5}.journal-preview-row>span{color:#64748b;font-size:12px;text-transform:uppercase}.journal-preview-row>strong{color:#24352a}.journal-preview-row>b{text-align:right;color:#08752f}.honorarium-section,.zakat-detail-section{margin-top:28px;padding-top:24px;border-top:1px solid #dce7df}.honorarium-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px}.honorarium-heading h3{margin:0 0 4px;font-size:18px;color:#17233a}.honorarium-heading p{margin:0;color:#64748b}.honorarium-heading>span{padding:8px 11px;border-radius:6px;background:#eaf8ee;color:#08752f;font-size:12px;font-weight:700}.zakat-period-panel{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #dce7df}.zakat-period-heading,.zakat-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px}.zakat-period-heading h3,.zakat-detail-heading h3{margin:0 0 4px;font-size:18px;color:#17233a}.zakat-period-heading p,.zakat-detail-heading p{margin:0;color:#64748b}.zakat-balance{text-align:right}.zakat-balance span,.zakat-balance small{display:block;color:#64748b}.zakat-balance strong{display:block;margin:2px 0;color:#08752f;font-size:20px}.zakat-period-fields{display:grid;grid-template-columns:minmax(220px,.7fr) minmax(280px,1.3fr);gap:16px;align-items:end}.zakat-period-note{display:flex;align-items:center;gap:10px;min-height:46px;padding:10px 12px;border:1px solid #cfe2d5;border-radius:6px;background:#f6fbf7;color:#365443}.zakat-target-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:20px 0 10px}.zakat-target-heading div span{display:block;margin-top:3px;color:#64748b;font-size:12px}.zakat-target-heading>strong{color:#b45309}.zakat-target-heading>strong.is-balanced{color:#15803d}.zakat-target-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px}.zakat-target-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid #dce7df;border-radius:6px}.zakat-target-item>span:first-child{font-size:12px;font-weight:700;color:#475569}.zakat-target-control{display:flex;align-items:center;gap:4px}.zakat-target-control input{width:64px;border:0;background:transparent;text-align:right;color:#17233a}.zakat-detail-labels,.zakat-detail-row{display:grid;grid-template-columns:minmax(190px,1.15fr) minmax(150px,.9fr) minmax(100px,.55fr) minmax(170px,1fr) 44px;gap:14px;align-items:end}.zakat-detail-labels{padding:0 0 8px;color:#64748b;font-size:12px;font-weight:700}.zakat-detail-row{padding:14px 0;border-top:1px solid #edf2ee}.zakat-detail-row .fmu-label{display:none}.zakat-recipient-details{grid-column:1/-1}.zakat-recipient-details summary{cursor:pointer;color:#08752f;font-size:12px;font-weight:700}.zakat-recipient-details-grid{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:12px;margin-top:12px}.zakat-recipient-details-grid .fmu-label{display:block}.zakat-remove-row{width:44px;height:44px;border:1px solid #efc7c7;border-radius:6px;background:#fff;color:#c43f3f;cursor:pointer}.zakat-remove-row:disabled{opacity:.35;cursor:not-allowed}.zakat-detail-summary{display:flex;justify-content:flex-end;gap:24px;flex-wrap:wrap;margin-top:12px;padding-top:14px;border-top:1px solid #dce7df;color:#475569}.zakat-detail-summary .is-balanced{color:#15803d;font-weight:700}@media(max-width:980px){.zakat-target-grid{grid-template-columns:repeat(2,minmax(140px,1fr))}.zakat-detail-labels{display:none}.zakat-detail-row{grid-template-columns:1fr 1fr}.zakat-detail-row .fmu-label{display:block}.zakat-remove-row{justify-self:end}}@media(max-width:760px){.journal-preview-row{grid-template-columns:55px minmax(0,1fr)}.journal-preview-row>b{grid-column:2;text-align:left}.honorarium-heading,.zakat-period-heading,.zakat-detail-heading{align-items:flex-start;flex-direction:column}.zakat-balance{text-align:left}.zakat-period-fields,.zakat-target-grid,.zakat-detail-row,.zakat-recipient-details-grid{grid-template-columns:1fr}.zakat-remove-row{justify-self:end}.zakat-detail-summary{justify-content:flex-start;gap:10px 18px}}
+.journal-preview{margin-top:22px;padding:16px;border:1px solid #cfe2d5;border-radius:6px;background:#f8fcf9}.journal-preview-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}.journal-preview-head div strong,.journal-preview-head div span{display:block}.journal-preview-head div strong{color:#193925}.journal-preview-head div span{margin-top:2px;color:#64748b;font-size:12px}.journal-preview-badge{display:inline-flex;align-items:center;gap:6px;color:#08752f;font-size:11px;font-weight:800}.journal-preview-row{display:grid;grid-template-columns:60px minmax(0,1fr) 150px;gap:12px;padding:10px 0;border-top:1px solid #e2ece5}.journal-preview-row>span{color:#64748b;font-size:12px;text-transform:uppercase}.journal-preview-row>strong{color:#24352a}.journal-preview-row>b{text-align:right;color:#08752f}.honorarium-section,.zakat-detail-section{margin-top:28px;padding-top:24px;border-top:1px solid #dce7df}.honorarium-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px}.honorarium-heading h3{margin:0 0 4px;font-size:18px;color:#17233a}.honorarium-heading p{margin:0;color:#64748b}.honorarium-heading>span{padding:8px 11px;border-radius:6px;background:#eaf8ee;color:#08752f;font-size:12px;font-weight:700}.zakat-period-panel{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #dce7df}.zakat-period-heading,.zakat-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px}.zakat-period-heading h3,.zakat-detail-heading h3{margin:0 0 4px;font-size:18px;color:#17233a}.zakat-period-heading p,.zakat-detail-heading p{margin:0;color:#64748b}.zakat-balance{text-align:right}.zakat-balance span,.zakat-balance small{display:block;color:#64748b}.zakat-balance strong{display:block;margin:2px 0;color:#08752f;font-size:20px}.zakat-period-fields{display:grid;grid-template-columns:minmax(220px,.7fr) minmax(280px,1.3fr);gap:16px;align-items:end}.zakat-period-note{display:flex;align-items:center;gap:10px;min-height:46px;padding:10px 12px;border:1px solid #cfe2d5;border-radius:6px;background:#f6fbf7;color:#365443}.zakat-target-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:20px 0 10px}.zakat-target-heading div span{display:block;margin-top:3px;color:#64748b;font-size:12px}.zakat-target-heading>strong{color:#b45309}.zakat-target-heading>strong.is-balanced{color:#15803d}.zakat-target-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px}.zakat-target-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid #dce7df;border-radius:6px}.zakat-target-item>span:first-child{font-size:12px;font-weight:700;color:#475569}.zakat-target-control{display:flex;align-items:center;gap:4px}.zakat-target-control input{width:64px;border:0;background:transparent;text-align:right;color:#17233a}.zakat-detail-labels,.zakat-detail-row{display:grid;grid-template-columns:minmax(190px,1.15fr) minmax(150px,.9fr) minmax(170px,1fr);gap:14px;align-items:end}.zakat-detail-labels{padding:0 0 8px;color:#64748b;font-size:12px;font-weight:700}.zakat-detail-row{padding:14px 0;border-top:1px solid #edf2ee}.zakat-detail-row .fmu-label{display:none}.zakat-recipient-details{grid-column:1/-1}.zakat-recipient-details summary{cursor:pointer;color:#08752f;font-size:12px;font-weight:700}.zakat-recipient-details-grid{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:12px;margin-top:12px}.zakat-recipient-details-grid .fmu-label{display:block}.zakat-remove-row{width:44px;height:44px;border:1px solid #efc7c7;border-radius:6px;background:#fff;color:#c43f3f;cursor:pointer}.zakat-remove-row:disabled{opacity:.35;cursor:not-allowed}.zakat-detail-summary{display:flex;justify-content:flex-end;gap:24px;flex-wrap:wrap;margin-top:12px;padding-top:14px;border-top:1px solid #dce7df;color:#475569}.zakat-detail-summary .is-balanced{color:#15803d;font-weight:700}@media(max-width:980px){.zakat-target-grid{grid-template-columns:repeat(2,minmax(140px,1fr))}.zakat-detail-labels{display:none}.zakat-detail-row{grid-template-columns:1fr 1fr}.zakat-detail-row .fmu-label{display:block}.zakat-remove-row{justify-self:end}}@media(max-width:760px){.journal-preview-row{grid-template-columns:55px minmax(0,1fr)}.journal-preview-row>b{grid-column:2;text-align:left}.honorarium-heading,.zakat-period-heading,.zakat-detail-heading{align-items:flex-start;flex-direction:column}.zakat-balance{text-align:left}.zakat-period-fields,.zakat-target-grid,.zakat-detail-row,.zakat-recipient-details-grid{grid-template-columns:1fr}.zakat-remove-row{justify-self:end}.zakat-detail-summary{justify-content:flex-start;gap:10px 18px}}
 </style>
 @endpush
 

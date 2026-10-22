@@ -948,7 +948,7 @@
                                             @if($item->periodePenyaluranZakat)
                                                 <strong>{{ $item->nomor_batch }}</strong> · Periode {{ \Carbon\Carbon::createFromFormat('Y-m', $item->periodePenyaluranZakat->periode)->translatedFormat('F Y') }}<br>
                                             @endif
-                                            {{ number_format($item->zakatPenyaluran->sum('jumlah_penerima'), 0, ',', '.') }} penerima,
+                                            {{ $item->zakatPenyaluran->pluck('asnaf')->unique()->count() }} golongan asnaf:
                                             {{ $item->zakatPenyaluran->pluck('asnaf')->unique()->map(fn($asnaf) => $asnafLabels[$asnaf] ?? $asnaf)->join(', ') }}
                                         </small>
                                     @endif

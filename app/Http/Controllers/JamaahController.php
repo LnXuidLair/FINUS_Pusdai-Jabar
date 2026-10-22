@@ -137,20 +137,14 @@ class JamaahController extends Controller
                 ->sum('nominal'),
             'pending' => (int) (clone $ringkasanQuery)
                 ->where(function ($builder): void {
-                    // Nominal pending/gagal: semua transaksi yang tidak berhasil
-                    // mencakup: dibatalkan, ditolak, pending, atau status kosong/NULL
                     $builder->where('status_verifikasi', 'dibatalkan')
-                        ->orWhere('status_verifikasi', 'ditolak')
-                        ->orWhere('status_verifikasi', 'pending')
-                        ->orWhereNull('status_verifikasi');
+                        ->orWhere('status_verifikasi', 'ditolak');
                 })
                 ->sum('nominal'),
             'jumlah_gagal' => (clone $ringkasanQuery)
                 ->where(function ($builder): void {
                     $builder->where('status_verifikasi', 'dibatalkan')
-                        ->orWhere('status_verifikasi', 'ditolak')
-                        ->orWhere('status_verifikasi', 'pending')
-                        ->orWhereNull('status_verifikasi');
+                        ->orWhere('status_verifikasi', 'ditolak');
                 })
                 ->count(),
         ];
@@ -528,17 +522,20 @@ class JamaahController extends Controller
                 Rule::in($allowedCalculationCategories),
             ],
             'periode_penghasilan' => [
+                'exclude_unless:jenis_ziswaf,zakat_penghasilan',
                 Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_penghasilan'),
                 'nullable',
                 Rule::in(['bulanan', 'tahunan']),
             ],
             'bulan_penghasilan' => [
+                'exclude_unless:jenis_ziswaf,zakat_penghasilan',
                 Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_penghasilan'
                     && $request->input('periode_penghasilan') === 'bulanan'),
                 'nullable',
                 'date_format:Y-m',
             ],
             'tahun_penghasilan' => [
+                'exclude_unless:jenis_ziswaf,zakat_penghasilan',
                 Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_penghasilan'),
                 'nullable',
                 'integer',
@@ -546,6 +543,7 @@ class JamaahController extends Controller
                 'max:'.now()->year,
             ],
             'penghasilan_bersih' => [
+                'exclude_unless:jenis_ziswaf,zakat_penghasilan',
                 Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'zakat_penghasilan'),
                 'nullable',
                 'integer',

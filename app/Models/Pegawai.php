@@ -68,6 +68,12 @@ class Pegawai extends Model
         return $this->belongsTo(User::class, 'email', 'email');
     }
 
+    public function scopePetugasParkir($query)
+    {
+        return $query->where('is_verified', true)
+            ->whereRaw('LOWER(jabatan) LIKE ?', ['%parkir%']);
+    }
+
     public function createdByAdmin()
     {
         return $this->belongsTo(User::class, 'createdby');

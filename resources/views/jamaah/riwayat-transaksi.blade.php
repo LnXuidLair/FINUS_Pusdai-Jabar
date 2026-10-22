@@ -902,61 +902,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 return res.json();
             })
             .then(function (data) {
-                if (data.status === 'paid') {
-                    // Pembayaran berhasil — update pill langsung di halaman
-                    activePolls.delete(id);
-
-                    const pill  = document.getElementById('pill-' + id);
-                    const icon  = document.getElementById('pill-icon-' + id);
-                    const text  = document.getElementById('pill-text-' + id);
-
-                    if (pill) {
-                        pill.className = 'status-pill status-pill-diterima';
-                    }
-                    if (icon) {
-                        icon.className = 'fa-solid fa-circle-check';
-                    }
-                    if (text) {
-                        text.textContent = 'Berhasil';
-                    }
-
-                    // Update warna baris
-                    if (row) {
-                        row.classList.remove('jt-row-pending-pay', 'jt-row-pending');
-                        row.classList.add('jt-row-diterima');
-                    }
-
-                    // Sembunyikan tombol Bayar & Batal di baris tersebut
-                    const actionGroup = row.querySelector('.jt-action-group');
-                    if (actionGroup) {
-                        actionGroup.innerHTML = '<span class="jt-action-none">&mdash;</span>';
-                    }
-
-                    // Jika semua sudah selesai, hentikan polling
-                    if (activePolls.size === 0) clearInterval(timer);
-
-                } else if (data.status === 'failed') {
-                    activePolls.delete(id);
-
-                    const pill = document.getElementById('pill-' + id);
-                    const icon = document.getElementById('pill-icon-' + id);
-                    const text = document.getElementById('pill-text-' + id);
-
-                    if (pill) pill.className = 'status-pill status-pill-ditolak';
-                    if (icon) icon.className = 'fa-solid fa-circle-xmark';
-                    if (text) text.textContent = 'Ditolak';
-
-                    if (row) {
-                        row.classList.remove('jt-row-pending-pay', 'jt-row-pending');
-                        row.classList.add('jt-row-ditolak');
-                    }
-
-                    const actionGroup = row.querySelector('.jt-action-group');
-                    if (actionGroup) {
-                        actionGroup.innerHTML = '<span class="jt-action-none">&mdash;</span>';
-                    }
-
-                    if (activePolls.size === 0) clearInterval(timer);
+                if (data.status === 'paid' || data.status === 'failed') {
+                    window.location.reload();
+                    return;
                 }
                 // status 'pending' atau 'error' — biarkan tetap polling
             })
@@ -966,10 +914,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Poll pertama 3 detik setelah halaman dimuat\r
-    setTimeout(pollAll, 3000);\r
-    var timer = setInterval(pollAll, POLL_INTERVAL_MS);\r
-});\r
+    // Poll pertama 3 detik setelah halaman dimuat
+    setTimeout(pollAll, 3000);
+    var timer = setInterval(pollAll, POLL_INTERVAL_MS);
+});
 </script>
 
 {{-- ── Invoice Modal JS ── --}}

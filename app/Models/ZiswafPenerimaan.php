@@ -60,6 +60,20 @@ class ZiswafPenerimaan extends Model
         'snapshot_kebijakan' => 'array',
     ];
 
+    public function scopeAwaitingManualVerification($query)
+    {
+        return $query->where(fn ($q) => $q->whereNull('status_verifikasi')->orWhere('status_verifikasi', 'pending'))
+            ->whereIn('metode_pembayaran', ['manual_transfer', 'qris_manual', 'tunai', 'kas'])
+            ->where(fn ($q) => $q->whereNull('payment_status')->orWhere('payment_status', 'manual_pending'));
+    }
+
+    public function getCanVerifyManuallyAttribute(): bool
+    {
+        return in_array($this->status_verifikasi, [null, 'pending'], true)
+            && in_array($this->metode_pembayaran, ['manual_transfer', 'qris_manual', 'tunai', 'kas'], true)
+            && in_array($this->payment_status, [null, 'manual_pending'], true);
+    }
+
     public function muzakki()
     {
         return $this->belongsTo(User::class, 'muzakki_id');
@@ -68,6 +82,11 @@ class ZiswafPenerimaan extends Model
     public function pegawai()
     {
         return $this->belongsTo(Pegawai::class, 'id_pegawai');
+    }
+
+    public function jurnal()
+    {
+        return $this->belongsTo(JurnalUmum::class, 'jurnal_id');
     }
 
     public function coa()

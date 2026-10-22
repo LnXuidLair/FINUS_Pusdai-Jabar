@@ -48,7 +48,8 @@ class PemasukanController extends Controller
     {
         return [
             'manual_transfer' => 'Transfer Bank',
-            'qris_manual'     => 'QRIS Manual',
+            'qris_manual'     => 'QRIS',
+            'qris_tunai'      => 'QRIS + Tunai / Cash',
             'tunai'           => 'Tunai',
             'qris'            => 'QRIS Gateway',
             'other_qris'      => 'QRIS',
@@ -75,12 +76,24 @@ class PemasukanController extends Controller
         ];
     }
 
+    public static function paymentStatusLabels(): array
+    {
+        return [
+            'manual_pending' => 'Menunggu verifikasi manual', 'manual_paid' => 'Manual dibayar',
+            'pending' => 'Menunggu pembayaran', 'settlement' => 'Berhasil', 'capture' => 'Berhasil',
+            'manual_rejected' => 'Manual ditolak', 'deny' => 'Ditolak gateway', 'cancel' => 'Dibatalkan',
+            'expire' => 'Kedaluwarsa', 'failure' => 'Gagal',
+        ];
+    }
+
     /**
      * Tampilkan halaman daftar pemasukan.
      */
     public function index(Request $request)
     {
         $filters = $request->validate([
+            'tab' => ['nullable', Rule::in(['all', 'pending', 'history'])],
+            'payment_status' => ['nullable', 'string', 'max:50'],
             'q'                 => ['nullable', 'string', 'max:100'],
             'golongan'          => ['nullable', 'string', 'max:50'],
             'status_verifikasi' => ['nullable', 'string', 'max:50'],
@@ -89,14 +102,20 @@ class PemasukanController extends Controller
             'tanggal_sampai'    => ['nullable', 'date'],
         ]);
 
-        $query = ZiswafPenerimaan::with(['muzakki', 'pegawai'])
-            ->where('status_verifikasi', '!=', 'dibatalkan')
-            ->where(function (Builder $q) {
-                $q->whereNull('payment_status')
-                  ->orWhere('payment_status', '!=', 'cancel');
-            })
-            ->latest('tanggal')
-            ->latest('id');
+        $activeTab = $filters['tab'] ?? 'all';
+        $query = ZiswafPenerimaan::with(['muzakki', 'pegawai', 'jurnal'])
+            ->latest('tanggal')->latest('id');
+        if ($activeTab === 'pending') {
+            $query->awaitingManualVerification();
+        } elseif ($activeTab === 'history') {
+            $query->where(function (Builder $q) {
+                $q->whereIn('status_verifikasi', ['diterima', 'ditolak', 'dibatalkan'])
+                    ->orWhereIn('payment_status', ['settlement', 'capture', 'manual_paid', 'manual_rejected', 'deny', 'cancel', 'expire', 'failure']);
+            });
+        }
+        if (! empty($filters['payment_status'])) {
+            $query->where('payment_status', $filters['payment_status']);
+        }
 
         if (!empty($filters['q'])) {
             $search = trim($filters['q']);
@@ -136,12 +155,7 @@ class PemasukanController extends Controller
         /* ── Summary cards ── */
         $summaryTotal = [
             'total'     => (int) ZiswafPenerimaan::where('status_verifikasi', 'diterima')->sum('nominal'),
-            'pending'   => (int) ZiswafPenerimaan::where('status_verifikasi', 'pending')
-                ->where(function ($q) {
-                    $q->whereNull('payment_status')
-                      ->orWhere('payment_status', '!=', 'cancel');
-                })
-                ->count(),
+            'pending' => ZiswafPenerimaan::query()->awaitingManualVerification()->count(),
             'bulan_ini' => (int) ZiswafPenerimaan::where('status_verifikasi', 'diterima')
                 ->whereMonth('tanggal', now()->month)
                 ->whereYear('tanggal', now()->year)
@@ -165,6 +179,10 @@ class PemasukanController extends Controller
         $transaksi = $query->paginate(15)->withQueryString();
 
         return view('admin.pemasukan.index', [
+            'activeTab' => $activeTab,
+            'paymentStatusLabels' => self::paymentStatusLabels(),
+            'receiptLabels' => self::golonganLabels() + ['zakat_fitrah' => 'Zakat Fitrah', 'shadaqah' => 'Sedekah', 'sedekah' => 'Sedekah', 'fidyah' => 'Fidyah'],
+            'fundTypeLabels' => config('transaction_categories.fund_types') + ['amil' => 'Dana Amil', 'nazhir' => 'Dana Nazhir'],
             'transaksi'          => $transaksi,
             'filters'            => $filters,
             'summaryTotal'       => $summaryTotal,
@@ -174,7 +192,7 @@ class PemasukanController extends Controller
             'metodeLabels'       => self::metodeLabels(),
             'statusLabels'       => self::statusLabels(),
             'pegawaiPenanggungJawab' => Pegawai::query()
-                ->where('is_verified', true)
+                ->petugasParkir()
                 ->orderBy('nama_pegawai')
                 ->get(['id', 'nama_pegawai', 'jabatan']),
         ]);
@@ -186,6 +204,14 @@ class PemasukanController extends Controller
     public function store(Request $request)
     {
         $isParkir = $request->input('jenis_ziswaf') === 'parkir';
+        $isMixed = $isParkir && $request->input('metode_pembayaran') === 'qris_tunai';
+        if ($isMixed) {
+            $parts = $request->validate([
+                'nominal_qris' => ['required', 'integer', 'min:1', 'max:999999999999'],
+                'nominal_tunai' => ['required', 'integer', 'min:1', 'max:999999999999'],
+            ]);
+            $request->merge(['nominal' => (int) $parts['nominal_qris'] + (int) $parts['nominal_tunai']]);
+        }
 
         $validated = $request->validate([
             'jenis_ziswaf'      => ['required', 'string', 'in:' . implode(',', array_keys(self::golonganLabels()))],
@@ -209,17 +235,26 @@ class PemasukanController extends Controller
             ],
             'nominal'           => ['required', 'integer', 'min:1000'],
             'tanggal'           => ['required', 'date', 'before_or_equal:today'],
-            'metode_pembayaran' => ['required', 'string', 'in:manual_transfer,qris_manual,tunai'],
+            'metode_pembayaran' => ['required', 'string', Rule::in($isParkir
+                ? ['qris_manual', 'tunai', 'qris_tunai']
+                : ['manual_transfer', 'qris_manual', 'tunai'])],
             'nama_donatur'      => ['nullable', 'string', 'max:255'],
             'keterangan'        => ['nullable', 'string', 'max:1000'],
             'id_pegawai'        => [
+                'exclude_unless:jenis_ziswaf,parkir',
                 Rule::requiredIf($isParkir),
                 'nullable',
-                Rule::exists('pegawai', 'id')->where(fn ($query) => $query->where('is_verified', true)),
+                Rule::in(Pegawai::query()->petugasParkir()->pluck('id')->all()),
             ],
             'shift'             => [Rule::requiredIf($isParkir), 'nullable', Rule::in(['pagi', 'siang', 'malam'])],
             'nomor_rekap'       => ['nullable', 'string', 'max:80'],
             'bukti_pembayaran'  => [Rule::requiredIf($isParkir), 'nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:2048'],
+        ], [
+            'id_pegawai.required' => 'Pilih petugas parkir sebagai penanggung jawab shift.',
+            'id_pegawai.in' => 'Penanggung jawab harus petugas parkir terverifikasi dari masjid ini.',
+            'metode_pembayaran.in' => $isParkir
+                ? 'Pilih QRIS, Tunai / Cash, atau QRIS + Tunai / Cash untuk parkir.'
+                : 'Metode pembayaran tidak valid.',
         ]);
 
         $buktiPath = null;
@@ -247,6 +282,9 @@ class PemasukanController extends Controller
                         'waktu_mulai' => $waktuMulai,
                         'waktu_selesai' => $waktuSelesai,
                         'nomor_rekap' => $validated['nomor_rekap'] ?? null,
+                        'pembagian_pembayaran' => $validated['metode_pembayaran'] === 'qris_tunai'
+                            ? ['qris' => (int) $request->input('nominal_qris'), 'tunai' => (int) $request->input('nominal_tunai')]
+                            : null,
                     ], static fn ($value): bool => $value !== null && $value !== '');
                 } elseif (! empty($validated['nama_donatur'])) {
                     $keterangan = '[Donatur: '.$validated['nama_donatur'].'] '.($validated['keterangan'] ?? '');
@@ -304,46 +342,32 @@ class PemasukanController extends Controller
      */
     public function verifikasi(Request $request, ZiswafPenerimaan $pemasukan)
     {
-        $action = $request->input('action');
-        $roleName = $request->user()->role === 'admin' ? 'admin' : 'petugas keuangan';
-
-        if ($action === 'terima') {
-            $pemasukan->update([
-                'payment_status'     => $pemasukan->payment_status === 'manual_pending' ? 'manual_paid' : $pemasukan->payment_status,
-                'status_verifikasi'  => 'diterima',
-                'catatan_verifikasi' => $request->input('catatan_verifikasi', 'Diverifikasi oleh ' . $roleName . '.'),
-                'verified_by'        => $request->user()->id,
-                'verified_at'        => now(),
-                'paid_at'            => $pemasukan->paid_at ?? now(),
-            ]);
-
-            // Posting otomatis ke jurnal PSAK 109
-            app(\App\Services\Accounting\Psak109PostingService::class)->postPenerimaan($pemasukan);
-
-            return back()->with('success', 'Pemasukan berhasil diterima dan dijurnal.');
-        }
-
-        if ($action === 'tolak') {
-            $request->validate([
-                'catatan_verifikasi' => ['required', 'string', 'max:1000'],
-            ]);
-
-            if ($pemasukan->jurnal_id) {
-                app(\App\Services\Accounting\Psak109PostingService::class)->reverseJurnal($pemasukan->jurnal_id, 'Verifikasi ditolak');
-                $pemasukan->jurnal_id = null;
+        $validated = $request->validate([
+            'action' => ['required', Rule::in(['terima', 'tolak'])],
+            'catatan_verifikasi' => [Rule::requiredIf($request->input('action') === 'tolak'), 'nullable', 'string', 'max:1000'],
+        ]);
+        DB::transaction(function () use ($request, $pemasukan, $validated) {
+            $receipt = ZiswafPenerimaan::lockForUpdate()->findOrFail($pemasukan->id);
+            if (! $receipt->can_verify_manually) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'action' => 'Transaksi ini tidak menunggu verifikasi manual. Pembayaran gateway mengikuti konfirmasi penyedia pembayaran.',
+                ]);
             }
-
-            $pemasukan->update([
-                'status_verifikasi'  => 'ditolak',
-                'catatan_verifikasi' => $request->input('catatan_verifikasi'),
-                'verified_by'        => $request->user()->id,
-                'verified_at'        => now(),
+            $accepted = $validated['action'] === 'terima';
+            $actor = $request->user('admin') ?? $request->user('pegawai');
+            $receipt->fill([
+                'payment_status' => $accepted ? 'manual_paid' : 'manual_rejected',
+                'status_verifikasi' => $accepted ? 'diterima' : 'ditolak',
+                'catatan_verifikasi' => $validated['catatan_verifikasi'] ?? 'Diverifikasi oleh petugas keuangan.',
+                'verified_by' => $actor->id,
+                'verified_at' => now(),
             ]);
-
-            return back()->with('success', 'Pemasukan berhasil ditolak.');
-        }
-
-        return back()->withErrors(['action' => 'Aksi tidak valid.']);
+            if ($accepted) $receipt->paid_at = $receipt->paid_at ?? now();
+            $receipt->save();
+            if ($accepted) app(\App\Services\Accounting\Psak109PostingService::class)->postPenerimaan($receipt);
+        });
+        return back()->with('success', $validated['action'] === 'terima'
+            ? 'Pemasukan berhasil diterima dan dijurnal.' : 'Pemasukan berhasil ditolak.');
     }
 
     /**

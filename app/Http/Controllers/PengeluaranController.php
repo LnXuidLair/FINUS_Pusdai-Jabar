@@ -198,7 +198,6 @@ class PengeluaranController extends Controller
             'zakat_details.*.nik_penerima' => ['nullable', 'string', 'max:30'],
             'zakat_details.*.alamat_penerima' => ['nullable', 'string', 'max:500'],
             'zakat_details.*.no_hp_penerima' => ['nullable', 'string', 'max:30'],
-            'zakat_details.*.jumlah_penerima' => ['nullable', 'integer'],
             'zakat_details.*.nominal' => ['nullable', 'integer'],
         ]);
 
@@ -294,41 +293,42 @@ class PengeluaranController extends Controller
         $saldoZakat = 0;
 
         if ($transactionCategory->requires_asnaf || $transactionCategory->form_type === 'zakat_distribution') {
+            $percentageData = $request->validate([
+                'target_asnaf' => ['required', 'array'],
+                'target_asnaf.*' => ['required', 'numeric', 'min:0', 'max:100'],
+            ]);
+            $targetAsnaf = collect($asnafLabels)->map(fn ($label, $asnaf) =>
+                $percentageData['target_asnaf'][$asnaf] ?? 0)->all();
+            $allocations = app(\App\Services\ZakatDistributionAllocator::class)
+                ->allocate((int) $validated['jumlah'], $targetAsnaf);
+            $details = collect($request->input('zakat_details', []));
+            $request->merge(['zakat_details' => $details->filter(fn ($detail) =>
+                is_array($detail) && ($targetAsnaf[$detail['asnaf'] ?? ''] ?? 0) > 0
+            )->values()->all()]);
             $zakatValidated = $request->validate([
                 'periode_zakat' => ['required', 'date_format:Y-m'],
-                'target_asnaf' => ['nullable', 'array'],
-                'target_asnaf.*' => ['nullable', 'numeric', 'min:0', 'max:100'],
-                'zakat_details' => ['required', 'array', 'min:1', 'max:100'],
-                'zakat_details.*.asnaf' => [
-                    'required',
-                    'string',
-                    Rule::in(array_keys($asnafLabels)),
-                ],
+                'zakat_details' => ['required', 'array', 'min:1'],
+                'zakat_details.*.asnaf' => ['required', 'string', 'distinct', Rule::in(array_keys($asnafLabels))],
                 'zakat_details.*.nama_penerima' => ['required', 'string', 'max:150'],
                 'zakat_details.*.nik_penerima' => ['nullable', 'string', 'max:30'],
                 'zakat_details.*.alamat_penerima' => ['nullable', 'string', 'max:500'],
                 'zakat_details.*.no_hp_penerima' => ['nullable', 'string', 'max:30'],
-                'zakat_details.*.jumlah_penerima' => ['required', 'integer', 'min:1'],
-                'zakat_details.*.nominal' => ['required', 'integer', 'min:1'],
+            ], [
+                'zakat_details.required' => 'Isi penanggung jawab untuk setiap asnaf yang disalurkan.',
+                'zakat_details.*.asnaf.distinct' => 'Setiap asnaf hanya boleh dicatat satu kali.',
+                'zakat_details.*.nama_penerima.required' => 'Nama penanggung jawab wajib diisi untuk asnaf yang disalurkan.',
             ]);
             $zakatDetails = $zakatValidated['zakat_details'];
-            $targetAsnaf = collect($zakatValidated['target_asnaf'] ?? [])
-                ->only(array_keys($asnafLabels))
-                ->map(fn ($value): float => (float) ($value ?? 0))
-                ->all();
-
-            if ((int) collect($zakatDetails)->sum('nominal') !== (int) $validated['jumlah']) {
-                throw ValidationException::withMessages([
-                    'zakat_details' => 'Total nominal seluruh penerima harus sama dengan jumlah pengeluaran.',
-                ]);
+            $submittedAsnaf = array_column($zakatDetails, 'asnaf');
+            foreach ($allocations as $asnaf => $nominal) {
+                if ($nominal > 0 && ! in_array($asnaf, $submittedAsnaf, true)) {
+                    throw ValidationException::withMessages(['zakat_details' => 'Penanggung jawab untuk '.$asnafLabels[$asnaf].' wajib diisi.']);
+                }
             }
-
-            $totalTarget = array_sum($targetAsnaf);
-            if ($totalTarget > 0 && abs($totalTarget - 100.0) > 0.01) {
-                throw ValidationException::withMessages([
-                    'target_asnaf' => 'Total target seluruh asnaf harus 100% atau dikosongkan jika periode tidak menggunakan target.',
-                ]);
+            foreach ($zakatDetails as &$detail) {
+                $detail['nominal'] = $allocations[$detail['asnaf']];
             }
+            unset($detail);
 
             $periodeStart = Carbon::createFromFormat('Y-m-d', $zakatValidated['periode_zakat'].'-01')->startOfDay();
             $periodeEnd = $periodeStart->copy()->endOfMonth()->startOfDay();
@@ -422,6 +422,10 @@ class PengeluaranController extends Controller
                 $validated,
                 $zakatDetails
             ): void {
+                if (config('cash_transfers.enabled')) {
+                    Coa::whereIn('kode_akun', ['1101', '1102'])->orderBy('id')->lockForUpdate()->get();
+                    app(\App\Services\Accounting\CashTransferService::class)->assertAvailable($coaKredit, $validated['jenis_dana'], (int) $validated['jumlah']);
+                }
                 $periodeZakat = null;
                 if ($transactionCategory->requires_asnaf || $transactionCategory->form_type === 'zakat_distribution') {
                     $periodeZakat = PeriodePenyaluranZakat::query()
@@ -484,7 +488,7 @@ class PengeluaranController extends Controller
                         'tanggal' => $validated['tanggal'],
                         'kategori_program' => 'Penyaluran Zakat - '.$label,
                         'penerima_manfaat' => $detail['nama_penerima'],
-                        'jumlah_penerima' => $detail['jumlah_penerima'],
+                        'jumlah_penerima' => 0,
                         'nominal' => $detail['nominal'],
                         'jenis_ziswaf_asal' => 'zakat',
                         'bukti_penyaluran' => $path,
