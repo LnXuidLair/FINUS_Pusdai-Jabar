@@ -808,7 +808,7 @@ html[data-finus-theme="dark"] {
                         class="{{ request()->routeIs('pegawai.presensi.index') ? 'active' : '' }}">
                         <i class="ti-calendar"></i>
                         <span>Presensi Saya</span>
-                        
+
                     </a>
                 </li>
                 <li>
@@ -820,6 +820,7 @@ html[data-finus-theme="dark"] {
                 </li>
                 @if($canManageFinance)
                     <li class="label">Transaksi</li>
+                    <li><a href="{{ config('cash_transfers.enabled') ? route('pegawai.keuangan.cash-transfers.index') : route('pegawai.laporan-keuangan.saldo-kas-bank') }}" class="{{ request()->routeIs('pegawai.keuangan.cash-transfers.*', 'pegawai.laporan-keuangan.saldo-kas-bank') ? 'active' : '' }}"><i class="fa-solid fa-wallet"></i><span>Saldo Kas & Bank</span></a></li>
                     <li>
                         <a href="{{ route('pegawai.keuangan.pemasukan.index') }}"
                             class="{{ request()->routeIs('pegawai.keuangan.pemasukan.*') ? 'active' : '' }}">
@@ -834,6 +835,8 @@ html[data-finus-theme="dark"] {
                             <span>Pengeluaran</span>
                         </a>
                     </li>
+
+
                     <li>
                         <a href="{{ route('pegawai.keuangan.penggajian.index') }}"
                             class="{{ request()->routeIs('pegawai.keuangan.penggajian.*') ? 'active' : '' }}">
@@ -844,13 +847,19 @@ html[data-finus-theme="dark"] {
                 @endif
                 @if($canViewFinanceReports)
                     <li class="label">Laporan Keuangan</li>
-                    <li>
+                    @if(!$canManageFinance)
+                    <li><a href="{{ route('pegawai.laporan-keuangan.saldo-kas-bank') }}" class="{{ request()->routeIs('pegawai.laporan-keuangan.saldo-kas-bank') ? 'active' : '' }}"><i class="fa-solid fa-wallet"></i><span>Saldo Kas & Bank</span></a></li>
+                    @endif
+
+                <li>
                         <a href="{{ route('pegawai.laporan-keuangan.jurnal-umum') }}"
                             class="{{ request()->routeIs('pegawai.laporan-keuangan.jurnal-umum') ? 'active' : '' }}">
                             <i class="fa-solid fa-book-open"></i>
                             <span>Jurnal Umum</span>
                         </a>
                     </li>
+                <li><a href="{{ route('pegawai.laporan-keuangan.buku-besar') }}" class="{{ request()->routeIs('pegawai.laporan-keuangan.buku-besar') ? 'active' : '' }}"><i class="fa-solid fa-book"></i><span>Buku Besar</span></a></li>
+
                     <li>
                         <a href="{{ route('pegawai.laporan-keuangan.jurnal-pemasukan') }}"
                             class="{{ request()->routeIs('pegawai.laporan-keuangan.jurnal-pemasukan') ? 'active' : '' }}">

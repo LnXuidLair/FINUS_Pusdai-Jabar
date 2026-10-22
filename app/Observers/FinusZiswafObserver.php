@@ -50,7 +50,7 @@ class FinusZiswafObserver implements ShouldHandleEventsAfterCommit
         if ($key) {
             $isParking = in_array((string) $transaction->jenis_ziswaf, ['parkir', 'hasil_parkir'], true);
             $category = $isParking ? 'pemasukan' : 'ziswaf';
-            $detailUrl = $isParking ? route('admin.pemasukan.index') : route('admin.ziswaf.transaksi.index');
+            $detailUrl = route('admin.pemasukan.index', ['tab' => $verified === 'pending' ? 'pending' : 'history', 'q' => $transaction->order_id]);
             app(FinusNotificationService::class)->notifyAdmins((int) $transaction->organization_id,
                 $key, $category, $title, $message, $detailUrl);
             // Jamaah tidak terikat organisasi tetap hanya melihat transaksi miliknya.

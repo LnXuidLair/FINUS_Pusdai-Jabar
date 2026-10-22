@@ -533,12 +533,16 @@ class LaporanController extends Controller
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
         ];
 
+        $ledgerAccounts = Coa::orderBy('kode_akun')->get();
+        $ledgerFunds = BukuBesarController::funds();
         return view('admin.laporan.arus-kas', compact(
             'periode',
             'tahun',
             'bulan',
             'daftarTahun',
             'daftarBulan',
+            'ledgerAccounts',
+            'ledgerFunds',
             'detailPemasukan',
             'detailPengeluaran',
             'totalPemasukan',

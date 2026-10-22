@@ -39,6 +39,7 @@ class Psak109PostingService
                     'tanggal' => $tanggalObj->toDateString(),
                     'no_referensi' => 'JMASUK-'.str_pad($penerimaan->id, 6, '0', STR_PAD_LEFT),
                     'sumber_tabel' => 'ziswaf_penerimaan',
+                    'organization_id' => $penerimaan->organization_id,
                     'sumber_id' => $penerimaan->id,
                     'deskripsi' => $this->keteranganPenerimaan($penerimaan),
                     'keterangan' => $penerimaan->keterangan,
@@ -61,17 +62,28 @@ class Psak109PostingService
             $penerimaan->persentase_amil = 0;
             $penerimaan->nominal_amil = 0;
 
-            // 1. Debit Kas/Bank (1 Rekening Utama dengan penanda jenis_dana)
-            JurnalDetail::create([
-                'jurnal_id' => $jurnal->id,
-                'coa_id' => $coaKas->id,
-                'deskripsi' => 'Penerimaan kas/bank '.$penerimaan->jenis_ziswaf,
-                'debit' => $nominal,
-                'credit' => 0,
-                'jenis_dana' => $jenisDana,
-                'restriction_type' => null,
-                'psak_reference' => $psakReference,
-            ]);
+            $cashParts = [[$coaKas, $nominal]];
+            if ($penerimaan->metode_pembayaran === 'qris_tunai') {
+                $parts = $penerimaan->rincian_perhitungan['pembagian_pembayaran'] ?? [];
+                $qris = $parts['qris'] ?? null;
+                $tunai = $parts['tunai'] ?? null;
+                if (! is_int($qris) || ! is_int($tunai) || $qris <= 0 || $tunai <= 0 || $qris + $tunai !== $nominal) {
+                    throw new \DomainException('Rincian QRIS dan tunai harus positif dan sama dengan total pemasukan.');
+                }
+                $cashParts = [[$this->resolveCoaKas('bank'), $qris], [$this->resolveCoaKas('tunai'), $tunai]];
+            }
+            foreach ($cashParts as [$account, $partAmount]) {
+                JurnalDetail::create([
+                    'jurnal_id' => $jurnal->id,
+                    'coa_id' => $account->id,
+                    'deskripsi' => 'Penerimaan '.$account->nama_akun.' '.$penerimaan->jenis_ziswaf,
+                    'debit' => $partAmount,
+                    'credit' => 0,
+                    'jenis_dana' => $jenisDana,
+                    'restriction_type' => null,
+                    'psak_reference' => $psakReference,
+                ]);
+            }
 
             // 2. Kredit Akun Penerimaan ZISWAF
             JurnalDetail::create([

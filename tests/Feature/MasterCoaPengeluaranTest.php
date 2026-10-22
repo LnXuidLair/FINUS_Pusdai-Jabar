@@ -535,6 +535,7 @@ class MasterCoaPengeluaranTest extends TestCase
 
     public function test_expense_journal_exception_rolls_back_and_shows_user_message(): void
     {
+        config(['cash_transfers.enabled' => false]); // Uji kegagalan posting pada alur lama secara terpisah.
         $admin = $this->admin();
         $category = $this->category($admin, 'KEBERSIHAN');
         $postingService = \Mockery::mock(Psak109PostingService::class)->makePartial();

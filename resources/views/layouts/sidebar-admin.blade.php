@@ -1158,7 +1158,7 @@ html[data-finus-theme="dark"] {
                     </a>
                 </li>
                 <li class="label">Transaksi</li>
-                <li><a href="{{ route('admin.ziswaf.transaksi.index') }}" class="{{ request()->routeIs('admin.ziswaf.*') ? 'active' : '' }}"><i class="fa-solid fa-hand-holding-heart"></i><span>Transaksi ZISWAF</span></a></li>
+                <li><a href="{{ route('admin.cash-transfers.index') }}" class="{{ request()->routeIs('admin.cash-transfers.*') ? 'active' : '' }}"><i class="fa-solid fa-wallet"></i><span>Saldo Kas & Bank</span></a></li>
                 <li>
                     <a
                         href="{{ route('admin.pemasukan.index') }}"
@@ -1166,7 +1166,7 @@ html[data-finus-theme="dark"] {
                     >
                         <i class="fa-solid fa-hand-holding-dollar"></i>
                         <span>Pemasukan</span>
-                        
+
                     </a>
                 </li>
                 <li>
@@ -1176,9 +1176,12 @@ html[data-finus-theme="dark"] {
                     >
                         <i class="fa-solid fa-receipt"></i>
                         <span>Pengeluaran</span>
-                        
+
                     </a>
                 </li>
+                @if(config('cash_transfers.enabled'))
+
+                @endif
                 <li>
                     <a
                         href="{{ route('admin.penggajian.index') }}"
@@ -1191,6 +1194,7 @@ html[data-finus-theme="dark"] {
 
                 <li class="label">Laporan</li>
 
+
                 <li>
                     <a
                         href="{{ route('admin.presensi.index') }}"
@@ -1198,9 +1202,10 @@ html[data-finus-theme="dark"] {
                     >
                         <i class="fa-solid fa-calendar-check"></i>
                         <span>Presensi</span>
-                        
+
                     </a>
                 </li>
+
                 <li>
                     <a
                         href="{{ route('admin.laporan.jurnal-umum') }}"
@@ -1209,6 +1214,7 @@ html[data-finus-theme="dark"] {
                         <span>Jurnal Umum</span>
                     </a>
                 </li>
+                <li><a href="{{ route('admin.laporan.buku-besar') }}" class="{{ request()->routeIs('admin.laporan.buku-besar') ? 'active' : '' }}"><i class="fa-solid fa-book"></i><span>Buku Besar</span></a></li>
                 <li>
                     <a
                         href="{{ route('admin.laporan.jurnal-pemasukan') }}"
