@@ -87,6 +87,19 @@ class CashTransferTest extends TestCase
         $this->assertSame(0, JurnalUmum::where('sumber_tabel', 'kas_bank_transfer')->count());
     }
 
+    public function test_allocation_only_offers_three_funds_and_rejects_other_funds(): void
+    {
+        [$kas, $bank] = $this->prepareAccounts();
+        $this->get(route('admin.cash-transfers.index'))->assertOk()
+            ->assertViewHas('labels', ['operasional' => 'Dana Operasional', 'wakaf' => 'Dana Wakaf', 'zakat' => 'Dana Zakat'])
+            ->assertDontSee('value="amil"', false)->assertDontSee('value="wakaf_temporer"', false)
+            ->assertDontSee('Dana Infak/Sedekah')->assertDontSee('Dana Nazhir');
+        foreach (['infak_sedekah', 'amil', 'nazhir', 'wakaf_temporer', 'non_halal'] as $fund) {
+            $this->post(route('admin.cash-transfers.store'), ['source' => $bank->id, 'target' => $kas->id, 'fund' => $fund, 'amount' => 100, 'date' => today()->toDateString(), 'description' => 'Uji batas golongan'])->assertSessionHasErrors('fund');
+        }
+        $this->assertSame(0, JurnalUmum::where('sumber_tabel', 'kas_bank_transfer')->count());
+    }
+
     public function test_wrong_fund_insufficient_balance_and_feature_switch(): void
     {
         [$kas, $bank] = $this->prepareAccounts();

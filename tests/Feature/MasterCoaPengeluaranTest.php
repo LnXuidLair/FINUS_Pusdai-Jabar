@@ -29,7 +29,7 @@ class MasterCoaPengeluaranTest extends TestCase
             ->assertSee('Dana Operasional')
             ->assertSee('Penyaluran Zakat kepada Mustahik')
             ->assertSee('Peralatan dan Bahan Kebersihan')
-            ->assertSee('Pengembalian Pokok Wakaf Temporer')
+            ->assertDontSee('Pengembalian Pokok Wakaf Temporer')
             ->assertSee('Sumber Dana')
             ->assertSee('Ditentukan otomatis dari kode akun kategori.')
             ->assertSee('Pratinjau Jurnal')

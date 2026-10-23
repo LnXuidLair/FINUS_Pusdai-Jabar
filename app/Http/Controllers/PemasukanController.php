@@ -218,7 +218,7 @@ class PemasukanController extends Controller
             'wakaf_type'        => [
                 Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'wakaf'),
                 'nullable',
-                Rule::in(['permanen', 'temporer', 'hasil_pengelolaan']),
+                Rule::in(['permanen', 'hasil_pengelolaan']),
             ],
             'wakaf_return_date' => [
                 Rule::requiredIf(fn (): bool => $request->input('wakaf_type') === 'temporer'),

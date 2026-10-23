@@ -621,7 +621,6 @@
                                     <label for="wakaf_type">Jenis Wakaf</label>
                                     <select name="wakaf_type" id="wakaf_type" class="form-control @error('wakaf_type') is-invalid @enderror" required>
                                         <option value="permanen" @selected(old('wakaf_type', 'permanen') === 'permanen')>Wakaf Permanen</option>
-                                        <option value="temporer" @selected(old('wakaf_type') === 'temporer')>Wakaf Temporer</option>
                                     </select>
                                     @error('wakaf_type')<small class="text-danger">{{ $message }}</small>@enderror
                                 </div>

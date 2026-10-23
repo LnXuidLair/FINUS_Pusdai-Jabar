@@ -17,7 +17,7 @@ class CashTransferController extends Controller
             return redirect()->route('pegawai.keuangan.cash-transfers.index');
         }
         $balances = $service->balances();
-        $labels = config('transaction_categories.fund_types') + ['amil' => 'Dana Amil', 'nazhir' => 'Dana Nazhir', 'non_halal' => 'Dana Non-Halal'];
+        $labels = config('cash_transfers.fund_types');
         return view('admin.cash-balances', compact('balances', 'labels'));
     }
 
@@ -26,7 +26,7 @@ class CashTransferController extends Controller
         abort_unless(config('cash_transfers.enabled'), 404);
         $accounts = Coa::whereIn('kode_akun', ['1101', '1102'])->orderBy('kode_akun')->get();
         $balances = $service->balances();
-        $labels = config('transaction_categories.fund_types') + ['amil' => 'Dana Amil', 'nazhir' => 'Dana Nazhir', 'non_halal' => 'Dana Non-Halal'];
+        $labels = config('cash_transfers.fund_types');
         $journals = JurnalUmum::where('sumber_tabel', 'kas_bank_transfer')->with('detail.coa')->latest('id')->paginate(15);
         $cancelled = JurnalUmum::where('sumber_tabel', 'kas_bank_reversal')->pluck('sumber_id')->all();
         return view('admin.cash-transfers', compact('accounts', 'balances', 'labels', 'journals', 'cancelled'));
@@ -37,7 +37,7 @@ class CashTransferController extends Controller
         abort_unless(config('cash_transfers.enabled'), 404);
         $data = $request->validate([
             'source' => ['required', 'integer'], 'target' => ['required', 'integer', 'different:source'],
-            'fund' => ['required', Rule::in(array_merge(array_keys(config('transaction_categories.fund_types')), ['amil', 'nazhir', 'non_halal']))],
+            'fund' => ['required', Rule::in(array_keys(config('cash_transfers.fund_types')))],
             'amount' => ['required', 'integer', 'min:1'], 'date' => ['required', 'date', 'before_or_equal:today'],
             'description' => ['required', 'string', 'max:255'],
         ]);

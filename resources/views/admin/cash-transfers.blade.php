@@ -4,6 +4,7 @@
 @section('content')
 @php
     $transferRoute = request()->routeIs('pegawai.*') ? 'pegawai.keuangan.cash-transfers' : 'admin.cash-transfers';
+    $allocationBalances = array_intersect_key($balances, $labels);
     $totalKas = collect($balances)->sum(fn ($row) => $row['1101'] ?? 0);
     $totalBank = collect($balances)->sum(fn ($row) => $row['1102'] ?? 0);
 @endphp
@@ -18,13 +19,13 @@
 <div><span>{{ $label }}</span><strong>Rp {{ number_format($balance, 0, ',', '.') }}</strong></div>
 @endforeach
 </div>
-<h2>Saldo dana berdasarkan akun COA</h2>
-<div style="overflow-x:auto"><table class="table"><thead><tr><th>Golongan</th><th>Kas · 1101</th><th>Bank · 1102</th><th>Total</th></tr></thead><tbody>
-@foreach($labels + array_fill_keys(array_keys($balances), 'Golongan lainnya') as $fund => $label)
-<tr><td>{{ $label }}</td><td>Rp {{ number_format($balances[$fund]['1101'] ?? 0, 0, ',', '.') }}</td><td>Rp {{ number_format($balances[$fund]['1102'] ?? 0, 0, ',', '.') }}</td><td>Rp {{ number_format(array_sum($balances[$fund] ?? []), 0, ',', '.') }}</td></tr>
+<h2 class="fund-balance-title">Saldo dana berdasarkan akun COA</h2>
+<div class="fund-balance-scroll"><table class="fund-balance-table" aria-label="Saldo golongan dana per akun"><colgroup><col style="width:34%"><col style="width:22%"><col style="width:22%"><col style="width:22%"></colgroup><thead><tr><th scope="col">Golongan Dana</th><th scope="col">Kas <span>1101</span></th><th scope="col">Bank <span>1102</span></th><th scope="col">Total</th></tr></thead><tbody>
+@foreach($labels as $fund => $label)
+<tr><th scope="row">{{ $label }}</th><td>Rp {{ number_format($balances[$fund]['1101'] ?? 0, 0, ',', '.') }}</td><td>Rp {{ number_format($balances[$fund]['1102'] ?? 0, 0, ',', '.') }}</td><td>Rp {{ number_format(array_sum($balances[$fund] ?? []), 0, ',', '.') }}</td></tr>
 @endforeach
-<tr><th>Total</th><th>Rp {{ number_format(collect($balances)->sum(fn($row) => $row['1101'] ?? 0), 0, ',', '.') }}</th><th>Rp {{ number_format(collect($balances)->sum(fn($row) => $row['1102'] ?? 0), 0, ',', '.') }}</th><th>Rp {{ number_format(collect($balances)->sum(fn($row) => array_sum($row)), 0, ',', '.') }}</th></tr>
-</tbody></table></div><p>Saldo lokasi dihitung dari penanda golongan pada jurnal. Saldo negatif perlu diperiksa terhadap transaksi atau alokasi lama.</p>
+</tbody><tfoot><tr><th scope="row">Total tiga golongan</th><th>Rp {{ number_format(collect($allocationBalances)->sum(fn($row) => $row['1101'] ?? 0), 0, ',', '.') }}</th><th>Rp {{ number_format(collect($allocationBalances)->sum(fn($row) => $row['1102'] ?? 0), 0, ',', '.') }}</th><th>Rp {{ number_format(collect($allocationBalances)->sum(fn($row) => array_sum($row)), 0, ',', '.') }}</th></tr>
+</tfoot></table></div><p class="fund-balance-note">Tabel mencakup Operasional, Wakaf, dan Zakat. Ringkasan saldo di atas mencakup seluruh golongan, termasuk saldo lama.</p><p class="fund-balance-note">Saldo dihitung dari jurnal. Saldo negatif perlu diperiksa terhadap transaksi atau alokasi lama.</p>
 </section>
 
 <section class="fmu-card" style="padding:24px"><h2>Riwayat dan jurnal pemindahan</h2><div style="overflow-x:auto"><table class="table"><thead><tr><th>Tanggal / Referensi</th><th>Keterangan</th><th>Golongan</th><th>Akun COA</th><th>Debit</th><th>Kredit</th><th>Status</th></tr></thead><tbody>
@@ -50,6 +51,33 @@
 @endsection
 
 @push('styles')
+<style>
+.cash-bank-page .fund-balance-title{margin:4px 0 16px;font-size:20px;font-weight:700;line-height:1.4}
+.fund-balance-scroll{overflow-x:auto;border:1px solid #e1ebe5;border-radius:14px;margin-bottom:14px}
+.fund-balance-table{width:100%;min-width:620px;border-collapse:collapse;table-layout:fixed;font-size:14px;font-variant-numeric:tabular-nums}
+.fund-balance-table th,.fund-balance-table td{padding:18px 22px;border-bottom:1px solid #e8efea;text-align:right;white-space:nowrap;vertical-align:middle}
+.fund-balance-table th:first-child{text-align:left}
+.cash-bank-page .fund-balance-table thead tr th:last-child,
+.cash-bank-page .fund-balance-table tbody tr td:last-child,
+.cash-bank-page .fund-balance-table tfoot tr th:last-child{text-align:right!important}
+.fund-balance-table thead th{background:#f4f8f5;color:#52665a;font-size:12px;font-weight:700}
+.fund-balance-table thead span{display:inline-block;margin-left:6px;font-size:11px;font-weight:500;color:#718478}
+.fund-balance-table tbody th{font-weight:600;color:#334b3d}
+.fund-balance-table tbody td{color:#52665a}
+.fund-balance-table tbody td:last-child{font-weight:700;color:#1c5535}
+.fund-balance-table tbody tr:hover{background:#fafcfb}
+.fund-balance-table tfoot th{background:#eef7f1;color:#145b35;font-weight:750;border-bottom:0;border-top:2px solid #d6e8dc}
+.cash-bank-page .fund-balance-note{margin:5px 0 0;font-size:12px;line-height:1.65;color:#718078}
+html[data-finus-theme="dark"] .fund-balance-scroll{border-color:#31493a}
+html[data-finus-theme="dark"] .fund-balance-table th,html[data-finus-theme="dark"] .fund-balance-table td{border-color:#31493a}
+html[data-finus-theme="dark"] .fund-balance-table thead th{background:#172a1e;color:#c3d7ca}
+html[data-finus-theme="dark"] .fund-balance-table tbody th,html[data-finus-theme="dark"] .fund-balance-table tbody td{color:#d2dfd6}
+html[data-finus-theme="dark"] .fund-balance-table tbody td:last-child{color:#86efac}
+html[data-finus-theme="dark"] .fund-balance-table tbody tr:hover{background:#192d20}
+html[data-finus-theme="dark"] .fund-balance-table tfoot th{background:#193924;color:#a3efbb}
+html[data-finus-theme="dark"] .cash-bank-page .fund-balance-note{color:#a6b9ad}
+@media(max-width:760px){.fund-balance-table th,.fund-balance-table td{padding:15px 16px}.cash-bank-page .fund-balance-title{font-size:18px}}
+</style>
 <style>.cash-bank-page{display:grid;gap:24px}#pemindahan-saldo{scroll-margin-top:110px}#pemindahan-saldo .fmu-field{margin-bottom:16px}.transfer-balances{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:24px 0}.transfer-balances>div{padding:20px;border:1px solid #dce8df;border-radius:14px;background:#f4fbf6}.transfer-balances span{display:block;font-size:13px;color:#64748b}.transfer-balances strong{display:block;margin-top:8px;font-size:24px;color:#087543;font-variant-numeric:tabular-nums}html[data-finus-theme="dark"] .transfer-balances>div{background:#14281c;border-color:#31493a}html[data-finus-theme="dark"] .transfer-balances strong{color:#86efac}@media(max-width:760px){.transfer-balances{grid-template-columns:1fr}}</style>
 @endpush
 
