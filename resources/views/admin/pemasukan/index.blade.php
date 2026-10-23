@@ -333,6 +333,20 @@
         min-width: 820px;
     }
 
+    .pm-table .pm-col-method {
+        width: 230px;
+        min-width: 230px;
+    }
+
+    .pm-table .pm-col-proof {
+        width: 105px;
+        min-width: 105px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .pm-col-proof .pm-abtn { white-space: nowrap; }
+
     .pm-table thead th {
         background: #f8fafc;
         padding: 11px 16px;
@@ -787,9 +801,10 @@
                         <th>Sumber</th>
                         <th>Golongan</th>
                         <th>Nominal</th>
-                        <th>Metode / Akun</th>
+                        <th class="pm-col-method">Metode / Akun</th>
                         <th>Jurnal</th>
                         <th>Status</th>
+                        <th class="pm-col-proof">Bukti</th>
                         <th style="text-align: center !important; width: 140px;">Aksi</th>
                     </tr>
                 </thead>
@@ -821,9 +836,6 @@
                             <td>
                                 <div style="font-weight:700;color:#1e293b;">
                                     {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') : '-' }}
-                                </div>
-                                <div style="font-size:11px;color:#94a3b8;margin-top:1px;">
-                                    {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('H:i') : '' }}
                                 </div>
                             </td>
 
@@ -879,7 +891,7 @@
                             </td>
 
                             {{-- Metode --}}
-                            <td style="font-size:12px;color:#475569;">{{ $metLabel }}<div style="margin-top:5px;">{{ $item->metode_pembayaran === 'qris_tunai' ? '1101 · Kas + 1102 · Bank' : (in_array($item->metode_pembayaran, ['tunai', 'kas'], true) ? '1101 · Kas' : '1102 · Bank') }}
+                            <td class="pm-col-method" style="font-size:12px;color:#475569;">{{ $metLabel }}<div style="margin-top:5px;">{{ $item->metode_pembayaran === 'qris_tunai' ? '1101 · Kas + 1102 · Bank' : (in_array($item->metode_pembayaran, ['tunai', 'kas'], true) ? '1101 · Kas' : '1102 · Bank') }}
 @if($item->metode_pembayaran === 'qris_tunai')<small>QRIS: Rp {{ number_format($item->rincian_perhitungan['pembagian_pembayaran']['qris'] ?? 0, 0, ',', '.') }}<br>Tunai: Rp {{ number_format($item->rincian_perhitungan['pembagian_pembayaran']['tunai'] ?? 0, 0, ',', '.') }}</small>@endif</div></td>
                             <td style="font-size:12px;">{{ $item->jurnal?->no_referensi ?? 'Belum dijurnal' }}</td>
 
@@ -905,6 +917,16 @@
                                 @endif
                             </td>
 
+                            <td class="pm-col-proof">
+                                @if(!$isJamaah && $item->bukti_pembayaran)
+                                    <a href="{{ route($pemasukanProofRoute, $item) }}" target="_blank" rel="noopener" class="pm-abtn pm-abtn-bukti"><i class="fa-solid fa-file-image"></i> Lihat Bukti</a>
+                                @elseif(!$isJamaah)
+                                    <span style="color:#94a3b8;font-size:12px;">Belum dilampirkan</span>
+                                @else
+                                    <span style="color:#94a3b8;">&mdash;</span>
+                                @endif
+                            </td>
+
                             {{-- Aksi --}}
                             <td style="text-align: center !important;">
                                 @if($hasAction)
@@ -925,7 +947,7 @@
                                             </button>
                                         @endif
 
-                                        @if($item->bukti_pembayaran)
+                                        @if($isJamaah && $item->bukti_pembayaran)
                                             <a href="{{ route($pemasukanProofRoute, $item) }}" target="_blank" class="pm-abtn pm-abtn-bukti" title="Lihat bukti">
                                                 <i class="fa-solid fa-file-image"></i>
                                             </a>
@@ -948,7 +970,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9">
+                            <td colspan="10">
                                 <div class="pm-empty">
                                     <i class="fa-solid fa-hand-holding-dollar"></i>
                                     <div class="pm-empty-h">Belum ada data pemasukan</div>
@@ -1006,9 +1028,10 @@
                 </div>
 
                 <div id="pmParkingFields" hidden>
+                    <p style="font-size:12px;color:#64748b;line-height:1.6;">Parkir dicatat sebagai setoran per shift ke Dana Operasional. Lampirkan laporan/rekap parkir; penerimaan ini langsung dijurnal tanpa alur pembayaran jamaah. Tunai masuk Kas, QRIS masuk Bank, dan pembayaran gabungan dipisahkan sesuai nominal masing-masing.</p>
                     <div class="pm-frow">
                         <div class="pm-fgroup">
-                            <label class="pm-flabel" for="pm_parkir_pegawai">Penanggung Jawab Parkir <span>*</span></label>
+                            <label class="pm-flabel" for="pm_parkir_pegawai">Penanggung Jawab Shift <span>*</span></label>
                             <select name="id_pegawai" id="pm_parkir_pegawai" class="pm-fselect" disabled>
                                 <option value="">-- Pilih Petugas Parkir --</option>
                                 @foreach($pegawaiPenanggungJawab as $pegawaiItem)
@@ -1041,7 +1064,6 @@
                     <label class="pm-flabel" for="pm_wakaf_type">Jenis Penerimaan Wakaf <span>*</span></label>
                     <select name="wakaf_type" id="pm_wakaf_type" class="pm-fselect" disabled>
                         <option value="permanen" @selected(old('wakaf_type', 'permanen') === 'permanen')>Wakaf Permanen</option>
-                        <option value="temporer" @selected(old('wakaf_type') === 'temporer')>Wakaf Temporer</option>
                         <option value="hasil_pengelolaan" @selected(old('wakaf_type') === 'hasil_pengelolaan')>Hasil Pengelolaan Wakaf</option>
                     </select>
                 </div>

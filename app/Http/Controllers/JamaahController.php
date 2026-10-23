@@ -577,7 +577,7 @@ class JamaahController extends Controller
             'wakaf_type' => [
                 Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'wakaf'),
                 'nullable',
-                Rule::in(['permanen', 'temporer']),
+                Rule::in(['permanen']),
             ],
             'wakaf_return_date' => [
                 Rule::requiredIf(fn (): bool => $request->input('wakaf_type') === 'temporer'),

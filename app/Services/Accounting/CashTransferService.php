@@ -32,6 +32,9 @@ class CashTransferService
 
     public function transfer(array $data): JurnalUmum
     {
+        if (! array_key_exists($data['fund'], config('cash_transfers.fund_types'))) {
+            throw ValidationException::withMessages(['fund' => 'Pilih Dana Operasional, Dana Wakaf, atau Dana Zakat.']);
+        }
         return DB::transaction(function () use ($data) {
             // Urutan kunci selalu sama agar pemindahan bersamaan tidak memakai saldo yang sama.
             $accounts = Coa::whereIn('kode_akun', ['1101', '1102'])->orderBy('id')->lockForUpdate()->get()->keyBy('id');

@@ -132,6 +132,9 @@ class TransactionCategoryController extends Controller
             $validated['requires_employee'] = false;
             $validated['requires_assignment_proof'] = false;
         }
+        if ($fundType === 'wakaf_temporer' || $validated['form_type'] === 'temporary_wakaf_return') {
+            $validated['is_active'] = false;
+        }
         $validated['is_system'] = $category?->is_system ?? false;
 
         return $validated;

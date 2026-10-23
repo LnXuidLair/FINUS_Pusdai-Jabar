@@ -4,6 +4,9 @@
 @section('content')
 @include('layouts.partials.finus-ui')
 @php
+    $allocationBalances = array_intersect_key($balances, $labels);
+    $allocationCash = collect($allocationBalances)->sum(fn ($row) => $row['1101'] ?? 0);
+    $allocationBank = collect($allocationBalances)->sum(fn ($row) => $row['1102'] ?? 0);
     $rupiah = fn ($value) => 'Rp '.number_format((float) $value, 0, ',', '.');
     $cash = collect($balances)->sum(fn ($row) => $row['1101'] ?? 0);
     $bank = collect($balances)->sum(fn ($row) => $row['1102'] ?? 0);
@@ -17,11 +20,11 @@
     </div>
     <section class="fmu-card balance-detail"><h2>Saldo per Golongan Dana</h2><p>Halaman ini hanya untuk pemantauan. Pemindahan dana dikelola oleh admin dan bagian Keuangan.</p>
         <div class="balance-scroll"><table><thead><tr><th>Golongan Dana</th><th>Kas · 1101</th><th>Bank · 1102</th><th>Total</th></tr></thead><tbody>
-        @foreach($labels + array_fill_keys(array_keys($balances), 'Golongan lainnya') as $fund => $label)
+        @foreach($labels as $fund => $label)
             <tr><td>{{ $label }}</td><td>{{ $rupiah($balances[$fund]['1101'] ?? 0) }}</td><td>{{ $rupiah($balances[$fund]['1102'] ?? 0) }}</td><td><strong>{{ $rupiah(array_sum($balances[$fund] ?? [])) }}</strong></td></tr>
         @endforeach
-        </tbody><tfoot><tr><th>Total</th><th>{{ $rupiah($cash) }}</th><th>{{ $rupiah($bank) }}</th><th>{{ $rupiah($cash + $bank) }}</th></tr></tfoot></table></div>
-        <small>Saldo mencakup seluruh jurnal tercatat, termasuk pemindahan dan jurnal balik. Pemindahan Kas–Bank mengubah lokasi dana; total dana tetap.</small>
+        </tbody><tfoot><tr><th>Total tiga golongan</th><th>{{ $rupiah($allocationCash) }}</th><th>{{ $rupiah($allocationBank) }}</th><th>{{ $rupiah($allocationCash + $allocationBank) }}</th></tr></tfoot></table></div>
+        <small>Tabel menampilkan Operasional, Wakaf, dan Zakat. Ringkasan saldo di atas tetap mencakup seluruh golongan dana. Saldo mencakup seluruh jurnal tercatat, termasuk pemindahan dan jurnal balik. Pemindahan Kas–Bank mengubah lokasi dana; total dana tetap.</small>
     </section>
 </div>
 @endsection

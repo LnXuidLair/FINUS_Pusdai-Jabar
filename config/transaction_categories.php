@@ -45,6 +45,6 @@ return [
         ['code' => 'OPERASIONAL-LAIN', 'name' => 'Operasional Lain-lain', 'coa_code' => '5199'],
         ['code' => 'PENYALURAN-ZAKAT', 'name' => 'Penyaluran Zakat kepada Mustahik', 'coa_code' => '5210', 'form_type' => 'zakat_distribution', 'requires_asnaf' => true],
         ['code' => 'PENYALURAN-WAKAF', 'name' => 'Penyaluran Manfaat Wakaf', 'coa_code' => '5411', 'form_type' => 'wakaf_distribution'],
-        ['code' => 'PENGEMBALIAN-WAKAF', 'name' => 'Pengembalian Pokok Wakaf Temporer', 'coa_code' => '2201', 'form_type' => 'temporary_wakaf_return'],
+        ['code' => 'PENGEMBALIAN-WAKAF', 'name' => 'Pengembalian Pokok Wakaf Temporer', 'coa_code' => '2201', 'form_type' => 'temporary_wakaf_return', 'is_active' => false],
     ],
 ];

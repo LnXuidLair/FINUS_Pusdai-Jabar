@@ -58,7 +58,9 @@ class TransactionCategory extends Model
 
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('is_active', true);
+        return $query->where('is_active', true)
+            ->where(fn (Builder $q) => $q->whereNull('form_type')->orWhere('form_type', '!=', 'temporary_wakaf_return'))
+            ->whereHas('coa', fn (Builder $coa) => $coa->where('kode_akun', '!=', '2201'));
     }
 
     public function allowsFund(string $fundType): bool
@@ -124,8 +126,12 @@ class TransactionCategory extends Model
                             'requires_employee' => $definition['requires_employee'] ?? false,
                             'requires_assignment_proof' => $definition['requires_assignment_proof'] ?? false,
                             'is_system' => true,
-                            'is_active' => true,
+                            'is_active' => $definition['is_active'] ?? true,
                         ]);
+                    }
+
+                    if ($fundType === 'wakaf_temporer' || $category->form_type === 'temporary_wakaf_return') {
+                        $category->is_active = false;
                     }
 
                     $category->fill([
