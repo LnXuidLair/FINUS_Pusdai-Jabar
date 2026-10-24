@@ -5,7 +5,7 @@
     $roleTitle = $isPegawai ? 'Keuangan' : 'Admin';
     $pemasukanIndexRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.index' : 'admin.pemasukan.index';
     $pemasukanProofRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.bukti' : 'admin.pemasukan.bukti';
-    $pemasukanStoreRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.store' : 'admin.pemasukan.store';
+    $pemasukanCreateRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.create' : 'admin.pemasukan.create';
     $pemasukanVerifikasiRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.verifikasi' : 'admin.pemasukan.verifikasi';
     $pemasukanDestroyRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.destroy' : 'admin.pemasukan.destroy';
     $pemasukanBasePath = $isPegawai ? url('/pegawai/keuangan/pemasukan') : url('/admin/pemasukan');
@@ -687,9 +687,9 @@
             <p>Seluruh penerimaan jamaah dan admin, verifikasi manual, serta riwayat pembayaran dalam satu tempat.</p>
         </div>
         <div class="pm-hero-actions">
-            <button type="button" class="pm-btn-add is-primary" onclick="pmOpenTambah()">
+            <a class="pm-btn-add is-primary" href="{{ route($pemasukanCreateRoute) }}">
                 <i class="fa-solid fa-plus"></i> Tambah Pemasukan
-            </button>
+            </a>
         </div>
     </div>
 
@@ -826,7 +826,7 @@
                             }
                             $namaSumber = $namaSumber ?? 'Hamba Allah';
 
-                            $hasAction = $item->can_verify_manually || $item->bukti_pembayaran || (!$isJamaah);
+                            $hasAction = $item->can_verify_manually || (!$isJamaah);
                         @endphp
                         <tr>
                             {{-- Nomor urut --}}
@@ -918,12 +918,14 @@
                             </td>
 
                             <td class="pm-col-proof">
-                                @if(!$isJamaah && $item->bukti_pembayaran)
-                                    <a href="{{ route($pemasukanProofRoute, $item) }}" target="_blank" rel="noopener" class="pm-abtn pm-abtn-bukti"><i class="fa-solid fa-file-image"></i> Lihat Bukti</a>
-                                @elseif(!$isJamaah)
-                                    <span style="color:#94a3b8;font-size:12px;">Belum dilampirkan</span>
+                                @if($item->bukti_pembayaran)
+                                    <button type="button" class="pm-abtn pm-abtn-bukti" data-transaction-proof
+                                        data-proof-url="{{ route($pemasukanProofRoute, $item) }}"
+                                        data-proof-title="Bukti Pembayaran Pemasukan" title="Lihat bukti pemasukan">
+                                        <i class="fa-solid fa-eye"></i> Lihat Bukti
+                                    </button>
                                 @else
-                                    <span style="color:#94a3b8;">&mdash;</span>
+                                    <span style="color:#94a3b8;font-size:12px;">Tidak ada bukti dilampirkan</span>
                                 @endif
                             </td>
 
@@ -945,12 +947,6 @@
                                             <button type="button" class="pm-abtn pm-abtn-tolak" onclick="pmOpenTolak({{ $item->id }})">
                                                 <i class="fa-solid fa-xmark"></i> Tolak
                                             </button>
-                                        @endif
-
-                                        @if($isJamaah && $item->bukti_pembayaran)
-                                            <a href="{{ route($pemasukanProofRoute, $item) }}" target="_blank" class="pm-abtn pm-abtn-bukti" title="Lihat bukti">
-                                                <i class="fa-solid fa-file-image"></i>
-                                            </a>
                                         @endif
 
                                         @if(!$isJamaah)
@@ -997,164 +993,6 @@
 </div>
 
 {{-- ================================================================
-     MODAL — Tambah Pemasukan Manual
-================================================================ --}}
-<div class="pm-overlay" id="pmTambahOverlay">
-    <div class="pm-modal" role="dialog" aria-modal="true">
-        <div class="pm-modal-head">
-            <div class="pm-modal-title">
-                <span class="pm-modal-title-icon"><i class="fa-solid fa-plus"></i></span>
-                <div>
-                    <h2>Tambah Pemasukan</h2>
-                    <p>Catat penerimaan dengan data transaksi yang lengkap.</p>
-                </div>
-            </div>
-            <button type="button" class="pm-modal-x" onclick="pmCloseTambah()" aria-label="Tutup">&times;</button>
-        </div>
-
-        <form method="POST" action="{{ route($pemasukanStoreRoute) }}" enctype="multipart/form-data" id="pmTambahForm">
-            @csrf
-            <div class="pm-modal-body">
-
-                {{-- Golongan --}}
-                <div class="pm-fgroup">
-                    <label class="pm-flabel" for="pm_golongan">Golongan <span>*</span></label>
-                    <select name="jenis_ziswaf" id="pm_golongan" class="pm-fselect" required>
-                        <option value="">-- Pilih Golongan --</option>
-                        @foreach($golonganLabels as $val => $lbl)
-                            <option value="{{ $val }}" {{ old('jenis_ziswaf') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div id="pmParkingFields" hidden>
-                    <p style="font-size:12px;color:#64748b;line-height:1.6;">Parkir dicatat sebagai setoran per shift ke Dana Operasional. Lampirkan laporan/rekap parkir; penerimaan ini langsung dijurnal tanpa alur pembayaran jamaah. Tunai masuk Kas, QRIS masuk Bank, dan pembayaran gabungan dipisahkan sesuai nominal masing-masing.</p>
-                    <div class="pm-frow">
-                        <div class="pm-fgroup">
-                            <label class="pm-flabel" for="pm_parkir_pegawai">Penanggung Jawab Shift <span>*</span></label>
-                            <select name="id_pegawai" id="pm_parkir_pegawai" class="pm-fselect" disabled>
-                                <option value="">-- Pilih Petugas Parkir --</option>
-                                @foreach($pegawaiPenanggungJawab as $pegawaiItem)
-                                    <option value="{{ $pegawaiItem->id }}" @selected((string) old('id_pegawai') === (string) $pegawaiItem->id)>
-                                        {{ $pegawaiItem->nama_pegawai }} · {{ $pegawaiItem->jabatan ?: 'Pegawai Umum' }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @if($pegawaiPenanggungJawab->isEmpty())
-                                <small>Belum ada petugas parkir terverifikasi. Lengkapi data pegawai dengan jabatan Parkir terlebih dahulu.</small>
-                            @endif
-                        </div>
-                        <div class="pm-fgroup">
-                            <label class="pm-flabel" for="pm_parkir_shift">Shift <span>*</span></label>
-                            <select name="shift" id="pm_parkir_shift" class="pm-fselect" disabled>
-                                <option value="pagi" @selected(old('shift', 'pagi') === 'pagi')>Pagi</option>
-                                <option value="siang" @selected(old('shift') === 'siang')>Siang</option>
-                                <option value="malam" @selected(old('shift') === 'malam')>Malam</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="pm-fgroup">
-                        <label class="pm-flabel" for="pm_parkir_rekap">Nomor Laporan / Rekap</label>
-                        <input type="text" name="nomor_rekap" id="pm_parkir_rekap" class="pm-finput" disabled
-                            maxlength="80" placeholder="Contoh: PKR-270926-P1" value="{{ old('nomor_rekap') }}">
-                    </div>
-                </div>
-
-                <div class="pm-fgroup" id="pmWakafTypeGroup" hidden>
-                    <label class="pm-flabel" for="pm_wakaf_type">Jenis Penerimaan Wakaf <span>*</span></label>
-                    <select name="wakaf_type" id="pm_wakaf_type" class="pm-fselect" disabled>
-                        <option value="permanen" @selected(old('wakaf_type', 'permanen') === 'permanen')>Wakaf Permanen</option>
-                        <option value="hasil_pengelolaan" @selected(old('wakaf_type') === 'hasil_pengelolaan')>Hasil Pengelolaan Wakaf</option>
-                    </select>
-                </div>
-
-                <div class="pm-frow" id="pmWakafRules" hidden>
-                    <div class="pm-fgroup" id="pmWakafReturnGroup" hidden>
-                        <label class="pm-flabel" for="pm_wakaf_return_date">Tanggal Pengembalian Pokok <span>*</span></label>
-                        <input type="date" name="wakaf_return_date" id="pm_wakaf_return_date" class="pm-finput"
-                            value="{{ old('wakaf_return_date') }}" disabled>
-                    </div>
-                    <div class="pm-fgroup" id="pmNazhirGroup" hidden>
-                        <label class="pm-flabel" for="pm_persentase_nazhir">Imbalan Nazhir (%) <span>*</span></label>
-                        <input type="number" name="persentase_nazhir" id="pm_persentase_nazhir" class="pm-finput"
-                            min="0" max="10" step="0.01" value="{{ old('persentase_nazhir', 10) }}" disabled>
-                        <div class="pm-fhint">Maksimal 10% dari hasil pengelolaan neto yang terealisasi.</div>
-                    </div>
-                </div>
-
-                <div class="pm-frow">
-                    {{-- Nominal --}}
-                    <div class="pm-fgroup">
-                        <label class="pm-flabel" for="pm_nominal" id="pmNominalLabel">Nominal (Rp) <span>*</span></label>
-                        <input type="number" name="nominal" id="pm_nominal" class="pm-finput"
-                            min="1000" step="1" placeholder="Contoh: 1250 atau 500000"
-                            value="{{ old('nominal') }}" required>
-                    </div>
-                    {{-- Tanggal --}}
-                    <div class="pm-fgroup">
-                        <label class="pm-flabel" for="pm_tanggal">Tanggal <span>*</span></label>
-                        <input type="date" name="tanggal" id="pm_tanggal" class="pm-finput"
-                            value="{{ old('tanggal', now()->format('Y-m-d')) }}"
-                            max="{{ now()->format('Y-m-d') }}" required>
-                    </div>
-                </div>
-
-                {{-- Metode --}}
-                <div class="pm-fgroup">
-                    <label class="pm-flabel" for="pm_metode">Metode Pembayaran <span>*</span></label>
-                    <select name="metode_pembayaran" id="pm_metode" class="pm-fselect" required>
-                        <option value="">-- Pilih Metode --</option>
-                        <option value="manual_transfer" {{ old('metode_pembayaran') === 'manual_transfer' ? 'selected' : '' }}>Transfer Bank</option>
-                        <option value="qris_manual"     {{ old('metode_pembayaran') === 'qris_manual'     ? 'selected' : '' }}>QRIS</option>
-                        <option value="qris_tunai" {{ old('metode_pembayaran') === 'qris_tunai' ? 'selected' : '' }}>QRIS + Tunai / Cash</option>
-                        <option value="tunai"           {{ old('metode_pembayaran') === 'tunai'           ? 'selected' : '' }}>Tunai / Cash</option>
-                    </select>
-                </div>
-
-                <div id="pmMixedPayments" hidden>
-                    <div class="pm-frow">
-                        <div class="pm-fgroup"><label class="pm-flabel" for="pm_nominal_qris">Nominal QRIS (Rp) <span>*</span></label><input type="number" name="nominal_qris" id="pm_nominal_qris" class="pm-finput" min="1" max="999999999999" step="1" value="{{ old('nominal_qris') }}" disabled><div class="pm-fhint">Dicatat ke Bank · 1102.</div></div>
-                        <div class="pm-fgroup"><label class="pm-flabel" for="pm_nominal_tunai">Nominal Tunai / Cash (Rp) <span>*</span></label><input type="number" name="nominal_tunai" id="pm_nominal_tunai" class="pm-finput" min="1" max="999999999999" step="1" value="{{ old('nominal_tunai') }}" disabled><div class="pm-fhint">Dicatat ke Kas · 1101.</div></div>
-                    </div>
-                    <p class="pm-fhint">Jumlah uang masuk dihitung otomatis dari nominal QRIS + tunai.</p>
-                </div>
-
-                {{-- Nama Donatur --}}
-                <div class="pm-fgroup" id="pmDonaturGroup">
-                    <label class="pm-flabel" for="pm_donatur">Nama Donatur / Muzakki</label>
-                    <input type="text" name="nama_donatur" id="pm_donatur" class="pm-finput"
-                        placeholder="Opsional — kosongkan jika anonim"
-                        value="{{ old('nama_donatur') }}" maxlength="255">
-                    <div class="pm-fhint">Nama dicatat di keterangan, tidak membuat akun baru.</div>
-                </div>
-
-                {{-- Keterangan --}}
-                <div class="pm-fgroup">
-                    <label class="pm-flabel" for="pm_ket" id="pmKeteranganLabel">Keterangan</label>
-                    <textarea name="keterangan" id="pm_ket" class="pm-ftarea"
-                        placeholder="Keterangan tambahan (opsional)…" maxlength="1000">{{ old('keterangan') }}</textarea>
-                </div>
-
-                {{-- Bukti --}}
-                <div class="pm-fgroup">
-                    <label class="pm-flabel" for="pm_bukti" id="pmBuktiLabel">Bukti Pembayaran</label>
-                    <input type="file" name="bukti_pembayaran" id="pm_bukti" class="pm-finput"
-                        accept=".jpg,.jpeg,.png,.pdf" style="padding:7px 12px;">
-                    <div class="pm-fhint">JPG, PNG atau PDF. Maks. 2 MB.</div>
-                </div>
-
-            </div>
-            <div class="pm-modal-foot">
-                <button type="button" class="pm-cancel" onclick="pmCloseTambah()">Batal</button>
-                <button type="submit" class="pm-submit" id="pmSubmitBtn">
-                    <i class="fa-solid fa-floppy-disk"></i> Simpan Pemasukan
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- ================================================================
      MODAL — Tolak Verifikasi
 ================================================================ --}}
 <div class="pm-tolak-overlay" id="pmTolakOverlay">
@@ -1185,108 +1023,6 @@
 </div>
 
 <script>
-    /* ── Modal Tambah ── */
-    function pmOpenTambah() {
-        document.getElementById('pmTambahOverlay').classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
-    function pmCloseTambah() {
-        document.getElementById('pmTambahOverlay').classList.remove('open');
-        document.body.style.overflow = '';
-    }
-    document.getElementById('pmTambahOverlay').addEventListener('click', function(e) {
-        if (e.target === this) pmCloseTambah();
-    });
-
-    const pmGolongan = document.getElementById('pm_golongan');
-    const pmParkingFields = document.getElementById('pmParkingFields');
-    const pmParkingEmployee = document.getElementById('pm_parkir_pegawai');
-    const pmParkingShift = document.getElementById('pm_parkir_shift');
-    const pmParkingReport = document.getElementById('pm_parkir_rekap');
-    const pmNominalLabel = document.getElementById('pmNominalLabel');
-    const pmDonaturGroup = document.getElementById('pmDonaturGroup');
-    const pmDonatur = document.getElementById('pm_donatur');
-    const pmKeteranganLabel = document.getElementById('pmKeteranganLabel');
-    const pmKeterangan = document.getElementById('pm_ket');
-    const pmBuktiLabel = document.getElementById('pmBuktiLabel');
-    const pmBukti = document.getElementById('pm_bukti');
-    const pmWakafTypeGroup = document.getElementById('pmWakafTypeGroup');
-    const pmWakafType = document.getElementById('pm_wakaf_type');
-    const pmWakafRules = document.getElementById('pmWakafRules');
-    const pmWakafReturnGroup = document.getElementById('pmWakafReturnGroup');
-    const pmWakafReturn = document.getElementById('pm_wakaf_return_date');
-    const pmNazhirGroup = document.getElementById('pmNazhirGroup');
-    const pmNazhir = document.getElementById('pm_persentase_nazhir');
-
-    function pmSyncPostingRules() {
-        const isWakaf = pmGolongan.value === 'wakaf';
-        const isParkir = pmGolongan.value === 'parkir';
-        const paymentMethod = document.getElementById('pm_metode');
-        const transferOption = paymentMethod?.querySelector('option[value="manual_transfer"]');
-        if (transferOption) {
-            transferOption.disabled = isParkir;
-            transferOption.hidden = isParkir;
-            if (isParkir && paymentMethod.value === 'manual_transfer') paymentMethod.value = '';
-        }
-        const mixedOption = paymentMethod.querySelector('option[value="qris_tunai"]');
-        mixedOption.disabled = !isParkir;
-        mixedOption.hidden = !isParkir;
-        if (!isParkir && paymentMethod.value === 'qris_tunai') paymentMethod.value = '';
-        const isMixed = isParkir && paymentMethod.value === 'qris_tunai';
-        document.getElementById('pmMixedPayments').hidden = !isMixed;
-        const qrisInput = document.getElementById('pm_nominal_qris');
-        const cashInput = document.getElementById('pm_nominal_tunai');
-        [qrisInput, cashInput].forEach(input => { input.disabled = !isMixed; input.required = isMixed; });
-        const totalInput = document.getElementById('pm_nominal');
-        if (totalInput.readOnly && !isMixed) totalInput.value = '';
-        totalInput.readOnly = isMixed;
-        if (isMixed) totalInput.value = Number(qrisInput.value || 0) + Number(cashInput.value || 0);
-        const isTemporary = isWakaf && pmWakafType.value === 'temporer';
-        const isManagementResult = isWakaf && pmWakafType.value === 'hasil_pengelolaan';
-
-        pmParkingFields.hidden = !isParkir;
-        pmParkingEmployee.disabled = !isParkir;
-        pmParkingEmployee.required = isParkir;
-        pmParkingShift.disabled = !isParkir;
-        pmParkingShift.required = isParkir;
-        pmParkingReport.disabled = !isParkir;
-        pmDonaturGroup.hidden = isParkir;
-        pmDonatur.disabled = isParkir;
-        pmBukti.required = isParkir;
-        pmNominalLabel.innerHTML = isParkir
-            ? 'Jumlah Uang Masuk (Rp) <span>*</span>'
-            : 'Nominal (Rp) <span>*</span>';
-        pmKeteranganLabel.textContent = isParkir ? 'Catatan Laporan' : 'Keterangan';
-        pmKeterangan.placeholder = isParkir
-            ? 'Catatan laporan atau serah terima shift'
-            : 'Keterangan tambahan (opsional)…';
-        pmBuktiLabel.innerHTML = isParkir
-            ? 'Bukti Laporan Parkir <span>*</span>'
-            : 'Bukti Pembayaran';
-
-        pmWakafTypeGroup.hidden = !isWakaf;
-        pmWakafType.disabled = !isWakaf;
-        pmWakafType.required = isWakaf;
-        pmWakafRules.hidden = !(isTemporary || isManagementResult);
-        pmWakafReturnGroup.hidden = !isTemporary;
-        pmWakafReturn.disabled = !isTemporary;
-        pmWakafReturn.required = isTemporary;
-        pmNazhirGroup.hidden = !isManagementResult;
-        pmNazhir.disabled = !isManagementResult;
-        pmNazhir.required = isManagementResult;
-    }
-
-    document.getElementById('pm_metode').addEventListener('change', pmSyncPostingRules);
-    ['pm_nominal_qris', 'pm_nominal_tunai'].forEach(id => document.getElementById(id).addEventListener('input', pmSyncPostingRules));
-    pmGolongan.addEventListener('change', pmSyncPostingRules);
-    pmWakafType.addEventListener('change', pmSyncPostingRules);
-    pmSyncPostingRules();
-
-    /* Buka modal otomatis jika ada validasi error dari server */
-    @if($errors->any() && old('jenis_ziswaf'))
-        document.addEventListener('DOMContentLoaded', () => pmOpenTambah());
-    @endif
-
     /* ── Modal Tolak ── */
     function pmOpenTolak(id) {
         const url = '{{ $pemasukanBasePath }}/' + id + '/verifikasi';
@@ -1306,19 +1042,12 @@
 
     /* ── ESC untuk tutup modal ── */
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') { pmCloseTambah(); pmCloseTolak(); }
+        if (e.key === 'Escape') pmCloseTolak();
     });
 
-    /* ── Cegah double submit ── */
-    const pmSubmitBtn = document.getElementById('pmSubmitBtn');
-    if (pmSubmitBtn) {
-        pmSubmitBtn.closest('form').addEventListener('submit', function() {
-            pmSubmitBtn.disabled = true;
-            pmSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan…';
-        });
-    }
 
 </script>
+@include('shared.transaction-proof-preview')
 @endsection
 
 {{-- FINUS DARK MODE LOCAL: admin/pemasukan/index.blade.php --}}
