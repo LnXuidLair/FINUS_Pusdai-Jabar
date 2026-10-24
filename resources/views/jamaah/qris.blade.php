@@ -96,4 +96,3 @@ html[data-finus-theme="dark"] body .qris-box .text-muted { color:#9EAEA4 !import
 html[data-finus-theme="dark"] body .finus-card .btn-light { border-color:#334B3B !important; background:#14211A !important; color:#D0DDD4 !important; }
 </style>
 @endpush
-

@@ -358,4 +358,3 @@ html[data-finus-theme="dark"] body .ag-form-page .ag-back { border-color:#334B3B
 html[data-finus-theme="dark"] body .ag-form-page .ag-toggle-wrap { border-color:#293D31 !important; background:#101A14 !important; }
 </style>
 @endpush
-

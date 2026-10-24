@@ -411,4 +411,3 @@ html[data-finus-theme="dark"] body .quick-action-link:hover { border-color:#3651
 html[data-finus-theme="dark"] body .quick-action-icon { background:#173620 !important; color:#64DD81 !important; }
 </style>
 @endpush
-

@@ -237,6 +237,24 @@ const themeColorMeta = document.querySelector(
             min-height: calc(100dvh - var(--auth-header-height));
         }
 
+        /*
+         * Semua halaman autentikasi mengikuti ukuran hero Register Admin:
+         * panel kiri setinggi layar, bukan setinggi form di panel kanan.
+         * Ini mencegah background-size: cover terlihat terlalu zoom
+         * saat form panjang (mis. registrasi/aktivasi/verifikasi).
+         * Pada tablet dan ponsel, media query responsif di bawah tetap berlaku.
+         */
+        @media (min-width: 1181px) {
+            .auth-layout > .auth-hero {
+                position: sticky;
+                top: var(--auth-header-height);
+                align-self: start;
+                height: calc(100vh - var(--auth-header-height));
+                height: calc(100dvh - var(--auth-header-height));
+                min-height: 620px;
+            }
+        }
+
         .auth-hero {
             position: relative;
             isolation: isolate;
@@ -1651,6 +1669,8 @@ html[data-finus-theme="dark"] body .auth-loading-card {
 }
     </style>
     @stack('dark-styles')
+    {{-- Kapitalisasi naratif saja; tidak memodifikasi data lama atau kolom identitas/kode. --}}
+    <script defer src="{{ asset('assets/js/finus-capitalization.js') }}"></script>
 </head>
 
 
@@ -2180,6 +2200,3 @@ const themeColorMeta = document.querySelector(
     @stack('scripts')
 </body>
 </html>
-
-
-
