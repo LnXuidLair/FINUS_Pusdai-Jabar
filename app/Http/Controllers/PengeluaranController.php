@@ -386,9 +386,10 @@ class PengeluaranController extends Controller
         try {
             $failureStep = 'upload_bukti_pembayaran';
             if ($request->hasFile('bukti_pembayaran')) {
-                $path = $request
-                    ->file('bukti_pembayaran')
-                    ->store('bukti_pembayaran', app(TransactionProofStorage::class)->disk());
+                $path = app(TransactionProofStorage::class)->store(
+                    $request->file('bukti_pembayaran'),
+                    'bukti_pengeluaran'
+                );
                 if ($path === false) {
                     throw new \RuntimeException('Gagal menyimpan bukti pembayaran. Transaksi dibatalkan.');
                 }

@@ -199,6 +199,21 @@ class PemasukanController extends Controller
     }
 
     /**
+     * Form pemasukan manual untuk admin dan pegawai bagian keuangan.
+     * Pembayaran otomatis Midtrans tetap melalui alur transaksi jamaah.
+     */
+    public function create()
+    {
+        return view('admin.pemasukan.create', [
+            'golonganLabels' => self::golonganLabels(),
+            'pegawaiPenanggungJawab' => Pegawai::query()
+                ->petugasParkir()
+                ->orderBy('nama_pegawai')
+                ->get(['id', 'nama_pegawai', 'jabatan']),
+        ]);
+    }
+
+    /**
      * Simpan pemasukan manual yang diinput oleh admin.
      */
     public function store(Request $request)
