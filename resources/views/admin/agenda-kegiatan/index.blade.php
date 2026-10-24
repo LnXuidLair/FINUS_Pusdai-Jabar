@@ -261,4 +261,3 @@ html[data-finus-theme="dark"] body .ag-page .ag-status-off { border-color:#4B554
 html[data-finus-theme="dark"] body .ag-page .ag-empty { color:#9EAEA4 !important; }
 </style>
 @endpush
-

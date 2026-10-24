@@ -11,4 +11,3 @@
 html[data-finus-theme="dark"] body .main { color:#F1F6F3 !important; }
 </style>
 @endpush
-

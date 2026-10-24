@@ -706,4 +706,3 @@ html[data-finus-theme="dark"] body .fmu-file-name { background:#0E1812 !importan
 html[data-finus-theme="dark"] body .fr-progress { background:#0C1510 !important; }
 </style>
 @endpush
-

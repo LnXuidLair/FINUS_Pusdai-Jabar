@@ -1205,4 +1205,3 @@ html[data-finus-theme="dark"] body .finance-table-empty { color:#9EAEA4 !importa
 html[data-finus-theme="dark"] body .finance-table-link { color:#A9F0B9 !important; }
 </style>
 @endpush
-

@@ -976,4 +976,3 @@ html[data-finus-theme="dark"] body .finus-data-page :where(.finus-data-empty-tit
 html[data-finus-theme="dark"] body .finus-data-page .finus-data-empty-text { color:#9EAEA4 !important; }
 </style>
 @endpush
-
