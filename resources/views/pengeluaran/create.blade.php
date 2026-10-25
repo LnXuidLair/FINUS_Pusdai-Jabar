@@ -27,7 +27,7 @@
     @if(config('cash_transfers.enabled') && auth('admin')->check())
     <p><a href="{{ route('admin.cash-transfers.index') }}">Lihat saldo golongan per Kas/Bank atau pindahkan saldo</a></p>
     @endif
-    <form method="POST" action="{{ route($pengeluaranStoreRoute) }}" enctype="multipart/form-data" class="fmu-card" id="expenseForm">
+    <form method="POST" action="{{ route($pengeluaranStoreRoute) }}" enctype="multipart/form-data" class="fmu-card" id="expenseForm" data-finus-proof-direct="{{ config('filesystems.disks.'.config('filesystems.attendance_disk', 'public').'.driver') === 's3' ? '1' : '0' }}">
         @csrf
         @if($errors->any())
             <div id="expenseErrorSummary" role="alert" tabindex="-1" class="fmu-expense-error-summary">
@@ -117,7 +117,7 @@
                 </div>
                 <div class="fmu-field fmu-field-full"><label class="fmu-label" for="deskripsi">Deskripsi <span class="fmu-required">*</span></label><textarea id="deskripsi" name="deskripsi" class="fmu-textarea @error('deskripsi') is-invalid @enderror" placeholder="Jelaskan keperluan pengeluaran secara singkat dan jelas" required>{{ old('deskripsi') }}</textarea>@error('deskripsi')<span class="fmu-error">{{ $message }}</span>@enderror</div>
                 <div class="fmu-field"><label class="fmu-label" for="jumlah">Jumlah <span class="fmu-required">*</span></label><div class="fmu-input-icon-wrap"><i class="fa-solid fa-rupiah-sign"></i><input type="number" min="1" step="1" id="jumlah" name="jumlah" value="{{ old('jumlah') }}" class="fmu-control @error('jumlah') is-invalid @enderror" placeholder="0" required></div><span class="fmu-help" id="expenseAmountPreview">Rp 0</span>@error('jumlah')<span class="fmu-error">{{ $message }}</span>@enderror</div>
-                <div class="fmu-field"><label class="fmu-label" for="bukti_pembayaran">Bukti Pembayaran</label><label class="fmu-upload" for="bukti_pembayaran"><span><i class="fa-solid fa-cloud-arrow-up"></i><strong>Pilih bukti pembayaran</strong><span>JPG, JPEG, PNG, atau PDF. Maksimal 2 MB.</span><span class="fmu-file-name" id="expenseFileName"></span></span></label><input type="file" id="bukti_pembayaran" name="bukti_pembayaran" accept=".jpg,.jpeg,.png,.pdf" class="d-none">@error('bukti_pembayaran')<span class="fmu-error">{{ $message }}</span>@enderror</div>
+                <div class="fmu-field"><label class="fmu-label" for="bukti_pembayaran">Bukti Pembayaran</label><label class="fmu-upload" for="bukti_pembayaran"><span><i class="fa-solid fa-cloud-arrow-up"></i><strong>Pilih bukti pembayaran</strong><span>JPG, JPEG, PNG, atau PDF. Maksimal 5 MB.</span><span class="fmu-file-name" id="expenseFileName"></span></span></label><input type="file" id="bukti_pembayaran" name="bukti_pembayaran" data-finus-proof-purpose="bukti_pengeluaran" accept=".jpg,.jpeg,.png,.pdf" class="d-none">@error('bukti_pembayaran')<span class="fmu-error">{{ $message }}</span>@enderror</div>
             </div>
 
             <div class="fmu-expense-balance-status" id="expenseBalanceStatus" role="status" aria-live="polite">
@@ -171,8 +171,8 @@
                     </div>
                     <div class="fmu-field">
                         <label class="fmu-label" for="bukti_surat_tugas"><span id="assignmentDocumentLabel">Dokumen Pendukung Honorarium</span> <span id="assignmentRequiredMark" class="fmu-required" hidden>*</span></label>
-                        <label class="fmu-upload" for="bukti_surat_tugas"><span><i class="fa-solid fa-file-signature"></i><strong>Pilih dokumen pendukung</strong><span>Surat pengantar magang, surat tugas, persetujuan, atau dokumen terkait (JPG, PNG, PDF; maksimal 2 MB).</span><span class="fmu-file-name" id="assignmentFileName"></span></span></label>
-                        <input type="file" id="bukti_surat_tugas" name="bukti_surat_tugas" accept=".jpg,.jpeg,.png,.pdf" class="d-none" disabled>
+                        <label class="fmu-upload" for="bukti_surat_tugas"><span><i class="fa-solid fa-file-signature"></i><strong>Pilih dokumen pendukung</strong><span>Surat pengantar magang, surat tugas, persetujuan, atau dokumen terkait (JPG, PNG, PDF; maksimal 5 MB).</span><span class="fmu-file-name" id="assignmentFileName"></span></span></label>
+                        <input type="file" id="bukti_surat_tugas" name="bukti_surat_tugas" data-finus-proof-purpose="dokumen_pendukung_honorarium" accept=".jpg,.jpeg,.png,.pdf" class="d-none" disabled>
                         <span class="fmu-help" id="assignmentDocumentHelp">Opsional. Dokumen diterbitkan oleh pihak berwenang; FINUS hanya menyimpannya.</span>
                         @error('bukti_surat_tugas')<span class="fmu-error">{{ $message }}</span>@enderror
                     </div>
@@ -362,7 +362,7 @@
         fileField?.addEventListener('change', () => {
             const file = fileField.files?.[0];
             if (!file) return;
-            if (file.size > 2 * 1024 * 1024 || !/\.(jpe?g|png|pdf)$/i.test(file.name)) {
+            if (file.size > 5 * 1024 * 1024 || !/\.(jpe?g|png|pdf)$/i.test(file.name)) {
                 fileField.value = '';
                 const fileNameLabel = fileField === input ? label : assignmentLabel;
                 if (fileNameLabel) {
@@ -370,7 +370,7 @@
                     fileNameLabel.classList.remove('is-visible');
                 }
                 const fileLabel = fileField === input ? 'Bukti pembayaran' : 'Dokumen pendukung';
-                clientError.textContent = `${fileLabel} harus berupa JPG, JPEG, PNG, atau PDF dengan ukuran maksimal 2 MB. Pilih file lain.`;
+                clientError.textContent = `${fileLabel} harus berupa JPG, JPEG, PNG, atau PDF dengan ukuran maksimal 5 MB. Pilih file lain.`;
                 clientError.hidden = false;
                 clientError.scrollIntoView({ block: 'center', behavior: 'smooth' });
             }

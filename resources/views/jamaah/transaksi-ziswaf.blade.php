@@ -491,7 +491,7 @@
 
                 <form method="POST"
                     action="{{ route('jamaah.transaksi.store', $jenis) }}"
-                    @if(! $paymentGatewayReady) enctype="multipart/form-data" @endif>
+                    @if(! $paymentGatewayReady) enctype="multipart/form-data" data-finus-proof-direct="{{ config('filesystems.disks.'.config('filesystems.attendance_disk', 'public').'.driver') === 's3' ? '1' : '0' }}" @endif>
                     @csrf
 
                     <div class="row">
@@ -1268,10 +1268,11 @@
                                     <div class="custom-dropzone" id="dropzone_wrapper">
                                         <i class="fa fa-cloud-upload-alt"></i>
                                         <h6 class="mb-1 font-weight-bold text-dark">Klik atau Seret Bukti Transfer</h6>
-                                        <p class="small-muted mb-0">Format: JPG, JPEG, PNG, PDF (Maksimal 2 MB)</p>
+                                        <p class="small-muted mb-0">Format: JPG, JPEG, PNG, PDF (Maksimal 5 MB)</p>
                                         <input
                                             type="file"
                                             name="bukti_pembayaran"
+                                            data-finus-proof-purpose="bukti_pemasukan"
                                             id="bukti_pembayaran"
                                             class="@error('bukti_pembayaran') is-invalid @enderror"
                                             accept=".jpg,.jpeg,.png,.pdf"

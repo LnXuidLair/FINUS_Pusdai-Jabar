@@ -248,7 +248,7 @@ class PemasukanController extends Controller
             ],
             'shift'             => [Rule::requiredIf($isParkir), 'nullable', Rule::in(['pagi', 'siang', 'malam'])],
             'nomor_rekap'       => ['nullable', 'string', 'max:80'],
-            'bukti_pembayaran'  => [Rule::requiredIf($isParkir), 'nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:2048'],
+            'bukti_pembayaran'  => [Rule::requiredIf($isParkir && ! $request->filled('bukti_pembayaran_upload_token')), 'nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120'],
         ], [
             'id_pegawai.required' => 'Pilih petugas parkir sebagai penanggung jawab shift.',
             'id_pegawai.in' => 'Penanggung jawab harus petugas parkir terverifikasi dari masjid ini.',
@@ -268,9 +268,8 @@ class PemasukanController extends Controller
         }
 
         $buktiPath = null;
-        if ($request->hasFile('bukti_pembayaran')) {
-            $buktiPath = $request->file('bukti_pembayaran')
-                ->store('bukti_pemasukan', app(TransactionProofStorage::class)->disk());
+        if ($request->hasFile('bukti_pembayaran') || $request->filled('bukti_pembayaran_upload_token')) {
+            $buktiPath = app(TransactionProofStorage::class)->storeFromRequest($request, 'bukti_pembayaran', 'bukti_pemasukan');
         }
 
         try {

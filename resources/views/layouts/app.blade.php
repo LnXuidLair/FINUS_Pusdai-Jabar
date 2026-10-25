@@ -2359,6 +2359,7 @@ html[data-finus-theme="dark"] body.finus-layout ::selection {
     @stack('dark-styles')
     {{-- Kapitalisasi naratif saja; tidak memodifikasi data lama atau kolom identitas/kode. --}}
     <script defer src="{{ asset('assets/js/finus-capitalization.js') }}"></script>
+<script defer src="{{ asset('assets/js/finus-direct-proof-upload.js') }}"></script>
 </head>
 @php
     $routeMiddleware = collect(request()->route()?->gatherMiddleware() ?? []);
