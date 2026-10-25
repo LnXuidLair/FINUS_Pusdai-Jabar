@@ -1459,4 +1459,3 @@ html[data-finus-theme="dark"] body .finus-data-page .finus-import-btn:not(.prima
 html[data-finus-theme="dark"] body .finus-data-page .finus-import-btn:not(.primary):hover { background:#193021 !important; border-color:#41634C !important; }
 </style>
 @endpush
-

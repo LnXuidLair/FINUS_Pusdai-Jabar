@@ -2976,7 +2976,7 @@ html[data-finus-theme="dark"] :where(.finus-secondary-button,.finus-nav-button,.
                         FINUS memudahkan Jamaah mengakses layanan <strong>Zakat, Infak, dan Wakaf</strong>, melakukan pembayaran, serta memantau riwayat transaksi dalam satu layanan yang sederhana, aman, dan transparan.
                     </p>
                     <div class="finus-hero-actions" id="layanan">
-                        <a href="{{ route('register.jamaah') }}" class="finus-primary-button" data-page-loading="Membuka login jamaah...">
+                        <a href="{{ route('register.jamaah') }}" class="finus-primary-button" data-page-loading="Membuka halaman pendaftaran jamaah...">
                             Daftar Jamaah <span aria-hidden="true">→</span>
                         </a>
                     </div>

@@ -135,7 +135,7 @@ class UnifiedPemasukanTest extends TestCase
         $category = \App\Models\TransactionCategory::where('code', 'PENGEMBALIAN-WAKAF')->firstOrFail();
         $this->assertFalse($category->is_active);
         $this->assertFalse(\App\Models\TransactionCategory::active()->whereKey($category->id)->exists());
-        $this->get(route('admin.pemasukan.index'))->assertOk()->assertDontSee('<option value="temporer"', false);
+        $this->get(route('admin.pemasukan.create'))->assertOk()->assertDontSee('<option value="temporer"', false);
         $this->get(route('admin.pengeluaran.create'))->assertOk()->assertDontSee('Pengembalian Pokok Wakaf Temporer');
         $old = $this->receipt('OLD-TEMPORARY-WAQF', ['jenis_ziswaf' => 'wakaf', 'wakaf_type' => 'temporer', 'status_verifikasi' => 'diterima', 'payment_status' => 'manual_paid']);
         $this->get(route('admin.pemasukan.index'))->assertOk()->assertSee('OLD-TEMPORARY-WAQF')->assertSee('Wakaf Temporer');

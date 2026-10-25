@@ -21,8 +21,7 @@ class TransactionProofStorage
     {
         if (! in_array($folder, [
             'bukti_pemasukan',
-            'bukti_pembayaran',
-            'bukti_surat_tugas', // Folder lama, tetap didukung untuk arsip terdahulu.
+            'bukti_pengeluaran',
             'dokumen_pendukung_honorarium',
             'bukti-pembayaran-ziswaf',
         ], true)) {
@@ -45,10 +44,19 @@ class TransactionProofStorage
         $disk = $this->existingDisk($path);
         abort_unless($disk, 404, 'Bukti transaksi tidak ditemukan.');
 
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $mimeType = match ($extension) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'pdf' => 'application/pdf',
+            default => 'application/octet-stream',
+        };
+
         return Storage::disk($disk)->response(
             $path,
             basename($path),
             [
+                'Content-Type' => $mimeType,
                 'Cache-Control' => 'private, no-store',
                 'X-Content-Type-Options' => 'nosniff',
             ],

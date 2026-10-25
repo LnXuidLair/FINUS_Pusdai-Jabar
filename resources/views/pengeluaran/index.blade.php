@@ -887,7 +887,8 @@
                             <th width="190">Kategori</th>
                             <th>Deskripsi</th>
                             <th width="175">Jumlah</th>
-                            <th width="155">Aksi</th>
+                            <th width="180">Bukti</th>
+                            <th width="125">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -984,18 +985,31 @@
                                         {{ $jumlahFormatted }}
                                     </span>
                                 </td>
-                                <td data-label="Aksi">
-                                    <div class="expense-row-actions">
+                                <td data-label="Bukti">
+                                    <div class="expense-row-actions" style="flex-wrap:wrap;">
                                         @if($item->bukti_pembayaran)
-                                            <a href="{{ route($pengeluaranProofRoute, ['pengeluaran' => $item->id, 'jenis' => 'pembayaran']) }}" target="_blank" rel="noopener" class="expense-action-btn" title="Lihat bukti pembayaran">
-                                                <i class="fa-solid fa-file-arrow-up"></i>
-                                            </a>
+                                            <button type="button" class="expense-action-btn" data-transaction-proof
+                                                data-proof-url="{{ route($pengeluaranProofRoute, ['pengeluaran' => $item->id, 'jenis' => 'pembayaran']) }}"
+                                                data-proof-title="Bukti Pembayaran Pengeluaran" title="Lihat bukti pembayaran"
+                                                aria-label="Lihat bukti pembayaran">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </button>
                                         @endif
                                         @if(!$isGaji && $item->bukti_surat_tugas)
-                                            <a href="{{ route($pengeluaranProofRoute, ['pengeluaran' => $item->id, 'jenis' => 'dokumen-pendukung']) }}" target="_blank" rel="noopener" class="expense-action-btn" title="Lihat dokumen pendukung pengeluaran">
+                                            <button type="button" class="expense-action-btn" data-transaction-proof
+                                                data-proof-url="{{ route($pengeluaranProofRoute, ['pengeluaran' => $item->id, 'jenis' => 'dokumen-pendukung']) }}"
+                                                data-proof-title="Dokumen Pendukung Honorarium" title="Lihat dokumen pendukung pengeluaran"
+                                                aria-label="Lihat dokumen pendukung pengeluaran">
                                                 <i class="fa-solid fa-file-signature"></i>
-                                            </a>
+                                            </button>
                                         @endif
+                                        @if(!$item->bukti_pembayaran && ($isGaji || !$item->bukti_surat_tugas))
+                                            <span style="color:#94a3b8;font-size:12px;">Belum dilampirkan</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td data-label="Aksi">
+                                    <div class="expense-row-actions">
                                         @if(!$isGaji)
                                             <button
                                                 type="button"
@@ -1015,7 +1029,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="finus-data-empty">
+                                <td colspan="8" class="finus-data-empty">
                                     <div class="finus-data-empty-icon">
                                         <i class="fa-solid fa-receipt"></i>
                                     </div>
@@ -1028,7 +1042,7 @@
                         @endforelse
 
                         <tr data-empty-search-row style="display:none;">
-                            <td colspan="7" class="finus-data-empty">
+                            <td colspan="8" class="finus-data-empty">
                                 <div class="finus-data-empty-icon">
                                     <i class="fa-solid fa-magnifying-glass"></i>
                                 </div>
@@ -1044,6 +1058,7 @@
         </div>
     </section>
 </div>
+@include('shared.transaction-proof-preview')
 @endsection
 
 @push('scripts')

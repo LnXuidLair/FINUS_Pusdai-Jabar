@@ -98,7 +98,12 @@ class PemasukanParkirTest extends TestCase
         $this->actingAs($this->admin(), 'admin')
             ->get(route('admin.pemasukan.index'))
             ->assertOk()
-            ->assertSee('onclick="pmOpenTambah()"', false)
+            ->assertSee(route('admin.pemasukan.create'), false)
+            ->assertDontSee('pmOpenTambah()', false);
+
+        $this->get(route('admin.pemasukan.create'))
+            ->assertOk()
+            ->assertSeeText('Tambah Pemasukan')
             ->assertDontSee('pmOpenPilihan', false)
             ->assertDontSee('pmOpenParkir', false)
             ->assertSee('<option value="parkir"', false)
@@ -168,5 +173,4 @@ class PemasukanParkirTest extends TestCase
             ]
         );
     }
-
 }

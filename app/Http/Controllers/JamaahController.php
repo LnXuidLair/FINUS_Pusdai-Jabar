@@ -876,8 +876,17 @@ class JamaahController extends Controller
         $orderId = 'ZSF-'.base_convert((string) now()->timestamp, 10, 36).'-'.random_int(100, 999);
         $buktiPembayaranPath = null;
         if (! $paymentGatewayReady && $request->hasFile('bukti_pembayaran')) {
-            $buktiPembayaranPath = $request->file('bukti_pembayaran')
-                ->store('bukti-pembayaran-ziswaf', app(TransactionProofStorage::class)->disk());
+            try {
+                $buktiPembayaranPath = app(TransactionProofStorage::class)->store(
+                    $request->file('bukti_pembayaran'),
+                    'bukti_pemasukan'
+                );
+            } catch (\Throwable $exception) {
+                report($exception);
+
+                return back()->withInput($request->except('bukti_pembayaran'))
+                    ->withErrors(['bukti_pembayaran' => 'Bukti pembayaran gagal diunggah. Silakan coba lagi. Transaksi belum disimpan.']);
+            }
         }
         try {
             $transaksi = ZiswafPenerimaan::create([
@@ -1897,5 +1906,4 @@ class JamaahController extends Controller
             'dana' => 'DANA',
         ];
     }
-
 }
