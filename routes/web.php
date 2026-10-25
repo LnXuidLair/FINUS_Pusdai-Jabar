@@ -179,6 +179,9 @@ Route::middleware(['auth:admin', 'role:admin'])
                     ->name('penggajian.index');
                 Route::patch('penggajian/{penggajian}/status', [PenggajianController::class, 'updateStatus'])
                     ->name('penggajian.status');
+                Route::post('pengeluaran/{pengeluaran}/bukti-pembayaran', [PengeluaranController::class, 'uploadBuktiPembayaran'])
+                    ->whereNumber('pengeluaran')
+                    ->name('pengeluaran.bukti-upload');
                 Route::get('pengeluaran/{pengeluaran}/bukti/{jenis}', [TransactionProofController::class, 'pengeluaran'])
                     ->whereIn('jenis', ['pembayaran', 'surat-tugas', 'dokumen-pendukung'])
                     ->name('pengeluaran.bukti');
@@ -296,6 +299,9 @@ Route::middleware(['auth:pegawai', 'role:pegawai',])
                 Route::delete('pemasukan/{pemasukan}', [PemasukanController::class, 'destroy'])
                     ->name('pemasukan.destroy');
 
+                Route::post('pengeluaran/{pengeluaran}/bukti-pembayaran', [PengeluaranController::class, 'uploadBuktiPembayaran'])
+                    ->whereNumber('pengeluaran')
+                    ->name('pengeluaran.bukti-upload');
                 Route::get('pengeluaran/{pengeluaran}/bukti/{jenis}', [TransactionProofController::class, 'pengeluaran'])
                     ->whereIn('jenis', ['pembayaran', 'surat-tugas', 'dokumen-pendukung'])
                     ->name('pengeluaran.bukti');
