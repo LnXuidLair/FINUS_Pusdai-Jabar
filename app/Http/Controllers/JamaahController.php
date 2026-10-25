@@ -574,17 +574,8 @@ class JamaahController extends Controller
                 'min:0.01',
                 'max:999999999',
             ],
-            'wakaf_type' => [
-                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'wakaf'),
-                'nullable',
-                Rule::in(['permanen']),
-            ],
-            'wakaf_return_date' => [
-                Rule::requiredIf(fn (): bool => $request->input('wakaf_type') === 'temporer'),
-                'nullable',
-                'date',
-                'after:today',
-            ],
+            'wakaf_type' => ['nullable', Rule::in(['permanen'])],
+            'wakaf_purpose' => [Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'wakaf'), 'nullable', Rule::in(['pembangunan', 'mushaf'])],
         ];
         if (! $paymentGatewayReady) {
             $rules['bukti_pembayaran'] = [
@@ -906,11 +897,9 @@ class JamaahController extends Controller
                 'tanggal' => now()->toDateString(),
                 'jenis_ziswaf' => $validated['jenis_ziswaf'],
                 'restriction_type' => null,
+                'wakaf_purpose' => $validated['jenis_ziswaf'] === 'wakaf' ? $validated['wakaf_purpose'] : null,
                 'wakaf_type' => $validated['jenis_ziswaf'] === 'wakaf'
-                    ? $validated['wakaf_type']
-                    : null,
-                'wakaf_return_date' => ($validated['wakaf_type'] ?? null) === 'temporer'
-                    ? $validated['wakaf_return_date']
+                    ? 'permanen'
                     : null,
                 'nominal' => $validated['nominal'],
                 'metode_pembayaran' => $validated['metode_pembayaran'],
@@ -1817,19 +1806,7 @@ class JamaahController extends Controller
 
     private function activeRicePrice(): ?HargaBarangZakat
     {
-        $beras = BarangZakat::query()
-            ->where('aktif', true)
-            ->where(function (Builder $query): void {
-                $query->whereRaw('LOWER(nama) = ?', ['beras'])
-                    ->orWhereRaw('LOWER(kode) = ?', ['beras']);
-            })
-            ->first();
-
-        return $beras?->harga()
-            ->berlakuPada()
-            ->latest('berlaku_mulai')
-            ->latest('id')
-            ->first();
+        return app(\App\Services\FitrahCalculationService::class)->activeRicePrice();
     }
 
     private function activeGoldPrice(): ?HargaBarangZakat

@@ -922,7 +922,10 @@
 
                             <tr
                                 data-search-row
-                                data-search-start="{{ $item->tanggal }}|{{ $jenisLabel }}|{{ $item->kategori }}|{{ $item->deskripsi }}|{{ $pegawaiHonorarium?->nama_pegawai }}|{{ $akunPembayaran?->nama_akun }}|{{ $jumlahFormatted }}|{{ $jumlahRaw }}"
+                                data-search-start="{{ $item->tanggal }}|{{ $jenisLabel }}|{{ $item->kategori }}|{{ $item->deskripsi }}@if(($item->jenis_dana ?? null) === 'zakat')<small style="display:block">{{ ($item->zakat_source ?? 'lainnya') === 'fitrah' ? 'Dana Zakat Fitrah' : 'Dana Zakat Lainnya' }}</small>@endif
+                                        @if(($item->jenis_dana ?? null) === 'wakaf')
+                                        <small style="display:block">Peruntukan: {{ ['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'][$item->wakaf_purpose] ?? 'Belum ditentukan' }}</small>
+                                        @endif|{{ $pegawaiHonorarium?->nama_pegawai }}|{{ $akunPembayaran?->nama_akun }}|{{ $jumlahFormatted }}|{{ $jumlahRaw }}"
                             >
                                 <td data-label="Nomor">
                                     <span class="finus-data-number" data-row-number>{{ $loop->iteration }}</span>
@@ -965,7 +968,10 @@
                                         <span class="finus-data-primary-icon">
                                             <i class="fa-solid fa-align-left"></i>
                                         </span>
-                                        {{ $item->deskripsi }}
+                                        {{ $item->deskripsi }}@if(($item->jenis_dana ?? null) === 'zakat')<small style="display:block">{{ ($item->zakat_source ?? 'lainnya') === 'fitrah' ? 'Dana Zakat Fitrah' : 'Dana Zakat Lainnya' }}</small>@endif
+                                        @if(($item->jenis_dana ?? null) === 'wakaf')
+                                        <small style="display:block">Peruntukan: {{ ['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'][$item->wakaf_purpose] ?? 'Belum ditentukan' }}</small>
+                                        @endif
                                     </span>
                                     @if($item instanceof \App\Models\Pengeluaran && $item->coaKredit)
                                         <small style="display:block;margin-top:7px;color:#64748b;">

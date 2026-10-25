@@ -15,12 +15,14 @@ class Pengeluaran extends Model
 
     protected $fillable = [
         'organization_id',
+        'zakat_source',
         'id_penggajian',
         'id_pegawai',
         'transaction_category_id',
         'kategori',
         'jenis_dana',
         'restriction_type',
+        'wakaf_purpose',
         'periode_penyaluran_zakat_id',
         'nomor_batch',
         'deskripsi',

@@ -239,6 +239,35 @@ class PsakZiswafPostingTest extends TestCase
         ]);
     }
 
+    public function test_wakaf_purpose_balances_follow_posted_receipts_and_reversals(): void
+    {
+        $service = app(Psak109PostingService::class);
+        $construction = $this->receipt(['payment_gateway' => 'midtrans', 'payment_status' => 'settlement', 'jenis_ziswaf' => 'wakaf', 'wakaf_type' => 'permanen', 'wakaf_purpose' => 'pembangunan', 'nominal' => 700000]);
+        $this->receipt(['payment_gateway' => 'midtrans', 'payment_status' => 'settlement', 'jenis_ziswaf' => 'wakaf', 'wakaf_type' => 'permanen', 'wakaf_purpose' => 'mushaf', 'nominal' => 200000]);
+        $this->receipt(['payment_gateway' => 'midtrans', 'payment_status' => 'settlement', 'jenis_ziswaf' => 'wakaf', 'wakaf_type' => 'permanen', 'nominal' => 50000]);
+        $pending = $this->receipt(['payment_gateway' => 'midtrans', 'payment_status' => 'settlement', 'jenis_ziswaf' => 'wakaf', 'wakaf_type' => 'permanen', 'wakaf_purpose' => 'mushaf', 'status_verifikasi' => 'pending', 'nominal' => 900000]);
+        $this->assertNull($pending->fresh()->jurnal_id);
+        $this->assertSame(700000.0, $service->getRekapWakaf()['pembangunan']['saldo']);
+        $this->assertSame(200000.0, $service->getRekapWakaf()['mushaf']['saldo']);
+        $this->assertSame(50000.0, $service->getRekapWakaf()['belum_ditentukan']['saldo']);
+        TransactionCategory::ensureDefaults();
+        $category = TransactionCategory::where('code', 'PENYALURAN-WAKAF')->firstOrFail();
+        $expense = Pengeluaran::create([
+            'transaction_category_id' => $category->id, 'kategori' => $category->name,
+            'jenis_dana' => 'wakaf', 'wakaf_purpose' => 'mushaf',
+            'deskripsi' => 'Pembelian mushaf', 'jumlah' => 75000, 'nominal' => 75000,
+            'tanggal' => '2026-09-21', 'status_verifikasi' => 'diterima',
+            'coa_debit_id' => $category->coa_id, 'coa_kredit_id' => $this->account('1101')->id,
+        ]);
+        $service->postPengeluaran($expense);
+        $this->assertSame(125000.0, $service->getRekapWakaf()['mushaf']['saldo']);
+        $this->assertSame(75000.0, $service->getRekapWakaf()['mushaf']['pengeluaran']);
+        $service->reverseJurnal($expense->fresh()->jurnal_id);
+        $service->reverseJurnal($construction->fresh()->jurnal_id);
+        $this->assertSame(0.0, $service->getRekapWakaf()['pembangunan']['saldo']);
+        $this->assertSame(200000.0, $service->getRekapWakaf()['mushaf']['saldo']);
+    }
+
     private function receipt(array $attributes): ZiswafPenerimaan
     {
         return ZiswafPenerimaan::create(array_merge([

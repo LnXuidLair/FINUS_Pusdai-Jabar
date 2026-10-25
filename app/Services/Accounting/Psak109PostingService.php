@@ -81,6 +81,8 @@ class Psak109PostingService
                     'credit' => 0,
                     'jenis_dana' => $jenisDana,
                     'restriction_type' => null,
+                    'zakat_source' => $jenisDana === 'zakat' ? ($penerimaan->jenis_ziswaf === 'zakat_fitrah' ? 'fitrah' : 'lainnya') : null,
+                'wakaf_purpose' => $jenisDana === 'wakaf' ? $penerimaan->wakaf_purpose : null,
                     'psak_reference' => $psakReference,
                 ]);
             }
@@ -94,6 +96,8 @@ class Psak109PostingService
                 'credit' => $nominal,
                 'jenis_dana' => $jenisDana,
                 'restriction_type' => null,
+                    'zakat_source' => $jenisDana === 'zakat' ? ($penerimaan->jenis_ziswaf === 'zakat_fitrah' ? 'fitrah' : 'lainnya') : null,
+                'wakaf_purpose' => $jenisDana === 'wakaf' ? $penerimaan->wakaf_purpose : null,
                 'psak_reference' => $psakReference,
             ]);
 
@@ -204,6 +208,7 @@ class Psak109PostingService
                         'debit' => $detail->nominal,
                         'credit' => 0,
                         'jenis_dana' => 'zakat',
+                        'zakat_source' => $pengeluaran->zakat_source ?? 'lainnya',
                         'psak_reference' => 'PSAK 109',
                         'asnaf' => $detail->asnaf,
                         'kategori_bidang' => null,
@@ -218,6 +223,8 @@ class Psak109PostingService
                     'credit' => 0,
                     'jenis_dana' => $jenisDana,
                     'restriction_type' => null,
+                    'zakat_source' => $jenisDana === 'zakat' ? ($pengeluaran->zakat_source ?? 'lainnya') : null,
+                'wakaf_purpose' => $jenisDana === 'wakaf' ? $pengeluaran->wakaf_purpose : null,
                     'psak_reference' => $psakReference,
                     'kategori_bidang' => $kategoriBidang,
                 ]);
@@ -232,6 +239,8 @@ class Psak109PostingService
                 'credit' => $nominal,
                 'jenis_dana' => $jenisDana,
                 'restriction_type' => null,
+                    'zakat_source' => $jenisDana === 'zakat' ? ($pengeluaran->zakat_source ?? 'lainnya') : null,
+                'wakaf_purpose' => $jenisDana === 'wakaf' ? $pengeluaran->wakaf_purpose : null,
                 'psak_reference' => $psakReference,
                 'kategori_bidang' => $kategoriBidang,
             ]);
@@ -384,8 +393,44 @@ class Psak109PostingService
     }
 
     /**
-     * Hitung rekapitulasi saldo dana secara real-time dari 1 rekening kas/bank.
+     * Rekap kas wakaf yang telah dijurnal, dipisahkan berdasarkan peruntukan.
      */
+    public function getRekapWakaf(): array
+    {
+        $rows = JurnalDetail::query()
+            ->whereHas('jurnalUmum', fn ($q) => $q->where(fn ($q) => $q->whereNull('sumber_tabel')->orWhereNotIn('sumber_tabel', ['kas_bank_transfer', 'kas_bank_reversal'])))
+            ->whereHas('coa', fn ($q) => $q->whereIn('kode_akun', ['1101', '1102']))
+            ->where('jenis_dana', 'wakaf')
+            ->selectRaw('wakaf_purpose, SUM(debit) AS penerimaan, SUM(credit) AS pengeluaran')
+            ->groupBy('wakaf_purpose')->get()->keyBy(fn ($row) => $row->wakaf_purpose ?? 'belum_ditentukan');
+        $result = [];
+        foreach (['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an', 'belum_ditentukan' => 'Belum ditentukan'] as $key => $label) {
+            $masuk = (float) ($rows->get($key)?->penerimaan ?? 0);
+            $keluar = (float) ($rows->get($key)?->pengeluaran ?? 0);
+            $result[$key] = ['label' => $label, 'penerimaan' => $masuk, 'pengeluaran' => $keluar, 'saldo' => $masuk - $keluar];
+        }
+        return $result;
+    }
+
+    public function getSaldoZakatSources(?Coa $account = null): array
+    {
+        $rows = JurnalDetail::query()->whereHas('jurnalUmum')
+            ->whereHas('coa', fn ($q) => $q->whereIn('kode_akun', ['1101', '1102']))
+            ->when($account, fn ($q) => $q->where('coa_id', $account->id))
+            ->where('jenis_dana', 'zakat')->get();
+        $balances = ['fitrah' => 0.0, 'lainnya' => 0.0];
+        foreach ($rows as $row) {
+            $source = $row->zakat_source === 'fitrah' ? 'fitrah' : 'lainnya';
+            $balances[$source] += (float) $row->debit - (float) $row->credit;
+        }
+        // Preserve legacy non-cash amil allocations against other zakat funds.
+        if (! $account) {
+            $balances['lainnya'] -= (float) JurnalDetail::query()->whereHas('jurnalUmum', fn ($q) => $q->where('sumber_tabel', 'ziswaf_penerimaan'))
+                ->whereHas('coa', fn ($q) => $q->where('kode_akun', '5210'))->sum('debit');
+        }
+        return $balances;
+    }
+
     public function getSaldoDana(): array
     {
         $coaKasIds = Coa::whereIn('kode_akun', ['1101', '1102'])

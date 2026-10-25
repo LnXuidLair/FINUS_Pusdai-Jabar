@@ -2865,8 +2865,13 @@ html[data-finus-theme="dark"] :where(.finus-secondary-button,.finus-nav-button,.
                 </button>
 
                 <div class="finus-nav-group finus-login-group">
-                    <a href="{{ route('login.jamaah') }}" class="finus-nav-button" data-page-loading="Membuka login jamaah...">
-                        <span class="finus-nav-button-icon" aria-hidden="true">↪</span>
+                    <a href="{{ route('login.jamaah') }}" class="finus-nav-button" aria-label="Masuk sebagai jamaah" style="text-decoration:none" data-page-loading="Membuka login jamaah...">
+                        <span class="finus-nav-button-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                                <path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"></path>
+                                <path d="m9 7 5 5-5 5M14 12H3"></path>
+                            </svg>
+                        </span>
                         <span class="finus-nav-button-text">Masuk</span>
                     </a>
                 </div>

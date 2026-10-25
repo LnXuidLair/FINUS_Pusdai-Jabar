@@ -21,6 +21,7 @@ class PemasukanController extends Controller
         return [
             'zakat_maal'        => 'Zakat Maal',
             'zakat_penghasilan' => 'Zakat Penghasilan',
+            'zakat_fitrah' => 'Zakat Fitrah',
             'infaq'             => 'Infak',
             'wakaf'             => 'Wakaf',
             'parkir'            => 'Parkir',
@@ -230,24 +231,8 @@ class PemasukanController extends Controller
 
         $validated = $request->validate([
             'jenis_ziswaf'      => ['required', 'string', 'in:' . implode(',', array_keys(self::golonganLabels()))],
-            'wakaf_type'        => [
-                Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'wakaf'),
-                'nullable',
-                Rule::in(['permanen', 'hasil_pengelolaan']),
-            ],
-            'wakaf_return_date' => [
-                Rule::requiredIf(fn (): bool => $request->input('wakaf_type') === 'temporer'),
-                'nullable',
-                'date',
-                'after:tanggal',
-            ],
-            'persentase_nazhir' => [
-                Rule::requiredIf(fn (): bool => $request->input('wakaf_type') === 'hasil_pengelolaan'),
-                'nullable',
-                'numeric',
-                'min:0',
-                'max:10',
-            ],
+            'wakaf_type' => ['nullable', Rule::in(['permanen'])],
+            'wakaf_purpose' => [Rule::requiredIf(fn (): bool => $request->input('jenis_ziswaf') === 'wakaf'), 'nullable', Rule::in(['pembangunan', 'mushaf'])],
             'nominal'           => ['required', 'integer', 'min:1000'],
             'tanggal'           => ['required', 'date', 'before_or_equal:today'],
             'metode_pembayaran' => ['required', 'string', Rule::in($isParkir
@@ -272,6 +257,16 @@ class PemasukanController extends Controller
                 : 'Metode pembayaran tidak valid.',
         ]);
 
+        $fitrah = null;
+        if ($validated['jenis_ziswaf'] === 'zakat_fitrah') {
+            $people = $request->validate(['jumlah_jiwa' => ['required', 'integer', 'min:1', 'max:10000']]);
+            $fitrah = app(\App\Services\FitrahCalculationService::class)->calculate((int) $people['jumlah_jiwa']);
+            if ((int) $validated['nominal'] !== $fitrah['nominal']) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['nominal' => 'Nominal tidak sesuai jumlah jiwa dan ketentuan fitrah aktif. Muat ulang formulir untuk memperbarui perhitungan.']);
+            }
+            $validated['nominal'] = $fitrah['nominal'];
+        }
+
         $buktiPath = null;
         if ($request->hasFile('bukti_pembayaran')) {
             $buktiPath = $request->file('bukti_pembayaran')
@@ -279,7 +274,7 @@ class PemasukanController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $validated, $isParkir, $buktiPath): void {
+            DB::transaction(function () use ($request, $validated, $isParkir, $buktiPath, $fitrah): void {
                 $shiftTimes = [
                     'pagi' => ['06:00', '14:00'],
                     'siang' => ['14:00', '22:00'],
@@ -313,21 +308,18 @@ class PemasukanController extends Controller
                     'id_pegawai' => $isParkir ? $validated['id_pegawai'] : null,
                     'jenis_ziswaf' => $validated['jenis_ziswaf'],
                     'restriction_type' => null,
+                    'wakaf_purpose' => $validated['jenis_ziswaf'] === 'wakaf' ? $validated['wakaf_purpose'] : null,
                     'wakaf_type' => $validated['jenis_ziswaf'] === 'wakaf'
-                        ? $validated['wakaf_type']
+                        ? 'permanen'
                         : null,
-                    'wakaf_return_date' => ($validated['wakaf_type'] ?? null) === 'temporer'
-                        ? $validated['wakaf_return_date']
-                        : null,
-                    'persentase_nazhir' => ($validated['wakaf_type'] ?? null) === 'hasil_pengelolaan'
-                        ? (float) $validated['persentase_nazhir']
-                        : 0,
+                    'persentase_nazhir' => 0,
                     'nominal' => (int) $validated['nominal'],
                     'tanggal' => $validated['tanggal'],
                     'metode_pembayaran' => $validated['metode_pembayaran'],
                     'muzakki_id' => null,
                     'keterangan' => $keterangan,
-                    'rincian_perhitungan' => $rincianPerhitungan,
+                    'rincian_perhitungan' => $fitrah['details'] ?? $rincianPerhitungan,
+                    'snapshot_kebijakan' => $fitrah['snapshot'] ?? null,
                     'bukti_pembayaran' => $buktiPath,
                     'status_verifikasi' => 'diterima',
                     'verified_by' => $request->user()->id,

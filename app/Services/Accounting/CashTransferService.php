@@ -15,6 +15,7 @@ class CashTransferService
         return JurnalDetail::query()->whereHas('jurnalUmum')->whereHas('coa', fn ($q) => $q->whereIn('kode_akun', ['1101', '1102']))
             ->with('coa')->get()->reduce(function ($result, $line) {
                 $fund = $line->jenis_dana === 'infak' ? 'infak_sedekah' : ($line->jenis_dana ?: 'amil');
+                if ($fund === 'zakat' && $line->zakat_source === 'fitrah') $fund = 'zakat_fitrah';
                 $code = $line->coa->kode_akun;
                 $result[$fund][$code] = ($result[$fund][$code] ?? 0) + (float) $line->debit - (float) $line->credit;
                 return $result;
@@ -33,7 +34,7 @@ class CashTransferService
     public function transfer(array $data): JurnalUmum
     {
         if (! array_key_exists($data['fund'], config('cash_transfers.fund_types'))) {
-            throw ValidationException::withMessages(['fund' => 'Pilih Dana Operasional, Dana Wakaf, atau Dana Zakat.']);
+            throw ValidationException::withMessages(['fund' => 'Pilih sumber dana yang tersedia.']);
         }
         return DB::transaction(function () use ($data) {
             // Urutan kunci selalu sama agar pemindahan bersamaan tidak memakai saldo yang sama.
@@ -51,7 +52,8 @@ class CashTransferService
                 'created_by' => auth('admin')->id(),
             ]);
             foreach ([$target, $source] as $account) {
-                $journal->detail()->create(['coa_id' => $account->id, 'jenis_dana' => $data['fund'],
+                $journal->detail()->create(['coa_id' => $account->id, 'jenis_dana' => $data['fund'] === 'zakat_fitrah' ? 'zakat' : $data['fund'],
+                    'zakat_source' => $data['fund'] === 'zakat_fitrah' ? 'fitrah' : ($data['fund'] === 'zakat' ? 'lainnya' : null),
                     'debit' => $account->id === $target->id ? $data['amount'] : 0,
                     'credit' => $account->id === $source->id ? $data['amount'] : 0,
                     'deskripsi' => $data['description']]);
@@ -70,11 +72,11 @@ class CashTransferService
             }
             $lines = $journal->detail()->with('coa')->get();
             foreach ($lines as $line) {
-                if ($line->debit > 0) $this->assertAvailable($line->coa, $line->jenis_dana, (int) $line->debit);
+                if ($line->debit > 0) $this->assertAvailable($line->coa, $line->jenis_dana === 'zakat' && $line->zakat_source === 'fitrah' ? 'zakat_fitrah' : $line->jenis_dana, (int) $line->debit);
             }
             $reverse = JurnalUmum::create(['tgl' => today(), 'tanggal' => today(), 'no_referensi' => 'BATAL-'.$journal->id.'-'.str()->ulid(),
                 'sumber_tabel' => 'kas_bank_reversal', 'sumber_id' => $id, 'deskripsi' => 'Pembatalan '.$journal->no_referensi, 'created_by' => auth('admin')->id()]);
-            foreach ($lines as $line) $reverse->detail()->create(['coa_id' => $line->coa_id, 'jenis_dana' => $line->jenis_dana,
+            foreach ($lines as $line) $reverse->detail()->create(['coa_id' => $line->coa_id, 'jenis_dana' => $line->jenis_dana, 'zakat_source' => $line->zakat_source,
                 'debit' => $line->credit, 'credit' => $line->debit, 'deskripsi' => 'Pembatalan pemindahan']);
         });
     }

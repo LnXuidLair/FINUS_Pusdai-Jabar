@@ -861,6 +861,9 @@
                                     {{ $golLabel }}
                                 </span>
                                 <div style="font-size:11px;color:#64748b;margin-top:5px;">{{ $fundTypeLabels[$item->jenis_ziswaf === 'wakaf' && $item->wakaf_type === 'temporer' ? 'wakaf_temporer' : app(\App\Services\Accounting\Psak109PostingService::class)->resolveJenisDana($item->jenis_ziswaf)] ?? 'Dana lainnya' }}</div>
+                                @if($item->jenis_ziswaf === 'wakaf')
+                                    <div style="font-size:12px">Peruntukan: {{ ['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'][$item->wakaf_purpose] ?? 'Belum ditentukan' }}</div>
+                                @endif
                                 @if($item->jenis_ziswaf === 'wakaf' && $item->wakaf_type)
                                     <div style="font-size:11px;color:#64748b;margin-top:5px;">
                                         {{ match($item->wakaf_type) {
@@ -872,6 +875,8 @@
                                             · kembali {{ $item->wakaf_return_date->format('d/m/Y') }}
                                         @endif
                                     </div>
+                                @elseif($item->jenis_ziswaf === 'zakat_fitrah' && data_get($item->rincian_perhitungan, 'jumlah_jiwa'))
+                                    <div class="pm-fhint">{{ data_get($item->rincian_perhitungan, 'jumlah_jiwa') }} jiwa × Rp {{ number_format(data_get($item->rincian_perhitungan, 'nominal_per_jiwa'), 0, ',', '.') }}/jiwa</div>
                                 @elseif($isParkir && data_get($item->rincian_perhitungan, 'shift'))
                                     <div style="font-size:11px;color:#64748b;margin-top:5px;line-height:1.5;">
                                         Shift {{ ucfirst(data_get($item->rincian_perhitungan, 'shift')) }}

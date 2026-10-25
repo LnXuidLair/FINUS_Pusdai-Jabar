@@ -16,6 +16,7 @@ class TransactionCategoryController extends Controller
 
         return view('transaction-categories.index', [
             'categories' => TransactionCategory::query()
+                ->where('code', '!=', 'PENGEMBALIAN-WAKAF')
                 ->with('coa')
                 ->orderBy('transaction_type')
                 ->orderBy('group')
