@@ -19,6 +19,9 @@
     $pengeluaranProofRoute = request()->routeIs('pegawai.keuangan.*')
         ? 'pegawai.keuangan.pengeluaran.bukti'
         : 'admin.pengeluaran.bukti';
+    $pengeluaranUploadProofRoute = request()->routeIs('pegawai.keuangan.*')
+        ? 'pegawai.keuangan.pengeluaran.bukti-upload'
+        : 'admin.pengeluaran.bukti-upload';
     $pengeluaranDestroyRoute = request()->routeIs('pegawai.keuangan.*')
         ? 'pegawai.keuangan.pengeluaran.destroy'
         : 'admin.pengeluaran.destroy';
@@ -768,12 +771,39 @@
 
 .expense-scope-note{display:flex;gap:12px;align-items:flex-start;margin:-2px 0 17px;padding:14px 16px;border:1px solid #D8E8DD;border-radius:15px;background:#F5FBF7;color:#466052;box-shadow:0 8px 20px rgba(15,23,42,.035)}
 .expense-scope-icon{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;min-width:34px;border-radius:10px;background:#E3F7E9;color:#179B40}.expense-scope-note strong{display:block;margin-bottom:3px;color:#173B24;font-size:12.5px}.expense-scope-note p{margin:0;font-size:11.5px;line-height:1.6}.expense-row-actions{display:flex;align-items:center;gap:7px}.expense-action-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid #DDE7E0;border-radius:9px;background:#fff;color:#179B40;text-decoration:none;cursor:pointer}.expense-action-btn:hover{background:#F2FAF4;color:#0E5423}.expense-action-danger{color:#DC2626}.expense-action-danger:hover{background:#FFF1F2;color:#B91C1C}.expense-auto-label{display:inline-flex;align-items:center;padding:6px 8px;border-radius:999px;background:#F5F0FF;color:#7C3AED;font-size:10px;font-weight:800}
+.expense-proof-feedback{margin:0 0 16px;padding:12px 15px;border-radius:12px;font-size:13px}
+.expense-proof-feedback-success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.expense-proof-feedback-error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.expense-proof-feedback ul{margin:6px 0 0;padding-left:20px}
+.expense-proof-attach-trigger{width:auto;min-width:100px;height:auto;padding:6px 9px;gap:5px;white-space:nowrap;font-size:11px}
+.expense-proof-attach-dialog{width:min(92vw,510px);max-width:510px;max-height:90vh;border:1px solid #cfe7d5;border-radius:18px;background:#fff;color:#172033;padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.26)}
+.expense-proof-attach-dialog::backdrop{background:rgba(0,0,0,.55)}
+.expense-proof-attach-dialog form{display:grid;gap:14px}
+.expense-proof-attach-dialog h2{margin:0;color:#0e5423;font-size:20px}
+.expense-proof-attach-dialog p{margin:0;font-size:13px;line-height:1.55}
+.expense-proof-attach-dialog label{font-size:13px;font-weight:700}
+.expense-proof-attach-dialog input[type=file]{width:100%;padding:12px;border:1px dashed #86bb94;border-radius:10px;background:#f5fbf7;color:#172033}
+.expense-proof-attach-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+.expense-proof-attach-actions button{padding:9px 14px;border:1px solid #b9d5bf;border-radius:9px;cursor:pointer}
+#expenseProofAttachSubmit{background:#159447;color:white;border-color:#159447;font-weight:700}
+.expense-proof-attach-error{color:#b91c1c!important;font-weight:700}
+html[data-finus-theme=dark] .expense-proof-attach-dialog{background:#14221a;color:#eef6f0;border-color:#365341}
+html[data-finus-theme=dark] .expense-proof-attach-dialog h2{color:#a1f0b8}
 </style>
 @endpush
 
 @section('content')
 @include('layouts.partials.finus-ui')
 <div class="finus-data-page" data-finus-data-page>
+    @if(session('success'))
+        <div class="expense-proof-feedback expense-proof-feedback-success" role="status">{{ session('success') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="expense-proof-feedback expense-proof-feedback-error" role="alert">
+            <strong>Belum berhasil mengunggah bukti:</strong>
+            <ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+        </div>
+    @endif
     <section class="finus-data-hero">
         <div class="finus-data-hero-left">
             <div class="finus-data-hero-icon">
@@ -1003,7 +1033,15 @@
                                                 <i class="fa-solid fa-file-signature"></i>
                                             </button>
                                         @endif
-                                        @if(!$item->bukti_pembayaran && ($isGaji || !$item->bukti_surat_tugas))
+                                        @if(!$item->bukti_pembayaran && !$isGaji)
+                                            <button type="button" class="expense-action-btn expense-proof-attach-trigger"
+                                                data-expense-proof-attach
+                                                data-upload-url="{{ route($pengeluaranUploadProofRoute, ['pengeluaran' => $item->id]) }}"
+                                                data-upload-label="{{ $item->kategori }} — {{ $jumlahFormatted }}"
+                                                title="Lampirkan bukti pembayaran tanpa mengubah jurnal">
+                                                <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> Lampirkan Bukti
+                                            </button>
+                                        @elseif(!$item->bukti_pembayaran && $isGaji)
                                             <span style="color:#94a3b8;font-size:12px;">Belum dilampirkan</span>
                                         @endif
                                     </div>
@@ -1059,9 +1097,57 @@
     </section>
 </div>
 @include('shared.transaction-proof-preview')
+<dialog id="expenseProofAttachDialog" class="expense-proof-attach-dialog" aria-labelledby="expenseProofAttachTitle">
+    <form id="expenseProofAttachForm" method="POST" enctype="multipart/form-data">
+        @csrf
+        <h2 id="expenseProofAttachTitle">Lampirkan Bukti Pembayaran</h2>
+        <p id="expenseProofAttachLabel"></p>
+        <p>Transaksi sudah tercatat. Mengunggah bukti ini <strong>tidak mengubah nominal maupun jurnal</strong>.</p>
+        <label for="expenseProofAttachFile">Pilih bukti pembayaran (JPG, PNG, PDF; maksimal 2 MB)</label>
+        <input type="file" id="expenseProofAttachFile" name="bukti_pembayaran" accept=".jpg,.jpeg,.png,.pdf" required>
+        <p id="expenseProofAttachError" class="expense-proof-attach-error" role="alert" hidden></p>
+        <div class="expense-proof-attach-actions">
+            <button type="button" id="expenseProofAttachCancel">Batal</button>
+            <button type="submit" id="expenseProofAttachSubmit">Unggah Bukti</button>
+        </div>
+    </form>
+</dialog>
 @endsection
 
 @push('scripts')
+<script>
+(() => {
+    const dialog = document.getElementById('expenseProofAttachDialog');
+    const form = document.getElementById('expenseProofAttachForm');
+    const file = document.getElementById('expenseProofAttachFile');
+    const error = document.getElementById('expenseProofAttachError');
+    const submit = document.getElementById('expenseProofAttachSubmit');
+    document.addEventListener('click', event => {
+        const button = event.target.closest('[data-expense-proof-attach]');
+        if (!button || !dialog || !form) return;
+        form.action = button.dataset.uploadUrl;
+        form.reset();
+        error.hidden = true;
+        submit.disabled = false;
+        submit.textContent = 'Unggah Bukti';
+        document.getElementById('expenseProofAttachLabel').textContent = button.dataset.uploadLabel || '';
+        dialog.showModal();
+    });
+    document.getElementById('expenseProofAttachCancel')?.addEventListener('click', () => dialog.close());
+    dialog?.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+    form?.addEventListener('submit', event => {
+        const selected = file.files?.[0];
+        if (!selected || selected.size > 2 * 1024 * 1024 || !/\.(jpe?g|png|pdf)$/i.test(selected.name)) {
+            event.preventDefault();
+            error.textContent = 'Pilih berkas JPG, PNG, atau PDF dengan ukuran maksimal 2 MB.';
+            error.hidden = false;
+            return;
+        }
+        submit.disabled = true;
+        submit.textContent = 'Mengunggah...';
+    });
+})();
+</script>
 <script>
 (() => {
     const normalize = value => (value || '')

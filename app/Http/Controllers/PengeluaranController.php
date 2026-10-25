@@ -583,6 +583,75 @@ class PengeluaranController extends Controller
             );
     }
 
+    /**
+     * Lampirkan bukti untuk pengeluaran yang sudah tercatat tanpa mengubah
+     * nominal, sumber dana, maupun jurnal yang telah diposting.
+     */
+    public function uploadBuktiPembayaran(Request $request, string $pengeluaran, TransactionProofStorage $proof)
+    {
+        $organizationId = (int) ($request->user('admin')?->organization_id
+            ?? $request->user('pegawai')?->organization_id);
+        abort_unless($organizationId > 0, 403);
+
+        $item = Pengeluaran::query()
+            ->where('organization_id', $organizationId)
+            ->whereNull('id_penggajian')
+            ->whereNull('referensi_penggajian_id')
+            ->where(fn ($query) => $query->whereNull('jenis')->orWhere('jenis', '!=', 'gaji'))
+            ->findOrFail($pengeluaran);
+
+        if ($item->bukti_pembayaran) {
+            return back()->withErrors([
+                'bukti_pembayaran' => 'Pengeluaran ini sudah memiliki bukti. Tidak ada file lama yang diganti.',
+            ]);
+        }
+
+        $validated = $request->validate([
+            'bukti_pembayaran' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
+        ], [
+            'bukti_pembayaran.required' => 'Pilih file bukti pembayaran sebelum mengunggah.',
+            'bukti_pembayaran.max' => 'Ukuran bukti pembayaran maksimal 2 MB.',
+        ]);
+
+        $path = null;
+        try {
+            $path = $proof->store($validated['bukti_pembayaran'], 'bukti_pengeluaran');
+            if (! $path) {
+                throw new \RuntimeException('File bukti gagal tersimpan.');
+            }
+
+            // Hanya satu kali lampiran dan tidak pernah membuat transaksi/jurnal baru.
+            $updated = Pengeluaran::query()
+                ->whereKey($item->getKey())
+                ->where('organization_id', $organizationId)
+                ->whereNull('bukti_pembayaran')
+                ->update(['bukti_pembayaran' => $path]);
+
+            if ($updated !== 1) {
+                $proof->delete($path);
+
+                return back()->withErrors([
+                    'bukti_pembayaran' => 'Bukti sudah ditambahkan oleh proses lain. Muat ulang halaman.',
+                ]);
+            }
+        } catch (\Throwable $exception) {
+            if ($path) {
+                try {
+                    $proof->delete($path);
+                } catch (\Throwable $cleanupError) {
+                    report($cleanupError);
+                }
+            }
+            report($exception);
+
+            return back()->withErrors([
+                'bukti_pembayaran' => 'Gagal mengunggah bukti ke penyimpanan R2. Transaksi dan jurnal lama tetap aman. Periksa log serta konfigurasi disk presensi.',
+            ]);
+        }
+
+        return back()->with('success', 'Bukti pembayaran berhasil disimpan. Nominal dan jurnal pengeluaran tidak diubah.');
+    }
+
     public function destroy($id)
     {
         /*

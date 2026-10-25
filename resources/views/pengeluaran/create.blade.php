@@ -23,7 +23,7 @@
 @section('content')
 @include('layouts.partials.finus-ui')
 <div class="fmu-page">
-    <section class="fmu-hero"><div class="fmu-hero-main"><span class="fmu-hero-icon"><i class="fa-solid fa-receipt"></i></span><div><h1>Tambah Pengeluaran</h1><p>Catat pengeluaran masjid dan lampirkan bukti pembayaran bila tersedia.</p></div></div><div class="fmu-hero-actions"><span class="fmu-hero-badge"><i class="fa-solid fa-shield-halved"></i>Pencatatan Keuangan</span></div></section>
+    <section class="fmu-hero"><div class="fmu-hero-main"><span class="fmu-hero-icon"><i class="fa-solid fa-receipt"></i></span><div><h1>Tambah Pengeluaran</h1><p>Catat pengeluaran masjid. Lampirkan bukti pembayaran sekarang, atau tambahkan nanti dari daftar pengeluaran.</p></div></div><div class="fmu-hero-actions"><span class="fmu-hero-badge"><i class="fa-solid fa-shield-halved"></i>Pencatatan Keuangan</span></div></section>
     @if(config('cash_transfers.enabled') && auth('admin')->check())
     <p><a href="{{ route('admin.cash-transfers.index') }}">Lihat saldo golongan per Kas/Bank atau pindahkan saldo</a></p>
     @endif
@@ -352,13 +352,23 @@
         clientError.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }, true);
     form?.addEventListener('input', () => { clientError.hidden = true; });
-    form?.addEventListener('change', () => { clientError.hidden = true; });
+    // Jangan langsung menyembunyikan pesan file tidak valid pada event change
+    // yang sama (event change input akan bubble ke form).
+    form?.addEventListener('change', (event) => {
+        if (event.target === input || event.target === assignmentInput) return;
+        clientError.hidden = true;
+    });
     for (const fileField of [input, assignmentInput]) {
         fileField?.addEventListener('change', () => {
             const file = fileField.files?.[0];
             if (!file) return;
             if (file.size > 2 * 1024 * 1024 || !/\.(jpe?g|png|pdf)$/i.test(file.name)) {
                 fileField.value = '';
+                const fileNameLabel = fileField === input ? label : assignmentLabel;
+                if (fileNameLabel) {
+                    fileNameLabel.textContent = '';
+                    fileNameLabel.classList.remove('is-visible');
+                }
                 const fileLabel = fileField === input ? 'Bukti pembayaran' : 'Dokumen pendukung';
                 clientError.textContent = `${fileLabel} harus berupa JPG, JPEG, PNG, atau PDF dengan ukuran maksimal 2 MB. Pilih file lain.`;
                 clientError.hidden = false;
@@ -369,7 +379,14 @@
     if (document.getElementById('expenseErrorSummary')) {
         requestAnimationFrame(() => document.getElementById('expenseErrorSummary')?.scrollIntoView({ block: 'center' }));
     }
-    form?.addEventListener('submit', () => {
+    form?.addEventListener('submit', (event) => {
+        // Bukti tetap opsional sesuai alur FINUS, tetapi jangan simpan diam-diam.
+        if (!input?.files?.length && !window.confirm(
+            'Belum ada bukti pembayaran yang dipilih. Tetap simpan pengeluaran TANPA bukti? Bukti dapat dilampirkan kemudian dari halaman Pengeluaran.'
+        )) {
+            event.preventDefault();
+            return;
+        }
         const button = form.querySelector('button[type="submit"]');
         if (button) {
             button.disabled = true;
