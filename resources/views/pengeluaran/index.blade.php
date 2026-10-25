@@ -415,7 +415,10 @@
 }
 
 .finus-data-table-wrap {
-    overflow: hidden;
+    /* Kolom tetap proporsional, tidak ditekan sampai teks menjadi satu kata per baris. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     border: 1px solid var(--fd-border);
     border-radius: 15px;
     background: #fff;
@@ -423,9 +426,63 @@
 
 .finus-data-table {
     width: 100%;
+    min-width: 1180px;
+    table-layout: fixed;
     margin: 0;
     border-collapse: separate;
     border-spacing: 0;
+}
+
+.finus-data-table col:nth-child(1) { width: 6%; }
+.finus-data-table col:nth-child(2) { width: 13%; }
+.finus-data-table col:nth-child(3) { width: 13%; }
+.finus-data-table col:nth-child(4) { width: 15%; }
+.finus-data-table col:nth-child(5) { width: 25%; }
+.finus-data-table col:nth-child(6) { width: 14%; }
+.finus-data-table col:nth-child(7) { width: 8%; }
+.finus-data-table col:nth-child(8) { width: 6%; }
+
+/* Deskripsi perlu ruang baca, sedangkan kolom aksi tetap ringkas. */
+.finus-data-table thead th:nth-child(5),
+.finus-data-table tbody td.expense-description-cell {
+    text-align: left !important;
+}
+
+.finus-data-table tbody td.expense-description-cell {
+    overflow-wrap: break-word;
+}
+
+.expense-description-content { min-width: 0; }
+.expense-description-content .finus-data-primary {
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
+    text-align: left;
+}
+.expense-description-content .finus-data-primary-icon {
+    flex: 0 0 35px;
+}
+.expense-description-copy { flex: 1; min-width: 0; }
+.expense-description-text {
+    display: block;
+    font-weight: 800;
+    line-height: 1.55;
+    overflow-wrap: break-word;
+}
+.expense-description-meta {
+    display: block;
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.55;
+    overflow-wrap: break-word;
+}
+.finus-data-table tbody td[data-label="Bukti"] .expense-row-actions,
+.finus-data-table tbody td[data-label="Aksi"] .expense-row-actions {
+    justify-content: center;
 }
 
 .finus-data-table thead th {
@@ -719,6 +776,8 @@
         display: block;
         width: 100%;
     }
+    .finus-data-table { min-width: 0; table-layout: auto; }
+    .finus-data-table colgroup { display: none; }
 
     .finus-data-table thead { display: none; }
 
@@ -756,6 +815,18 @@
     }
 
     .finus-data-primary { justify-content: flex-end; }
+    .finus-data-table tbody tr[data-search-row] td.expense-description-cell {
+        align-items: flex-start;
+        text-align: right !important;
+    }
+    .finus-data-table tbody tr[data-search-row] td.expense-description-cell .expense-description-content {
+        width: min(100%, 340px);
+        text-align: left;
+    }
+    .finus-data-table tbody tr[data-search-row] td[data-label="Bukti"] .expense-row-actions,
+    .finus-data-table tbody tr[data-search-row] td[data-label="Aksi"] .expense-row-actions {
+        justify-content: flex-end;
+    }
 
     .finus-data-empty {
         display: block !important;
@@ -913,16 +984,19 @@ html[data-finus-theme=dark] .expense-proof-attach-dialog h2{color:#a1f0b8}
         <div class="finus-data-table-area">
             <div class="finus-data-table-wrap">
                 <table class="finus-data-table">
+                    <colgroup>
+                        <col><col><col><col><col><col><col><col>
+                    </colgroup>
                     <thead>
                         <tr>
-                            <th width="70">No.</th>
-                            <th width="150">Tanggal</th>
-                            <th width="145">Jenis</th>
-                            <th width="190">Kategori</th>
+                            <th>No.</th>
+                            <th>Tanggal</th>
+                            <th>Jenis</th>
+                            <th>Kategori</th>
                             <th>Deskripsi</th>
-                            <th width="175">Jumlah</th>
-                            <th width="180">Bukti</th>
-                            <th width="125">Aksi</th>
+                            <th>Jumlah</th>
+                            <th>Bukti</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -967,7 +1041,7 @@ html[data-finus-theme=dark] .expense-proof-attach-dialog h2{color:#a1f0b8}
                                 <td data-label="Tanggal">
                                     <span class="finus-data-chip blue">
                                         <i class="fa-solid fa-calendar-day"></i>
-                                        {{ $item->tanggal }}
+                                        {{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') }}
                                     </span>
                                 </td>
                                 <td data-label="Jenis">
@@ -997,21 +1071,28 @@ html[data-finus-theme=dark] .expense-proof-attach-dialog h2{color:#a1f0b8}
                                         </small>
                                     @endif
                                 </td>
-                                <td data-label="Deskripsi">
-                                    <span class="finus-data-primary">
-                                        <span class="finus-data-primary-icon">
-                                            <i class="fa-solid fa-align-left"></i>
+                                <td data-label="Deskripsi" class="expense-description-cell">
+                                    <div class="expense-description-content">
+                                        <span class="finus-data-primary">
+                                            <span class="finus-data-primary-icon" aria-hidden="true">
+                                                <i class="fa-solid fa-align-left"></i>
+                                            </span>
+                                            <span class="expense-description-copy">
+                                                <span class="expense-description-text">{{ $item->deskripsi }}</span>
+                                                @if(($item->jenis_dana ?? null) === 'zakat')
+                                                    <small class="expense-description-meta">{{ ($item->zakat_source ?? 'lainnya') === 'fitrah' ? 'Dana Zakat Fitrah' : 'Dana Zakat Lainnya' }}</small>
+                                                @endif
+                                                @if(($item->jenis_dana ?? null) === 'wakaf')
+                                                    <small class="expense-description-meta">Peruntukan: {{ ['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'][$item->wakaf_purpose] ?? 'Belum ditentukan' }}</small>
+                                                @endif
+                                            </span>
                                         </span>
-                                        {{ $item->deskripsi }}@if(($item->jenis_dana ?? null) === 'zakat')<small style="display:block">{{ ($item->zakat_source ?? 'lainnya') === 'fitrah' ? 'Dana Zakat Fitrah' : 'Dana Zakat Lainnya' }}</small>@endif
-                                        @if(($item->jenis_dana ?? null) === 'wakaf')
-                                        <small style="display:block">Peruntukan: {{ ['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'][$item->wakaf_purpose] ?? 'Belum ditentukan' }}</small>
+                                        @if($item instanceof \App\Models\Pengeluaran && $item->coaKredit)
+                                            <small class="expense-description-meta">
+                                                {{ config('transaction_categories.fund_types.'.$item->jenis_dana, 'Dana tidak diklasifikasikan') }} · Dibayar dari {{ $item->coaKredit->nama_akun }}
+                                            </small>
                                         @endif
-                                    </span>
-                                    @if($item instanceof \App\Models\Pengeluaran && $item->coaKredit)
-                                        <small style="display:block;margin-top:7px;color:#64748b;">
-                                            {{ config('transaction_categories.fund_types.'.$item->jenis_dana, 'Dana tidak diklasifikasikan') }} · Dibayar dari {{ $item->coaKredit->nama_akun }}
-                                        </small>
-                                    @endif
+                                    </div>
                                 </td>
                                 <td data-label="Jumlah">
                                     <span class="finus-data-money">
