@@ -787,6 +787,10 @@
 .expense-proof-attach-actions button{padding:9px 14px;border:1px solid #b9d5bf;border-radius:9px;cursor:pointer}
 #expenseProofAttachSubmit{background:#159447;color:white;border-color:#159447;font-weight:700}
 .expense-proof-attach-error{color:#b91c1c!important;font-weight:700}
+.expense-proof-client-toast{position:fixed;top:20px;right:20px;z-index:99999;display:flex;align-items:flex-start;gap:12px;width:min(480px,calc(100vw - 40px));padding:15px 16px;border:1px solid #fca5a5;border-radius:12px;background:#fef2f2;color:#991b1b;box-shadow:0 12px 36px rgba(0,0,0,.2);font-size:13px;font-weight:650;line-height:1.55}
+.expense-proof-client-toast[hidden]{display:none!important}
+.expense-proof-client-toast-text{flex:1}
+.expense-proof-client-toast-close{border:0;background:transparent;color:inherit;font-size:21px;line-height:1;cursor:pointer;padding:0 2px}
 html[data-finus-theme=dark] .expense-proof-attach-dialog{background:#14221a;color:#eef6f0;border-color:#365341}
 html[data-finus-theme=dark] .expense-proof-attach-dialog h2{color:#a1f0b8}
 </style>
@@ -1097,14 +1101,18 @@ html[data-finus-theme=dark] .expense-proof-attach-dialog h2{color:#a1f0b8}
     </section>
 </div>
 @include('shared.transaction-proof-preview')
+<div id="expenseProofClientToast" class="expense-proof-client-toast" role="alert" aria-live="assertive" tabindex="-1" hidden>
+    <span class="expense-proof-client-toast-text" id="expenseProofClientToastText"></span>
+    <button type="button" class="expense-proof-client-toast-close" id="expenseProofClientToastClose" aria-label="Tutup pesan kesalahan">&times;</button>
+</div>
 <dialog id="expenseProofAttachDialog" class="expense-proof-attach-dialog" aria-labelledby="expenseProofAttachTitle">
-    <form id="expenseProofAttachForm" method="POST" enctype="multipart/form-data">
+    <form id="expenseProofAttachForm" method="POST" enctype="multipart/form-data" data-finus-no-auto-submit data-finus-own-proof-error novalidate data-finus-proof-direct="{{ config('filesystems.disks.'.config('filesystems.attendance_disk', 'public').'.driver') === 's3' ? '1' : '0' }}">
         @csrf
         <h2 id="expenseProofAttachTitle">Lampirkan Bukti Pembayaran</h2>
         <p id="expenseProofAttachLabel"></p>
         <p>Transaksi sudah tercatat. Mengunggah bukti ini <strong>tidak mengubah nominal maupun jurnal</strong>.</p>
-        <label for="expenseProofAttachFile">Pilih bukti pembayaran (JPG, PNG, PDF; maksimal 2 MB)</label>
-        <input type="file" id="expenseProofAttachFile" name="bukti_pembayaran" accept=".jpg,.jpeg,.png,.pdf" required>
+        <label for="expenseProofAttachFile">Pilih bukti pembayaran (JPG, PNG, PDF; maksimal 5 MB)</label>
+        <input type="file" id="expenseProofAttachFile" name="bukti_pembayaran" data-finus-proof-purpose="bukti_pengeluaran" accept=".jpg,.jpeg,.png,.pdf" required>
         <p id="expenseProofAttachError" class="expense-proof-attach-error" role="alert" hidden></p>
         <div class="expense-proof-attach-actions">
             <button type="button" id="expenseProofAttachCancel">Batal</button>
@@ -1122,30 +1130,72 @@ html[data-finus-theme=dark] .expense-proof-attach-dialog h2{color:#a1f0b8}
     const file = document.getElementById('expenseProofAttachFile');
     const error = document.getElementById('expenseProofAttachError');
     const submit = document.getElementById('expenseProofAttachSubmit');
+    const toast = document.getElementById('expenseProofClientToast');
+    const toastText = document.getElementById('expenseProofClientToastText');
+    const MAX_BYTES = 5 * 1024 * 1024;
+
+    const resetSubmit = () => {
+        if (!submit) return;
+        submit.disabled = false;
+        submit.textContent = 'Unggah Bukti';
+    };
+    const showError = message => {
+        // Pesan berada di luar dialog agar tidak hilang saat modal ditutup.
+        if (toast && toastText) {
+            toastText.textContent = message;
+            toast.hidden = false;
+        } else {
+            window.alert(message);
+        }
+        resetSubmit();
+        form?.reset();
+        if (dialog?.open) dialog.close();
+        toast?.focus();
+    };
+    document.getElementById('expenseProofClientToastClose')?.addEventListener('click', () => {
+        toast.hidden = true;
+    });
     document.addEventListener('click', event => {
         const button = event.target.closest('[data-expense-proof-attach]');
         if (!button || !dialog || !form) return;
         form.action = button.dataset.uploadUrl;
+        delete form.dataset.finusDirectReady;
+        delete form.dataset.finusDirectPending;
+        form.querySelectorAll('input[name$="_upload_token"]').forEach(input => input.remove());
+        if (file) { file.disabled = false; file.required = true; }
         form.reset();
         error.hidden = true;
-        submit.disabled = false;
-        submit.textContent = 'Unggah Bukti';
+        if (toast) toast.hidden = true;
+        resetSubmit();
         document.getElementById('expenseProofAttachLabel').textContent = button.dataset.uploadLabel || '';
         dialog.showModal();
     });
+    form?.addEventListener('finus-proof-upload-error', event => showError(event.detail || 'Upload bukti gagal.'));
     document.getElementById('expenseProofAttachCancel')?.addEventListener('click', () => dialog.close());
     dialog?.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
     form?.addEventListener('submit', event => {
-        const selected = file.files?.[0];
-        if (!selected || selected.size > 2 * 1024 * 1024 || !/\.(jpe?g|png|pdf)$/i.test(selected.name)) {
+        const selected = file?.files?.[0];
+        let message = '';
+        if (!selected && !form.querySelector('input[name=\"bukti_pembayaran_upload_token\"]')?.value) {
+            message = 'Pilih bukti pembayaran sebelum menekan Unggah Bukti.';
+        } else if (!/\.(jpe?g|png|pdf)$/i.test(selected.name)) {
+            message = 'Format file tidak didukung. Pilih JPG, JPEG, PNG, atau PDF.';
+        } else if (selected.size > MAX_BYTES) {
+            const sizeMB = (selected.size / (1024 * 1024)).toFixed(2).replace('.', ',');
+            message = `Ukuran file ${sizeMB} MB melebihi batas 5 MB. Kompres file atau pilih berkas lain.`;
+        }
+        if (message) {
             event.preventDefault();
-            error.textContent = 'Pilih berkas JPG, PNG, atau PDF dengan ukuran maksimal 2 MB.';
-            error.hidden = false;
+            showError(message);
             return;
         }
+        if (error) error.hidden = true;
+        if (toast) toast.hidden = true;
         submit.disabled = true;
         submit.textContent = 'Mengunggah...';
     });
+    // Pulihkan tombol jika pengguna kembali ke halaman dari browser cache.
+    window.addEventListener('pageshow', resetSubmit);
 })();
 </script>
 <script>

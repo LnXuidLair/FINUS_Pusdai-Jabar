@@ -181,13 +181,13 @@ class PengeluaranController extends Controller
                 'nullable',
                 'file',
                 'mimes:jpeg,jpg,png,pdf',
-                'max:2048',
+                'max:5120',
             ],
             'bukti_surat_tugas' => [
                 'nullable',
                 'file',
                 'mimes:jpeg,jpg,png,pdf',
-                'max:2048',
+                'max:5120',
             ],
             'periode_zakat' => ['nullable', 'date_format:Y-m'],
             'target_asnaf' => ['nullable', 'array'],
@@ -287,7 +287,7 @@ class PengeluaranController extends Controller
             }
         }
 
-        if ($requiresAssignmentProof && ! $request->hasFile('bukti_surat_tugas')) {
+        if ($requiresAssignmentProof && ! $request->hasFile('bukti_surat_tugas') && ! $request->filled('bukti_surat_tugas_upload_token')) {
             throw ValidationException::withMessages([
                 'bukti_surat_tugas' => 'Dokumen pendukung diwajibkan untuk kategori ini.',
             ]);
@@ -391,10 +391,9 @@ class PengeluaranController extends Controller
 
         try {
             $failureStep = 'upload_bukti_pembayaran';
-            if ($request->hasFile('bukti_pembayaran')) {
-                $path = app(TransactionProofStorage::class)->store(
-                    $request->file('bukti_pembayaran'),
-                    'bukti_pengeluaran'
+            if ($request->hasFile('bukti_pembayaran') || $request->filled('bukti_pembayaran_upload_token')) {
+                $path = app(TransactionProofStorage::class)->storeFromRequest(
+                    $request, 'bukti_pembayaran', 'bukti_pengeluaran'
                 );
                 if ($path === false) {
                     throw new \RuntimeException('Gagal menyimpan bukti pembayaran. Transaksi dibatalkan.');
@@ -402,10 +401,9 @@ class PengeluaranController extends Controller
             }
 
             $failureStep = 'upload_dokumen_pendukung';
-            if ($request->hasFile('bukti_surat_tugas')) {
-                $assignmentPath = $request->file('bukti_surat_tugas')->store(
-                    $isHonorarium ? 'dokumen_pendukung_honorarium' : 'bukti_surat_tugas',
-                    app(TransactionProofStorage::class)->disk()
+            if ($request->hasFile('bukti_surat_tugas') || $request->filled('bukti_surat_tugas_upload_token')) {
+                $assignmentPath = app(TransactionProofStorage::class)->storeFromRequest(
+                    $request, 'bukti_surat_tugas', 'dokumen_pendukung_honorarium'
                 );
                 if ($assignmentPath === false) {
                     throw new \RuntimeException('Gagal menyimpan dokumen pendukung. Transaksi dibatalkan.');
@@ -607,15 +605,16 @@ class PengeluaranController extends Controller
         }
 
         $validated = $request->validate([
-            'bukti_pembayaran' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
+            'bukti_pembayaran' => [\Illuminate\Validation\Rule::requiredIf(! $request->filled('bukti_pembayaran_upload_token')), 'nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'bukti_pembayaran_upload_token' => ['nullable', 'string', 'max:4096'],
         ], [
             'bukti_pembayaran.required' => 'Pilih file bukti pembayaran sebelum mengunggah.',
-            'bukti_pembayaran.max' => 'Ukuran bukti pembayaran maksimal 2 MB.',
+            'bukti_pembayaran.max' => 'Ukuran bukti pembayaran maksimal 5 MB.',
         ]);
 
         $path = null;
         try {
-            $path = $proof->store($validated['bukti_pembayaran'], 'bukti_pengeluaran');
+            $path = $proof->storeFromRequest($request, 'bukti_pembayaran', 'bukti_pengeluaran');
             if (! $path) {
                 throw new \RuntimeException('File bukti gagal tersimpan.');
             }

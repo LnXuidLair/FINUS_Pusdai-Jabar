@@ -1639,13 +1639,22 @@
                 }, { threshold: .12, rootMargin: '0px 0px -35px 0px' });
                 elements.forEach(element => observer.observe(element));
 
+                // Tunggu semua handler validasi selesai sebelum menampilkan loading.
+                // Handler lain dapat memanggil preventDefault() ketika input tidak sah.
                 document.querySelectorAll('form').forEach(form => {
-                    form.addEventListener('submit', () => {
-                        const button = form.querySelector('button[type="submit"]');
+                    form.addEventListener('submit', event => {
+                        // Form dengan loading/validasi sendiri tidak dikelola secara global.
+                        if (form.hasAttribute('data-finus-no-auto-submit')) return;
+                        const button = event.submitter?.matches?.('button[type="submit"]')
+                            ? event.submitter
+                            : form.querySelector('button[type="submit"]');
                         if (!button || button.disabled) return;
-                        button.dataset.originalHtml = button.innerHTML;
-                        button.disabled = true;
-                        button.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...';
+                        queueMicrotask(() => {
+                            if (event.defaultPrevented || button.disabled || !form.isConnected) return;
+                            button.dataset.originalHtml = button.innerHTML;
+                            button.disabled = true;
+                            button.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...';
+                        });
                     });
                 });
             })();

@@ -579,10 +579,11 @@ class JamaahController extends Controller
         ];
         if (! $paymentGatewayReady) {
             $rules['bukti_pembayaran'] = [
-                'required',
+                Rule::requiredIf(! $request->filled('bukti_pembayaran_upload_token')),
+                'nullable',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
-                'max:2048',
+                'max:5120',
             ];
         }
         $messages = [
@@ -600,7 +601,7 @@ class JamaahController extends Controller
             'bukti_pembayaran.required' => 'Bukti pembayaran wajib diunggah untuk pembayaran manual.',
             'bukti_pembayaran.file' => 'Bukti pembayaran harus berupa file.',
             'bukti_pembayaran.mimes' => 'Bukti pembayaran harus berformat JPG, JPEG, PNG, atau PDF.',
-            'bukti_pembayaran.max' => 'Ukuran bukti pembayaran maksimal 2 MB.',
+            'bukti_pembayaran.max' => 'Ukuran bukti pembayaran maksimal 5 MB.',
             'tanggal_mulai_kepemilikan.required' => 'Tanggal mulai kepemilikan harta atau barang wajib diisi untuk menghitung haul.',
             'tanggal_mulai_kepemilikan.date' => 'Tanggal mulai kepemilikan tidak valid.',
             'tanggal_mulai_kepemilikan.before_or_equal' => 'Tanggal mulai kepemilikan tidak boleh melewati hari ini.',
@@ -875,11 +876,10 @@ class JamaahController extends Controller
         // Contoh: ZSF-l8n4kx-427 (~14 karakter, unik, sesuai standar Midtrans)
         $orderId = 'ZSF-'.base_convert((string) now()->timestamp, 10, 36).'-'.random_int(100, 999);
         $buktiPembayaranPath = null;
-        if (! $paymentGatewayReady && $request->hasFile('bukti_pembayaran')) {
+        if (! $paymentGatewayReady && ($request->hasFile('bukti_pembayaran') || $request->filled('bukti_pembayaran_upload_token'))) {
             try {
-                $buktiPembayaranPath = app(TransactionProofStorage::class)->store(
-                    $request->file('bukti_pembayaran'),
-                    'bukti_pemasukan'
+                $buktiPembayaranPath = app(TransactionProofStorage::class)->storeFromRequest(
+                    $request, 'bukti_pembayaran', 'bukti_pemasukan'
                 );
             } catch (\Throwable $exception) {
                 report($exception);

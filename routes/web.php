@@ -27,6 +27,11 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+// Upload bukti langsung ke R2, supaya berkas 5 MB tidak melalui payload Function Vercel.
+Route::post('/transaction-proof/upload-url', [\App\Http\Controllers\DirectTransactionProofUploadController::class, 'create'])
+    ->middleware(['auth:admin,pegawai,jamaah', 'throttle:30,1'])
+    ->name('transaction-proof.upload-url');
+
 Route::view('/', 'welcome')->name('home');
 Route::view('/visi-misi', 'visi-misi')->name('visi-misi');
 Route::view('/location', 'location')->name('location');

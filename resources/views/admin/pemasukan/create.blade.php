@@ -71,7 +71,7 @@ html[data-finus-theme="dark"] .pm-file-upload{background:#153323;border-color:#3
         </div></div>
         <span class="pm-create-badge"><i class="fa-solid fa-shield-halved"></i>Pencatatan Keuangan</span>
     </section>
-    <form method="POST" action="{{ route($pemasukanStoreRoute) }}" enctype="multipart/form-data" class="pm-create-card" id="pmTambahForm">
+    <form method="POST" action="{{ route($pemasukanStoreRoute) }}" enctype="multipart/form-data" class="pm-create-card" id="pmTambahForm" data-finus-proof-direct="{{ config('filesystems.disks.'.config('filesystems.attendance_disk', 'public').'.driver') === 's3' ? '1' : '0' }}">
         @csrf
         @if($errors->any())
             <div class="pm-create-errors" role="alert" tabindex="-1" id="pemasukanErrorSummary">
@@ -210,7 +210,7 @@ html[data-finus-theme="dark"] .pm-file-upload{background:#153323;border-color:#3
                 {{-- Bukti --}}
                 <div class="pm-fgroup">
                     <label class="pm-flabel" for="pm_bukti" id="pmBuktiLabel">Bukti Pembayaran</label>
-                    <label class="pm-file-upload" for="pm_bukti"><i class="fa-solid fa-cloud-arrow-up"></i><strong>Pilih bukti pembayaran</strong><span>JPG, JPEG, PNG, atau PDF · Maksimal 2 MB</span><span id="pmSelectedFile" aria-live="polite">Belum ada file dipilih</span><input type="file" name="bukti_pembayaran" id="pm_bukti" accept=".jpg,.jpeg,.png,.pdf"></label>
+                    <label class="pm-file-upload" for="pm_bukti"><i class="fa-solid fa-cloud-arrow-up"></i><strong>Pilih bukti pembayaran</strong><span>JPG, JPEG, PNG, atau PDF · Maksimal 5 MB</span><span id="pmSelectedFile" aria-live="polite">Belum ada file dipilih</span><input type="file" name="bukti_pembayaran" id="pm_bukti" data-finus-proof-purpose="bukti_pemasukan" accept=".jpg,.jpeg,.png,.pdf"></label>
                     @error('bukti_pembayaran')<span class="pm-field-error">{{ $message }}</span>@enderror
                 </div>
 
@@ -324,7 +324,8 @@ html[data-finus-theme="dark"] .pm-file-upload{background:#153323;border-color:#3
     document.getElementById('pm_nominal_tunai').addEventListener('input', updateNominalPreview);
     updateNominalPreview();
     const pmSubmitBtn = document.getElementById('pmSubmitBtn');
-    document.getElementById('pmTambahForm').addEventListener('submit', () => {
+    document.getElementById('pmTambahForm').addEventListener('submit', (event) => {
+        if (event.defaultPrevented) return;
         pmSubmitBtn.disabled = true;
         pmSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan…';
     });
