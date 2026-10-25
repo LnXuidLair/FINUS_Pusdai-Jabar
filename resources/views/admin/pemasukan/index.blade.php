@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @php
+    $fitrahConfig = app(\App\Services\FitrahCalculationService::class)->configuration();
     $isPegawai = request()->routeIs('pegawai.keuangan.*');
     $roleTitle = $isPegawai ? 'Keuangan' : 'Admin';
     $pemasukanIndexRoute = $isPegawai ? 'pegawai.keuangan.pemasukan.index' : 'admin.pemasukan.index';
@@ -861,6 +862,9 @@
                                     {{ $golLabel }}
                                 </span>
                                 <div style="font-size:11px;color:#64748b;margin-top:5px;">{{ $fundTypeLabels[$item->jenis_ziswaf === 'wakaf' && $item->wakaf_type === 'temporer' ? 'wakaf_temporer' : app(\App\Services\Accounting\Psak109PostingService::class)->resolveJenisDana($item->jenis_ziswaf)] ?? 'Dana lainnya' }}</div>
+                                @if($item->jenis_ziswaf === 'wakaf')
+                                    <div style="font-size:12px">Peruntukan: {{ ['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'][$item->wakaf_purpose] ?? 'Belum ditentukan' }}</div>
+                                @endif
                                 @if($item->jenis_ziswaf === 'wakaf' && $item->wakaf_type)
                                     <div style="font-size:11px;color:#64748b;margin-top:5px;">
                                         {{ match($item->wakaf_type) {
@@ -872,6 +876,8 @@
                                             · kembali {{ $item->wakaf_return_date->format('d/m/Y') }}
                                         @endif
                                     </div>
+                                @elseif($item->jenis_ziswaf === 'zakat_fitrah' && data_get($item->rincian_perhitungan, 'jumlah_jiwa'))
+                                    <div class="pm-fhint">{{ data_get($item->rincian_perhitungan, 'jumlah_jiwa') }} jiwa × Rp {{ number_format(data_get($item->rincian_perhitungan, 'nominal_per_jiwa'), 0, ',', '.') }}/jiwa</div>
                                 @elseif($isParkir && data_get($item->rincian_perhitungan, 'shift'))
                                     <div style="font-size:11px;color:#64748b;margin-top:5px;line-height:1.5;">
                                         Shift {{ ucfirst(data_get($item->rincian_perhitungan, 'shift')) }}
@@ -1061,11 +1067,15 @@
                 </div>
 
                 <div class="pm-fgroup" id="pmWakafTypeGroup" hidden>
-                    <label class="pm-flabel" for="pm_wakaf_type">Jenis Penerimaan Wakaf <span>*</span></label>
-                    <select name="wakaf_type" id="pm_wakaf_type" class="pm-fselect" disabled>
-                        <option value="permanen" @selected(old('wakaf_type', 'permanen') === 'permanen')>Wakaf Permanen</option>
-                        <option value="hasil_pengelolaan" @selected(old('wakaf_type') === 'hasil_pengelolaan')>Hasil Pengelolaan Wakaf</option>
+                    <label class="pm-flabel" for="pm_wakaf_type_purpose">Peruntukan Wakaf <span>*</span></label>
+                    <input type="hidden" name="wakaf_type" id="pm_wakaf_type" value="permanen">
+                    <select name="wakaf_purpose" id="pm_wakaf_type_purpose" class="pm-fselect" required>
+                        <option value="">Pilih peruntukan wakaf</option>
+                    @foreach(['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'] as $value => $label)
+                        <option value="{{ $value }}" @selected(old('wakaf_purpose') === $value)>{{ $label }}</option>
+                    @endforeach
                     </select>
+                    @error('wakaf_purpose')<small class="text-danger">{{ $message }}</small>@enderror
                 </div>
 
                 <div class="pm-frow" id="pmWakafRules" hidden>
@@ -1082,6 +1092,13 @@
                     </div>
                 </div>
 
+                <div class="pm-fgroup" id="pmFitrahGroup" hidden>
+                    <label class="pm-flabel" for="pm_jumlah_jiwa">Jumlah Jiwa <span>*</span></label>
+                    <input type="number" name="jumlah_jiwa" id="pm_jumlah_jiwa" class="pm-finput" min="1" max="10000" step="1" value="{{ old('jumlah_jiwa', 1) }}" disabled>
+                    <div class="pm-fhint">Takaran: {{ $fitrahConfig['kg'] }} kg/jiwa · Harga beras: Rp {{ number_format($fitrahConfig['price'], 0, ',', '.') }}/kg.</div>
+                    <div class="pm-fhint" id="pmFitrahInfo"></div>
+                    @error('jumlah_jiwa')<small class="text-danger">{{ $message }}</small>@enderror
+                </div>
                 <div class="pm-frow">
                     {{-- Nominal --}}
                     <div class="pm-fgroup">
@@ -1220,6 +1237,8 @@
 
     function pmSyncPostingRules() {
         const isWakaf = pmGolongan.value === 'wakaf';
+        const purpose = document.getElementById('pm_wakaf_type_purpose');
+        purpose.disabled = !isWakaf; purpose.required = isWakaf;
         const isParkir = pmGolongan.value === 'parkir';
         const paymentMethod = document.getElementById('pm_metode');
         const transferOption = paymentMethod?.querySelector('option[value="manual_transfer"]');
@@ -1239,7 +1258,22 @@
         [qrisInput, cashInput].forEach(input => { input.disabled = !isMixed; input.required = isMixed; });
         const totalInput = document.getElementById('pm_nominal');
         if (totalInput.readOnly && !isMixed) totalInput.value = '';
-        totalInput.readOnly = isMixed;
+        const isFitrah = pmGolongan.value === 'zakat_fitrah';
+        const fitrahConfig = @json($fitrahConfig);
+        const people = document.getElementById('pm_jumlah_jiwa');
+        document.getElementById('pmFitrahGroup').hidden = !isFitrah;
+        people.disabled = !isFitrah;
+        people.required = isFitrah;
+        totalInput.readOnly = isMixed || isFitrah;
+        if (isFitrah) {
+            const count = Number(people.value);
+            totalInput.value = fitrahConfig.ready && Number.isInteger(count) && count >= 1 && count <= 10000
+                ? Math.round(count * fitrahConfig.kg * fitrahConfig.price) : '';
+            people.setCustomValidity(fitrahConfig.ready ? '' : 'Ketentuan fitrah atau harga beras aktif belum tersedia.');
+            document.getElementById('pmFitrahInfo').textContent = fitrahConfig.ready
+                ? 'Nominal per jiwa: ' + new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(fitrahConfig.kg * fitrahConfig.price) + '. Total = jumlah jiwa × nominal per jiwa.'
+                : 'Ketentuan fitrah atau harga beras yang disetujui dan berlaku belum tersedia.';
+        } else { people.setCustomValidity(''); }
         if (isMixed) totalInput.value = Number(qrisInput.value || 0) + Number(cashInput.value || 0);
         const isTemporary = isWakaf && pmWakafType.value === 'temporer';
         const isManagementResult = isWakaf && pmWakafType.value === 'hasil_pengelolaan';
@@ -1278,6 +1312,7 @@
 
     document.getElementById('pm_metode').addEventListener('change', pmSyncPostingRules);
     ['pm_nominal_qris', 'pm_nominal_tunai'].forEach(id => document.getElementById(id).addEventListener('input', pmSyncPostingRules));
+    document.getElementById('pm_jumlah_jiwa').addEventListener('input', pmSyncPostingRules);
     pmGolongan.addEventListener('change', pmSyncPostingRules);
     pmWakafType.addEventListener('change', pmSyncPostingRules);
     pmSyncPostingRules();

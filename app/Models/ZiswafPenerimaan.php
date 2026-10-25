@@ -20,6 +20,7 @@ class ZiswafPenerimaan extends Model
         'tanggal',
         'jenis_ziswaf',
         'restriction_type',
+        'wakaf_purpose',
         'wakaf_type',
         'wakaf_return_date',
         'nominal',

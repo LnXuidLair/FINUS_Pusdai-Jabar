@@ -219,6 +219,12 @@ class PengeluaranController extends Controller
                 'transaction_category_id' => 'Kode akun kategori belum memiliki aturan sumber dana.',
             ]);
         }
+        $purpose = $request->validate([
+            'wakaf_purpose' => [Rule::requiredIf($jenisDana === 'wakaf'), 'nullable', Rule::in(['pembangunan', 'mushaf'])],
+        ]);
+        $validated['wakaf_purpose'] = $jenisDana === 'wakaf' ? $purpose['wakaf_purpose'] : null;
+        $source = $request->validate(['zakat_source' => [Rule::requiredIf($jenisDana === 'zakat'), 'nullable', Rule::in(['fitrah', 'lainnya'])]]);
+        $validated['zakat_source'] = $jenisDana === 'zakat' ? $source['zakat_source'] : null;
         $validated['jenis_dana'] = $jenisDana;
         $coaKredit = ! empty($validated['coa_kredit_id'])
             ? Coa::query()
@@ -332,14 +338,14 @@ class PengeluaranController extends Controller
 
             $periodeStart = Carbon::createFromFormat('Y-m-d', $zakatValidated['periode_zakat'].'-01')->startOfDay();
             $periodeEnd = $periodeStart->copy()->endOfMonth()->startOfDay();
-            if (! Carbon::parse($validated['tanggal'])->isSameDay($periodeEnd)) {
+            if ($validated['zakat_source'] !== 'fitrah' && ! Carbon::parse($validated['tanggal'])->isSameDay($periodeEnd)) {
                 throw ValidationException::withMessages([
                     'tanggal' => 'Penyaluran reguler harus dicatat pada tanggal akhir periode, yaitu '.$periodeEnd->format('d/m/Y').'.',
                 ]);
             }
 
             $periodeTerpakai = PeriodePenyaluranZakat::query()
-                ->where('periode', $zakatValidated['periode_zakat'])
+                ->where('periode', $zakatValidated['periode_zakat'])->where('zakat_source', $validated['zakat_source'])
                 ->where(function ($query): void {
                     $query->where('status', PeriodePenyaluranZakat::STATUS_DITUTUP)
                         ->orWhereHas('pengeluaran');
@@ -351,7 +357,7 @@ class PengeluaranController extends Controller
                 ]);
             }
 
-            $saldoZakat = $this->saldoZakatTersedia();
+            $saldoZakat = (int) app(Psak109PostingService::class)->getSaldoZakatSources()[$validated['zakat_source']];
             if ((int) $validated['jumlah'] > $saldoZakat) {
                 throw ValidationException::withMessages([
                     'jumlah' => 'Jumlah penyaluran melebihi saldo dana zakat yang tersedia (Rp '.number_format($saldoZakat, 0, ',', '.').').',
@@ -422,14 +428,32 @@ class PengeluaranController extends Controller
                 $validated,
                 $zakatDetails
             ): void {
+                if ($validated['jenis_dana'] === 'zakat') {
+                    Coa::whereIn('kode_akun', ['1101', '1102'])->orderBy('id')->lockForUpdate()->get();
+                    $posting = app(Psak109PostingService::class);
+                    $saldoZakat = (int) $posting->getSaldoZakatSources()[$validated['zakat_source']];
+                    $saldoSource = $posting->getSaldoZakatSources($coaKredit)[$validated['zakat_source']];
+                    if ((int) $validated['jumlah'] > min($saldoZakat, $saldoSource, $posting->getSaldoKasBank($coaKredit))) {
+                        throw ValidationException::withMessages(['jumlah' => 'Saldo sumber dana zakat yang dipilih pada Kas/Bank ini tidak mencukupi.']);
+                    }
+                }
+                if ($validated['jenis_dana'] === 'wakaf') {
+                    Coa::query()->whereIn('kode_akun', ['1101', '1102'])->orderBy('id')->lockForUpdate()->get();
+                    $rekap = app(Psak109PostingService::class)->getRekapWakaf();
+                    $saldo = $rekap[$validated['wakaf_purpose']]['saldo'];
+                    if ((int) $validated['jumlah'] > $saldo) {
+                        throw ValidationException::withMessages(['jumlah' => 'Saldo wakaf untuk peruntukan yang dipilih tidak mencukupi.']);
+                    }
+                }
+
                 if (config('cash_transfers.enabled')) {
                     Coa::whereIn('kode_akun', ['1101', '1102'])->orderBy('id')->lockForUpdate()->get();
-                    app(\App\Services\Accounting\CashTransferService::class)->assertAvailable($coaKredit, $validated['jenis_dana'], (int) $validated['jumlah']);
+                    app(\App\Services\Accounting\CashTransferService::class)->assertAvailable($coaKredit, $validated['jenis_dana'] === 'zakat' && $validated['zakat_source'] === 'fitrah' ? 'zakat_fitrah' : $validated['jenis_dana'], (int) $validated['jumlah']);
                 }
                 $periodeZakat = null;
                 if ($transactionCategory->requires_asnaf || $transactionCategory->form_type === 'zakat_distribution') {
                     $periodeZakat = PeriodePenyaluranZakat::query()
-                        ->where('periode', $validated['periode_zakat'])
+                        ->where('periode', $validated['periode_zakat'])->where('zakat_source', $validated['zakat_source'])
                         ->lockForUpdate()
                         ->first();
 
@@ -443,6 +467,7 @@ class PengeluaranController extends Controller
                     $periodeZakat ??= new PeriodePenyaluranZakat;
                     $periodeZakat->fill([
                         'periode' => $validated['periode_zakat'],
+                        'zakat_source' => $validated['zakat_source'],
                         'tanggal_mulai' => $periodeStart,
                         'tanggal_selesai' => $periodeEnd,
                         'persentase_amil' => 0,
@@ -458,6 +483,8 @@ class PengeluaranController extends Controller
                 $pengeluaran->transaction_category_id = $transactionCategory->id;
                 $pengeluaran->kategori = $isExternal ? 'Honorarium Kegiatan' : $transactionCategory->name;
                 $pengeluaran->jenis_dana = $validated['jenis_dana'];
+                $pengeluaran->zakat_source = $validated['zakat_source'];
+                $pengeluaran->wakaf_purpose = $validated['wakaf_purpose'];
                 $pengeluaran->id_pegawai = $pegawai?->id;
                 $pengeluaran->restriction_type = null;
                 $pengeluaran->periode_penyaluran_zakat_id = $periodeZakat?->id;
@@ -608,13 +635,6 @@ class PengeluaranController extends Controller
         return $request->routeIs('pegawai.keuangan.*')
             ? 'pegawai.keuangan.pengeluaran.index'
             : 'admin.pengeluaran.index';
-    }
-
-    private function saldoZakatTersedia(): int
-    {
-        $saldo = app(Psak109PostingService::class)->getSaldoDana()['zakat'] ?? 0;
-
-        return max(0, (int) round((float) $saldo));
     }
 
     private function normalizeTargetAsnaf(array $targets, array $allowedAsnaf): array

@@ -18,6 +18,7 @@ class PeriodePenyaluranZakat extends Model
 
     protected $fillable = [
         'organization_id',
+        'zakat_source',
         'periode',
         'tanggal_mulai',
         'tanggal_selesai',

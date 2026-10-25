@@ -254,7 +254,7 @@
                                     <div class="jt-type-detail-main">
                                         <span class="jt-type-dot"></span>
                                         <div>
-                                            <strong>{{ $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf }}</strong>
+                                            <strong>{{ $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf }}@if($item->jenis_ziswaf === 'wakaf') · {{ ['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'][$item->wakaf_purpose] ?? 'Belum ditentukan' }}@endif</strong>
                                             <small>{{ number_format($item->jumlah_transaksi, 0, ',', '.') }} transaksi</small>
                                         </div>
                                     </div>
@@ -293,7 +293,7 @@
                     <div class="jt-breakdown-item">
                         <div>
                             <strong>
-                                {{ $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf }}
+                                {{ $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf }}@if($item->jenis_ziswaf === 'wakaf') · {{ ['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'][$item->wakaf_purpose] ?? 'Belum ditentukan' }}@endif
                             </strong>
                             <small>{{ number_format($item->jumlah_transaksi, 0, ',', '.') }} transaksi</small>
                         </div>
@@ -348,7 +348,7 @@
 
                             <td>
                                 <span class="jt-type">
-                                    {{ $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf }}
+                                    {{ $jenisLabels[$item->jenis_ziswaf] ?? $item->jenis_ziswaf }}@if($item->jenis_ziswaf === 'wakaf') · {{ ['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'][$item->wakaf_purpose] ?? 'Belum ditentukan' }}@endif
                                 </span>
                             </td>
 

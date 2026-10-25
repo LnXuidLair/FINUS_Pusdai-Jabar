@@ -28,7 +28,7 @@ class JurnalDetail extends Model
     public function getLabelJenisDanaAttribute(): string
     {
         return match ($this->jenis_dana) {
-            'zakat' => 'Dana Zakat',
+            'zakat' => $this->zakat_source === 'fitrah' ? 'Dana Zakat Fitrah' : 'Dana Zakat Lainnya',
             'infak_sedekah', 'infak' => 'Dana Infak/Sedekah',
             'amil' => 'Dana Amil',
             'non_halal' => 'Dana Non-Halal',

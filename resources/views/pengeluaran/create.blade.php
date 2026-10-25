@@ -9,6 +9,7 @@
     $pengeluaranIndexRoute = request()->routeIs('pegawai.keuangan.*')
         ? 'pegawai.keuangan.pengeluaran.index'
         : 'admin.pengeluaran.index';
+    $zakatSourceBalances = app(\App\Services\Accounting\Psak109PostingService::class)->getSaldoZakatSources();
     $submittedZakatDetails = collect(old('zakat_details', []))->keyBy('asnaf');
     $oldZakatDetails = collect($asnafLabels ?? [])->map(fn ($label, $asnaf) => array_merge(
         ['nama_penerima' => '', 'jumlah_penerima' => 0, 'nominal' => ''],
@@ -75,10 +76,28 @@
                     </span>
                 </div>
                 <div class="fmu-field"><label class="fmu-label" for="tanggal">Tanggal <span class="fmu-required">*</span></label><div class="fmu-input-icon-wrap"><i class="fa-solid fa-calendar-day"></i><input type="date" id="tanggal" name="tanggal" value="{{ old('tanggal', now()->format('Y-m-d')) }}" class="fmu-control @error('tanggal') is-invalid @enderror" required></div><span class="fmu-help" id="recognitionDateHelp">Tanggal transaksi atau pembayaran.</span>@error('tanggal')<span class="fmu-error">{{ $message }}</span>@enderror</div>
-                <div class="fmu-field">
+                <div class="fmu-field" id="derivedFundSourceGroup">
                     <span class="fmu-label">Sumber Dana</span>
                     <div class="fmu-derived-value"><i class="fa-solid fa-layer-group"></i><strong id="fundSourceLabel">Pilih kategori terlebih dahulu</strong></div>
                     <span class="fmu-help">Ditentukan otomatis dari kode akun kategori. Saldo dihitung dari jurnal yang sudah diposting.</span>
+                </div>
+                <div class="fmu-field" id="zakatSourceGroup" hidden>
+                    <label class="fmu-label" for="zakat_source">Sumber Dana Zakat <span class="fmu-required">*</span></label>
+                    <select class="fmu-control" name="zakat_source" id="zakat_source" disabled>
+                        <option value="">Pilih sumber dana zakat</option>
+                        <option value="fitrah" @selected(old('zakat_source') === 'fitrah')>Dana Zakat Fitrah</option>
+                        <option value="lainnya" @selected(old('zakat_source') === 'lainnya')>Dana Zakat Lainnya (Maal, Penghasilan, Pertanian)</option>
+                    </select>
+                    @error('zakat_source')<span class="fmu-error">{{ $message }}</span>@enderror
+                </div>
+                <div class="fmu-field" id="wakafPurposeGroup" hidden>
+                    <label class="fmu-label" for="wakaf_purpose">Peruntukan Wakaf <span class="fmu-required">*</span></label>
+                    <select name="wakaf_purpose" id="wakaf_purpose" class="fmu-control" disabled>
+                        <option value="">Pilih peruntukan wakaf</option>
+                        @foreach(['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'] as $value => $label)
+                        <option value="{{ $value }}" @selected(old('wakaf_purpose') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="fmu-field">
                     <label class="fmu-label" for="coa_kredit_id">Sumber Pembayaran <span class="fmu-required">*</span></label>
@@ -87,7 +106,7 @@
                         <select id="coa_kredit_id" name="coa_kredit_id" class="fmu-control @error('coa_kredit_id') is-invalid @enderror" required>
                             <option value="">-- Pilih Kas atau Bank --</option>
                             @foreach($akunPembayaran ?? [] as $akun)
-                                <option value="{{ $akun->id }}" data-code="{{ $akun->kode_akun }}" data-saldo="{{ (int) ($saldoKasBankJurnal[$akun->id] ?? 0) }}" @selected((string) old('coa_kredit_id', $defaultPaymentAccountId) === (string) $akun->id)>
+                                <option value="{{ $akun->id }}" data-code="{{ $akun->kode_akun }}" data-fitrah="{{ app(\App\Services\Accounting\Psak109PostingService::class)->getSaldoZakatSources($akun)['fitrah'] }}" data-lainnya="{{ app(\App\Services\Accounting\Psak109PostingService::class)->getSaldoZakatSources($akun)['lainnya'] }}" data-saldo="{{ (int) ($saldoKasBankJurnal[$akun->id] ?? 0) }}" @selected((string) old('coa_kredit_id', $defaultPaymentAccountId) === (string) $akun->id)>
                                     {{ $akun->nama_akun }}
                                 </option>
                             @endforeach
@@ -169,8 +188,8 @@
                         </div>
                         <div class="zakat-balance">
                             <span>Saldo zakat tersedia</span>
-                            <strong>{{ 'Rp '.number_format($saldoZakat ?? 0, 0, ',', '.') }}</strong>
-                            <small>Seluruh saldo zakat tersedia untuk asnaf yang berhak</small>
+                            <strong id="zakatSourceBalance">Rp 0</strong>
+                            <small>Saldo mengikuti sumber dana zakat yang dipilih</small>
                         </div>
                     </div>
                     <div class="zakat-period-fields">
@@ -298,6 +317,8 @@
     const initialDetails = @json($oldZakatDetails);
     const rupiah = value => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value || 0);
 
+    const zakatSource = document.getElementById('zakat_source');
+    const zakatSourceBalances = @json($zakatSourceBalances);
     const cashFundBalances = @json($cashFundBalances);
     const syncBalanceStatus = () => {
         const cat = category?.selectedOptions?.[0];
@@ -307,11 +328,13 @@
             balanceStatus.classList.remove('is-insufficient');
             return;
         }
-        const dana = Number(cat.dataset.fundBalance || 0);
+        const isZakat = cat.dataset.fund === 'zakat';
+        const fundKey = isZakat && zakatSource.value === 'fitrah' ? 'zakat_fitrah' : cat.dataset.fund;
+        const dana = isZakat ? Number(zakatSourceBalances[zakatSource.value] || 0) : Number(cat.dataset.fundBalance || 0);
         const kas = Number(bank.dataset.saldo || 0);
         const nominal = Number(amount?.value || 0);
         const lowFund = nominal > 0 && nominal > dana;
-        const fundAtSource = cashFundBalances === null ? kas : Number(cashFundBalances[cat.dataset.fund]?.[bank.dataset.code] || 0);
+        const fundAtSource = isZakat ? Number(bank.dataset[zakatSource.value] || 0) : (cashFundBalances === null ? kas : Number(cashFundBalances[fundKey]?.[bank.dataset.code] || 0));
         const lowCash = nominal > 0 && nominal > Math.min(kas, fundAtSource);
         balanceStatus.textContent = `Saldo ${cat.dataset.fundLabel || 'dana'}: ${rupiah(dana)} · Saldo ${bank.textContent.trim()}: ${rupiah(kas)}. Golongan pada sumber ini: ${rupiah(fundAtSource)}.`
             + (lowFund || lowCash ? ` Jumlah transaksi melebihi saldo ${[lowFund ? 'dana' : '', lowCash ? 'sumber pembayaran' : ''].filter(Boolean).join(' dan ')} yang tersedia. Pengeluaran akan ditolak.` : ' Saldo berasal dari jurnal yang sudah diposting.');
@@ -402,7 +425,7 @@
     };
 
     const syncPeriodEnd = () => {
-        if (!period?.value || !transactionDate) return;
+        if (!period?.value || !transactionDate || zakatSource.value === 'fitrah') return;
         const [year, month] = period.value.split('-').map(Number);
         const lastDay = new Date(year, month, 0).getDate();
         transactionDate.value = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
@@ -417,6 +440,14 @@
     const syncZakatVisibility = () => {
         const selected = category?.selectedOptions?.[0];
         const formType = selected?.dataset?.formType || '';
+        const isZakat = selected?.dataset?.fund === 'zakat';
+        document.getElementById('zakatSourceGroup').hidden = !isZakat;
+        document.getElementById('derivedFundSourceGroup').hidden = isZakat;
+        zakatSource.disabled = !isZakat; zakatSource.required = isZakat;
+        const isWakaf = selected?.dataset?.fund === 'wakaf';
+        document.getElementById('wakafPurposeGroup').hidden = !isWakaf;
+        const purpose = document.getElementById('wakaf_purpose');
+        purpose.disabled = !isWakaf; purpose.required = isWakaf;
         const isHonorarium = formType === 'honorarium';
         const isExternal = isHonorarium && recipientType?.value === 'eksternal';
         const requiresEmployee = isHonorarium ? !isExternal : selected?.dataset?.requiresEmployee === '1';
@@ -464,6 +495,10 @@
             ? `${selected.dataset.debitCode || ''} ${selected.dataset.debitName || ''}`.trim()
             : 'Pilih kategori pengeluaran';
         syncZakatVisibility();
+        if (selected?.dataset?.fund === 'zakat') {
+            fundSourceLabel.textContent = zakatSource.selectedOptions[0]?.textContent || 'Pilih sumber dana zakat';
+            document.getElementById('zakatSourceBalance').textContent = rupiah(zakatSourceBalances[zakatSource.value] || 0);
+        }
         syncBalanceStatus();
     };
 
@@ -481,6 +516,7 @@
     (initialDetails.length ? initialDetails : [{}]).forEach(addRow);
     period?.addEventListener('change', syncPeriodEnd);
     targetInputs.forEach(field => field.addEventListener('input', () => { syncTargetTotal(); syncZakatTotals(); }));
+    zakatSource.addEventListener('change', () => { syncCategoryMapping(); syncPeriodEnd(); });
     category?.addEventListener('change', syncCategoryMapping);
     paymentAccount?.addEventListener('change', syncJournalPreview);
     amount?.addEventListener('input', () => { syncZakatTotals(); syncJournalPreview(); });

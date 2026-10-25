@@ -618,10 +618,15 @@
 
                             @if($isWakafPage)
                                 <div class="form-group">
-                                    <label for="wakaf_type">Jenis Wakaf</label>
-                                    <select name="wakaf_type" id="wakaf_type" class="form-control @error('wakaf_type') is-invalid @enderror" required>
-                                        <option value="permanen" @selected(old('wakaf_type', 'permanen') === 'permanen')>Wakaf Permanen</option>
+                                    <label for="wakaf_type_purpose">Peruntukan Wakaf</label>
+                                    <input type="hidden" name="wakaf_type" id="wakaf_type" value="permanen">
+                                    <select name="wakaf_purpose" id="wakaf_type_purpose" class="form-control" required>
+                                        <option value="">Pilih peruntukan wakaf</option>
+                                    @foreach(['pembangunan' => 'Pembangunan', 'mushaf' => 'Mushaf Al-Qur’an'] as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('wakaf_purpose') === $value)>{{ $label }}</option>
+                                    @endforeach
                                     </select>
+                                    @error('wakaf_purpose')<small class="text-danger">{{ $message }}</small>@enderror
                                     @error('wakaf_type')<small class="text-danger">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group" id="wakaf_return_group" hidden>

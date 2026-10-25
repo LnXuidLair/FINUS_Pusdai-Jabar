@@ -5,6 +5,7 @@ return [
     'fund_types' => [
         'operasional' => 'Dana Operasional',
         'wakaf' => 'Dana Wakaf',
-        'zakat' => 'Dana Zakat',
+        'zakat' => 'Dana Zakat Lainnya',
+        'zakat_fitrah' => 'Dana Zakat Fitrah',
     ],
 ];
