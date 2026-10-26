@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\ZiswafPenerimaan;
 use App\Services\ZakatCalculatorService;
 use App\Services\TransactionProofStorage;
+use App\Services\Accounting\MidtransReceiptJournalService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -1141,19 +1142,17 @@ class JamaahController extends Controller
          * kembali menjadi pending.
          */
         if (
-            in_array(
-                $transaksi->payment_status,
-                ['settlement', 'capture'],
-                true
-            )
+            in_array($transaksi->payment_status, ['settlement', 'capture'], true)
+            && $transaksi->status_verifikasi === 'diterima'
             && $transactionStatus === 'pending'
         ) {
-            return redirect()
-                ->back()
-                ->with(
-                    'success',
-                    'Status transaksi sudah terkonfirmasi sebelumnya. Tidak ada perubahan.'
-                );
+            try {
+                app(MidtransReceiptJournalService::class)->repair($transaksi->id);
+            } catch (Throwable $exception) {
+                report($exception);
+                return redirect()->back()->with('warning', 'Pembayaran berhasil, tetapi jurnal belum dapat disinkronkan. Hubungi admin.');
+            }
+            return redirect()->back()->with('success', 'Pembayaran telah dikonfirmasi dan jurnal diperiksa.');
         }
 
         if (
@@ -1167,16 +1166,18 @@ class JamaahController extends Controller
                 )
             )
         ) {
-            $transaksi->update([
-                'payment_status' => $transactionStatus,
-                'payment_type' => $paymentType,
-                'transaction_id' => $transactionId,
-                'fraud_status' => $fraudStatus,
-                'status_verifikasi' => 'diterima',
-                'catatan_verifikasi' => 'Pembayaran terkonfirmasi melalui cek status manual.',
-                'verified_at' => now(),
-                'paid_at' => $transaksi->paid_at ?? now(),
-            ]);
+            try {
+                app(MidtransReceiptJournalService::class)->confirmAndPost($transaksi->id, [
+                    'payment_status' => $transactionStatus,
+                    'payment_type' => $paymentType,
+                    'transaction_id' => $transactionId,
+                    'fraud_status' => $fraudStatus,
+                    'catatan_verifikasi' => 'Pembayaran terkonfirmasi melalui cek status manual.',
+                ]);
+            } catch (Throwable $exception) {
+                report($exception);
+                return redirect()->back()->with('warning', 'Midtrans mengonfirmasi pembayaran, tetapi jurnal belum berhasil dicatat. Hubungi admin untuk rekonsiliasi.');
+            }
 
             return redirect()
                 ->route('jamaah.riwayat.index')
@@ -1264,7 +1265,14 @@ class JamaahController extends Controller
 
         // Jika transaksi sudah selesai di sisi lokal, kembalikan langsung tanpa
         // memanggil Midtrans API lagi
-        if (in_array($transaksi->payment_status, ['settlement', 'capture'], true)) {
+        if (in_array($transaksi->payment_status, ['settlement', 'capture'], true)
+            && $transaksi->status_verifikasi === 'diterima') {
+            try {
+                app(MidtransReceiptJournalService::class)->repair($transaksi->id);
+            } catch (Throwable $exception) {
+                report($exception);
+                return response()->json(['status' => 'error', 'message' => 'Pembayaran berhasil, tetapi jurnal belum dapat disinkronkan. Hubungi admin.'], 200);
+            }
             return response()->json([
                 'status' => 'paid',
                 'redirect_url' => route('jamaah.riwayat.index'),
@@ -1299,16 +1307,18 @@ class JamaahController extends Controller
                 && in_array($fraudStatus, ['accept', null, ''], true)
             )
         ) {
-            $transaksi->update([
-                'payment_status' => $transactionStatus,
-                'payment_type' => $paymentType,
-                'transaction_id' => $transactionId,
-                'fraud_status' => $fraudStatus,
-                'status_verifikasi' => 'diterima',
-                'catatan_verifikasi' => 'Pembayaran terkonfirmasi otomatis melalui polling status.',
-                'verified_at' => now(),
-                'paid_at' => $transaksi->paid_at ?? now(),
-            ]);
+            try {
+                app(MidtransReceiptJournalService::class)->confirmAndPost($transaksi->id, [
+                    'payment_status' => $transactionStatus,
+                    'payment_type' => $paymentType,
+                    'transaction_id' => $transactionId,
+                    'fraud_status' => $fraudStatus,
+                    'catatan_verifikasi' => 'Pembayaran terkonfirmasi otomatis melalui polling status.',
+                ]);
+            } catch (Throwable $exception) {
+                report($exception);
+                return response()->json(['status' => 'error', 'message' => 'Pembayaran terkonfirmasi, tetapi jurnal belum berhasil dicatat. Hubungi admin.'], 200);
+            }
 
             return response()->json([
                 'status' => 'paid',
@@ -1371,26 +1381,34 @@ class JamaahController extends Controller
         $transactionId = $request->input('transaction_id');
         if (
             in_array($transaksi->payment_status, ['settlement', 'capture'], true)
+            && $transaksi->status_verifikasi === 'diterima'
             && $transactionStatus === 'pending'
         ) {
-            return response()->json([
-                'message' => 'Notification ignored because transaction already paid.',
-            ]);
+            try {
+                app(MidtransReceiptJournalService::class)->repair($transaksi->id);
+            } catch (Throwable $exception) {
+                report($exception);
+                return response()->json(['message' => 'Posting jurnal belum berhasil.'], 500);
+            }
+            return response()->json(['message' => 'Payment already accepted; journal verified.']);
         }
         if (
             $transactionStatus === 'settlement'
             || ($transactionStatus === 'capture' && in_array($fraudStatus, ['accept', null, ''], true))
         ) {
-            $transaksi->update([
-                'payment_status' => $transactionStatus,
-                'payment_type' => $paymentType,
-                'transaction_id' => $transactionId,
-                'fraud_status' => $fraudStatus,
-                'status_verifikasi' => 'diterima',
-                'catatan_verifikasi' => 'Pembayaran otomatis terkonfirmasi melalui payment gateway.',
-                'verified_at' => now(),
-                'paid_at' => $transaksi->paid_at ?? now(),
-            ]);
+            try {
+                app(MidtransReceiptJournalService::class)->confirmAndPost($transaksi->id, [
+                    'payment_status' => $transactionStatus,
+                    'payment_type' => $paymentType,
+                    'transaction_id' => $transactionId,
+                    'fraud_status' => $fraudStatus,
+                    'catatan_verifikasi' => 'Pembayaran otomatis terkonfirmasi melalui payment gateway.',
+                ]);
+            } catch (Throwable $exception) {
+                report($exception);
+                // Status HTTP 500 mendorong Midtrans mengirim ulang notifikasi.
+                return response()->json(['message' => 'Posting jurnal belum berhasil.'], 500);
+            }
 
             return response()->json([
                 'message' => 'Payment accepted.',
